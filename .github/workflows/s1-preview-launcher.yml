@@ -1,0 +1,59 @@
+name: S1 Preview Launcher
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: s1-main-preview-launcher
+  cancel-in-progress: true
+
+jobs:
+  build:
+    if: contains(github.event.head_commit.message, '[s1-preview]')
+    runs-on: ubuntu-latest
+    env:
+      S1_EXACT_SHA: 85d7be34e28547c516d0d1f12fdefff1d262951d
+    steps:
+      - name: Checkout exact S1 candidate
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ env.S1_EXACT_SHA }}
+      - name: Verify checked-out exact head
+        run: test "$(git rev-parse HEAD)" = "$S1_EXACT_SHA"
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Validate canonical subset
+        run: npm run test:data
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Upload preview artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./dist
+
+  deploy:
+    if: contains(github.event.head_commit.message, '[s1-preview]')
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy exact S1 preview
+        id: deployment
+        uses: actions/deploy-pages@v4
