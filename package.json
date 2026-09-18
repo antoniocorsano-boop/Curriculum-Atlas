@@ -1,0 +1,30 @@
+{
+  "name": "curriculum-atlas-spatial-poc",
+  "private": true,
+  "version": "0.1.0-s1",
+  "type": "module",
+  "engines": {"node": ">=22"},
+  "scripts": {
+    "dev": "vite",
+    "test:data": "node scripts/validate-data.mjs",
+    "typecheck": "tsc --noEmit",
+    "build": "npm run test:data && npm run typecheck && vite build",
+    "preview": "vite preview --host 0.0.0.0"
+  },
+  "dependencies": {
+    "@react-three/drei": "10.7.8",
+    "@react-three/fiber": "9.7.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "three": "0.186.0",
+    "zustand": "5.0.8"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@types/three": "0.186.0",
+    "@vitejs/plugin-react": "6.1.1",
+    "typescript": "7.0.2",
+    "vite": "8.3.0"
+  }
+}
