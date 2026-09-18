@@ -7,12 +7,14 @@
 
 S1 uses a deliberately small stable core:
 
-- React 19.3.0
+- React 19.2.8
 - Three.js 0.186.0 (r186)
 - @react-three/fiber 9.7.0
 - @react-three/drei 10.7.8
 - Zustand 5.0.8
 - Vite 8.3.0 + TypeScript 7.0.2
+
+React 19.2.8 is intentionally pinned because @react-three/fiber 9.7.0 declares a peer range compatible with React >=19 and <19.3. The first CI run caught the 19.3.0 incompatibility; S1 does not use --force or --legacy-peer-deps to bypass peer contracts.
 
 No alpha/pre-release spatial library is allowed in the S1 core. @react-three/uikit, force-graph, post-processing and Theatre.js remain gated candidates for later slices.
 
