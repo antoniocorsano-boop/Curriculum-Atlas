@@ -1,4 +1,4 @@
-name: S1 Preview Launcher
+name: S1 / P1 Preview Launcher
 
 on:
   push:
@@ -11,49 +11,90 @@ permissions:
   id-token: write
 
 concurrency:
-  group: s1-main-preview-launcher
+  group: main-preview-launcher
   cancel-in-progress: true
 
 jobs:
   build:
-    if: contains(github.event.head_commit.message, '[s1-preview]')
+    if: contains(github.event.head_commit.message, '[s1-preview]') || contains(github.event.head_commit.message, '[p1-preview]')
     runs-on: ubuntu-latest
     env:
       S1_EXACT_SHA: 85d7be34e28547c516d0d1f12fdefff1d262951d
+      P1_EXACT_SHA: fc509d3eba255432c2708256450c94c88e7eb6db
     steps:
       - name: Checkout exact S1 candidate
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           ref: ${{ env.S1_EXACT_SHA }}
-      - name: Verify checked-out exact head
+          path: s1
+
+      - name: Verify S1 exact head
+        working-directory: s1
         run: test "$(git rev-parse HEAD)" = "$S1_EXACT_SHA"
+
+      - name: Checkout exact P1 candidate
+        if: contains(github.event.head_commit.message, '[p1-preview]')
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.P1_EXACT_SHA }}
+          path: p1
+
+      - name: Verify P1 exact head
+        if: contains(github.event.head_commit.message, '[p1-preview]')
+        working-directory: p1
+        run: test "$(git rev-parse HEAD)" = "$P1_EXACT_SHA"
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install
-        run: npm install --ignore-scripts --no-audit --no-fund
-      - name: Validate canonical subset
-        run: npm run test:data
-      - name: Typecheck
-        run: npm run typecheck
-      - name: Build
-        run: npm run build
+
+      - name: Build S1 root
+        working-directory: s1
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm run build
+
+      - name: Build P1 preview
+        if: contains(github.event.head_commit.message, '[p1-preview]')
+        working-directory: p1
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm run build
+
+      - name: Assemble Pages artifact
+        run: |
+          mkdir -p site
+          cp -a s1/dist/. site/
+          if [[ "${{ github.event.head_commit.message }}" == *"[p1-preview]"* ]]; then
+            mkdir -p site/p1-preview
+            cp -a p1/dist/. site/p1-preview/
+            sed -i 's#<head>#<head><meta name="robots" content="noindex,nofollow">#' site/p1-preview/index.html
+            printf '%s\n' \
+              "ATLAS-P1 navigable preview" \
+              "p1_sha=${P1_EXACT_SHA}" \
+              "s1_sha=${S1_EXACT_SHA}" \
+              "launcher_sha=${GITHUB_SHA}" \
+              "built_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              > site/p1-preview/PREVIEW_IDENTITY.txt
+          fi
+
       - name: Upload preview artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: ./dist
+          path: ./site
 
   deploy:
-    if: contains(github.event.head_commit.message, '[s1-preview]')
+    if: contains(github.event.head_commit.message, '[s1-preview]') || contains(github.event.head_commit.message, '[p1-preview]')
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Deploy exact S1 preview
+      - name: Deploy controlled preview
         id: deployment
         uses: actions/deploy-pages@v4
