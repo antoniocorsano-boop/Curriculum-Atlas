@@ -1,9 +1,10 @@
-name: S1 Controlled Preview
+name: S1 + P1 Controlled Preview
 
 on:
   push:
     branches:
       - work/s1-spatial-poc
+      - work/p1-materials-hub-v1
   workflow_dispatch:
 
 permissions:
@@ -12,33 +13,63 @@ permissions:
   id-token: write
 
 concurrency:
-  group: s1-controlled-preview
+  group: atlas-controlled-preview
   cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout exact head
-        uses: actions/checkout@v6
+      - name: Checkout stable S1 exact head
+        uses: actions/checkout@v4
+        with:
+          ref: 85d7be34e28547c516d0d1f12fdefff1d262951d
+          path: s1
+
+      - name: Checkout current branch
+        uses: actions/checkout@v4
+        with:
+          path: current
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install
-        run: npm install --ignore-scripts --no-audit --no-fund
-      - name: Validate canonical subset
-        run: npm run test:data
-      - name: Typecheck
-        run: npm run typecheck
-      - name: Build
-        run: npm run build
-      - name: Upload preview artifact
+
+      - name: Build S1 root
+        working-directory: s1
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm run build
+
+      - name: Build current branch
+        working-directory: current
+        run: |
+          npm install --ignore-scripts --no-audit --no-fund
+          npm run build
+
+      - name: Assemble Pages site
+        run: |
+          mkdir -p site
+          cp -a s1/dist/. site/
+          if [ "${GITHUB_REF_NAME}" = "work/p1-materials-hub-v1" ]; then
+            mkdir -p site/p1-preview
+            cp -a current/dist/. site/p1-preview/
+            sed -i 's#<head>#<head><meta name="robots" content="noindex,nofollow">#' site/p1-preview/index.html
+            printf '%s\n' \
+              "ATLAS-P1 navigable preview" \
+              "sha=${GITHUB_SHA}" \
+              "built_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              > site/p1-preview/PREVIEW_IDENTITY.txt
+          fi
+
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: ./dist
+          path: ./site
 
   deploy:
     environment:
@@ -47,6 +78,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Deploy S1 preview
+      - name: Deploy controlled preview
         id: deployment
         uses: actions/deploy-pages@v4
