@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       S1_EXACT_SHA: 85d7be34e28547c516d0d1f12fdefff1d262951d
-      P1_EXACT_SHA: fc509d3eba255432c2708256450c94c88e7eb6db
+      P1_EXACT_SHA: b5f781af0ed6ef7f9d581b878d76dc041b83c33a
     steps:
       - name: Checkout exact S1 candidate
         uses: actions/checkout@v4
@@ -74,7 +74,7 @@ jobs:
             cp -a p1/dist/. site/p1-preview/
             sed -i 's#<head>#<head><meta name="robots" content="noindex,nofollow">#' site/p1-preview/index.html
             printf '%s\n' \
-              "ATLAS-P1 navigable preview" \
+              "ATLAS-P1.1-S1 mobile navigation preview" \
               "p1_sha=${P1_EXACT_SHA}" \
               "s1_sha=${S1_EXACT_SHA}" \
               "launcher_sha=${GITHUB_SHA}" \
