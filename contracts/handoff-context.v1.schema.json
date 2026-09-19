@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://curriculum-atlas.local/contracts/handoff-context.v1.schema.json",
+  "title": "HandoffContext v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "sourceProduct",
+    "targetProduct",
+    "task",
+    "issuedAt"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "sourceProduct": {
+      "type": "string",
+      "enum": [
+        "CurManLight Arena",
+        "Curriculum Atlas",
+        "Docente OS"
+      ]
+    },
+    "targetProduct": {
+      "type": "string",
+      "enum": [
+        "CurManLight Arena",
+        "Curriculum Atlas",
+        "Docente OS"
+      ]
+    },
+    "task": {
+      "type": "string",
+      "enum": [
+        "EXPLORE",
+        "PREPARE_LESSON",
+        "PROPOSE_REVISION",
+        "RETURN_TO_LESSON"
+      ]
+    },
+    "issuedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "curriculumNodeId": {
+      "type": "string"
+    },
+    "curriculumSnapshotVersion": {
+      "type": "string"
+    },
+    "loId": {
+      "type": "string"
+    },
+    "loVersion": {
+      "type": "string"
+    },
+    "uda": {
+      "type": "string"
+    },
+    "planSegmentId": {
+      "type": "string"
+    },
+    "assetRole": {
+      "type": "string",
+      "enum": [
+        "LIM",
+        "MAP",
+        "STUDENT",
+        "TEACHER",
+        "ASSESSMENT"
+      ]
+    },
+    "originUrl": {
+      "type": "string",
+      "pattern": "^https://"
+    }
+  }
+}

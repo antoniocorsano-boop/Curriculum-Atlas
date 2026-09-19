@@ -1,0 +1,158 @@
+{
+  "meta": {
+    "slice": "ATLAS-P1-MATERIALS-HUB-V1",
+    "generatedAt": "2026-09-19",
+    "readOnly": true,
+    "personalData": false,
+    "sourceRegistry": "1JFmEyfFXXO8wIgnzPeiwH-ChZ63dgp94XrIOK20ic0c"
+  },
+  "learningObjects": [
+    {
+      "loId": "TEC-MAT-001",
+      "title": "Materiali: proprietà, scelta e impiego",
+      "discipline": "Tecnologia",
+      "grade": "Prima",
+      "version": "0.2",
+      "lifecycle": "GENERATED",
+      "durationMinutes": 60,
+      "activity": "Confrontare materiali per lo stesso oggetto e motivare una scelta tecnica.",
+      "evidence": "Tabella di confronto + breve motivazione tecnica.",
+      "styleProfile": "EDU-PRO-v0.2",
+      "manifestUrl": "https://docs.google.com/document/d/1EBpy6SkT7WvPI10Srk3nCw0CspMVF8a6srmvCbZjJtU/edit",
+      "sourceRefs": [
+        "BOZZA-CURR-TEC-01",
+        "ATLAS-04C"
+      ],
+      "patternApplication": {
+        "appId": "APP-TEC-MAT-001",
+        "primaryPatternId": "PAT-SYS-001",
+        "secondaryPatternIds": [
+          "PAT-DES-001"
+        ]
+      },
+      "assets": [
+        {
+          "artId": "ART-TEC-MAT-001-LIM-PPTX-V02",
+          "role": "LIM",
+          "label": "Visuale LIM",
+          "url": "https://docs.google.com/presentation/d/1TVGIm7-fOXfWBwqRCZakPV6ZOH-fR85D/edit",
+          "format": "PPTX",
+          "version": "0.2"
+        },
+        {
+          "artId": "ART-TEC-MAT-001-STU-DOCX-V02",
+          "role": "STUDENT",
+          "label": "Scheda studente",
+          "url": "https://docs.google.com/document/d/1f218a43DR-3mj6wwB384nrhO2gJlBQIh/edit",
+          "format": "DOCX",
+          "version": "0.2"
+        },
+        {
+          "artId": "ART-TEC-MAT-001-DOC-DOCX-V02",
+          "role": "TEACHER",
+          "label": "Guida docente",
+          "url": "https://docs.google.com/document/d/1OVwZ6dwsqM5Ax4OGP3NXHJ6xdkzvKz5q/edit",
+          "format": "DOCX",
+          "version": "0.2"
+        }
+      ]
+    },
+    {
+      "loId": "TEC-SYS-001",
+      "title": "Bisogni, risorse e sistemi",
+      "discipline": "Tecnologia",
+      "grade": "Prima",
+      "version": "0.2",
+      "lifecycle": "GENERATED",
+      "durationMinutes": 60,
+      "activity": "Analizzare un oggetto o servizio come sistema e proporre un miglioramento.",
+      "evidence": "Schema bisogno → risorse → processo → risultato → effetti + miglioramento.",
+      "styleProfile": "EDU-PRO-v0.2",
+      "manifestUrl": "https://docs.google.com/document/d/1QLCZqGtGcOgulBoEJGBWov8cyoaxECd6UCUJRG7pGJ0/edit",
+      "sourceRefs": [
+        "CAN-UDA-1-01",
+        "ATLAS-04C"
+      ],
+      "patternApplication": {
+        "appId": "APP-TEC-SYS-001",
+        "primaryPatternId": "PAT-SYS-001"
+      },
+      "assets": [
+        {
+          "artId": "ART-TEC-SYS-001-LIM-PPTX-V02",
+          "role": "LIM",
+          "label": "Visuale LIM",
+          "url": "https://docs.google.com/presentation/d/1V6K4DgX-7cDdb_6B-ZjSbOXlU6EEhZRv/edit",
+          "format": "PPTX",
+          "version": "0.2"
+        },
+        {
+          "artId": "ART-TEC-SYS-001-STU-DOCX-V02",
+          "role": "STUDENT",
+          "label": "Scheda studente",
+          "url": "https://docs.google.com/document/d/116YYkQfhvslQJKNuZVy9hGiMLYcN6xTE/edit",
+          "format": "DOCX",
+          "version": "0.2"
+        },
+        {
+          "artId": "ART-TEC-SYS-001-DOC-DOCX-V02",
+          "role": "TEACHER",
+          "label": "Guida docente",
+          "url": "https://docs.google.com/document/d/1UMnz_6szenpbOXjopaKQDuR5xiyzQl9A/edit",
+          "format": "DOCX",
+          "version": "0.2"
+        }
+      ]
+    },
+    {
+      "loId": "TEC-DES-001",
+      "title": "Micro-progetto: un piccolo oggetto utile e sostenibile",
+      "discipline": "Tecnologia",
+      "grade": "Prima",
+      "version": "0.2",
+      "lifecycle": "GENERATED",
+      "durationMinutes": 300,
+      "activity": "Progettare, prototipare, testare e migliorare un piccolo oggetto utile e sostenibile.",
+      "evidence": "Prototipo + scheda grafica + motivazione + prova + miglioramento.",
+      "styleProfile": "EDU-PRO-v0.2",
+      "manifestUrl": "https://docs.google.com/document/d/15bYW7UDGpFzOpjPNFwfpwkDyn27cLTqJK7Onu90FclA/edit",
+      "sourceRefs": [
+        "CAN-ORCH-1",
+        "ATLAS-04C"
+      ],
+      "patternApplication": {
+        "appId": "APP-TEC-DES-001",
+        "primaryPatternId": "PAT-DES-001",
+        "secondaryPatternIds": [
+          "PAT-PBL-001"
+        ]
+      },
+      "assets": [
+        {
+          "artId": "ART-TEC-DES-001-LIM-PPTX-V02",
+          "role": "LIM",
+          "label": "Visuale LIM",
+          "url": "https://docs.google.com/presentation/d/1vmR52TxLyiKln6U7kGnzF_GQgvN95yql/edit",
+          "format": "PPTX",
+          "version": "0.2"
+        },
+        {
+          "artId": "ART-TEC-DES-001-STU-DOCX-V02",
+          "role": "STUDENT",
+          "label": "Scheda studente",
+          "url": "https://docs.google.com/document/d/1LP3pa2-PnRxW6nGiyLrxhYmkWoBYwkO6/edit",
+          "format": "DOCX",
+          "version": "0.2"
+        },
+        {
+          "artId": "ART-TEC-DES-001-DOC-DOCX-V02",
+          "role": "TEACHER",
+          "label": "Guida docente",
+          "url": "https://docs.google.com/document/d/1g27K3xnguqijitrsVzgEKGKLrsnCebD8/edit",
+          "format": "DOCX",
+          "version": "0.2"
+        }
+      ]
+    }
+  ]
+}

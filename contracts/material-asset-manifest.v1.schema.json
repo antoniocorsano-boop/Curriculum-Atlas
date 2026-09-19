@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://curriculum-atlas.local/contracts/material-asset-manifest.v1.schema.json",
+  "title": "MaterialAssetManifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "artId",
+    "role",
+    "label",
+    "url",
+    "format",
+    "version"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "artId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "LIM",
+        "MAP",
+        "STUDENT",
+        "TEACHER",
+        "ASSESSMENT",
+        "RECEIPT"
+      ]
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1
+    },
+    "url": {
+      "type": "string",
+      "pattern": "^https://"
+    },
+    "format": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}
