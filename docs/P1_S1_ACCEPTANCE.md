@@ -99,3 +99,8 @@ Validated public fixture:
 - all pilot LO remain GENERATED.
 
 Performance finding resolved in-slice: the spatial engine is now lazy-loaded and does not inflate the initial public-shell bundle.
+
+
+## Navigable preview
+
+A composite GitHub Pages deploy preserves S1 at the repository root and publishes P1 under `/p1-preview/`. The P1 path carries `noindex,nofollow` and is for human validation only.
