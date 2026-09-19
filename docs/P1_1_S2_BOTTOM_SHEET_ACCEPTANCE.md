@@ -1,6 +1,6 @@
 # ATLAS-P1.1-S2 — Mobile Inspector → Bottom Sheet
 
-Status: IMPLEMENTED_PENDING_AUTOMATED_AND_HUMAN_VALIDATION  
+Status: HUMAN_ANDROID_PASS_PENDING_FINAL_EXACT_HEAD  
 Date: 2026-09-19  
 Parent: ATLAS-P1 #3  
 Quality authority: docs/product/ATLAS_P1_1_INTERACTION_VISUAL_QUALITY.md
@@ -39,25 +39,25 @@ Those remain P1.1-S3…S9.
 ## Gate
 
 ### Automated
-- [ ] P1.1-S2-GA1 — data validator PASS;
-- [ ] P1.1-S2-GA2 — TypeScript PASS;
-- [ ] P1.1-S2-GA3 — production build PASS.
+- [x] P1.1-S2-GA1 — data validator PASS on implementation head `b9f91a340ef63b78235f6f85e741a2d39543e3b0`;
+- [x] P1.1-S2-GA2 — TypeScript PASS;
+- [x] P1.1-S2-GA3 — production build PASS.
 
 ### Human Android
 - [x] P1.1-S2-GH1 — selecting a node opens a bottom sheet from the bottom, not a side drawer — PASS from Android screenshots;
 - [x] P1.1-S2-GH2 — compact state preserves visible Map context — PASS from Android screenshots;
 - [x] P1.1-S2-GH3 — Espandi reaches medium and full states — PASS: medium and full states evidenced;
 - [x] P1.1-S2-GH4 — Riduci returns to compact state — PASS from Android compact-state screenshots;
-- [ ] P1.1-S2-GH5 — vertical swipe/drag on the handle changes state;
+- [x] P1.1-S2-GH5 — vertical swipe/drag on the handle changes state — PASS from direct user test: `drag ok`;
 - [x] P1.1-S2-GH6 — sheet content scrolls internally — PASS from full-state screenshot with internal scrollbar;
 - [x] P1.1-S2-GH7 — Torna alla vista closes focus and returns to the Map — PASS from subsequent screenshots with no sheet.
 
 ### Regression
-- [ ] P1.1-S2-GR1 — desktop Inspector remains side drawer;
-- [ ] P1.1-S2-GR2 — node/segment content unchanged;
-- [ ] P1.1-S2-GR3 — provenance remains reachable;
-- [ ] P1.1-S2-GR4 — no curriculum/LO/data contract changes;
-- [ ] P1.1-S2-GR5 — P1.1-S1 mobile navigation remains unchanged.
+- [x] P1.1-S2-GR1 — desktop Inspector remains side drawer — mobile layout overrides are confined to `@media(max-width:760px)`;
+- [x] P1.1-S2-GR2 — node/segment content unchanged — presentation wrapper only;
+- [x] P1.1-S2-GR3 — provenance remains reachable — existing details blocks retained;
+- [x] P1.1-S2-GR4 — no curriculum/LO/data contract changes;
+- [x] P1.1-S2-GR5 — P1.1-S1 mobile navigation remains unchanged — no PublicHeader change.
 
 ## Human validation
 
@@ -120,3 +120,21 @@ Result now:
 - return-to-map PASS.
 
 Only the handle drag gesture remains unevidenced by still images.
+
+
+## Final human Android result
+
+Direct user confirmation received: **drag ok**.
+
+Together with the screenshot evidence, all P1.1-S2 human Android gates are now PASS:
+- compact;
+- medium;
+- full;
+- Riduci/Espandi;
+- handle drag;
+- internal scroll;
+- return to Map.
+
+Result: **HUMAN ANDROID PASS**.
+
+Closure remains conditional only on the final exact-head automated gate after this receipt update.
