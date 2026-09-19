@@ -104,3 +104,29 @@ Performance finding resolved in-slice: the spatial engine is now lazy-loaded and
 ## Navigable preview
 
 A composite GitHub Pages deploy preserves S1 at the repository root and publishes P1 under `/p1-preview/`. The P1 path carries `noindex,nofollow` and is for human validation only.
+
+
+## Human Android review — 2026-09-19
+
+Evidence: screenshots from the navigable P1 preview on Android.
+
+Result: **PARTIAL / NOT ACCEPTED AS PRODUCT-QUALITY PASS**.
+
+Observed findings:
+- primary navigation can overflow horizontally;
+- Map exposes too many persistent control layers;
+- mobile Inspector behaves like a desktop side drawer squeezed into the viewport;
+- dark-surface contrast and typographic hierarchy are insufficient in detail panels;
+- graph lacks semantic zoom;
+- technical provenance appears too early for the teacher task.
+
+Interpretation:
+the P1 implementation remains technically valid, but these findings block a human UX PASS for mobile/product-quality readiness.
+
+Next authority:
+`docs/product/ATLAS_P1_1_INTERACTION_VISUAL_QUALITY.md`
+
+Canonical full analysis:
+https://docs.google.com/document/d/1l2rNiHpjW_I3ocA0TpE6pN2eUt2CDpQlgzCf7-fn7ZI/edit
+
+Do not merge or promote the current slice as a mature public product on the basis of automated PASS alone.
