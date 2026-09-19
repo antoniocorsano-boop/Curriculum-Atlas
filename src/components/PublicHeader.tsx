@@ -1,17 +1,32 @@
 import { useAtlasStore } from '../store/useAtlasStore'
 import type { AtlasSection } from '../types'
 
-const items: Array<[AtlasSection, string]> = [
+const primaryItems: Array<[AtlasSection, string]> = [
   ['curriculum', 'Curricolo'],
   ['paths', 'Percorsi'],
   ['materials', 'Materiali'],
   ['map', 'Mappa'],
+]
+
+const desktopItems: Array<[AtlasSection, string]> = [
+  ...primaryItems,
   ['sources', 'Fonti'],
 ]
 
 export function PublicHeader() {
   const section = useAtlasStore((state) => state.section)
   const setSection = useAtlasStore((state) => state.setSection)
+
+  const renderItem = ([id, label]: [AtlasSection, string]) => (
+    <button
+      key={id}
+      className={section === id ? 'active' : ''}
+      onClick={() => setSection(id)}
+      aria-current={section === id ? 'page' : undefined}
+    >
+      {label}
+    </button>
+  )
 
   return (
     <header className="public-header">
@@ -23,17 +38,21 @@ export function PublicHeader() {
         </span>
       </button>
 
-      <nav className="public-nav" aria-label="Navigazione principale">
-        {items.map(([id, label]) => (
-          <button
-            key={id}
-            className={section === id ? 'active' : ''}
-            onClick={() => setSection(id)}
-            aria-current={section === id ? 'page' : undefined}
-          >
-            {label}
-          </button>
-        ))}
+      <nav className="public-nav desktop-nav" aria-label="Navigazione principale">
+        {desktopItems.map(renderItem)}
+      </nav>
+
+      <button
+        className={'mobile-sources' + (section === 'sources' ? ' active' : '')}
+        onClick={() => setSection('sources')}
+        aria-current={section === 'sources' ? 'page' : undefined}
+        aria-label="Apri Fonti e provenienza"
+      >
+        Fonti
+      </button>
+
+      <nav className="public-nav mobile-nav" aria-label="Navigazione principale mobile">
+        {primaryItems.map(renderItem)}
       </nav>
     </header>
   )
