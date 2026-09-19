@@ -46,10 +46,10 @@ export function Controls() {
     <header className="controls">
       <div className="brand">
         <span className="brand-dot" />
-        <div><strong>Curriculum Atlas</strong><small>Spatial POC · S1</small></div>
+        <div><strong>Mappa Atlas</strong><small>motore spaziale S1 · read-only</small></div>
       </div>
 
-      <nav aria-label="Viste dell'atlante">
+      <nav aria-label="Viste della mappa">
         {views.map(([id, label]) => (
           <button
             key={id}
@@ -62,7 +62,7 @@ export function Controls() {
       </nav>
 
       <div className="search-wrap">
-        <label className="sr-only" htmlFor="atlas-search">Cerca nel curriculum</label>
+        <label className="sr-only" htmlFor="atlas-search">Cerca nella mappa del curricolo</label>
         <input
           id="atlas-search"
           value={query}
