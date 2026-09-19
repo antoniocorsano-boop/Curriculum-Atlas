@@ -60,9 +60,9 @@ Rendered opacity/compositing, focus states, real devices and projection still re
 ## Gate
 
 ### Automated
-- [ ] P1.1-S3-GA1 — data validator PASS;
-- [ ] P1.1-S3-GA2 — TypeScript PASS;
-- [ ] P1.1-S3-GA3 — production build PASS.
+- [x] P1.1-S3-GA1 — data validator PASS on `a0d8723d4d503713d37bc2228365c03adde8b17d`;
+- [x] P1.1-S3-GA2 — TypeScript PASS;
+- [x] P1.1-S3-GA3 — production build PASS.
 
 ### Visual Android
 - [ ] P1.1-S3-GH1 — Map brand title is clearly readable;
@@ -104,3 +104,8 @@ S3 closes only after:
 - regression review PASS.
 
 Passing S3 does not validate progressive disclosure or later P1.1 slices.
+
+
+## Automated receipt
+
+GitHub Actions `Curriculum Atlas Quality Gate` run `35459613827`: PASS on exact head `a0d8723d4d503713d37bc2228365c03adde8b17d`.
