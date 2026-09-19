@@ -59,9 +59,9 @@ This is a technical/public-bundle boundary, not a generic legal-compliance claim
 
 ## Acceptance gates
 
-- [ ] P1-S1-G1 — data validator PASS;
-- [ ] P1-S1-G2 — TypeScript PASS;
-- [ ] P1-S1-G3 — production build PASS;
+- [x] P1-S1-G1 — data validator PASS on exact head `07aa48e3f331804e7c1feef7a304e4acc3ec9d35`;
+- [x] P1-S1-G2 — TypeScript PASS on exact head;
+- [x] P1-S1-G3 — production build PASS; initial shell code-split to ~224 kB, Spatial engine lazy chunk ~951 kB;
 - [ ] P1-S1-G4 — home/materials responsive on Android;
 - [ ] P1-S1-G5 — desktop/LIM review;
 - [ ] P1-S1-G6 — keyboard/focus review;
@@ -86,3 +86,16 @@ This is a technical/public-bundle boundary, not a generic legal-compliance claim
 This branch is intentionally stacked on `work/s1-spatial-poc` so P1 can mature without forcing the S1 PR merge.
 
 After S1 disposition, P1 can be rebased/retargeted without changing the product contract.
+
+## Automated receipt
+
+GitHub Actions `Curriculum Atlas Quality Gate` run #48 PASS on exact head `07aa48e3f331804e7c1feef7a304e4acc3ec9d35`.
+
+Validated public fixture:
+- 3 Learning Objects;
+- 9 material assets;
+- readOnly = true;
+- personalData = false;
+- all pilot LO remain GENERATED.
+
+Performance finding resolved in-slice: the spatial engine is now lazy-loaded and does not inflate the initial public-shell bundle.
