@@ -1,5 +1,6 @@
 export type AtlasView = 'universe' | 'galaxy' | 'verticale' | 'timeline' | 'focus'
 export type StatusFilter = 'all' | 'accepted' | 'review'
+export type AtlasSection = 'home' | 'curriculum' | 'paths' | 'materials' | 'map' | 'sources'
 export type Vec3 = [number, number, number]
 
 export interface CurriculumNode {
@@ -43,4 +44,48 @@ export interface AtlasFixture {
   nodes: CurriculumNode[]
   segments: PlanSegment[]
   links: AtlasLink[]
+}
+
+export type LearningObjectLifecycle = 'DRAFT' | 'GENERATED' | 'REVIEWED' | 'CANONICAL' | 'RETIRED'
+export type MaterialRole = 'LIM' | 'MAP' | 'STUDENT' | 'TEACHER' | 'ASSESSMENT' | 'RECEIPT'
+
+export interface MaterialAssetRef {
+  artId: string
+  role: MaterialRole
+  label: string
+  url: string
+  format: string
+  version: string
+}
+
+export interface LearningObjectRef {
+  loId: string
+  title: string
+  discipline: string
+  grade: 'Prima' | 'Seconda' | 'Terza'
+  version: string
+  lifecycle: LearningObjectLifecycle
+  durationMinutes?: number
+  activity?: string
+  evidence?: string
+  styleProfile?: string
+  manifestUrl: string
+  sourceRefs: string[]
+  patternApplication?: {
+    appId: string
+    primaryPatternId: string
+    secondaryPatternIds?: string[]
+  }
+  assets: MaterialAssetRef[]
+}
+
+export interface P1Fixture {
+  meta: {
+    slice: string
+    generatedAt: string
+    readOnly: boolean
+    personalData: boolean
+    sourceRegistry: string
+  }
+  learningObjects: LearningObjectRef[]
 }
