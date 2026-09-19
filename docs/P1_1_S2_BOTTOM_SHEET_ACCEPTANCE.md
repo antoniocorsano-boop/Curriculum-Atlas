@@ -45,12 +45,12 @@ Those remain P1.1-S3…S9.
 
 ### Human Android
 - [x] P1.1-S2-GH1 — selecting a node opens a bottom sheet from the bottom, not a side drawer — PASS from Android screenshots;
-- [ ] P1.1-S2-GH2 — compact state preserves visible Map context;
+- [x] P1.1-S2-GH2 — compact state preserves visible Map context — PASS from Android screenshots;
 - [x] P1.1-S2-GH3 — Espandi reaches medium and full states — PASS: medium and full states evidenced;
-- [ ] P1.1-S2-GH4 — Riduci returns to compact state — partial: reduction control visible, compact state not yet evidenced;
+- [x] P1.1-S2-GH4 — Riduci returns to compact state — PASS from Android compact-state screenshots;
 - [ ] P1.1-S2-GH5 — vertical swipe/drag on the handle changes state;
 - [x] P1.1-S2-GH6 — sheet content scrolls internally — PASS from full-state screenshot with internal scrollbar;
-- [ ] P1.1-S2-GH7 — Torna alla vista closes focus and returns to the Map.
+- [x] P1.1-S2-GH7 — Torna alla vista closes focus and returns to the Map — PASS from subsequent screenshots with no sheet.
 
 ### Regression
 - [ ] P1.1-S2-GR1 — desktop Inspector remains side drawer;
@@ -103,3 +103,20 @@ Still not evidenced:
 Result: **HUMAN ANDROID PARTIAL PASS**.
 
 No dimension change is justified from these screenshots alone.
+
+
+## Human Android evidence — compact + return
+
+Additional screenshots received:
+- compact/peek state is clearly shown with Map context preserved above the sheet;
+- Riduci is disabled in compact state and Espandi remains available;
+- subsequent screenshots show the Map with no Inspector, confirming Torna alla vista.
+
+Result now:
+- compact PASS;
+- medium PASS;
+- full PASS;
+- internal scroll PASS;
+- return-to-map PASS.
+
+Only the handle drag gesture remains unevidenced by still images.
