@@ -38,9 +38,9 @@ Those remain P1.1-S2…S9.
 ## Gate
 
 ### Automated
-- [ ] P1.1-S1-GA1 — data validator PASS;
-- [ ] P1.1-S1-GA2 — TypeScript PASS;
-- [ ] P1.1-S1-GA3 — production build PASS.
+- [x] P1.1-S1-GA1 — data validator PASS on `73357d976390314792beeae64c2ef1019b06b8e1`;
+- [x] P1.1-S1-GA2 — TypeScript PASS;
+- [x] P1.1-S1-GA3 — production build PASS.
 
 ### Human mobile
 - [ ] P1.1-S1-GH1 — no horizontal primary-nav overflow at Android viewport;
@@ -77,3 +77,8 @@ Report:
 Only a human PASS on mobile navigation may close P1.1-S1.
 
 Passing this slice does not validate P1.1-S2+ and does not promote P1 or any Learning Object lifecycle.
+
+
+## Automated receipt
+
+GitHub Actions `Curriculum Atlas Quality Gate` run `35443313659`: PASS on implementation head `73357d976390314792beeae64c2ef1019b06b8e1`.
