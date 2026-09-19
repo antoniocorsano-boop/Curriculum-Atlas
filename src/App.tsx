@@ -1,16 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo } from 'react'
 import fixtureJson from './data/s1-fixture.json'
 import p1Json from './data/p1-learning-objects.json'
-import { AccessibleMirror } from './components/AccessibleMirror'
-import { AtlasScene } from './components/AtlasScene'
-import { Controls } from './components/Controls'
-import { Inspector } from './components/Inspector'
 import { MaterialsHub } from './components/MaterialsHub'
 import { PublicHeader } from './components/PublicHeader'
 import { useAtlasStore } from './store/useAtlasStore'
 import type { AtlasFixture, P1Fixture } from './types'
 import './styles.css'
 
+const MapExperience = lazy(() => import('./components/MapExperience'))
 const fixture = fixtureJson as unknown as AtlasFixture
 const p1 = p1Json as unknown as P1Fixture
 
@@ -18,16 +15,6 @@ export default function App() {
   const section = useAtlasStore((state) => state.section)
   const setSection = useAtlasStore((state) => state.setSection)
   const select = useAtlasStore((state) => state.select)
-  const [reducedMotion, setReducedMotion] = useState(false)
-  const [showMirror, setShowMirror] = useState(false)
-
-  useEffect(() => {
-    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const sync = () => setReducedMotion(media.matches)
-    sync()
-    media.addEventListener('change', sync)
-    return () => media.removeEventListener('change', sync)
-  }, [])
 
   const themes = useMemo(() => {
     const map = new Map<string, typeof fixture.nodes>()
@@ -185,25 +172,9 @@ export default function App() {
       )}
 
       {section === 'map' && (
-        <main className="map-experience" aria-label="Mappa intelligente del Curriculum Atlas">
-          <Controls />
-          <div className="scene-shell"><AtlasScene reducedMotion={reducedMotion} /></div>
-          <div className="legend" aria-hidden="true">
-            <span><i className="dot accepted" /> fonte pilot</span>
-            <span><i className="dot review" /> da rivedere</span>
-            <span><i className="bar ready" /> proposta review-ready</span>
-            <span><i className="bar blocked" /> raccordo bloccato</span>
-          </div>
-          <div className="helper">
-            <strong>Una vista avanzata, non l'unica via.</strong>
-            <span>Trascina · zoom · seleziona. Tutti i dati restano accessibili anche in HTML.</span>
-          </div>
-          <button className="mirror-toggle" onClick={() => setShowMirror((v) => !v)} aria-expanded={showMirror}>
-            {showMirror ? 'Chiudi elenco accessibile' : 'Esplora come elenco'}
-          </button>
-          {showMirror && <AccessibleMirror />}
-          <Inspector />
-        </main>
+        <Suspense fallback={<main className="page-section"><p>Caricamento della mappa intelligente…</p></main>}>
+          <MapExperience />
+        </Suspense>
       )}
     </div>
   )
