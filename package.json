@@ -1,9 +1,11 @@
 {
-  "name": "curriculum-atlas-spatial-poc",
+  "name": "curriculum-atlas",
   "private": true,
-  "version": "0.1.0-s1",
+  "version": "0.2.0-p1",
   "type": "module",
-  "engines": {"node": ">=22"},
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "vite",
     "test:data": "node scripts/validate-data.mjs",
