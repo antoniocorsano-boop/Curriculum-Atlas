@@ -1,0 +1,54 @@
+name: ATLAS-P1 Controlled Preview Artifact
+
+on:
+  push:
+    branches:
+      - work/p1-materials-hub-v1
+  pull_request:
+    branches:
+      - work/s1-spatial-poc
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact head
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install
+        run: npm install --ignore-scripts --no-audit --no-fund
+
+      - name: Validate public data
+        run: npm run test:data
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build P1 preview
+        run: npm run build
+
+      - name: Write preview identity
+        run: |
+          printf '%s\n' \
+            "ATLAS-P1 controlled preview" \
+            "sha=${GITHUB_SHA}" \
+            "ref=${GITHUB_REF}" \
+            "built_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            > dist/PREVIEW_IDENTITY.txt
+
+      - name: Upload P1 preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-p1-preview-${{ github.sha }}
+          path: dist
+          if-no-files-found: error
+          retention-days: 14
