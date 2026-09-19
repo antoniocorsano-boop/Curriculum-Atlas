@@ -1,4 +1,4 @@
-name: S1 Quality Gate
+name: Curriculum Atlas Quality Gate
 
 on:
   push:
