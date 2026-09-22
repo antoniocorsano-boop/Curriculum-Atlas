@@ -30,4 +30,6 @@ jobs:
         env:
           TRAMA_PW_BASE_SHA: ${{ github.event.pull_request.base.sha || inputs.base_sha }}
           TRAMA_PW_HEAD_SHA: ${{ github.event.pull_request.head.sha || inputs.head_sha }}
-        run: node tools/trama-perceptible-write/validate.mjs
+        run: |
+          node --test tools/trama-perceptible-write/lib.test.mjs
+          node tools/trama-perceptible-write/validate.mjs
