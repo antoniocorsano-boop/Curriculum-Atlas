@@ -22,14 +22,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || inputs.head_sha }}
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Self-test TRAMA-PW-01 classifier
+        run: node --test tools/trama-perceptible-write/lib.test.mjs
       - name: Enforce TRAMA-PW-01
         env:
           TRAMA_PW_BASE_SHA: ${{ github.event.pull_request.base.sha || inputs.base_sha }}
           TRAMA_PW_HEAD_SHA: ${{ github.event.pull_request.head.sha || inputs.head_sha }}
-        run: |
-          node --test tools/trama-perceptible-write/lib.test.mjs
-          node tools/trama-perceptible-write/validate.mjs
+        run: node tools/trama-perceptible-write/validate.mjs
