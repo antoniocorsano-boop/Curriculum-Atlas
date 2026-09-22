@@ -15,7 +15,7 @@ const head = process.env.TRAMA_PW_HEAD_SHA
 if (!base || !head || /^0+$/.test(base)) { console.log('TRAMA-PW-01 PASS: preventive contract active'); process.exit(0) }
 
 const changed = execFileSync('git',['diff','--name-only',base + '...' + head],{encoding:'utf8'}).trim().split('\n').filter(Boolean)
-const source = changed.filter((p)=>/\.(tsx?|jsx?|mjs|cjs)$/.test(p) && fs.existsSync(p)).map((path)=>({path,text:fs.readFileSync(path,'utf8')}))
+const source = changed.filter((p)=>!p.startsWith('tools/trama-perceptible-write/') && /\.(tsx?|jsx?|mjs|cjs)$/.test(p) && fs.existsSync(p)).map((path)=>({path,text:fs.readFileSync(path,'utf8')}))
 const mutationPattern = /(onSubmit\s*=|<form|\.insert\s*\(|\.update\s*\(|\.delete\s*\(|\.upsert\s*\(|localStorage\.setItem|indexedDB|\b(save|publish|approve|confirm|remove|delete|accept|dismiss|withdraw)[A-Z_a-z0-9]*\s*\()/i
 const mutationFiles = source.filter((f)=>mutationPattern.test(f.text))
 if (!mutationFiles.length) { console.log('TRAMA-PW-01 PASS: no changed mutation candidate'); process.exit(0) }
