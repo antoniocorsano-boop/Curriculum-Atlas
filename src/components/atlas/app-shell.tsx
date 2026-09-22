@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   BookOpen,
   Boxes,
@@ -6,7 +9,6 @@ import {
   GitBranch,
   Home,
   Library,
-  Menu,
   Search,
   Settings,
   Target,
@@ -25,6 +27,9 @@ const items = [
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isActive = (href: string) => href === "/" ? pathname === "/" : pathname.startsWith(href);
+
   return (
     <div className="atlas-shell">
       <aside className="atlas-sidebar" aria-label="Navigazione Atlas">
@@ -34,7 +39,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </Link>
         <nav className="atlas-nav">
           {items.map(({ href, label, icon: Icon }) => (
-            <Link key={href} href={href} data-active={href === "/" ? "true" : "false"}>
+            <Link key={href} href={href} data-active={isActive(href) ? "true" : "false"}>
               <Icon size={17} aria-hidden="true" />
               <span>{label}</span>
             </Link>
@@ -69,7 +74,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <nav className="atlas-mobile-nav" aria-label="Navigazione mobile">
         {items.slice(0, 5).map(({ href, label, icon: Icon }) => (
-          <Link key={href} href={href} data-active={href === "/" ? "true" : "false"}>
+          <Link key={href} href={href} data-active={isActive(href) ? "true" : "false"}>
             <Icon size={19} aria-hidden="true" />
             <span>{label}</span>
           </Link>
