@@ -1,0 +1,48 @@
+name: MAT-PUB-B Image Normalization
+
+on:
+  pull_request:
+    paths:
+      - "scripts/normalize-image.mjs"
+      - "package.json"
+      - ".github/workflows/mat-pub-b.yml"
+      - "docs/S3-V2-F3-MATERIALI-RISORSE.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Sharp version
+        run: node -e "const s=require('sharp'); console.log('sharp', s.versions.sharp)"
+
+      - name: Run image normalization self-test
+        run: pnpm normalize:image:selftest
+
+      - name: Contract checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'metadataStripped: true' scripts/normalize-image.mjs
+          grep -q 'sha256:' scripts/normalize-image.mjs
+          grep -q 'toColorspace("srgb")' scripts/normalize-image.mjs
+          grep -q '.webp({' scripts/normalize-image.mjs
+          grep -q 'limitInputPixels' scripts/normalize-image.mjs
