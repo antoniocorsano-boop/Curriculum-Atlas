@@ -16,17 +16,17 @@ export default function HomePage() {
         <div>
           <span className="atlas-eyebrow">Atlas · TRAMA</span>
           <h1>Il curricolo, connesso.</h1>
-          <p>Esplora relazioni, progressioni e risorse senza perdere la provenienza curricolare.</p>
+          <p>Una mappa leggibile di curricolo, relazioni e risorse.</p>
         </div>
       </header>
 
       <div className="atlas-home-grid">
         <section className="atlas-hero">
           <span className="atlas-eyebrow">Esplora. Comprendi. Costruisci.</span>
-          <h2>Conoscenza che connette nuovi orizzonti.</h2>
+          <h2>Esplora connessioni, progressioni e risorse.</h2>
           <p>
-            Atlas rende visibili le relazioni tra annualità, nuclei, obiettivi, prerequisiti,
-            raccordi e risorse. Arena resta la fonte curricolare; Atlas organizza l&apos;esplorazione.
+            Atlas rende visibili le relazioni tra annualità, nuclei, obiettivi, prerequisiti e raccordi.
+            Arena resta la fonte curricolare; Atlas organizza l&apos;esplorazione e collega le risorse.
           </p>
 
           <div className="atlas-feature-grid">
