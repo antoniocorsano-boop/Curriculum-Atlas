@@ -37,14 +37,17 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Install static server
+        run: pnpm add --global serve
+
       - name: Start app
         shell: bash
         run: |
           set -euo pipefail
-          pnpm start > /tmp/atlas-f1.log 2>&1 &
+          pnpm exec serve out -l 4173 > /tmp/atlas-f1.log 2>&1 &
           echo $! > /tmp/atlas-f1.pid
           for i in {1..60}; do
-            if curl -fsS http://127.0.0.1:3000/curricolo >/dev/null; then
+            if curl -fsS http://127.0.0.1:4173/curricolo/ >/dev/null; then
               exit 0
             fi
             sleep 1
