@@ -20,11 +20,11 @@ export default function CurriculumPage() {
         <div className="atlas-curriculum-rail">
           <ProvenancePanel label="Fixture di istituto per S3-V2/F1 · fonte reale non ancora collegata" version="fixture S3-V2/F1" />
           <section className="atlas-panel atlas-progression-panel">
-            <h3>Progressione</h3>
+            <h3>Ordini di scuola</h3>
             <ol>
-              <li><strong>Prima</strong><span>osservare e riconoscere</span></li>
-              <li><strong>Seconda</strong><span>analizzare sistemi e processi</span></li>
-              <li><strong>Terza</strong><span>valutare e progettare</span></li>
+              <li><strong>Infanzia</strong><span>campi di esperienza</span></li>
+              <li><strong>Primaria</strong><span>sviluppo dei fondamenti disciplinari</span></li>
+              <li><strong>Secondaria I</strong><span>discipline, raccordi e progressione</span></li>
             </ol>
           </section>
         </div>
