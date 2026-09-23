@@ -139,6 +139,7 @@ export function RelationExplorer() {
         return disciplineId === "tutte" || node.disciplineId === disciplineId;
       }
       if (node.kind === "stage") {
+        if (depth !== "detail") return false;
         const disciplineMatches = disciplineId === "tutte" || node.disciplineId === disciplineId;
         const stageMatches = stage === "Tutti" || node.stage === stage;
         return disciplineMatches && stageMatches;
