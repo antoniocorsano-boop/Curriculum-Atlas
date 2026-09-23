@@ -736,3 +736,125 @@ button, input { font: inherit; }
   .atlas-explore-context{padding:15px}
   .atlas-equivalent-outline{padding:14px}
 }
+
+
+/* S3-V2/F3 · Materiali + Risorse */
+.atlas-domain-note{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:4px 16px;
+  align-items:center;
+  padding:14px 16px;
+  border:1px solid #c9ddd9;
+  border-radius:12px;
+  background:#f2faf8;
+  color:var(--text-secondary)
+}
+.atlas-domain-note strong{color:var(--text-primary);font-size:14px}
+.atlas-domain-note span{font-size:13px}
+.atlas-domain-note a{
+  grid-column:2;
+  grid-row:1 / span 2;
+  display:inline-flex;
+  align-items:center;
+  min-height:38px;
+  padding:0 11px;
+  border-radius:8px;
+  background:white;
+  border:1px solid #b9d7d2;
+  color:var(--domain-atlas);
+  font-size:12px;
+  font-weight:800
+}
+.atlas-material-item{grid-template-columns:38px minmax(0,1fr)}
+.atlas-material-item>span:last-child{min-width:0}
+.atlas-material-origin{display:block;width:auto;max-width:100%;overflow-wrap:anywhere;color:var(--action-primary);font-size:12px;font-weight:700}
+.atlas-material-origin:hover{text-decoration:underline}
+.atlas-material-origin-neutral{color:var(--text-muted)}
+
+.atlas-resource-catalog{display:grid;gap:18px}
+.atlas-resource-toolbar{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,240px));
+  gap:12px;
+  padding:16px;
+  border:1px solid var(--border-subtle);
+  border-radius:14px;
+  background:var(--surface-raised);
+  box-shadow:var(--shadow-soft)
+}
+.atlas-resource-toolbar label{display:grid;gap:6px}
+.atlas-resource-toolbar label>span{
+  color:var(--text-secondary);
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.045em;
+  text-transform:uppercase
+}
+.atlas-resource-toolbar select{
+  min-height:44px;
+  width:100%;
+  padding:0 12px;
+  border:1px solid var(--border-strong);
+  border-radius:9px;
+  background:white;
+  color:var(--text-primary)
+}
+.atlas-resource-toolbar select:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+.atlas-resource-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.atlas-resource-card{
+  scroll-margin-top:90px;
+  display:grid;
+  gap:14px;
+  padding:18px;
+  border:1px solid var(--border-subtle);
+  border-radius:14px;
+  background:var(--surface-raised);
+  box-shadow:var(--shadow-soft)
+}
+.atlas-resource-card:target{outline:3px solid color-mix(in srgb,var(--focus-ring) 28%,transparent);border-color:var(--focus-ring)}
+.atlas-resource-card header{display:grid;grid-template-columns:42px 1fr;gap:11px;align-items:start}
+.atlas-resource-card h2{margin:3px 0 0;font-size:19px;letter-spacing:-.015em}
+.atlas-resource-card p{margin:0;color:var(--text-secondary);line-height:1.55}
+.atlas-resource-icon{
+  display:grid;
+  place-items:center;
+  width:40px;
+  height:40px;
+  border-radius:10px;
+  background:color-mix(in srgb,var(--domain-atlas) 10%,white);
+  color:var(--domain-atlas)
+}
+.atlas-resource-kicker{color:var(--domain-atlas);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.045em}
+.atlas-resource-metadata{display:flex;flex-wrap:wrap;gap:6px}
+.atlas-resource-metadata span{
+  padding:5px 8px;
+  border-radius:999px;
+  background:var(--surface-subtle);
+  color:var(--text-secondary);
+  font-size:11px
+}
+.atlas-resource-status-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 14px;
+  padding-top:12px;
+  border-top:1px solid var(--border-subtle);
+  color:var(--text-secondary);
+  font-size:12px
+}
+.atlas-resource-status-row span{display:inline-flex;align-items:center;gap:5px}
+.atlas-resource-status-row .is-ok{color:var(--ui-success)}
+.atlas-resource-status-row .is-warning{color:var(--ui-warning)}
+.atlas-resource-card footer{display:grid;gap:8px}
+.atlas-resource-card footer strong{font-size:12px}
+
+@media(max-width:980px){
+  .atlas-resource-grid{grid-template-columns:1fr}
+}
+@media(max-width:720px),(hover:none) and (pointer:coarse){
+  .atlas-domain-note{grid-template-columns:1fr;padding:13px 14px}
+  .atlas-domain-note a{grid-column:1;grid-row:auto;width:max-content;margin-top:6px}
+  .atlas-resource-toolbar{grid-template-columns:1fr;padding:14px}
+  .atlas-resource-card{padding:14px}
+}

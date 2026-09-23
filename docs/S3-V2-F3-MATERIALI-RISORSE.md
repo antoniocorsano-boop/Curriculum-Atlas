@@ -168,3 +168,49 @@ Contratto corrente:
 Dipendenza: `sharp@^0.35.4`.
 
 MAT-PUB-B non effettua commit, deploy o pubblicazione e non modifica il controllo editoriale. Il passo successivo resta MAT-PUB-C — Repository publisher.
+
+
+## F3-E — Modello pubblico Risorse / Materiali
+
+La superficie pubblica distingue due oggetti che non devono essere confusi:
+
+- **Risorsa Atlas**: oggetto editoriale riusabile, catalogabile e collegabile al curricolo;
+- **Materiale pubblicato**: elemento effettivamente reso disponibile nel contesto di una specifica lezione.
+
+Una Risorsa Atlas non diventa materiale per il solo fatto di esistere nel catalogo. Il legame nasce solo quando la risorsa viene pubblicata nel contesto classe + disciplina + lezione. Restano inoltre ammessi materiali pubblicati direttamente per una lezione senza inventare una Risorsa Atlas corrispondente.
+
+### Superficie `/risorse`
+
+Espone il catalogo editoriale con filtri per disciplina e tipologia, metadati di accessibilità e diritti, ordine di scuola, periodo di aggiornamento, collegamenti curricolari e numero di lezioni pubbliche che riusano la risorsa.
+
+### Superficie `/materiali`
+
+Conserva il percorso pubblico:
+
+`classe → disciplina → lezione → materiali pubblicati`
+
+Ogni materiale può dichiarare l'origine da una Risorsa Atlas, un URL pubblico reale dell'asset quando disponibile, oppure la pubblicazione diretta per la lezione.
+
+Il substrato MAT-PUB e il modello prodotto F3 sono complementari: MAT-PUB governa validazione, normalizzazione e pubblicazione tecnica degli asset; F3 governa la presentazione pubblica e la distinzione semantica tra catalogo e materiale di lezione.
+
+### Autorità e confini
+
+- Arena resta l'autorità curricolare;
+- Atlas non introduce una seconda autorità sugli obiettivi;
+- Docente OS resta il luogo di preparazione, contesto e decisione docente;
+- nessuna sincronizzazione live Arena → Atlas è attivata da F3;
+- nessuna pubblicazione runtime Docente OS → Atlas è attivata da F3;
+- nessuna adozione o approvazione automatica;
+- nessun account, profilo o tracking studente.
+
+### Criteri di accettazione F3-E
+
+- differenza Risorsa / Materiale comprensibile direttamente nella UI;
+- `/risorse` navigabile e filtrabile;
+- `/materiali` organizzato per classe, disciplina e lezione;
+- materiali reali MAT-PUB ancora apribili;
+- origine Atlas tracciabile quando presente;
+- materiali diretti rappresentabili senza risorsa fittizia;
+- metadati accessibilità e diritti visibili;
+- nessun overflow orizzontale su mobile e desktop;
+- build, typecheck, lint, gate TRAMA e gate visuale F3 PASS.
