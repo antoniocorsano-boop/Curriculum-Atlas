@@ -82,6 +82,7 @@ export function ResourceCatalog() {
                 <span>Aggiornata: {resource.updatedLabel}</span>
               </div>
               <div className="atlas-resource-status-row">
+                <span className="is-ok"><CheckCircle2 size={15} aria-hidden={true} />Stato editoriale: {resource.editorialStatus}</span>
                 <span className={resource.accessibilityStatus === "Verificata" ? "is-ok" : "is-warning"}>
                   {resource.accessibilityStatus === "Verificata"
                     ? <CheckCircle2 size={15} aria-hidden={true} />
