@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const isGitHubPages = process.env.GITHUB_ACTIONS === "true";
+const isGitHubPages = process.env.ATLAS_GITHUB_PAGES === "true";
 const repositoryName = "Curriculum-Atlas";
 
 const nextConfig: NextConfig = {
