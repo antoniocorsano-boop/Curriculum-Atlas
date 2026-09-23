@@ -2,7 +2,17 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { AppShell } from "@/components/atlas/app-shell";
 import { ProvenancePanel } from "@/components/atlas/provenance-panel";
-import { findObjective } from "@/features/curriculum/fixtures";
+import { findObjective, instituteCurriculumFixture } from "@/features/curriculum/fixtures";
+
+export function generateStaticParams() {
+  return instituteCurriculumFixture.disciplines.flatMap(discipline =>
+    discipline.bands.flatMap(band =>
+      band.topics.flatMap(topic =>
+        topic.objectives.map(objective => ({ id: objective.id }))
+      )
+    )
+  );
+}
 
 export default async function ObjectivePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
