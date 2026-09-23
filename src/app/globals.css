@@ -370,3 +370,82 @@ button, input { font: inherit; }
 .atlas-chip-row{display:flex;flex-wrap:wrap;gap:8px}.atlas-chip{display:inline-flex;align-items:center;min-height:30px;padding:4px 10px;border-radius:999px;background:var(--surface-subtle);color:var(--text-secondary);font-size:12px;font-weight:650}
 @media(max-width:980px){.atlas-curriculum-layout,.atlas-objective-layout{grid-template-columns:1fr}.atlas-curriculum-rail{position:static;grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:720px),(hover:none) and (pointer:coarse){.atlas-curriculum-rail{grid-template-columns:1fr}.atlas-objective-row{grid-template-columns:52px 1fr auto;min-height:52px}.atlas-objective-layout,.atlas-curriculum-layout{gap:12px}}
+
+
+/* Institute curriculum hierarchy */
+.atlas-department{display:grid;gap:12px}
+.atlas-department+ .atlas-department{padding-top:20px;border-top:1px solid var(--border-subtle)}
+.atlas-department>h2{margin:0;font-size:18px;letter-spacing:-.01em}
+.atlas-discipline-block{display:grid;gap:10px}
+.atlas-discipline-block>h3{margin:0;color:var(--text-secondary);font-size:14px;text-transform:uppercase;letter-spacing:.045em}
+.atlas-tree-year summary{cursor:pointer;list-style:none}
+.atlas-tree-year summary::-webkit-details-marker{display:none}
+.atlas-tree-year-head span{display:grid;gap:2px}
+.atlas-tree-year-head small{color:var(--text-secondary);font-weight:400}
+.atlas-tree-topic h4{margin:0 0 10px;font-size:15px}
+
+/* Public student materials */
+.atlas-material-browser{display:grid;gap:18px}
+.atlas-context-picker{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,240px));
+  gap:12px;
+  padding:16px;
+  border:1px solid var(--border-subtle);
+  border-radius:14px;
+  background:var(--surface-raised);
+  box-shadow:var(--shadow-soft)
+}
+.atlas-context-picker label{display:grid;gap:6px}
+.atlas-context-picker label>span{font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.045em}
+.atlas-context-picker select{
+  min-height:44px;
+  width:100%;
+  padding:0 12px;
+  border:1px solid var(--border-strong);
+  border-radius:9px;
+  background:white;
+  color:var(--text-primary)
+}
+.atlas-context-picker select:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+.atlas-lesson-list{display:grid;gap:14px}
+.atlas-lesson-card{
+  padding:18px;
+  border:1px solid var(--border-subtle);
+  border-radius:14px;
+  background:var(--surface-raised);
+  box-shadow:var(--shadow-soft)
+}
+.atlas-lesson-card header{display:grid;gap:4px;margin-bottom:14px}
+.atlas-lesson-number{color:var(--domain-atlas);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+.atlas-lesson-card h2{margin:0;font-size:19px}
+.atlas-material-list{display:grid;gap:8px}
+.atlas-material-item{
+  display:grid;
+  grid-template-columns:38px 1fr;
+  gap:10px;
+  align-items:center;
+  min-height:54px;
+  padding:8px 10px;
+  border:1px solid var(--border-subtle);
+  border-radius:10px;
+  background:#fbfcfe
+}
+.atlas-material-item>span:last-child{display:grid;gap:2px}
+.atlas-material-item small{color:var(--text-muted)}
+.atlas-material-icon{
+  display:grid;
+  place-items:center;
+  width:34px;
+  height:34px;
+  border-radius:9px;
+  background:color-mix(in srgb,var(--domain-atlas) 9%,white);
+  color:var(--domain-atlas)
+}
+.atlas-empty-state{text-align:center}.atlas-empty-state h2{margin-top:0}
+
+@media(max-width:720px),(hover:none) and (pointer:coarse){
+  .atlas-context-picker{grid-template-columns:1fr;padding:14px}
+  .atlas-lesson-card{padding:14px}
+  .atlas-department>h2{font-size:17px}
+}
