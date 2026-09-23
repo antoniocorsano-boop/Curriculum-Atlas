@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { instituteCurriculumFixture } from "@/features/curriculum/fixtures";
 
-const stages = ["Tutti", "Primaria", "Secondaria di primo grado"] as const;
+const stages = ["Tutti", "Infanzia", "Primaria", "Secondaria di primo grado"] as const;
 
 export function CurriculumTree() {
   const [stage, setStage] = useState<(typeof stages)[number]>("Tutti");
