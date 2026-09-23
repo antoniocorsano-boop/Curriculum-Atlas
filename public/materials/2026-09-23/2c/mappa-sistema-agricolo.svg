@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Mappa del sistema agricolo</title>
+  <desc id="desc">Infografica per la classe 2C che rappresenta il sistema agricolo come relazione tra risorse, input, processi, prodotti e impatti.</desc>
+  <rect width="1600" height="900" fill="#f8fbff"/>
+  <text x="800" y="72" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="52" font-weight="800" fill="#0f2f66">IL SISTEMA AGRICOLO</text>
+  <text x="800" y="118" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="600" fill="#334155">Tecnologia · Classe 2C · Agricoltura come sistema tecnologico</text>
+
+  <rect x="85" y="210" width="330" height="190" rx="26" fill="#ecfeff" stroke="#0891b2" stroke-width="4"/>
+  <text x="250" y="260" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="800" fill="#155e75">RISORSE / INPUT</text>
+  <text x="250" y="308" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="24" fill="#0f172a">suolo · acqua · energia</text>
+  <text x="250" y="344" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="24" fill="#0f172a">lavoro · macchine · semi</text>
+
+  <rect x="635" y="210" width="330" height="190" rx="26" fill="#f0fdf4" stroke="#16a34a" stroke-width="4"/>
+  <text x="800" y="260" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="800" fill="#166534">PROCESSI</text>
+  <text x="800" y="308" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="24" fill="#0f172a">preparare · seminare</text>
+  <text x="800" y="344" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="24" fill="#0f172a">irrigare · coltivare · raccogliere</text>
+
+  <rect x="1185" y="210" width="330" height="190" rx="26" fill="#fff7ed" stroke="#ea580c" stroke-width="4"/>
+  <text x="1350" y="260" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="800" fill="#9a3412">OUTPUT</text>
+  <text x="1350" y="308" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="24" fill="#0f172a">prodotti agricoli</text>
+  <text x="1350" y="344" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="24" fill="#0f172a">residui · dati · valore</text>
+
+  <line x1="415" y1="305" x2="635" y2="305" stroke="#2563eb" stroke-width="10"/>
+  <polygon points="635,305 607,286 607,324" fill="#2563eb"/>
+  <line x1="965" y1="305" x2="1185" y2="305" stroke="#2563eb" stroke-width="10"/>
+  <polygon points="1185,305 1157,286 1157,324" fill="#2563eb"/>
+
+  <rect x="300" y="520" width="1000" height="220" rx="28" fill="#fefce8" stroke="#ca8a04" stroke-width="4"/>
+  <text x="800" y="575" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="32" font-weight="800" fill="#854d0e">RELAZIONI E IMPATTI</text>
+  <text x="800" y="625" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="25" fill="#0f172a">clima · fertilità del suolo · consumo d'acqua · energia · biodiversità · costi</text>
+  <text x="800" y="675" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="25" fill="#0f172a">Ogni scelta modifica il funzionamento del sistema e i suoi effetti sull'ambiente.</text>
+
+  <text x="800" y="825" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700" fill="#1d4ed8">Domanda guida: quali relazioni rendono il territorio agricolo un sistema tecnologico?</text>
+</svg>

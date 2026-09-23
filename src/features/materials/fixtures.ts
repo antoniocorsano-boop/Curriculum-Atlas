@@ -46,7 +46,7 @@ export const publishedLessons: PublishedLesson[] = [
     id: "2c-tec-02", classId: "2c", disciplineId: "tecnologia", lessonNumber: 2,
     title: "Agricoltura come sistema tecnologico", dateLabel: "Lezione 2",
     materials: [
-      { id: "m4", title: "Mappa del sistema agricolo", kind: "Infografica" },
+      { id: "m4", title: "Mappa del sistema agricolo", kind: "Infografica", url: "/materials/2026-09-23/2c/mappa-sistema-agricolo.svg" },
       { id: "m5", title: "Attività guidata", kind: "Scheda" }
     ]
   },
