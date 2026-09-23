@@ -33,7 +33,8 @@ try {
     });
 
     await page.getByRole("button", { name: "Elenco" }).click();
-    await page.getByRole("heading", { name: "Istituto" }).waitFor();
+    await page.locator(".atlas-equivalent-outline").waitFor();
+    await page.getByRole("button", { name: /Istituto Comprensivo/ }).first().waitFor();
 
     await page.screenshot({
       path: `artifacts/f2-visual/esplora-list-${viewport.name}.png`,
