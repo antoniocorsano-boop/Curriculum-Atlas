@@ -31,7 +31,16 @@ export function MaterialBrowser() {
         <label>
           <span>Classe</span>
           <select value={classId} onChange={event => setClassId(event.target.value)}>
-            {publicClasses.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+            <optgroup label="Primaria">
+              {publicClasses.filter(item => item.schoolStage === "Primaria").map(item => (
+                <option key={item.id} value={item.id}>{item.label}</option>
+              ))}
+            </optgroup>
+            <optgroup label="Secondaria di primo grado">
+              {publicClasses.filter(item => item.schoolStage === "Secondaria di primo grado").map(item => (
+                <option key={item.id} value={item.id}>{item.label}</option>
+              ))}
+            </optgroup>
           </select>
         </label>
         <label>
