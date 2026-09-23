@@ -1,0 +1,46 @@
+name: MAT-PUB-A Material Manifest
+
+on:
+  pull_request:
+    paths:
+      - "schemas/atlas-material-publication.schema.json"
+      - "fixtures/material-publication/**"
+      - "scripts/validate-material-publication.mjs"
+      - "package.json"
+      - ".github/workflows/mat-pub-a.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Validate accepted fixtures
+        run: npm run validate:materials:valid
+
+      - name: Reject prohibited fixtures
+        run: npm run validate:materials:invalid
+
+      - name: Contract files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f schemas/atlas-material-publication.schema.json
+          test -f scripts/validate-material-publication.mjs
+          test -f fixtures/material-publication/valid/lesson-materials.json
+          test -f fixtures/material-publication/invalid/student-data.json
+          test -f fixtures/material-publication/invalid/asset-contract.json
+          grep -q '"publicPath"' schemas/atlas-material-publication.schema.json
+          grep -q '"checksum"' schemas/atlas-material-publication.schema.json
+          grep -q '"sourceProvenance"' schemas/atlas-material-publication.schema.json
+          grep -q 'forbidden personal/sensitive publication field' scripts/validate-material-publication.mjs
