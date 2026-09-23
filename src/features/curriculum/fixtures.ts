@@ -5,6 +5,39 @@ export const instituteCurriculumFixture: InstituteCurriculum = {
   versionLabel: "S3-V2/F1 · dati dimostrativi non autorevoli",
   disciplines: [
     {
+      id: "campi-esperienza",
+      label: "Campi di esperienza",
+      department: "Scuola dell'infanzia",
+      bands: [
+        {
+          id: "infanzia-conoscenza-mondo",
+          schoolStage: "Infanzia",
+          gradeLabel: "Percorso verticale",
+          subtitle: "Esplorazione, osservazione e prime relazioni",
+          topics: [
+            {
+              id: "infanzia-mondo",
+              title: "La conoscenza del mondo",
+              objectives: [
+                {
+                  id: "infanzia-1",
+                  code: "INF.1",
+                  title: "Osservare fenomeni, oggetti e relazioni",
+                  description: "Esplorare il mondo attraverso osservazione, confronto, domande e prime rappresentazioni.",
+                  knowledge: ["Oggetti e materiali", "Relazioni", "Spazio e tempo"],
+                  skills: ["Osservare", "Confrontare", "Descrivere"],
+                  prerequisites: [],
+                  connections: ["Scienze", "Matematica", "Tecnologia"],
+                  sourceLabel: "Fonte prevista: Arena · fixture di istituto",
+                  sourceVersion: "S3-V2/F1"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       id: "italiano",
       label: "Italiano",
       department: "Area linguistico-espressiva",
