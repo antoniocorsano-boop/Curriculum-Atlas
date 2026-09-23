@@ -5,7 +5,7 @@ export function ProvenancePanel({ label, version }: { label: string; version: st
     <aside className="atlas-provenance" aria-label="Provenienza curricolare">
       <div className="atlas-provenance-icon"><ShieldCheck size={18} aria-hidden="true" /></div>
       <div>
-        <strong>Fonte curricolare: Arena</strong>
+        <strong>Provenienza curricolare</strong>
         <p>{label}</p>
         <small>Versione: {version}</small>
       </div>
