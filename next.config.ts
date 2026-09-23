@@ -6,10 +6,10 @@ const repositoryName = "Curriculum-Atlas";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  output: "export",
+  output: isGitHubPages ? "export" : undefined,
   trailingSlash: true,
   images: {
-    unoptimized: true,
+    unoptimized: isGitHubPages,
   },
   basePath: isGitHubPages ? `/${repositoryName}` : "",
   assetPrefix: isGitHubPages ? `/${repositoryName}/` : undefined,
