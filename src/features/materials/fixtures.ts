@@ -1,6 +1,8 @@
 import type { PublicClass, PublishedLesson } from "@/features/curriculum/model";
 
 export const publicClasses: PublicClass[] = [
+  { id: "5a-primary", label: "5A", schoolStage: "Primaria" },
+  { id: "5b-primary", label: "5B", schoolStage: "Primaria" },
   { id: "1a", label: "1A", schoolStage: "Secondaria di primo grado" },
   { id: "1c", label: "1C", schoolStage: "Secondaria di primo grado" },
   { id: "2a", label: "2A", schoolStage: "Secondaria di primo grado" },
@@ -17,6 +19,29 @@ export const publicDisciplines = [
 ];
 
 export const publishedLessons: PublishedLesson[] = [
+  {
+    id: "5a-ita-01",
+    classId: "5a-primary",
+    disciplineId: "italiano",
+    lessonNumber: 1,
+    title: "Comprendere un testo informativo",
+    dateLabel: "Lezione 1",
+    materials: [
+      { id: "m0a", title: "Guida alla lettura", kind: "Scheda" },
+      { id: "m0b", title: "Mappa delle informazioni", kind: "Infografica" }
+    ]
+  },
+  {
+    id: "5a-mat-01",
+    classId: "5a-primary",
+    disciplineId: "matematica",
+    lessonNumber: 1,
+    title: "Leggere e rappresentare dati",
+    dateLabel: "Lezione 1",
+    materials: [
+      { id: "m0c", title: "Esercizi su tabelle e grafici", kind: "Scheda" }
+    ]
+  },
   {
     id: "2c-tec-01",
     classId: "2c",
