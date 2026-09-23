@@ -47,7 +47,8 @@ try {
 
     await context.setOffline(true);
     await page.reload({ waitUntil: "domcontentloaded", timeout: 15000 });
-    await page.getByText("Quale spiegazione regge meglio?", { exact: false }).first().waitFor({ timeout: 10000 });
+    await page.getByText("Scegli la spiegazione che ti sembra più plausibile all'inizio e annota il perché.").waitFor({ timeout: 10000 });
+    await page.getByPlaceholder("Scrivi con parole tue. Non viene inviato ad Atlas.").waitFor({ timeout: 10000 });
     await context.setOffline(false);
 
     await context.close();
