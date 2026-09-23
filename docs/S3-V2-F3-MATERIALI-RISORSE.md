@@ -145,3 +145,26 @@ Decisione architetturale:
 `trama-ecosistema/docs/decisions/trama-adr-013-atlas-git-first-media-publication.md`
 
 Finché TRAMA-ADR-013 resta `PROPOSED`, questo documento è un contratto implementativo proposto e non promuove da solo il runtime cross-product.
+
+
+## MAT-PUB-B — Image normalization · IMPLEMENTED
+
+Il normalizzatore raster build-time è implementato in `scripts/normalize-image.mjs`.
+
+Contratto corrente:
+
+- input ammessi: JPEG, PNG, WebP, AVIF;
+- decoder in modalità restrittiva (`failOn: warning`);
+- limite pixel in ingresso;
+- correzione orientamento;
+- ridimensionamento entro budget senza enlargement;
+- conversione a sRGB;
+- output WebP;
+- metadata EXIF/XMP/IPTC rimossi;
+- checksum SHA-256 dell'output;
+- budget massimo del file risultante;
+- self-test CI con sorgente sintetica che contiene EXIF e verifica la sua rimozione.
+
+Dipendenza: `sharp@^0.35.4`.
+
+MAT-PUB-B non effettua commit, deploy o pubblicazione e non modifica il controllo editoriale. Il passo successivo resta MAT-PUB-C — Repository publisher.

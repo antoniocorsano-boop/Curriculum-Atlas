@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit",
     "validate:materials:valid": "node scripts/validate-material-publication.mjs --valid fixtures/material-publication/valid/lesson-materials.json",
     "validate:materials:invalid": "node scripts/validate-material-publication.mjs --invalid fixtures/material-publication/invalid/student-data.json fixtures/material-publication/invalid/asset-contract.json",
-    "validate:materials": "npm run validate:materials:valid && npm run validate:materials:invalid"
+    "validate:materials": "npm run validate:materials:valid && npm run validate:materials:invalid",
+    "normalize:image": "node scripts/normalize-image.mjs",
+    "normalize:image:selftest": "node scripts/normalize-image.mjs --self-test"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
@@ -21,7 +23,8 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "tailwind-merge": "^3.3.1",
-    "@xyflow/react": "^12.8.6"
+    "@xyflow/react": "^12.8.6",
+    "sharp": "^0.35.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.13",
