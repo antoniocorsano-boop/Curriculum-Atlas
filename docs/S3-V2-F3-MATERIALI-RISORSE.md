@@ -228,3 +228,16 @@ In questo slice:
 - nessun account o tracking studente viene introdotto.
 
 Il prototipo ATLAS-PERCHÉ resta su una PR separata e non viene assorbito da questo riallineamento.
+
+
+### Regola trust-state
+
+Il catalogo non può mostrare come verificati stati non supportati da evidenza.
+
+In particolare:
+- presenza nel catalogo = `Catalogata`, non automaticamente `Pubblicata`;
+- accessibilità = `Da verificare` finché non esiste evidenza specifica;
+- diritti/licenza = `Diritti da verificare` finché non esiste una fonte o receipt;
+- il conteggio delle lezioni indica un collegamento pubblico, non prova da solo lo stato editoriale o i diritti della risorsa.
+
+La UI deve evitare badge positivi sintetici basati su fixture o assunzioni.
