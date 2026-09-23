@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { FileText, Image, Link2, MonitorPlay, Presentation, Video } from "lucide-react";
-import { publicClasses, publicDisciplines, publishedLessons } from "@/features/materials/fixtures";
+import { atlasResources, publicClasses, publicDisciplines, publishedLessons } from "@/features/materials/fixtures";
 import type { PublishedMaterial } from "@/features/curriculum/model";
 
 const icons: Record<PublishedMaterial["kind"], React.ComponentType<{ size?: number; "aria-hidden"?: boolean }>> = {
@@ -24,6 +24,11 @@ export function MaterialBrowser() {
       .filter(item => item.classId === classId && item.disciplineId === disciplineId)
       .sort((a, b) => a.lessonNumber - b.lessonNumber),
     [classId, disciplineId]
+  );
+
+  const resourceById = useMemo(
+    () => new Map(atlasResources.map(resource => [resource.id, resource])),
+    []
   );
 
   return (
@@ -52,6 +57,12 @@ export function MaterialBrowser() {
         </label>
       </section>
 
+      <div className="atlas-domain-note" role="note">
+        <strong>Qui trovi solo ciò che è stato pubblicato per una lezione.</strong>
+        <span>Il catalogo generale delle risorse riusabili è separato in Risorse Atlas.</span>
+        <Link href="/risorse">Apri Risorse Atlas</Link>
+      </div>
+
       {lessons.length ? (
         <div className="atlas-lesson-list">
           {lessons.map(lesson => (
@@ -63,28 +74,27 @@ export function MaterialBrowser() {
               <div className="atlas-material-list">
                 {lesson.materials.map(material => {
                   const Icon = icons[material.kind];
-                  const body = (
-                    <>
+                  const resource = material.resourceId ? resourceById.get(material.resourceId) : undefined;
+                  return (
+                    <div key={material.id} className="atlas-material-item">
                       <span className="atlas-material-icon"><Icon size={18} aria-hidden={true} /></span>
                       <span>
                         <strong>{material.title}</strong>
-                        <small>{material.kind}{material.url ? " · Apri" : ""}</small>
+                        <small>{material.kind} · Pubblicato per questa lezione</small>
+                        {material.url ? (
+                          <Link className="atlas-material-origin" href={material.url} target="_blank" rel="noreferrer">
+                            Apri materiale
+                          </Link>
+                        ) : null}
+                        {resource ? (
+                          <Link className="atlas-material-origin" href={"/risorse#" + resource.id}>
+                            Deriva dalla risorsa Atlas “{resource.title}”
+                          </Link>
+                        ) : (
+                          <small className="atlas-material-origin-neutral">Materiale pubblicato direttamente per la lezione</small>
+                        )}
                       </span>
-                    </>
-                  );
-                  return material.url ? (
-                    <Link
-                      key={material.id}
-                      className="atlas-material-item"
-                      href={material.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label={`Apri ${material.title}`}
-                    >
-                      {body}
-                    </Link>
-                  ) : (
-                    <div key={material.id} className="atlas-material-item">{body}</div>
+                    </div>
                   );
                 })}
               </div>
