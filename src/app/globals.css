@@ -766,7 +766,9 @@ button, input { font: inherit; }
   font-size:12px;
   font-weight:800
 }
-.atlas-material-origin{width:max-content;max-width:100%;color:var(--action-primary);font-size:12px;font-weight:700}
+.atlas-material-item{grid-template-columns:38px minmax(0,1fr)}
+.atlas-material-item>span:last-child{min-width:0}
+.atlas-material-origin{display:block;width:auto;max-width:100%;overflow-wrap:anywhere;color:var(--action-primary);font-size:12px;font-weight:700}
 .atlas-material-origin:hover{text-decoration:underline}
 .atlas-material-origin-neutral{color:var(--text-muted)}
 
