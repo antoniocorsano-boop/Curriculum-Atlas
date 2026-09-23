@@ -5,7 +5,7 @@ import { AppShell } from "@/components/atlas/app-shell";
 const quick = [
   { href: "/esplora", label: "Esplora", detail: "Mappa relazionale del curricolo", icon: Compass },
   { href: "/curricolo", label: "Curricolo", detail: "Struttura, annualità e obiettivi", icon: BookOpen },
-  { href: "/risorse", label: "Risorse", detail: "Contenuti e materiali Atlas", icon: Library },
+  { href: "/materiali", label: "Materiali", detail: "Materiali pubblicati, organizzati per lezione", icon: Library },
   { href: "/percorsi", label: "Percorsi", detail: "Itinerari e connessioni didattiche", icon: Waypoints },
 ];
 

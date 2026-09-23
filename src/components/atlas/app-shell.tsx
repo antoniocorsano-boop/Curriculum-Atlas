@@ -19,9 +19,9 @@ const items = [
   { href: "/", label: "Home", icon: Home },
   { href: "/esplora", label: "Esplora", icon: Compass },
   { href: "/curricolo", label: "Curricolo", icon: BookOpen },
+  { href: "/materiali", label: "Materiali", icon: Boxes },
   { href: "/percorsi", label: "Percorsi", icon: GitBranch },
-  { href: "/risorse", label: "Risorse", icon: Library },
-  { href: "/lezioni", label: "Lezioni", icon: Boxes },
+  { href: "/risorse", label: "Risorse Atlas", icon: Library },
   { href: "/obiettivi", label: "Obiettivi", icon: Target },
   { href: "/raccordi", label: "Raccordi", icon: Waypoints },
 ];
