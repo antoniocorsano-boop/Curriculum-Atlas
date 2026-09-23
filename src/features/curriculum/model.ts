@@ -49,7 +49,7 @@ export type AtlasResource = {
   schoolStages: Array<"Primaria" | "Secondaria di primo grado">;
   accessibilityStatus: "Verificata" | "Da verificare";
   rightsLabel: string;
-  editorialStatus: "Pubblicata";
+  editorialStatus: "Catalogata" | "Pubblicata";
   objectiveIds: string[];
   updatedLabel: string;
 };
