@@ -98,6 +98,8 @@ button, input { font: inherit; }
 
 .atlas-main { min-width: 0; }
 
+.atlas-mobile-brand { display: none; }
+
 .atlas-topbar {
   position: sticky;
   top: 0;
@@ -260,28 +262,64 @@ button, input { font: inherit; }
   .atlas-sidebar { display: none; }
   .atlas-topbar {
     grid-template-columns: 1fr auto;
-    min-height: 58px;
-    padding: 8px 14px;
+    grid-template-areas:
+      "brand user"
+      "search search";
+    gap: 8px 12px;
+    min-height: 92px;
+    padding: 8px 14px 10px;
   }
+  .atlas-mobile-brand {
+    grid-area: brand;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    width: max-content;
+    color: var(--text-primary);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 20px;
+    font-weight: 600;
+  }
+  .atlas-mobile-brand .atlas-mark { font-size: 18px; }
+  .atlas-search { grid-area: search; min-width: 0; min-height: 42px; }
+  .atlas-search input::placeholder { color: var(--text-muted); opacity: 1; }
+  .atlas-user { grid-area: user; }
   .atlas-user > div:last-child { display: none; }
-  .atlas-search { min-width: 0; }
-  .atlas-search input::placeholder { color: transparent; }
-  .atlas-content { padding: 22px 14px 30px; }
-  .atlas-page-heading { align-items: start; }
+  .atlas-content { padding: 18px 14px 30px; }
+  .atlas-page-heading { align-items: start; margin-bottom: 16px; }
+  .atlas-page-heading h1 { font-size: 32px; }
+  .atlas-page-heading p { font-size: 15px; margin-top: 6px; }
   .atlas-home-grid { display: block; }
   .atlas-home-grid > * + * { margin-top: 14px; }
-  .atlas-hero { min-height: auto; padding: 26px 20px 30px; border-radius: 13px; }
-  .atlas-hero h2 { font-size: 38px; }
+  .atlas-hero { min-height: auto; padding: 22px 18px 24px; border-radius: 13px; }
+  .atlas-hero h2 {
+    max-width: 16ch;
+    margin: 10px 0 10px;
+    font-size: 31px;
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+  }
+  .atlas-hero p { font-size: 15.5px; line-height: 1.55; }
   .atlas-feature-grid {
     display: flex;
+    gap: 10px;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
-    margin-inline: -20px;
-    padding-inline: 20px;
+    scroll-padding-inline: 18px;
+    overscroll-behavior-x: contain;
+    margin: 24px -18px 0;
+    padding: 0 18px 4px;
     scrollbar-width: none;
   }
   .atlas-feature-grid::-webkit-scrollbar { display: none; }
-  .atlas-feature { flex: 0 0 76%; scroll-snap-align: start; }
+  .atlas-feature {
+    flex: 0 0 min(82vw, 320px);
+    min-width: 0;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    padding: 16px;
+  }
+  .atlas-feature strong { margin-top: 9px; }
   .atlas-mobile-nav {
     position: fixed;
     z-index: 40;
