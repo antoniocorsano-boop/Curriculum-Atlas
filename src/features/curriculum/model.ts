@@ -38,10 +38,27 @@ export type InstituteCurriculum = {
   disciplines: CurriculumDiscipline[];
 };
 
+export type ResourceKind = "Scheda" | "Presentazione" | "Infografica" | "Video" | "Link" | "Documento";
+
+export type AtlasResource = {
+  id: string;
+  title: string;
+  summary: string;
+  kind: ResourceKind;
+  disciplineId: string;
+  schoolStages: Array<"Primaria" | "Secondaria di primo grado">;
+  accessibilityStatus: "Verificata" | "Da verificare";
+  rightsLabel: string;
+  editorialStatus: "Catalogata" | "Pubblicata";
+  objectiveIds: string[];
+  updatedLabel: string;
+};
+
 export type PublishedMaterial = {
   id: string;
   title: string;
-  kind: "Scheda" | "Presentazione" | "Infografica" | "Video" | "Link" | "Documento";
+  kind: ResourceKind;
+  resourceId?: string;
   url?: string;
 };
 
