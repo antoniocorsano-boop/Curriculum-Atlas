@@ -1,0 +1,62 @@
+name: R3-F0 S3-V2 Foundation
+
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "package.json"
+      - "tsconfig.json"
+      - "next.config.ts"
+      - "postcss.config.mjs"
+      - "components.json"
+      - "eslint.config.mjs"
+      - ".github/workflows/s3-v2-foundation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  foundation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build
+        run: pnpm build
+
+      - name: Foundation contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f src/components/atlas/app-shell.tsx
+          test -f src/components/ui/button.tsx
+          test -f src/app/globals.css
+          grep -q -- "--authority-arena" src/app/globals.css
+          grep -q -- "--domain-atlas" src/app/globals.css
+          grep -q "atlas-mobile-nav" src/app/globals.css
+          grep -q "Cerca in Atlas" src/components/atlas/app-shell.tsx
+          grep -q "Il curricolo, connesso" src/app/page.tsx
+          if grep -R -E "(login studente|student account|tracking individuale)" src; then
+            echo "Forbidden student identity/tracking concept found in foundation" >&2
+            exit 1
+          fi
