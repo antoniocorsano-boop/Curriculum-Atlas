@@ -82,14 +82,17 @@ export function ResourceCatalog() {
                 <span>Aggiornata: {resource.updatedLabel}</span>
               </div>
               <div className="atlas-resource-status-row">
-                <span className="is-ok"><CheckCircle2 size={15} aria-hidden={true} />Stato editoriale: {resource.editorialStatus}</span>
+                <span className={resource.editorialStatus === "Pubblicata" ? "is-ok" : ""}>
+                  {resource.editorialStatus === "Pubblicata" ? <CheckCircle2 size={15} aria-hidden={true} /> : <CircleAlert size={15} aria-hidden={true} />}
+                  Stato editoriale: {resource.editorialStatus}
+                </span>
                 <span className={resource.accessibilityStatus === "Verificata" ? "is-ok" : "is-warning"}>
                   {resource.accessibilityStatus === "Verificata"
                     ? <CheckCircle2 size={15} aria-hidden={true} />
                     : <CircleAlert size={15} aria-hidden={true} />}
                   Accessibilità {resource.accessibilityStatus.toLowerCase()}
                 </span>
-                <span>{uses === 0 ? "Non ancora pubblicata in lezioni" : uses === 1 ? "Pubblicata in 1 lezione" : "Pubblicata in " + uses + " lezioni"}</span>
+                <span>{uses === 0 ? "Non collegata a lezioni pubbliche" : uses === 1 ? "Collegata a 1 lezione pubblica" : "Collegata a " + uses + " lezioni pubbliche"}</span>
               </div>
               {resource.objectiveIds.length > 0 && (
                 <footer>
