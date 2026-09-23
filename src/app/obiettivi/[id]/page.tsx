@@ -9,21 +9,21 @@ export default async function ObjectivePage({ params }: { params: Promise<{ id: 
   const found = findObjective(id);
   if (!found) notFound();
 
-  const { year, topic, objective } = found;
+  const { discipline, band, topic, objective } = found;
 
   return (
     <AppShell>
       <nav className="atlas-breadcrumbs" aria-label="Percorso">
         <Link href="/curricolo">Curricolo</Link>
         <span>›</span>
-        <span>{year.label}</span>
+        <span>{discipline.label}</span><span>›</span><span>{band.schoolStage} · {band.gradeLabel}</span>
         <span>›</span>
         <span>{topic.title}</span>
       </nav>
 
       <header className="atlas-page-heading">
         <div>
-          <span className="atlas-eyebrow">{objective.code} · {year.label}</span>
+          <span className="atlas-eyebrow">{objective.code} · {discipline.label} · {band.gradeLabel}</span>
           <h1>{objective.title}</h1>
           <p>{objective.description}</p>
         </div>
