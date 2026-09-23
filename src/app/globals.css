@@ -482,3 +482,14 @@ button, input { font: inherit; }
 @media(max-width:720px),(hover:none) and (pointer:coarse){
   .atlas-curriculum-filters{grid-template-columns:1fr}
 }
+
+
+@media(max-width:720px),(hover:none) and (pointer:coarse){
+  .atlas-progression-panel li{
+    grid-template-columns:1fr;
+    gap:2px;
+  }
+  .atlas-progression-panel li strong{
+    white-space:normal;
+  }
+}
