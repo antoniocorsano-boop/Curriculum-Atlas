@@ -578,7 +578,31 @@ button, input { font: inherit; }
 }
 .atlas-relation-canvas .react-flow__attribution{display:none}
 
-.react-flow__node.atlas-map-node{
+.atlas-map-node-inner{
+  position:relative;
+  display:grid;
+  gap:4px;
+  width:190px;
+  min-height:68px;
+  padding:11px 12px;
+  border:1px solid var(--border-subtle);
+  border-radius:12px;
+  background:white;
+  color:var(--text-primary);
+  box-shadow:0 8px 22px rgb(18 33 59 / .08);
+  line-height:1.28
+}
+.atlas-map-node-inner strong{font-size:13px;line-height:1.25}
+.atlas-map-node-inner small{color:var(--text-muted);font-size:10px;line-height:1.25}
+.atlas-map-node-kind{
+  color:var(--text-muted);
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.045em;
+  text-transform:uppercase
+}
+.atlas-hidden-handle{opacity:0!important;pointer-events:none!important}
+.react-flow__node-atlas{padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;width:auto!important}
   width:190px;
   min-height:66px;
   padding:11px 12px;
@@ -590,38 +614,34 @@ button, input { font: inherit; }
   font-size:13px;
   line-height:1.28
 }
-.react-flow__node.atlas-map-node::before{
-  content:attr(data-kind);
-}
-.react-flow__node.atlas-map-node.selected{
+.react-flow__node-atlas.selected .atlas-map-node-inner{
   outline:3px solid color-mix(in srgb,var(--focus-ring) 35%,transparent);
   border-color:var(--focus-ring)
 }
-.react-flow__node.atlas-map-node .react-flow__node-default{padding:0}
-.react-flow__node.atlas-map-node-institution{
+.atlas-map-node-inner.atlas-map-node-institution{
   width:240px;
   border-color:#c7d5ea;
   background:#eef4ff;
   color:#153463;
   font-weight:800
 }
-.react-flow__node.atlas-map-node-discipline{
+.atlas-map-node-inner.atlas-map-node-discipline{
   border-color:#bcdedb;
   background:#eef9f8;
   color:#165d5a;
   font-weight:750
 }
-.react-flow__node.atlas-map-node-stage{
+.atlas-map-node-inner.atlas-map-node-stage{
   border-color:#ddd8ef;
   background:#f7f5fc;
   color:#403a78
 }
-.react-flow__node.atlas-map-node-objective{
+.atlas-map-node-inner.atlas-map-node-objective{
   border-color:#d8e1ee;
   background:#fff;
   color:var(--text-primary)
 }
-.react-flow__node.atlas-map-node-connection{
+.atlas-map-node-inner.atlas-map-node-connection{
   width:170px;
   border-color:#ead8b5;
   background:#fff9ec;
