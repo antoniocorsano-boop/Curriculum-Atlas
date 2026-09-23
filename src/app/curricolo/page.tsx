@@ -7,9 +7,9 @@ export default function CurriculumPage() {
     <AppShell>
       <header className="atlas-page-heading">
         <div>
-          <span className="atlas-eyebrow">Curricolo</span>
-          <h1>Struttura e progressione</h1>
-          <p>Esplora annualità, nuclei e obiettivi mantenendo sempre visibile la provenienza curricolare.</p>
+          <span className="atlas-eyebrow">Curricolo verticale di istituto</span>
+          <h1>Il curricolo dell’istituto</h1>
+          <p>Esplora aree, discipline, ordini di scuola, annualità, nuclei e obiettivi in una struttura verticale unica.</p>
         </div>
       </header>
 
@@ -18,7 +18,7 @@ export default function CurriculumPage() {
           <CurriculumTree />
         </section>
         <div className="atlas-curriculum-rail">
-          <ProvenancePanel label="Dati dimostrativi governati per S3-V2/F1" version="fixture S3-V2/F1" />
+          <ProvenancePanel label="Fixture di istituto per S3-V2/F1 · fonte reale non ancora collegata" version="fixture S3-V2/F1" />
           <section className="atlas-panel atlas-progression-panel">
             <h3>Progressione</h3>
             <ol>
