@@ -113,7 +113,7 @@ export function ActivityPrototype() {
       <section className="atlas-why-launch atlas-panel">
         <span className="atlas-eyebrow">Prototipo · Primaria classe quinta</span>
         <h2>Quale spiegazione regge meglio?</h2>
-        <p>Un breve laboratorio per confrontare due spiegazioni, cercare l'evidenza che conta e capire quando è necessario cambiare idea.</p>
+        <p>Un breve laboratorio per confrontare due spiegazioni, cercare l&apos;evidenza che conta e capire quando è necessario cambiare idea.</p>
         <div className="atlas-why-actions">
           <button className="atlas-primary-button" onClick={() => void loadActivity()}>
             <Play size={18} aria-hidden="true" /> Avvia
@@ -128,7 +128,7 @@ export function ActivityPrototype() {
   }
 
   return (
-    <section className="atlas-why-player" aria-live="polite">
+    <section className="atlas-why-player" aria-live="polite">\n      <p role="status" className="atlas-why-local-status">Le risposte restano salvate localmente su questo dispositivo.</p>
       <div className="atlas-why-progress" aria-label={"Passaggio " + (stepIndex + 1) + " di " + activity.steps.length}>
         {activity.steps.map((step, index) => (
           <span key={step.stepId} data-current={index === stepIndex} data-complete={index < stepIndex} />
