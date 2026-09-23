@@ -1,0 +1,63 @@
+name: R3-F0 S3-V2 F3 Visual Evidence
+
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "scripts/capture-f3-visual.mjs"
+      - "package.json"
+      - ".github/workflows/s3-v2-f3-visual.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build
+        run: pnpm build
+
+      - name: Start app
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm start > /tmp/atlas-f3.log 2>&1 &
+          echo $! > /tmp/atlas-f3.pid
+          for i in {1..60}; do
+            if curl -fsS http://127.0.0.1:3000/risorse >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/atlas-f3.log
+          exit 1
+
+      - name: Capture visual evidence
+        run: node scripts/capture-f3-visual.mjs
+
+      - name: Upload visual evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-f3-visual-evidence
+          path: artifacts/f3-visual/*.png
+          if-no-files-found: error
