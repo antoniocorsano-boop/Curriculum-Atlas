@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trama.local/schemas/atlas-material-publication.schema.json",
+  "title": "ATLAS-MAT-PUB-01 Material Publication Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "publicationId",
+    "lessonId",
+    "disciplineId",
+    "classContext",
+    "materials"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "publicationId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{5,127}$"
+    },
+    "lessonId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,127}$"
+    },
+    "disciplineId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{1,63}$"
+    },
+    "classContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gradeLabel"],
+      "properties": {
+        "gradeLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "schoolYear": {
+          "type": "string",
+          "pattern": "^20[0-9]{2}-20[0-9]{2}$"
+        }
+      }
+    },
+    "curriculumBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["curriculumVersionRef", "authorityState"],
+      "properties": {
+        "curriculumVersionRef": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "authorityState": {
+          "type": "string",
+          "enum": ["APPROVED", "PUBLISHED", "VERIFIED"]
+        },
+        "authorityReceiptRef": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      }
+    },
+    "materials": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "items": {
+        "$ref": "#/$defs/material"
+      }
+    }
+  },
+  "$defs": {
+    "material": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "materialId",
+        "title",
+        "kind",
+        "mimeType",
+        "filesize",
+        "checksum",
+        "sourceProvenance",
+        "publicPath",
+        "publicationState"
+      ],
+      "properties": {
+        "materialId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{2,127}$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 180
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["infographic", "worksheet", "presentation", "image", "document"]
+        },
+        "alt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "mimeType": {
+          "type": "string",
+          "enum": ["image/svg+xml", "image/webp", "image/avif", "image/png", "image/jpeg", "application/pdf"]
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12000
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12000
+        },
+        "filesize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10485760
+        },
+        "checksum": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "sourceProvenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sourceType"],
+          "properties": {
+            "sourceType": {
+              "type": "string",
+              "enum": ["generated", "teacher-authored", "adapted", "atlas-reuse"]
+            },
+            "sourceRef": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          }
+        },
+        "publicPath": {
+          "type": "string",
+          "pattern": "^/materials/[a-zA-Z0-9._/-]+$"
+        },
+        "publicationState": {
+          "type": "string",
+          "enum": ["CANDIDATE", "PUBLISHED", "WITHDRAWN"]
+        },
+        "publishedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "commitSha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "publicUrl": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    }
+  }
+}
