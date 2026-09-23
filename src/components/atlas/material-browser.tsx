@@ -62,14 +62,28 @@ export function MaterialBrowser() {
               <div className="atlas-material-list">
                 {lesson.materials.map(material => {
                   const Icon = icons[material.kind];
-                  return (
-                    <div key={material.id} className="atlas-material-item">
+                  const body = (
+                    <>
                       <span className="atlas-material-icon"><Icon size={18} aria-hidden={true} /></span>
                       <span>
                         <strong>{material.title}</strong>
-                        <small>{material.kind}</small>
+                        <small>{material.kind}{material.url ? " · Apri" : ""}</small>
                       </span>
-                    </div>
+                    </>
+                  );
+                  return material.url ? (
+                    <a
+                      key={material.id}
+                      className="atlas-material-item"
+                      href={material.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`Apri ${material.title}`}
+                    >
+                      {body}
+                    </a>
+                  ) : (
+                    <div key={material.id} className="atlas-material-item">{body}</div>
                   );
                 })}
               </div>
