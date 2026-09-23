@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "validate:materials:valid": "node scripts/validate-material-publication.mjs --valid fixtures/material-publication/valid/lesson-materials.json",
+    "validate:materials:invalid": "node scripts/validate-material-publication.mjs --invalid fixtures/material-publication/invalid/student-data.json fixtures/material-publication/invalid/asset-contract.json",
+    "validate:materials": "npm run validate:materials:valid && npm run validate:materials:invalid"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",

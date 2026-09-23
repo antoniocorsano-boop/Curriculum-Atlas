@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "publicationId": "pub-2026-09-23-1c-tecnologia",
+  "lessonId": "1c-tec-2026-09-23",
+  "disciplineId": "tecnologia",
+  "classContext": {
+    "gradeLabel": "1C",
+    "schoolYear": "2026-2027"
+  },
+  "curriculumBinding": {
+    "curriculumVersionRef": "arena:tecnologia:v1",
+    "authorityState": "APPROVED"
+  },
+  "materials": [
+    {
+      "materialId": "1c-20260923-infografica",
+      "title": "Dal bisogno alla soluzione tecnica",
+      "kind": "infographic",
+      "alt": "Schema che collega bisogno, problema, soluzione e bene o servizio.",
+      "mimeType": "image/svg+xml",
+      "filesize": 5961,
+      "checksum": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sourceProvenance": {
+        "sourceType": "generated",
+        "sourceRef": "lesson-material-2026-09-23"
+      },
+      "publicPath": "/materials/2026-09-23/1c/tecnologia/dal-bisogno-alla-soluzione-tecnica.svg",
+      "publicationState": "CANDIDATE"
+    }
+  ]
+}
