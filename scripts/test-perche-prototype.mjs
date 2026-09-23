@@ -1,4 +1,5 @@
-// @trama-feedback-test\nimport { chromium } from "playwright";
+// @trama-feedback-test
+import { chromium } from "playwright";
 import fs from "node:fs/promises";
 
 const base = process.env.BASE_URL || "http://127.0.0.1:3000";
@@ -24,10 +25,17 @@ try {
     await page.getByRole("button", { name: "Continua" }).click();
     const note = page.getByPlaceholder("Scrivi con parole tue. Non viene inviato ad Atlas.");
     await note.fill("Ipotesi locale di prova");
-    const stored = await page.evaluate(() => localStorage.getItem("atlas:perche:perche-p3-spiegazione:v1"));
+
+    const stored = await page.evaluate(() =>
+      localStorage.getItem("atlas:perche:perche-p3-spiegazione:v1")
+    );
     if (!stored || !stored.includes("Ipotesi locale di prova")) {
       throw new Error("Local persistence contract failed");
     }
+
+    await page.getByRole("status").getByText(
+      "Le risposte restano salvate localmente su questo dispositivo."
+    ).waitFor();
 
     await page.getByRole("button", { name: "Salva sul dispositivo" }).click();
     await page.getByRole("button", { name: "Disponibile offline" }).waitFor({ timeout: 15000 });
