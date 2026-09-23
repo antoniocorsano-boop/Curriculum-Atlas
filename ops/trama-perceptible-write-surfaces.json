@@ -2,5 +2,19 @@
   "contract": "TRAMA-PW-01",
   "version": 1,
   "product": "Atlas",
-  "surfaces": []
+  "surfaces": [
+    {
+      "id": "atlas-perche-local-activity-state",
+      "critical": false,
+      "sourcePatterns": [
+        "src/components/atlas/activity-prototype.tsx"
+      ],
+      "feedbackFiles": [
+        "src/components/atlas/activity-prototype.tsx"
+      ],
+      "testFiles": [
+        "scripts/test-perche-prototype.mjs"
+      ]
+    }
+  ]
 }
