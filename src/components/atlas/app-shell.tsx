@@ -55,10 +55,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="atlas-main">
         <header className="atlas-topbar">
+          <Link href="/" className="atlas-mobile-brand" aria-label="Atlas, home">
+            <span className="atlas-mark" aria-hidden="true">✦</span>
+            <span>Atlas</span>
+          </Link>
           <label className="atlas-search">
             <Search size={17} aria-hidden="true" />
             <span className="sr-only">Cerca in Atlas</span>
-            <input placeholder="Cerca nel curricolo, nelle risorse, negli obiettivi…" />
+            <input placeholder="Cerca in Atlas" aria-label="Cerca in Atlas" />
           </label>
           <div className="atlas-user">
             <div className="atlas-avatar" aria-hidden="true">TR</div>
