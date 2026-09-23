@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Background,
   Controls,
@@ -50,7 +50,7 @@ function AtlasMapNode({ data }: NodeProps) {
 
 const nodeTypes = { atlas: AtlasMapNode };
 
-function buildLayout(nodes: ExploreNode[]): Node[] {
+function buildLayout(nodes: ExploreNode[], compact = false): Node[] {
   const disciplines = nodes.filter(node => node.kind === "discipline");
   const stagesNodes = nodes.filter(node => node.kind === "stage");
   const objectives = nodes.filter(node => node.kind === "objective");
@@ -61,27 +61,29 @@ function buildLayout(nodes: ExploreNode[]): Node[] {
   if (institute) {
     result.push({
       id: institute.id,
-      position: { x: 420, y: 20 },
+      position: compact ? { x: 40, y: 20 } : { x: 420, y: 20 },
       data: { label: institute.label, meta: institute.subtitle, kind: institute.kind },
       type: "atlas",
     });
   }
 
   disciplines.forEach((node, index) => {
-    const x = 40 + index * 270;
+    const x = compact ? 40 : 40 + index * 270;
+    const y = compact ? 155 + index * 115 : 190;
     result.push({
       id: node.id,
-      position: { x, y: 190 },
+      position: { x, y },
       data: { label: node.label, meta: node.subtitle, kind: node.kind },
       type: "atlas",
     });
 
     const relatedStages = stagesNodes.filter(item => item.disciplineId === node.disciplineId);
     relatedStages.forEach((stageNode, stageIndex) => {
-      const sx = x + stageIndex * 175;
+      const sx = compact ? 300 : x + stageIndex * 175;
+      const sy = compact ? y + stageIndex * 90 : 360;
       result.push({
         id: stageNode.id,
-        position: { x: sx, y: 360 },
+        position: { x: sx, y: sy },
         data: { label: stageNode.label, meta: stageNode.subtitle, kind: stageNode.kind },
         type: "atlas",
       });
@@ -92,7 +94,9 @@ function buildLayout(nodes: ExploreNode[]): Node[] {
       relatedObjectives.forEach((objective, objectiveIndex) => {
         result.push({
           id: objective.id,
-          position: { x: sx + objectiveIndex * 210, y: 535 },
+          position: compact
+            ? { x: 550, y: sy + objectiveIndex * 105 }
+            : { x: sx + objectiveIndex * 210, y: 535 },
           data: { label: objective.label, meta: objective.subtitle, kind: objective.kind },
           type: "atlas",
         });
@@ -103,7 +107,9 @@ function buildLayout(nodes: ExploreNode[]): Node[] {
   connections.forEach((node, index) => {
     result.push({
       id: node.id,
-      position: { x: 80 + (index % 5) * 220, y: 740 + Math.floor(index / 5) * 135 },
+      position: compact
+        ? { x: 790, y: 80 + index * 105 }
+        : { x: 80 + (index % 5) * 220, y: 740 + Math.floor(index / 5) * 135 },
       data: { label: node.label, meta: node.subtitle, kind: node.kind },
       type: "atlas",
     });
@@ -128,9 +134,18 @@ function buildEdges(ids: Set<string>): Edge[] {
 export function RelationExplorer() {
   const [view, setView] = useState<"map" | "list">("map");
   const [depth, setDepth] = useState<"overview" | "detail">("overview");
+  const [compact, setCompact] = useState(false);
   const [stage, setStage] = useState<(typeof stages)[number]>("Tutti");
   const [disciplineId, setDisciplineId] = useState("tutte");
   const [selectedId, setSelectedId] = useState("institute");
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 720px), (hover: none) and (pointer: coarse)");
+    const sync = () => setCompact(query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, []);
 
   const visibleGraph = useMemo(() => {
     const primary = exploreGraph.nodes.filter(node => {
@@ -168,7 +183,7 @@ export function RelationExplorer() {
     return { nodes, ids };
   }, [depth, disciplineId, stage]);
 
-  const mapNodes = useMemo(() => buildLayout(visibleGraph.nodes), [visibleGraph.nodes]);
+  const mapNodes = useMemo(() => buildLayout(visibleGraph.nodes, compact), [visibleGraph.nodes, compact]);
   const mapEdges = useMemo(() => buildEdges(visibleGraph.ids), [visibleGraph.ids]);
   const selected = visibleGraph.nodes.find(node => node.id === selectedId) ?? visibleGraph.nodes[0];
 
