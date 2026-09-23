@@ -7,7 +7,7 @@ export default function MaterialsPage() {
       <header className="atlas-page-heading">
         <div>
           <span className="atlas-eyebrow">Materiali didattici</span>
-          <h1>Le tue lezioni, in ordine.</h1>
+          <h1>Le lezioni della tua classe.</h1>
           <p>Scegli la classe e la disciplina per vedere i materiali pubblicati, organizzati lezione per lezione.</p>
         </div>
       </header>
