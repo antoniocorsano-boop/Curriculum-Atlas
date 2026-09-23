@@ -79,7 +79,7 @@ export const atlasResources: AtlasResource[] = [
     kind: "Presentazione",
     disciplineId: "scienze",
     schoolStages: ["Secondaria di primo grado"],
-    accessibilityStatus: "Da verificare",
+    accessibilityStatus: "Verificata",
     rightsLabel: "Uso didattico autorizzato",
     editorialStatus: "Pubblicata",
     objectiveIds: [],
