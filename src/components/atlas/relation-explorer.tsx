@@ -5,12 +5,15 @@ import { useMemo, useState } from "react";
 import {
   Background,
   Controls,
+  Handle,
   MiniMap,
   ReactFlow,
   MarkerType,
+  Position,
   type Edge,
   type Node,
   type NodeMouseHandler,
+  type NodeProps,
 } from "@xyflow/react";
 import { List, Map, Maximize2 } from "lucide-react";
 import { instituteCurriculumFixture } from "@/features/curriculum/fixtures";
@@ -26,9 +29,26 @@ const kindLabel: Record<ExploreNodeKind, string> = {
   connection: "Raccordo",
 };
 
-function nodeClass(kind: ExploreNodeKind) {
-  return "atlas-map-node atlas-map-node-" + kind;
+type AtlasMapNodeData = {
+  label: string;
+  meta?: string;
+  kind: ExploreNodeKind;
+};
+
+function AtlasMapNode({ data }: NodeProps) {
+  const nodeData = data as AtlasMapNodeData;
+  return (
+    <div className={"atlas-map-node-inner atlas-map-node-" + nodeData.kind}>
+      <Handle type="target" position={Position.Top} className="atlas-hidden-handle" />
+      <span className="atlas-map-node-kind">{kindLabel[nodeData.kind]}</span>
+      <strong>{nodeData.label}</strong>
+      {nodeData.meta ? <small>{nodeData.meta}</small> : null}
+      <Handle type="source" position={Position.Bottom} className="atlas-hidden-handle" />
+    </div>
+  );
 }
+
+const nodeTypes = { atlas: AtlasMapNode };
 
 function buildLayout(nodes: ExploreNode[]): Node[] {
   const disciplines = nodes.filter(node => node.kind === "discipline");
@@ -43,7 +63,7 @@ function buildLayout(nodes: ExploreNode[]): Node[] {
       id: institute.id,
       position: { x: 420, y: 20 },
       data: { label: institute.label, meta: institute.subtitle, kind: institute.kind },
-      className: nodeClass(institute.kind),
+      type: "atlas",
     });
   }
 
@@ -53,7 +73,7 @@ function buildLayout(nodes: ExploreNode[]): Node[] {
       id: node.id,
       position: { x, y: 190 },
       data: { label: node.label, meta: node.subtitle, kind: node.kind },
-      className: nodeClass(node.kind),
+      type: "atlas",
     });
 
     const relatedStages = stagesNodes.filter(item => item.disciplineId === node.disciplineId);
@@ -63,7 +83,7 @@ function buildLayout(nodes: ExploreNode[]): Node[] {
         id: stageNode.id,
         position: { x: sx, y: 360 },
         data: { label: stageNode.label, meta: stageNode.subtitle, kind: stageNode.kind },
-        className: nodeClass(stageNode.kind),
+        type: "atlas",
       });
 
       const relatedObjectives = objectives.filter(
@@ -74,7 +94,7 @@ function buildLayout(nodes: ExploreNode[]): Node[] {
           id: objective.id,
           position: { x: sx + objectiveIndex * 210, y: 535 },
           data: { label: objective.label, meta: objective.subtitle, kind: objective.kind },
-          className: nodeClass(objective.kind),
+          type: "atlas",
         });
       });
     });
@@ -85,7 +105,7 @@ function buildLayout(nodes: ExploreNode[]): Node[] {
       id: node.id,
       position: { x: 80 + (index % 5) * 220, y: 740 + Math.floor(index / 5) * 135 },
       data: { label: node.label, meta: node.subtitle, kind: node.kind },
-      className: nodeClass(node.kind),
+      type: "atlas",
     });
   });
 
@@ -107,6 +127,7 @@ function buildEdges(ids: Set<string>): Edge[] {
 
 export function RelationExplorer() {
   const [view, setView] = useState<"map" | "list">("map");
+  const [depth, setDepth] = useState<"overview" | "detail">("overview");
   const [stage, setStage] = useState<(typeof stages)[number]>("Tutti");
   const [disciplineId, setDisciplineId] = useState("tutte");
   const [selectedId, setSelectedId] = useState("institute");
@@ -117,7 +138,13 @@ export function RelationExplorer() {
       if (node.kind === "discipline") {
         return disciplineId === "tutte" || node.disciplineId === disciplineId;
       }
-      if (node.kind === "stage" || node.kind === "objective") {
+      if (node.kind === "stage") {
+        const disciplineMatches = disciplineId === "tutte" || node.disciplineId === disciplineId;
+        const stageMatches = stage === "Tutti" || node.stage === stage;
+        return disciplineMatches && stageMatches;
+      }
+      if (node.kind === "objective") {
+        if (depth !== "detail") return false;
         const disciplineMatches = disciplineId === "tutte" || node.disciplineId === disciplineId;
         const stageMatches = stage === "Tutti" || node.stage === stage;
         return disciplineMatches && stageMatches;
@@ -126,11 +153,11 @@ export function RelationExplorer() {
     });
 
     const primaryIds = new Set(primary.map(node => node.id));
-    const connectedRelationIds = new Set(
+    const connectedRelationIds = depth === "detail" ? new Set(
       exploreGraph.edges
         .filter(edge => edge.relation === "connects" && primaryIds.has(edge.source))
         .map(edge => edge.target)
-    );
+    ) : new Set<string>();
     const relationNodes = exploreGraph.nodes.filter(
       node => node.kind === "connection" && connectedRelationIds.has(node.id)
     );
@@ -138,7 +165,7 @@ export function RelationExplorer() {
     const ids = new Set(nodes.map(node => node.id));
 
     return { nodes, ids };
-  }, [disciplineId, stage]);
+  }, [depth, disciplineId, stage]);
 
   const mapNodes = useMemo(() => buildLayout(visibleGraph.nodes), [visibleGraph.nodes]);
   const mapEdges = useMemo(() => buildEdges(visibleGraph.ids), [visibleGraph.ids]);
@@ -153,14 +180,27 @@ export function RelationExplorer() {
       <section className="atlas-explore-toolbar" aria-label="Controlli Esplora">
         <div className="atlas-explore-filters">
           <label>
+            <span>Livello</span>
+            <select value={depth} onChange={event => setDepth(event.target.value as "overview" | "detail")}>
+              <option value="overview">Panoramica</option>
+              <option value="detail">Obiettivi e raccordi</option>
+            </select>
+          </label>
+          <label>
             <span>Ordine di scuola</span>
-            <select value={stage} onChange={event => setStage(event.target.value as (typeof stages)[number])}>
+            <select value={stage} onChange={event => {
+              setStage(event.target.value as (typeof stages)[number]);
+              if (event.target.value !== "Tutti") setDepth("detail");
+            }}>
               {stages.map(item => <option key={item} value={item}>{item}</option>)}
             </select>
           </label>
           <label>
             <span>Disciplina</span>
-            <select value={disciplineId} onChange={event => setDisciplineId(event.target.value)}>
+            <select value={disciplineId} onChange={event => {
+              setDisciplineId(event.target.value);
+              if (event.target.value !== "tutte") setDepth("detail");
+            }}>
               <option value="tutte">Tutte le discipline</option>
               {instituteCurriculumFixture.disciplines.map(item => (
                 <option key={item.id} value={item.id}>{item.label}</option>
@@ -186,6 +226,7 @@ export function RelationExplorer() {
               <ReactFlow
                 nodes={mapNodes}
                 edges={mapEdges}
+                nodeTypes={nodeTypes}
                 onNodeClick={onNodeClick}
                 onPaneClick={() => setSelectedId("institute")}
                 fitView
