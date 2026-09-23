@@ -8,7 +8,8 @@ export const publicClasses: PublicClass[] = [
   { id: "2a", label: "2A", schoolStage: "Secondaria di primo grado" },
   { id: "2c", label: "2C", schoolStage: "Secondaria di primo grado" },
   { id: "3a", label: "3A", schoolStage: "Secondaria di primo grado" },
-  { id: "3c", label: "3C", schoolStage: "Secondaria di primo grado" }
+  { id: "3c", label: "3C", schoolStage: "Secondaria di primo grado" },
+  { id: "3e", label: "3E", schoolStage: "Secondaria di primo grado" }
 ];
 
 export const publicDisciplines = [
@@ -20,35 +21,21 @@ export const publicDisciplines = [
 
 export const publishedLessons: PublishedLesson[] = [
   {
-    id: "5a-ita-01",
-    classId: "5a-primary",
-    disciplineId: "italiano",
-    lessonNumber: 1,
-    title: "Comprendere un testo informativo",
-    dateLabel: "Lezione 1",
+    id: "5a-ita-01", classId: "5a-primary", disciplineId: "italiano", lessonNumber: 1,
+    title: "Comprendere un testo informativo", dateLabel: "Lezione 1",
     materials: [
       { id: "m0a", title: "Guida alla lettura", kind: "Scheda" },
       { id: "m0b", title: "Mappa delle informazioni", kind: "Infografica" }
     ]
   },
   {
-    id: "5a-mat-01",
-    classId: "5a-primary",
-    disciplineId: "matematica",
-    lessonNumber: 1,
-    title: "Leggere e rappresentare dati",
-    dateLabel: "Lezione 1",
-    materials: [
-      { id: "m0c", title: "Esercizi su tabelle e grafici", kind: "Scheda" }
-    ]
+    id: "5a-mat-01", classId: "5a-primary", disciplineId: "matematica", lessonNumber: 1,
+    title: "Leggere e rappresentare dati", dateLabel: "Lezione 1",
+    materials: [{ id: "m0c", title: "Esercizi su tabelle e grafici", kind: "Scheda" }]
   },
   {
-    id: "2c-tec-01",
-    classId: "2c",
-    disciplineId: "tecnologia",
-    lessonNumber: 1,
-    title: "Tecnica, tecnologia e sistema tecnologico",
-    dateLabel: "Lezione 1",
+    id: "2c-tec-01", classId: "2c", disciplineId: "tecnologia", lessonNumber: 1,
+    title: "Tecnica, tecnologia e sistema tecnologico", dateLabel: "Lezione 1",
     materials: [
       { id: "m1", title: "Infografica: tecnica e tecnologia", kind: "Infografica" },
       { id: "m2", title: "Scheda studente", kind: "Scheda" },
@@ -56,37 +43,37 @@ export const publishedLessons: PublishedLesson[] = [
     ]
   },
   {
-    id: "2c-tec-02",
-    classId: "2c",
-    disciplineId: "tecnologia",
-    lessonNumber: 2,
-    title: "Agricoltura come sistema tecnologico",
-    dateLabel: "Lezione 2",
+    id: "2c-tec-02", classId: "2c", disciplineId: "tecnologia", lessonNumber: 2,
+    title: "Agricoltura come sistema tecnologico", dateLabel: "Lezione 2",
     materials: [
       { id: "m4", title: "Mappa del sistema agricolo", kind: "Infografica" },
       { id: "m5", title: "Attività guidata", kind: "Scheda" }
     ]
   },
   {
-    id: "2c-sci-01",
-    classId: "2c",
-    disciplineId: "scienze",
-    lessonNumber: 1,
-    title: "Materia e passaggi di stato",
-    dateLabel: "Lezione 1",
+    id: "2c-sci-01", classId: "2c", disciplineId: "scienze", lessonNumber: 1,
+    title: "Materia e passaggi di stato", dateLabel: "Lezione 1",
+    materials: [{ id: "m6", title: "Schema dei passaggi di stato", kind: "Presentazione" }]
+  },
+  {
+    id: "1a-ita-01", classId: "1a", disciplineId: "italiano", lessonNumber: 1,
+    title: "Comprendere la struttura di un testo", dateLabel: "Lezione 1",
+    materials: [{ id: "m7", title: "Guida alla lettura", kind: "Scheda" }]
+  },
+  {
+    id: "1c-tec-03", classId: "1c", disciplineId: "tecnologia", lessonNumber: 3,
+    title: "Dal bisogno alla soluzione tecnica", dateLabel: "23 settembre 2026",
     materials: [
-      { id: "m6", title: "Schema dei passaggi di stato", kind: "Presentazione" }
+      { id: "1c-20260923-infografica", title: "Dal bisogno alla soluzione tecnica", kind: "Infografica", url: "/materials/2026-09-23/1c/dal-bisogno-alla-soluzione-tecnica.svg" },
+      { id: "1c-20260923-scheda", title: "Scheda studente: bisogno e soluzione", kind: "Scheda", url: "/materials/2026-09-23/1c/scheda-studente.svg" }
     ]
   },
   {
-    id: "1a-ita-01",
-    classId: "1a",
-    disciplineId: "italiano",
-    lessonNumber: 1,
-    title: "Comprendere la struttura di un testo",
-    dateLabel: "Lezione 1",
+    id: "3e-tec-02", classId: "3e", disciplineId: "tecnologia", lessonNumber: 2,
+    title: "Dove va l'energia? Effetto utile e dispersioni", dateLabel: "23 settembre 2026",
     materials: [
-      { id: "m7", title: "Guida alla lettura", kind: "Scheda" }
+      { id: "3e-20260923-infografica", title: "Dove va l'energia?", kind: "Infografica", url: "/materials/2026-09-23/3e/dove-va-l-energia.svg" },
+      { id: "3e-20260923-scheda", title: "Scheda studente: trasformazioni e dispersioni", kind: "Scheda", url: "/materials/2026-09-23/3e/scheda-studente.svg" }
     ]
   }
 ];

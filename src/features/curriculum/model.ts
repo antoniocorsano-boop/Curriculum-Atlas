@@ -42,6 +42,7 @@ export type PublishedMaterial = {
   id: string;
   title: string;
   kind: "Scheda" | "Presentazione" | "Infografica" | "Video" | "Link" | "Documento";
+  url?: string;
 };
 
 export type PublishedLesson = {
