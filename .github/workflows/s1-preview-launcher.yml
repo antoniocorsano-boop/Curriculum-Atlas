@@ -18,6 +18,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ATLAS_GITHUB_PAGES: "true"
     steps:
       - name: Checkout exact main head
         uses: actions/checkout@v4
