@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { FileText, Image, Link2, MonitorPlay, Presentation, Video } from "lucide-react";
 import { publicClasses, publicDisciplines, publishedLessons } from "@/features/materials/fixtures";
@@ -72,7 +73,7 @@ export function MaterialBrowser() {
                     </>
                   );
                   return material.url ? (
-                    <a
+                    <Link
                       key={material.id}
                       className="atlas-material-item"
                       href={material.url}
@@ -81,7 +82,7 @@ export function MaterialBrowser() {
                       aria-label={`Apri ${material.title}`}
                     >
                       {body}
-                    </a>
+                    </Link>
                   ) : (
                     <div key={material.id} className="atlas-material-item">{body}</div>
                   );

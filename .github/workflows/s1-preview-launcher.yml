@@ -1,9 +1,10 @@
-name: S1 / P1 Preview Launcher
+name: Atlas Canonical Pages Deploy
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -11,38 +12,21 @@ permissions:
   id-token: write
 
 concurrency:
-  group: main-preview-launcher
+  group: atlas-pages-production
   cancel-in-progress: true
 
 jobs:
   build:
-    if: contains(github.event.head_commit.message, '[s1-preview]') || contains(github.event.head_commit.message, '[p1-preview]')
     runs-on: ubuntu-latest
     env:
-      S1_EXACT_SHA: 85d7be34e28547c516d0d1f12fdefff1d262951d
-      P1_EXACT_SHA: c59f10349bdfdd0bc0ba15d359fd54043188b421
+      ATLAS_GITHUB_PAGES: "true"
     steps:
-      - name: Checkout exact S1 candidate
+      - name: Checkout exact main head
         uses: actions/checkout@v4
-        with:
-          ref: ${{ env.S1_EXACT_SHA }}
-          path: s1
 
-      - name: Verify S1 exact head
-        working-directory: s1
-        run: test "$(git rev-parse HEAD)" = "$S1_EXACT_SHA"
-
-      - name: Checkout exact P1 candidate
-        if: contains(github.event.head_commit.message, '[p1-preview]')
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ env.P1_EXACT_SHA }}
-          path: p1
-
-      - name: Verify P1 exact head
-        if: contains(github.event.head_commit.message, '[p1-preview]')
-        working-directory: p1
-        run: test "$(git rev-parse HEAD)" = "$P1_EXACT_SHA"
+      - name: Record exact head
+        id: head
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -51,50 +35,61 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - name: Build S1 root
-        working-directory: s1
+      - name: Install dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build static Atlas
+        run: npm run build
+
+      - name: Verify public materials in export
         run: |
-          npm install --ignore-scripts --no-audit --no-fund
-          npm run build
+          test -f out/materiali/index.html
+          test -f out/materials/2026-09-23/1c/dal-bisogno-alla-soluzione-tecnica.svg
+          test -f out/materials/2026-09-23/1c/scheda-studente.svg
+          test -f out/materials/2026-09-23/3e/dove-va-l-energia.svg
+          test -f out/materials/2026-09-23/3e/scheda-studente.svg
 
-      - name: Build P1 preview
-        if: contains(github.event.head_commit.message, '[p1-preview]')
-        working-directory: p1
+      - name: Write release identity
         run: |
-          npm install --ignore-scripts --no-audit --no-fund
-          npm run build
+          printf '%s\n' \
+            "Curriculum Atlas public release" \
+            "sha=${{ steps.head.outputs.sha }}" \
+            "built_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            > out/RELEASE_IDENTITY.txt
 
-      - name: Assemble Pages artifact
-        run: |
-          mkdir -p site
-          cp -a s1/dist/. site/
-          if [[ "${{ github.event.head_commit.message }}" == *"[p1-preview]"* ]]; then
-            mkdir -p site/p1-preview
-            cp -a p1/dist/. site/p1-preview/
-            sed -i 's#<head>#<head><meta name="robots" content="noindex,nofollow">#' site/p1-preview/index.html
-            printf '%s\n' \
-              "ATLAS-P1.1-S3 visual QA preview" \
-              "p1_sha=${P1_EXACT_SHA}" \
-              "s1_sha=${S1_EXACT_SHA}" \
-              "launcher_sha=${GITHUB_SHA}" \
-              "built_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-              > site/p1-preview/PREVIEW_IDENTITY.txt
-          fi
-
-      - name: Upload preview artifact
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: ./site
+          path: ./out
 
   deploy:
-    if: contains(github.event.head_commit.message, '[s1-preview]') || contains(github.event.head_commit.message, '[p1-preview]')
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Deploy controlled preview
+      - name: Deploy canonical Atlas
         id: deployment
         uses: actions/deploy-pages@v4
+
+  verify:
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: Smoke test public URLs
+        run: |
+          base="https://antoniocorsano-boop.github.io/Curriculum-Atlas"
+          curl --fail --silent --show-error --location "$base/materiali/" > /dev/null
+          curl --fail --silent --show-error --location "$base/materials/2026-09-23/1c/dal-bisogno-alla-soluzione-tecnica.svg" > /dev/null
+          curl --fail --silent --show-error --location "$base/materials/2026-09-23/1c/scheda-studente.svg" > /dev/null
+          curl --fail --silent --show-error --location "$base/materials/2026-09-23/3e/dove-va-l-energia.svg" > /dev/null
+          curl --fail --silent --show-error --location "$base/materials/2026-09-23/3e/scheda-studente.svg" > /dev/null
