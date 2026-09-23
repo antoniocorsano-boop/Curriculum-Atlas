@@ -8,7 +8,7 @@ export default function WhyActivityPage() {
         <div>
           <span className="atlas-eyebrow">Perché? · laboratorio cognitivo</span>
           <h1>Osserva. Chiedi. Verifica. Spiega.</h1>
-          <p>Prototipo pubblico senza credenziali: l'attività può essere avviata online e salvata sul dispositivo per continuare anche senza rete.</p>
+          <p>Prototipo pubblico senza credenziali: l&apos;attività può essere avviata online e salvata sul dispositivo per continuare anche senza rete.</p>
         </div>
       </header>
       <ActivityPrototype />
