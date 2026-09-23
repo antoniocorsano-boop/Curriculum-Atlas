@@ -29,7 +29,7 @@ export const atlasResources: AtlasResource[] = [
     accessibilityStatus: "Verificata",
     rightsLabel: "CC BY 4.0",
     editorialStatus: "Pubblicata",
-    objectiveIds: ["tec-2-1"],
+    objectiveIds: ["tech-s2-1"],
     updatedLabel: "Settembre 2026"
   },
   {
@@ -42,7 +42,7 @@ export const atlasResources: AtlasResource[] = [
     accessibilityStatus: "Verificata",
     rightsLabel: "CC BY 4.0",
     editorialStatus: "Pubblicata",
-    objectiveIds: ["tec-2-1"],
+    objectiveIds: ["tech-s2-1"],
     updatedLabel: "Settembre 2026"
   },
   {
@@ -55,7 +55,7 @@ export const atlasResources: AtlasResource[] = [
     accessibilityStatus: "Verificata",
     rightsLabel: "CC BY 4.0",
     editorialStatus: "Pubblicata",
-    objectiveIds: ["tec-2-2"],
+    objectiveIds: ["tech-s2-1"],
     updatedLabel: "Settembre 2026"
   },
   {
