@@ -24,7 +24,7 @@ F4 consolida Atlas come esperienza pubblica realmente fruibile su smartphone, ta
 - nessun overflow orizzontale;
 - testata compatta e non ambigua;
 - ricerca sempre identificabile;
-- bottom navigation con cinque destinazioni pubbliche principali;
+- bottom navigation con cinque destinazioni pubbliche principali e accesso `Altro` alle sezioni secondarie;
 - target interattivi ≥ 44 px quando applicabile;
 - Curricolo, Esplora, Materiali e Risorse utilizzabili senza layout desktop compresso.
 
@@ -41,6 +41,7 @@ F4 consolida Atlas come esperienza pubblica realmente fruibile su smartphone, ta
 - rimozione del falso profilo/utente “TR” dalla testata pubblica;
 - sostituzione con indicatore statico “Vista pubblica”;
 - navigazione mobile esplicita: Home, Esplora, Curricolo, Materiali, Risorse;
+- accesso mobile `Altro` a Percorsi, Obiettivi, Raccordi e Impostazioni, così nessuna sezione resta raggiungibile solo dalla sidebar desktop;
 - target tattili della bottom navigation;
 - contenimento della larghezza del contenuto su LIM.
 
@@ -60,7 +61,7 @@ per le superfici:
 - Materiali;
 - Risorse.
 
-Il gate fallisce in presenza di overflow orizzontale.
+Il gate fallisce in presenza di overflow orizzontale, target mobile sotto 44 px o perdita di raggiungibilità delle sezioni secondarie.
 
 ## Gate umano
 
