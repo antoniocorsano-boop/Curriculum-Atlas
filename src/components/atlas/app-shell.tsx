@@ -13,6 +13,7 @@ import {
   Settings,
   Target,
   Waypoints,
+  Ellipsis,
 } from "lucide-react";
 
 const items = [
@@ -29,6 +30,13 @@ const items = [
 const mobileItems = items.filter((item) =>
   ["/", "/esplora", "/curricolo", "/materiali", "/risorse"].includes(item.href)
 );
+
+const mobileMoreItems = [
+  { href: "/percorsi", label: "Percorsi", icon: GitBranch },
+  { href: "/obiettivi", label: "Obiettivi", icon: Target },
+  { href: "/raccordi", label: "Raccordi", icon: Waypoints },
+  { href: "/impostazioni", label: "Impostazioni", icon: Settings },
+];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -84,6 +92,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span>{label}</span>
           </Link>
         ))}
+        <details className="atlas-mobile-more">
+          <summary aria-label="Altre sezioni Atlas">
+            <Ellipsis size={19} aria-hidden="true" />
+            <span>Altro</span>
+          </summary>
+          <div className="atlas-mobile-more-menu">
+            {mobileMoreItems.map(({ href, label, icon: Icon }) => (
+              <Link key={href} href={href} data-active={isActive(href) ? "true" : "false"}>
+                <Icon size={17} aria-hidden="true" />
+                <span>{label}</span>
+              </Link>
+            ))}
+          </div>
+        </details>
       </nav>
     </div>
   );
