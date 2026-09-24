@@ -40,9 +40,14 @@ if (errors.length) {
 
 let previous = null;
 try { previous = JSON.parse(await fs.readFile(target, "utf8")); } catch {}
+let facade = "";
+try { facade = await fs.readFile("src/features/curriculum/fixtures.ts", "utf8"); } catch {}
+const projectsArena = facade.includes("./arena-projected");
+
 if (previous?.structuralFingerprint?.hash === input.structuralFingerprint.hash
   && previous?.authorityState === input.authorityState
-  && previous?.curriculum?.sourceRevisionId === input.curriculum?.sourceRevisionId) {
+  && previous?.curriculum?.sourceRevisionId === input.curriculum?.sourceRevisionId
+  && projectsArena) {
   console.log("Arena curriculum already current:", input.structuralFingerprint.hash, input.authorityState);
   process.exit(0);
 }
