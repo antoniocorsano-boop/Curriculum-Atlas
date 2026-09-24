@@ -18,6 +18,18 @@ const req = (ok, message) => { if (!ok) errors.push(message); };
 req(input.contract === "ARENA_ATLAS_CURRICULUM_EXPORT_V1", "unsupported Arena export contract");
 req(input.contractVersion === 1, "unsupported Arena export version");
 req(["PROVISIONAL_COMPLETE", "APPROVED"].includes(input.authorityState), "invalid authorityState");
+req(input.publicationPolicy?.atlasAutomaticSync === true, "publication policy must enable Atlas automatic sync");
+req(input.publicationPolicy?.atlasAutomaticMerge === false, "publication policy must keep Atlas automatic merge disabled");
+req(Array.isArray(input.publicationPolicy?.publicVisibilityAllowedAuthorityStates)
+  && input.publicationPolicy.publicVisibilityAllowedAuthorityStates.includes("PROVISIONAL_COMPLETE")
+  && input.publicationPolicy.publicVisibilityAllowedAuthorityStates.includes("APPROVED"),
+  "publication policy must allow provisional and approved visibility");
+req(input.publicationPolicy?.provisionalPublicDisclosureRequired === true,
+  "publication policy must require provisional public disclosure");
+req(input.publicationPolicy?.vigencyRequiresAuthorityState === "APPROVED",
+  "publication policy must require APPROVED for vigency");
+req(input.publicationPolicy?.humanApprovalRequired === true,
+  "publication policy must preserve human approval");
 req(input.structuralFingerprint?.algorithm === "fnv1a", "missing structural fingerprint");
 req(/^[0-9a-f]{8}$/.test(input.structuralFingerprint?.hash || ""), "invalid structural fingerprint");
 req(input.coverage?.infanziaFields === 5, "incomplete Infanzia coverage");
