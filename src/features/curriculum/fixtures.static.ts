@@ -1,7 +1,7 @@
 import type { InstituteCurriculum } from "./model";
 
 export const arenaCurriculumAuthority = {
-  authorityState: "FIXTURE",
+  authorityState: "FIXTURE" as "FIXTURE" | "PROVISIONAL_COMPLETE" | "APPROVED",
   sourceState: "DEMO_FIXTURE",
   masterVersion: "S3-V2/F1",
   fingerprint: "fixture",
