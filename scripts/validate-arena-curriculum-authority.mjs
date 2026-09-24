@@ -16,6 +16,18 @@ req(input.coverage?.secondaryDisciplines === 12, "Secondary discipline coverage 
 req(input.coverage?.primaryGradeBands === 55, "Primary grade coverage incomplete");
 req(input.coverage?.secondaryGradeBands === 36, "Secondary grade coverage incomplete");
 req(input.coverage?.transversalAxes === 3, "transversal coverage incomplete");
+req(input.publicationPolicy?.atlasAutomaticSync === true, "publication policy must enable Atlas automatic sync");
+req(input.publicationPolicy?.atlasAutomaticMerge === false, "publication policy must keep Atlas automatic merge disabled");
+req(Array.isArray(input.publicationPolicy?.publicVisibilityAllowedAuthorityStates)
+  && input.publicationPolicy.publicVisibilityAllowedAuthorityStates.includes("PROVISIONAL_COMPLETE")
+  && input.publicationPolicy.publicVisibilityAllowedAuthorityStates.includes("APPROVED"),
+  "publication policy must allow provisional and approved visibility");
+req(input.publicationPolicy?.provisionalPublicDisclosureRequired === true,
+  "publication policy must require provisional disclosure");
+req(input.publicationPolicy?.vigencyRequiresAuthorityState === "APPROVED",
+  "publication policy must require APPROVED for vigency");
+req(input.publicationPolicy?.humanApprovalRequired === true,
+  "publication policy must preserve human approval");
 
 const facade = fs.readFileSync("src/features/curriculum/fixtures.ts", "utf8");
 const projectsArenaSnapshot = facade.includes("./arena-projected");
