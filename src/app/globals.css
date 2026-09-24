@@ -953,3 +953,48 @@ button, input { font: inherit; }
   .atlas-explore-filters select { text-overflow:ellipsis; }
   .atlas-explore-context dl div { grid-template-columns:minmax(60px,72px) minmax(0,1fr); }
 }
+
+
+/* F4 full-curriculum mobile intrinsic-width guard */
+@media(max-width:720px),(hover:none) and (pointer:coarse){
+  .atlas-content,
+  .atlas-panel,
+  .atlas-curriculum-layout,
+  .atlas-curriculum-tree,
+  .atlas-curriculum-filters,
+  .atlas-curriculum-filters label,
+  .atlas-department,
+  .atlas-discipline-block,
+  .atlas-tree-year,
+  .atlas-tree-year-head,
+  .atlas-tree-year-head > span,
+  .atlas-tree-topic,
+  .atlas-tree-objectives {
+    inline-size:100%;
+    min-inline-size:0;
+    max-inline-size:100%;
+  }
+
+  .atlas-curriculum-filters select {
+    display:block;
+    inline-size:100%;
+    min-inline-size:0;
+    max-inline-size:100%;
+    text-overflow:ellipsis;
+  }
+
+  .atlas-tree-year summary,
+  .atlas-tree-year-head strong,
+  .atlas-tree-year-head small,
+  .atlas-discipline-block > h3,
+  .atlas-objective-row {
+    min-inline-size:0;
+    max-inline-size:100%;
+  }
+
+  .atlas-tree-year-head strong,
+  .atlas-tree-year-head small,
+  .atlas-discipline-block > h3 {
+    overflow-wrap:anywhere;
+  }
+}
