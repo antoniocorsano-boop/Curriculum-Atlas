@@ -48,6 +48,15 @@ if (previous?.structuralFingerprint?.hash === input.structuralFingerprint.hash
 }
 
 await fs.writeFile(target, JSON.stringify(input, null, 2) + "\n", "utf8");
+
+const facade = `export {
+  instituteCurriculumFixture,
+  arenaCurriculumAuthority,
+  findObjective,
+} from "./arena-projected";
+`;
+await fs.writeFile("src/features/curriculum/fixtures.ts", facade, "utf8");
+
 console.log(JSON.stringify({
   changed: true,
   fingerprint: input.structuralFingerprint.hash,
