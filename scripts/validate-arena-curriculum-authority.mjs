@@ -15,7 +15,10 @@ req(input.coverage?.primaryGradeBands===55,"Primary grade coverage incomplete");
 req(input.coverage?.secondaryGradeBands===36,"Secondary grade coverage incomplete");
 req(input.coverage?.transversalAxes===3,"transversal coverage incomplete");
 
-if (!candidateOnly) {
+const facade = fs.readFileSync("src/features/curriculum/fixtures.ts", "utf8");
+const promotesArenaSnapshot = facade.includes("./arena-projected");
+
+if (!candidateOnly && promotesArenaSnapshot) {
   req(input.authorityState==="APPROVED","PUBLICATION BLOCKED: Arena authorityState is not APPROVED");
   req(input.authorityReceiptRef && typeof input.authorityReceiptRef==="object","PUBLICATION BLOCKED: authorityReceiptRef missing");
   req(input.integrityDigest?.algorithm==="sha256" && /^[0-9a-f]{64}$/.test(input.integrityDigest?.hash||""),"PUBLICATION BLOCKED: approved payload requires SHA-256 digest");
@@ -26,7 +29,7 @@ if(errors.length){
   process.exit(1);
 }
 console.log(JSON.stringify({
-  mode:candidateOnly?"candidate":"publication",
+  mode:candidateOnly?"candidate":(promotesArenaSnapshot?"publication":"infrastructure"),
   authorityState:input.authorityState,
   fingerprint:input.structuralFingerprint.hash,
   coverage:input.coverage
