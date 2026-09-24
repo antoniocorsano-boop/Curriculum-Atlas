@@ -5,8 +5,11 @@ on:
     paths:
       - "src/features/curriculum/arena-curriculum-export.json"
       - "src/features/curriculum/fixtures.ts"
+      - "src/app/curricolo/page.tsx"
+      - "docs/governance/ATLAS-CURR-PROVISIONAL-PUBLICATION-01.md"
       - "scripts/sync-arena-curriculum.mjs"
       - "scripts/validate-arena-curriculum-authority.mjs"
+      - "scripts/validate-provisional-curriculum-regression.mjs"
       - ".github/workflows/arena-curriculum-*.yml"
 
 permissions:
@@ -34,3 +37,14 @@ jobs:
           node-version: 22
           package-manager-cache: false
       - run: node scripts/validate-arena-curriculum-authority.mjs
+
+  provisional-regression:
+    name: Provisional curriculum governance regression
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - run: node scripts/validate-provisional-curriculum-regression.mjs
