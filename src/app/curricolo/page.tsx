@@ -27,12 +27,8 @@ export default function CurriculumPage() {
         </section>
         <div className="atlas-curriculum-rail">
           <ProvenancePanel
-            label={arenaCurriculumAuthority.authorityState === "FIXTURE"
-              ? "Fixture di istituto per S3-V2/F1 · fonte reale non ancora pubblicata"
-              : `Arena · ${arenaCurriculumAuthority.sourceState}`}
-            version={arenaCurriculumAuthority.authorityState === "FIXTURE"
-              ? "fixture S3-V2/F1"
-              : `${arenaCurriculumAuthority.masterVersion} · ${arenaCurriculumAuthority.fingerprint}`}
+            label={`Arena · ${arenaCurriculumAuthority.sourceState}`}
+            version={`${arenaCurriculumAuthority.masterVersion} · ${arenaCurriculumAuthority.fingerprint}`}
           />
           <section className="atlas-panel atlas-progression-panel">
             <h3>Ordini di scuola</h3>
