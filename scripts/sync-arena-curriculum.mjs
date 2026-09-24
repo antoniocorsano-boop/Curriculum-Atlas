@@ -52,13 +52,11 @@ try { previous = JSON.parse(await fs.readFile(target, "utf8")); } catch {}
 let currentFacade = "";
 try { currentFacade = await fs.readFile(facadePath, "utf8"); } catch {}
 
-const samePayload =
-  previous?.structuralFingerprint?.hash === input.structuralFingerprint.hash
-  && previous?.authorityState === input.authorityState
-  && previous?.curriculum?.sourceRevisionId === input.curriculum?.sourceRevisionId;
+const samePayload = previous != null
+  && JSON.stringify(previous) === JSON.stringify(input);
 
 if (samePayload && currentFacade === projectedFacade) {
-  console.log("Arena curriculum already current:", input.structuralFingerprint.hash, input.authorityState);
+  console.log("Arena curriculum already current:", input.structuralFingerprint.hash, input.authorityState, input.publicationPolicy);
   process.exit(0);
 }
 
