@@ -6,33 +6,67 @@ const path = args.find((arg) => !arg.startsWith("--"))
   || "src/features/curriculum/arena-curriculum-export.json";
 const input = JSON.parse(fs.readFileSync(path, "utf8"));
 
-const errors=[];
-const req=(ok,msg)=>{ if(!ok) errors.push(msg); };
+const errors = [];
+const req = (ok, msg) => { if (!ok) errors.push(msg); };
 
-req(input.contract==="ARENA_ATLAS_CURRICULUM_EXPORT_V1","unsupported contract");
-req(input.coverage?.infanziaFields===5,"Infanzia coverage incomplete");
-req(input.coverage?.primaryDisciplines===11,"Primary discipline coverage incomplete");
-req(input.coverage?.secondaryDisciplines===12,"Secondary discipline coverage incomplete");
-req(input.coverage?.primaryGradeBands===55,"Primary grade coverage incomplete");
-req(input.coverage?.secondaryGradeBands===36,"Secondary grade coverage incomplete");
-req(input.coverage?.transversalAxes===3,"transversal coverage incomplete");
+req(input.contract === "ARENA_ATLAS_CURRICULUM_EXPORT_V1", "unsupported contract");
+req(input.coverage?.infanziaFields === 5, "Infanzia coverage incomplete");
+req(input.coverage?.primaryDisciplines === 11, "Primary discipline coverage incomplete");
+req(input.coverage?.secondaryDisciplines === 12, "Secondary discipline coverage incomplete");
+req(input.coverage?.primaryGradeBands === 55, "Primary grade coverage incomplete");
+req(input.coverage?.secondaryGradeBands === 36, "Secondary grade coverage incomplete");
+req(input.coverage?.transversalAxes === 3, "transversal coverage incomplete");
+req(input.publicationPolicy?.atlasAutomaticSync === true, "publication policy must enable Atlas automatic sync");
+req(input.publicationPolicy?.atlasAutomaticMerge === false, "publication policy must keep Atlas automatic merge disabled");
+req(Array.isArray(input.publicationPolicy?.publicVisibilityAllowedAuthorityStates)
+  && input.publicationPolicy.publicVisibilityAllowedAuthorityStates.includes("PROVISIONAL_COMPLETE")
+  && input.publicationPolicy.publicVisibilityAllowedAuthorityStates.includes("APPROVED"),
+  "publication policy must allow provisional and approved visibility");
+req(input.publicationPolicy?.provisionalPublicDisclosureRequired === true,
+  "publication policy must require provisional disclosure");
+req(input.publicationPolicy?.vigencyRequiresAuthorityState === "APPROVED",
+  "publication policy must require APPROVED for vigency");
+req(input.publicationPolicy?.humanApprovalRequired === true,
+  "publication policy must preserve human approval");
 
 const facade = fs.readFileSync("src/features/curriculum/fixtures.ts", "utf8");
-const promotesArenaSnapshot = facade.includes("./arena-projected");
+const projectsArenaSnapshot = facade.includes("./arena-projected");
 
-if (!candidateOnly && promotesArenaSnapshot) {
-  req(input.authorityState==="APPROVED","PUBLICATION BLOCKED: Arena authorityState is not APPROVED");
-  req(input.authorityReceiptRef && typeof input.authorityReceiptRef==="object","PUBLICATION BLOCKED: authorityReceiptRef missing");
-  req(input.integrityDigest?.algorithm==="sha256" && /^[0-9a-f]{64}$/.test(input.integrityDigest?.hash||""),"PUBLICATION BLOCKED: approved payload requires SHA-256 digest");
+if (!candidateOnly && projectsArenaSnapshot) {
+  if (input.authorityState === "PROVISIONAL_COMPLETE") {
+    const curriculumPage = fs.readFileSync("src/app/curricolo/page.tsx", "utf8");
+    req(input.authorityReceiptRef == null, "PROVISIONAL_COMPLETE cannot claim authorityReceiptRef");
+    req(
+      curriculumPage.includes("Curriculum provvisorio — non vigente.")
+        && curriculumPage.includes("approvazione del Collegio dei docenti")
+        && curriculumPage.includes('data-authority-state="PROVISIONAL_COMPLETE"'),
+      "PUBLICATION BLOCKED: provisional curriculum requires explicit non-vigente Collegio-pending disclosure"
+    );
+  } else if (input.authorityState === "APPROVED") {
+    req(
+      input.authorityReceiptRef && typeof input.authorityReceiptRef === "object",
+      "PUBLICATION BLOCKED: authorityReceiptRef missing"
+    );
+    req(
+      input.integrityDigest?.algorithm === "sha256"
+        && /^[0-9a-f]{64}$/.test(input.integrityDigest?.hash || ""),
+      "PUBLICATION BLOCKED: approved payload requires SHA-256 digest"
+    );
+  } else {
+    req(false, "PUBLICATION BLOCKED: unsupported Arena authorityState");
+  }
 }
 
-if(errors.length){
-  console.error(errors.map(e=>"ERROR: "+e).join("\n"));
+if (errors.length) {
+  console.error(errors.map((e) => "ERROR: " + e).join("\n"));
   process.exit(1);
 }
+
 console.log(JSON.stringify({
-  mode:candidateOnly?"candidate":(promotesArenaSnapshot?"publication":"infrastructure"),
-  authorityState:input.authorityState,
-  fingerprint:input.structuralFingerprint.hash,
-  coverage:input.coverage
-},null,2));
+  mode: candidateOnly ? "candidate" : (projectsArenaSnapshot ? "public-projection" : "infrastructure"),
+  authorityState: input.authorityState,
+  visibleInAtlas: projectsArenaSnapshot,
+  vigente: projectsArenaSnapshot && input.authorityState === "APPROVED",
+  fingerprint: input.structuralFingerprint.hash,
+  coverage: input.coverage
+}, null, 2));

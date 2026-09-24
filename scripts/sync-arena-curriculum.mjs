@@ -4,6 +4,7 @@ const sourceUrl = process.env.ARENA_CURRICULUM_EXPORT_URL
   || "https://raw.githubusercontent.com/antoniocorsano-boop/CurManLight_arena/main/exports/atlas-curriculum/current.json";
 const target = process.env.ATLAS_CURRICULUM_TARGET
   || "src/features/curriculum/arena-curriculum-export.json";
+const facadePath = "src/features/curriculum/fixtures.ts";
 
 const response = await fetch(sourceUrl, { headers: { "User-Agent": "Curriculum-Atlas-sync" } });
 if (!response.ok) {
@@ -17,6 +18,18 @@ const req = (ok, message) => { if (!ok) errors.push(message); };
 req(input.contract === "ARENA_ATLAS_CURRICULUM_EXPORT_V1", "unsupported Arena export contract");
 req(input.contractVersion === 1, "unsupported Arena export version");
 req(["PROVISIONAL_COMPLETE", "APPROVED"].includes(input.authorityState), "invalid authorityState");
+req(input.publicationPolicy?.atlasAutomaticSync === true, "publication policy must enable Atlas automatic sync");
+req(input.publicationPolicy?.atlasAutomaticMerge === false, "publication policy must keep Atlas automatic merge disabled");
+req(Array.isArray(input.publicationPolicy?.publicVisibilityAllowedAuthorityStates)
+  && input.publicationPolicy.publicVisibilityAllowedAuthorityStates.includes("PROVISIONAL_COMPLETE")
+  && input.publicationPolicy.publicVisibilityAllowedAuthorityStates.includes("APPROVED"),
+  "publication policy must allow provisional and approved visibility");
+req(input.publicationPolicy?.provisionalPublicDisclosureRequired === true,
+  "publication policy must require provisional public disclosure");
+req(input.publicationPolicy?.vigencyRequiresAuthorityState === "APPROVED",
+  "publication policy must require APPROVED for vigency");
+req(input.publicationPolicy?.humanApprovalRequired === true,
+  "publication policy must preserve human approval");
 req(input.structuralFingerprint?.algorithm === "fnv1a", "missing structural fingerprint");
 req(/^[0-9a-f]{8}$/.test(input.structuralFingerprint?.hash || ""), "invalid structural fingerprint");
 req(input.coverage?.infanziaFields === 5, "incomplete Infanzia coverage");
@@ -38,33 +51,35 @@ if (errors.length) {
   throw new Error("Arena curriculum export rejected:\n" + errors.map((e) => "- " + e).join("\n"));
 }
 
-let previous = null;
-try { previous = JSON.parse(await fs.readFile(target, "utf8")); } catch {}
-let facade = "";
-try { facade = await fs.readFile("src/features/curriculum/fixtures.ts", "utf8"); } catch {}
-const projectsArena = facade.includes("./arena-projected");
-
-if (previous?.structuralFingerprint?.hash === input.structuralFingerprint.hash
-  && previous?.authorityState === input.authorityState
-  && previous?.curriculum?.sourceRevisionId === input.curriculum?.sourceRevisionId
-  && projectsArena) {
-  console.log("Arena curriculum already current:", input.structuralFingerprint.hash, input.authorityState);
-  process.exit(0);
-}
-
-await fs.writeFile(target, JSON.stringify(input, null, 2) + "\n", "utf8");
-
-const facade = `export {
+const projectedFacade = `export {
   instituteCurriculumFixture,
   arenaCurriculumAuthority,
   findObjective,
 } from "./arena-projected";
 `;
-await fs.writeFile("src/features/curriculum/fixtures.ts", facade, "utf8");
+
+let previous = null;
+try { previous = JSON.parse(await fs.readFile(target, "utf8")); } catch {}
+
+let currentFacade = "";
+try { currentFacade = await fs.readFile(facadePath, "utf8"); } catch {}
+
+const samePayload = previous != null
+  && JSON.stringify(previous) === JSON.stringify(input);
+
+if (samePayload && currentFacade === projectedFacade) {
+  console.log("Arena curriculum already current:", input.structuralFingerprint.hash, input.authorityState, input.publicationPolicy);
+  process.exit(0);
+}
+
+await fs.writeFile(target, JSON.stringify(input, null, 2) + "\n", "utf8");
+await fs.writeFile(facadePath, projectedFacade, "utf8");
 
 console.log(JSON.stringify({
   changed: true,
   fingerprint: input.structuralFingerprint.hash,
   authorityState: input.authorityState,
   masterVersion: input.curriculum?.masterVersion,
+  atlasVisible: true,
+  vigente: input.authorityState === "APPROVED",
 }, null, 2));

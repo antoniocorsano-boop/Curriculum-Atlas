@@ -28,6 +28,38 @@ try {
         clientWidth: document.documentElement.clientWidth
       }));
       if (metrics.scrollWidth > metrics.clientWidth) {
+        const offenders = await page.evaluate(() => {
+          const viewportWidth = document.documentElement.clientWidth;
+          return Array.from(document.querySelectorAll("body *"))
+            .map((node) => {
+              const el = node;
+              const rect = el.getBoundingClientRect();
+              const style = getComputedStyle(el);
+              const overflowsViewport = rect.right > viewportWidth + 1 || rect.left < -1;
+              const intrinsicOverflow = el.scrollWidth > el.clientWidth + 1;
+              if (!overflowsViewport && !intrinsicOverflow) return null;
+              return {
+                tag: el.tagName.toLowerCase(),
+                id: el.id || "",
+                className: typeof el.className === "string" ? el.className : "",
+                rect: {
+                  left: Math.round(rect.left),
+                  right: Math.round(rect.right),
+                  width: Math.round(rect.width)
+                },
+                scrollWidth: el.scrollWidth,
+                clientWidth: el.clientWidth,
+                overflowX: style.overflowX,
+                minWidth: style.minWidth,
+                width: style.width,
+                text: (el.textContent || "").trim().replace(/\s+/g, " ").slice(0, 180)
+              };
+            })
+            .filter(Boolean)
+            .sort((a, b) => Math.max(b.rect.right - viewportWidth, b.scrollWidth - b.clientWidth) - Math.max(a.rect.right - viewportWidth, a.scrollWidth - a.clientWidth))
+            .slice(0, 20);
+        });
+        console.error("F4 overflow offenders:", JSON.stringify(offenders, null, 2));
         throw new Error(`Horizontal overflow detected on ${path} / ${viewport.name}: ${metrics.scrollWidth} > ${metrics.clientWidth}`);
       }
 

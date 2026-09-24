@@ -7,7 +7,12 @@
   "publicationPolicy": {
     "atlasAutomaticSync": true,
     "atlasAutomaticMerge": false,
-    "publicPromotionRequiresAuthorityState": "APPROVED",
+    "publicVisibilityAllowedAuthorityStates": [
+      "PROVISIONAL_COMPLETE",
+      "APPROVED"
+    ],
+    "provisionalPublicDisclosureRequired": true,
+    "vigencyRequiresAuthorityState": "APPROVED",
     "humanApprovalRequired": true
   },
   "structuralFingerprint": {
