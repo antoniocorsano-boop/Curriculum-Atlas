@@ -21,6 +21,7 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
+          package-manager-cache: false
       - run: node scripts/validate-arena-curriculum-authority.mjs --candidate-only
 
   publication-authority:
@@ -31,4 +32,5 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
+          package-manager-cache: false
       - run: node scripts/validate-arena-curriculum-authority.mjs
