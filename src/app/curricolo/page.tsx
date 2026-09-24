@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/atlas/app-shell";
 import { CurriculumTree } from "@/components/atlas/curriculum-tree";
 import { ProvenancePanel } from "@/components/atlas/provenance-panel";
+import { arenaCurriculumAuthority } from "@/features/curriculum/fixtures";
 
 export default function CurriculumPage() {
   return (
@@ -13,12 +14,26 @@ export default function CurriculumPage() {
         </div>
       </header>
 
+      {arenaCurriculumAuthority.authorityState === "PROVISIONAL_COMPLETE" ? (
+        <div className="atlas-domain-note" role="note">
+          <strong>Baseline Arena completa in validazione · non vigente.</strong>
+          <span>Atlas mostra questa versione solo nella PR di sincronizzazione. La pubblicazione su main resta bloccata finché Arena non registra l’approvazione istituzionale.</span>
+        </div>
+      ) : null}
+
       <div className="atlas-curriculum-layout">
         <section className="atlas-panel">
           <CurriculumTree />
         </section>
         <div className="atlas-curriculum-rail">
-          <ProvenancePanel label="Fixture di istituto per S3-V2/F1 · fonte reale non ancora collegata" version="fixture S3-V2/F1" />
+          <ProvenancePanel
+            label={arenaCurriculumAuthority.authorityState === "FIXTURE"
+              ? "Fixture di istituto per S3-V2/F1 · fonte reale non ancora pubblicata"
+              : `Arena · ${arenaCurriculumAuthority.sourceState}`}
+            version={arenaCurriculumAuthority.authorityState === "FIXTURE"
+              ? "fixture S3-V2/F1"
+              : `${arenaCurriculumAuthority.masterVersion} · ${arenaCurriculumAuthority.fingerprint}`}
+          />
           <section className="atlas-panel atlas-progression-panel">
             <h3>Ordini di scuola</h3>
             <ol>
