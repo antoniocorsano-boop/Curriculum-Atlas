@@ -136,26 +136,22 @@ button, input { font: inherit; }
   color: var(--text-primary);
 }
 
-.atlas-user {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.atlas-public-context {
+  display: grid;
+  gap: 2px;
+  justify-items: end;
   color: var(--text-secondary);
   font-size: 12px;
 }
+.atlas-public-context strong { color: var(--text-primary); }
+.atlas-public-context span { color: var(--text-muted); }
 
-.atlas-avatar {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: #dbe5f1;
-  color: var(--text-primary);
-  font-weight: 700;
+.atlas-content {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 30px clamp(18px, 3vw, 42px) 46px;
 }
-
-.atlas-content { padding: 30px clamp(18px, 3vw, 42px) 46px; }
 
 .atlas-page-heading {
   display: flex;
@@ -263,7 +259,7 @@ button, input { font: inherit; }
   .atlas-topbar {
     grid-template-columns: 1fr auto;
     grid-template-areas:
-      "brand user"
+      "brand context"
       "search search";
     gap: 8px 12px;
     min-height: 92px;
@@ -283,8 +279,8 @@ button, input { font: inherit; }
   .atlas-mobile-brand .atlas-mark { font-size: 18px; }
   .atlas-search { grid-area: search; min-width: 0; min-height: 42px; }
   .atlas-search input::placeholder { color: var(--text-muted); opacity: 1; }
-  .atlas-user { grid-area: user; }
-  .atlas-user > div:last-child { display: none; }
+  .atlas-public-context { grid-area: context; font-size: 11px; }
+  .atlas-public-context span { display: none; }
   .atlas-content { padding: 18px 14px 30px; }
   .atlas-page-heading { align-items: start; margin-bottom: 16px; }
   .atlas-page-heading h1 { font-size: 32px; }
@@ -337,7 +333,9 @@ button, input { font: inherit; }
   .atlas-mobile-nav a {
     display: grid;
     justify-items: center;
+    align-content: center;
     gap: 2px;
+    min-height: 48px;
     color: var(--text-secondary);
     font-size: 10px;
   }
