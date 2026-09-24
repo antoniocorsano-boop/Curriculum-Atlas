@@ -41,7 +41,10 @@ try {
 
         await page.locator(".atlas-mobile-more > summary").click();
         const secondaryHrefs = await page.locator(".atlas-mobile-more-menu a").evaluateAll((nodes) =>
-          nodes.map((node) => node.getAttribute("href"))
+          nodes
+            .map((node) => node.getAttribute("href"))
+            .filter(Boolean)
+            .map((href) => href.length > 1 ? href.replace(/\/$/, "") : href)
         );
         const requiredSecondary = ["/percorsi", "/obiettivi", "/raccordi", "/impostazioni"];
         if (requiredSecondary.some((href) => !secondaryHrefs.includes(href))) {
