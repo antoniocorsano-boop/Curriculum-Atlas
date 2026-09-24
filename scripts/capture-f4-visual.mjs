@@ -32,11 +32,20 @@ try {
       }
 
       if (viewport.name.startsWith("mobile")) {
-        const targets = await page.locator(".atlas-mobile-nav a").evaluateAll((nodes) =>
+        const targets = await page.locator(".atlas-mobile-nav > a, .atlas-mobile-more > summary").evaluateAll((nodes) =>
           nodes.map((node) => Math.round(node.getBoundingClientRect().height))
         );
         if (!targets.length || targets.some((height) => height < 44)) {
           throw new Error(`Mobile nav target below 44px on ${path} / ${viewport.name}: ${targets.join(",")}`);
+        }
+
+        await page.locator(".atlas-mobile-more > summary").click();
+        const secondaryHrefs = await page.locator(".atlas-mobile-more-menu a").evaluateAll((nodes) =>
+          nodes.map((node) => node.getAttribute("href"))
+        );
+        const requiredSecondary = ["/percorsi", "/obiettivi", "/raccordi", "/impostazioni"];
+        if (requiredSecondary.some((href) => !secondaryHrefs.includes(href))) {
+          throw new Error(`Incomplete mobile secondary navigation on ${path} / ${viewport.name}: ${secondaryHrefs.join(",")}`);
         }
       }
 
