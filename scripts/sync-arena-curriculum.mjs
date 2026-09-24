@@ -39,23 +39,12 @@ if (errors.length) {
   throw new Error("Arena curriculum export rejected:\n" + errors.map((e) => "- " + e).join("\n"));
 }
 
-const approvedFacade = `export {
+const projectedFacade = `export {
   instituteCurriculumFixture,
   arenaCurriculumAuthority,
   findObjective,
 } from "./arena-projected";
 `;
-
-const provisionalFacade = `export {
-  instituteCurriculumFixture,
-  arenaCurriculumAuthority,
-  findObjective,
-} from "./fixtures.static";
-`;
-
-const desiredFacade = input.authorityState === "APPROVED"
-  ? approvedFacade
-  : provisionalFacade;
 
 let previous = null;
 try { previous = JSON.parse(await fs.readFile(target, "utf8")); } catch {}
@@ -68,18 +57,19 @@ const samePayload =
   && previous?.authorityState === input.authorityState
   && previous?.curriculum?.sourceRevisionId === input.curriculum?.sourceRevisionId;
 
-if (samePayload && currentFacade === desiredFacade) {
+if (samePayload && currentFacade === projectedFacade) {
   console.log("Arena curriculum already current:", input.structuralFingerprint.hash, input.authorityState);
   process.exit(0);
 }
 
 await fs.writeFile(target, JSON.stringify(input, null, 2) + "\n", "utf8");
-await fs.writeFile(facadePath, desiredFacade, "utf8");
+await fs.writeFile(facadePath, projectedFacade, "utf8");
 
 console.log(JSON.stringify({
   changed: true,
   fingerprint: input.structuralFingerprint.hash,
   authorityState: input.authorityState,
   masterVersion: input.curriculum?.masterVersion,
-  publicationPromoted: input.authorityState === "APPROVED",
+  atlasVisible: true,
+  vigente: input.authorityState === "APPROVED",
 }, null, 2));
