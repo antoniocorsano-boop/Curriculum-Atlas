@@ -4,6 +4,8 @@ import { ProvenancePanel } from "@/components/atlas/provenance-panel";
 import { arenaCurriculumAuthority } from "@/features/curriculum/fixtures";
 
 export default function CurriculumPage() {
+  const isProvisional = arenaCurriculumAuthority.authorityState === "PROVISIONAL_COMPLETE";
+
   return (
     <AppShell>
       <header className="atlas-page-heading">
@@ -14,10 +16,15 @@ export default function CurriculumPage() {
         </div>
       </header>
 
-      {arenaCurriculumAuthority.authorityState === "PROVISIONAL_COMPLETE" ? (
-        <div className="atlas-domain-note" role="note">
-          <strong>Baseline Arena completa in validazione · non vigente.</strong>
-          <span>Atlas mostra questa versione solo nella PR di sincronizzazione. La pubblicazione su main resta bloccata finché Arena non registra l’approvazione istituzionale.</span>
+      {isProvisional ? (
+        <div
+          className="atlas-domain-note"
+          role="status"
+          aria-label="Stato di autorità del curricolo"
+          data-authority-state="PROVISIONAL_COMPLETE"
+        >
+          <strong>Curriculum provvisorio — non vigente.</strong>
+          <span>Versione aggiornata propagata da Arena. L’approvazione del Collegio dei docenti è in attesa.</span>
         </div>
       ) : null}
 
