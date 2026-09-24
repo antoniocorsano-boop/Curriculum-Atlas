@@ -50,6 +50,27 @@ try {
         if (requiredSecondary.some((href) => !secondaryHrefs.includes(href))) {
           throw new Error(`Incomplete mobile secondary navigation on ${path} / ${viewport.name}: ${secondaryHrefs.join(",")}`);
         }
+
+        if (surface === "esplora") {
+          if (await page.locator(".react-flow__minimap").count()) {
+            throw new Error(`Esplora minimap must stay hidden on ${viewport.name}`);
+          }
+          const nodeWidths = await page.locator(".atlas-map-node-inner").evaluateAll((nodes) =>
+            nodes.slice(0, 4).map((node) => Math.round(node.getBoundingClientRect().width))
+          );
+          if (!nodeWidths.length || nodeWidths.some((width) => width < 150)) {
+            throw new Error(`Esplora nodes too small on ${viewport.name}: ${nodeWidths.join(",")}`);
+          }
+        }
+      }
+
+      if (surface === "esplora" && viewport.name === "lim-1080p") {
+        const nodeWidths = await page.locator(".atlas-map-node-inner").evaluateAll((nodes) =>
+          nodes.slice(0, 4).map((node) => Math.round(node.getBoundingClientRect().width))
+        );
+        if (!nodeWidths.length || nodeWidths.some((width) => width < 145)) {
+          throw new Error(`Esplora overview too small on LIM: ${nodeWidths.join(",")}`);
+        }
       }
 
       await page.screenshot({
