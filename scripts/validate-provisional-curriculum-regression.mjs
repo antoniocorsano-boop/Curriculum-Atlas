@@ -42,6 +42,21 @@ req(rule.includes("La visibilità pubblica di una versione provvisoria non equiv
 req(rule.includes("approvazione del Collegio dei docenti"),
   "REGRESSION: governance rule no longer binds vigency to Collegio approval");
 
+req(arenaExport.publicationPolicy?.atlasAutomaticSync === true,
+  "REGRESSION: publication policy no longer enables Atlas automatic sync");
+req(arenaExport.publicationPolicy?.atlasAutomaticMerge === false,
+  "REGRESSION: publication policy no longer forbids automatic merge");
+req(Array.isArray(arenaExport.publicationPolicy?.publicVisibilityAllowedAuthorityStates)
+  && arenaExport.publicationPolicy.publicVisibilityAllowedAuthorityStates.includes("PROVISIONAL_COMPLETE")
+  && arenaExport.publicationPolicy.publicVisibilityAllowedAuthorityStates.includes("APPROVED"),
+  "REGRESSION: allowed public visibility states changed");
+req(arenaExport.publicationPolicy?.provisionalPublicDisclosureRequired === true,
+  "REGRESSION: provisional public disclosure requirement missing");
+req(arenaExport.publicationPolicy?.vigencyRequiresAuthorityState === "APPROVED",
+  "REGRESSION: vigency no longer requires APPROVED");
+req(arenaExport.publicationPolicy?.humanApprovalRequired === true,
+  "REGRESSION: human approval requirement missing");
+
 if (arenaExport.authorityState === "PROVISIONAL_COMPLETE") {
   req(arenaExport.authorityReceiptRef == null,
     "REGRESSION: provisional export must not claim authorityReceiptRef");
