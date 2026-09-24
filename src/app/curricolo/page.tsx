@@ -14,10 +14,10 @@ export default function CurriculumPage() {
         </div>
       </header>
 
-      {arenaCurriculumAuthority.authorityState !== "APPROVED" ? (
+      {arenaCurriculumAuthority.authorityState === "PROVISIONAL_COMPLETE" ? (
         <div className="atlas-domain-note" role="note">
           <strong>Baseline Arena completa in validazione · non vigente.</strong>
-          <span>Atlas mostra questa versione solo per la review della sincronizzazione. La pubblicazione su main resta bloccata finché Arena non registra l’approvazione istituzionale.</span>
+          <span>Atlas mostra questa versione solo nella PR di sincronizzazione. La pubblicazione su main resta bloccata finché Arena non registra l’approvazione istituzionale.</span>
         </div>
       ) : null}
 
@@ -27,8 +27,12 @@ export default function CurriculumPage() {
         </section>
         <div className="atlas-curriculum-rail">
           <ProvenancePanel
-            label={`Arena · ${arenaCurriculumAuthority.sourceState}`}
-            version={`${arenaCurriculumAuthority.masterVersion} · ${arenaCurriculumAuthority.fingerprint}`}
+            label={arenaCurriculumAuthority.authorityState === "FIXTURE"
+              ? "Fixture di istituto per S3-V2/F1 · fonte reale non ancora pubblicata"
+              : `Arena · ${arenaCurriculumAuthority.sourceState}`}
+            version={arenaCurriculumAuthority.authorityState === "FIXTURE"
+              ? "fixture S3-V2/F1"
+              : `${arenaCurriculumAuthority.masterVersion} · ${arenaCurriculumAuthority.fingerprint}`}
           />
           <section className="atlas-panel atlas-progression-panel">
             <h3>Ordini di scuola</h3>
