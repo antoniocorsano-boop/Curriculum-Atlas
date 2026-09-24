@@ -13,6 +13,7 @@ import {
   Settings,
   Target,
   Waypoints,
+  Ellipsis,
 } from "lucide-react";
 
 const items = [
@@ -24,6 +25,17 @@ const items = [
   { href: "/risorse", label: "Risorse Atlas", icon: Library },
   { href: "/obiettivi", label: "Obiettivi", icon: Target },
   { href: "/raccordi", label: "Raccordi", icon: Waypoints },
+];
+
+const mobileItems = items.filter((item) =>
+  ["/", "/esplora", "/curricolo", "/materiali", "/risorse"].includes(item.href)
+);
+
+const mobileMoreItems = [
+  { href: "/percorsi", label: "Percorsi", icon: GitBranch },
+  { href: "/obiettivi", label: "Obiettivi", icon: Target },
+  { href: "/raccordi", label: "Raccordi", icon: Waypoints },
+  { href: "/impostazioni", label: "Impostazioni", icon: Settings },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -64,12 +76,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span className="sr-only">Cerca in Atlas</span>
             <input placeholder="Cerca in Atlas" aria-label="Cerca in Atlas" />
           </label>
-          <div className="atlas-user">
-            <div className="atlas-avatar" aria-hidden="true">TR</div>
-            <div>
-              <strong>Atlas</strong><br />
-              <span>Prodotto TRAMA</span>
-            </div>
+          <div className="atlas-public-context" aria-label="Atlas è una vista pubblica senza account">
+            <strong>Vista pubblica</strong>
+            <span>TRAMA · nessun account</span>
           </div>
         </header>
 
@@ -77,12 +86,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <nav className="atlas-mobile-nav" aria-label="Navigazione mobile">
-        {items.slice(0, 5).map(({ href, label, icon: Icon }) => (
+        {mobileItems.map(({ href, label, icon: Icon }) => (
           <Link key={href} href={href} data-active={isActive(href) ? "true" : "false"}>
             <Icon size={19} aria-hidden="true" />
             <span>{label}</span>
           </Link>
         ))}
+        <details className="atlas-mobile-more">
+          <summary aria-label="Altre sezioni Atlas">
+            <Ellipsis size={19} aria-hidden="true" />
+            <span>Altro</span>
+          </summary>
+          <div className="atlas-mobile-more-menu">
+            {mobileMoreItems.map(({ href, label, icon: Icon }) => (
+              <Link key={href} href={href} data-active={isActive(href) ? "true" : "false"}>
+                <Icon size={17} aria-hidden="true" />
+                <span>{label}</span>
+              </Link>
+            ))}
+          </div>
+        </details>
       </nav>
     </div>
   );
