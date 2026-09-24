@@ -1,8 +1,10 @@
 import fs from "node:fs";
 
-const path = process.argv[2] || "src/features/curriculum/arena-curriculum-export.json";
+const args = process.argv.slice(2);
+const candidateOnly = args.includes("--candidate-only");
+const path = args.find((arg) => !arg.startsWith("--"))
+  || "src/features/curriculum/arena-curriculum-export.json";
 const input = JSON.parse(fs.readFileSync(path, "utf8"));
-const candidateOnly = process.argv.includes("--candidate-only");
 
 const errors=[];
 const req=(ok,msg)=>{ if(!ok) errors.push(msg); };
