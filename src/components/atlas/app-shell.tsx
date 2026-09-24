@@ -26,6 +26,10 @@ const items = [
   { href: "/raccordi", label: "Raccordi", icon: Waypoints },
 ];
 
+const mobileItems = items.filter((item) =>
+  ["/", "/esplora", "/curricolo", "/materiali", "/risorse"].includes(item.href)
+);
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isActive = (href: string) => href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -64,12 +68,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span className="sr-only">Cerca in Atlas</span>
             <input placeholder="Cerca in Atlas" aria-label="Cerca in Atlas" />
           </label>
-          <div className="atlas-user">
-            <div className="atlas-avatar" aria-hidden="true">TR</div>
-            <div>
-              <strong>Atlas</strong><br />
-              <span>Prodotto TRAMA</span>
-            </div>
+          <div className="atlas-public-context" aria-label="Atlas è una vista pubblica senza account">
+            <strong>Vista pubblica</strong>
+            <span>TRAMA · nessun account</span>
           </div>
         </header>
 
@@ -77,7 +78,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <nav className="atlas-mobile-nav" aria-label="Navigazione mobile">
-        {items.slice(0, 5).map(({ href, label, icon: Icon }) => (
+        {mobileItems.map(({ href, label, icon: Icon }) => (
           <Link key={href} href={href} data-active={isActive(href) ? "true" : "false"}>
             <Icon size={19} aria-hidden="true" />
             <span>{label}</span>
