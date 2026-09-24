@@ -29,7 +29,7 @@ jobs:
         id: changes
         shell: bash
         run: |
-          if git diff --quiet -- src/features/curriculum/arena-curriculum-export.json; then
+          if git diff --quiet -- src/features/curriculum/arena-curriculum-export.json src/features/curriculum/fixtures.ts; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -46,7 +46,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B "$BRANCH"
-          git add src/features/curriculum/arena-curriculum-export.json
+          git add src/features/curriculum/arena-curriculum-export.json src/features/curriculum/fixtures.ts
           git commit -m "sync(curriculum): update Arena curriculum snapshot"
           git push --force origin "HEAD:$BRANCH"
 
