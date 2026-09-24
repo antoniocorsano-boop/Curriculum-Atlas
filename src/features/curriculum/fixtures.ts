@@ -2,4 +2,4 @@ export {
   instituteCurriculumFixture,
   arenaCurriculumAuthority,
   findObjective,
-} from "./arena-projected";
+} from "./fixtures.static";
