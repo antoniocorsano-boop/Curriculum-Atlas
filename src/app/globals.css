@@ -893,3 +893,63 @@ button, input { font: inherit; }
   .atlas-resource-card{padding:14px}
 }
 
+
+
+/* Full institute curriculum responsive hardening */
+.atlas-curriculum-layout,
+.atlas-curriculum-tree,
+.atlas-curriculum-filters,
+.atlas-curriculum-filters label,
+.atlas-department,
+.atlas-discipline-block,
+.atlas-tree-year,
+.atlas-tree-year-head,
+.atlas-tree-year-head span,
+.atlas-tree-topic,
+.atlas-tree-objectives,
+.atlas-objective-row,
+.atlas-objective-row > span,
+.atlas-explore,
+.atlas-explore-toolbar,
+.atlas-explore-filters,
+.atlas-explore-filters label,
+.atlas-explore-layout,
+.atlas-explore-surface,
+.atlas-explore-context,
+.atlas-equivalent-outline,
+.atlas-outline-list,
+.atlas-outline-list button,
+.atlas-outline-list button > span:first-child {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.atlas-curriculum-filters select,
+.atlas-explore-filters select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.atlas-discipline-block > h3,
+.atlas-tree-year-head strong,
+.atlas-tree-year-head small,
+.atlas-objective-row > span,
+.atlas-explore-context h2,
+.atlas-explore-context p,
+.atlas-explore-context dd,
+.atlas-outline-list strong,
+.atlas-outline-list small {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+@media(max-width:720px),(hover:none) and (pointer:coarse){
+  .atlas-panel { min-width:0; overflow:hidden; }
+  .atlas-curriculum-filters,
+  .atlas-explore-toolbar { width:100%; max-width:100%; }
+  .atlas-objective-row { grid-template-columns:minmax(42px,52px) minmax(0,1fr) auto; }
+  .atlas-explore-filters { width:100%; min-width:0; }
+  .atlas-explore-filters select { text-overflow:ellipsis; }
+  .atlas-explore-context dl div { grid-template-columns:minmax(60px,72px) minmax(0,1fr); }
+}
