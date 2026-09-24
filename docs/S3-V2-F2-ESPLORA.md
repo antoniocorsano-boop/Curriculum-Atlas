@@ -76,9 +76,16 @@ Obbligatori:
 ### Mobile
 - filtri impilati;
 - selettore Mappa/Elenco a larghezza piena;
-- canvas touch;
+- canvas touch con **viewport iniziale leggibile**, senza fit dell’intero grafo;
+- minimappa nascosta quando sottrae spazio utile;
+- navigazione per pan/zoom su un sottoinsieme visibile alla volta;
 - pannello contestuale sotto;
 - Elenco pienamente utilizzabile senza canvas.
+
+### Desktop / LIM
+- la panoramica non deve comprimere automaticamente l’intero grafo fino a rendere illeggibili nodi e label;
+- il viewport iniziale privilegia una scala leggibile e consente pan/zoom per il resto della rete;
+- la minimappa resta un ausilio secondario, non sostituisce la leggibilità del canvas principale.
 
 ## Exit F2
 
@@ -89,8 +96,8 @@ F2 può essere candidato a integrazione solo se:
 - [ ] build PASS;
 - [ ] Foundation gate PASS;
 - [ ] TRAMA Perceptible Write PASS;
-- [ ] screenshot Mappa mobile PASS;
-- [ ] screenshot Mappa desktop PASS;
+- [ ] screenshot Mappa mobile PASS con nodi leggibili e minimappa non invasiva;
+- [ ] screenshot Mappa desktop/LIM PASS con overview leggibile, non miniaturizzata;
 - [ ] screenshot Elenco mobile PASS;
 - [ ] screenshot Elenco desktop PASS;
 - [ ] nessun overflow orizzontale;
