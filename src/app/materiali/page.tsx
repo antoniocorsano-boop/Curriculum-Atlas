@@ -6,9 +6,9 @@ export default function MaterialsPage() {
     <AppShell>
       <header className="atlas-page-heading">
         <div>
-          <span className="atlas-eyebrow">Materiali didattici</span>
+          <span className="atlas-eyebrow">Materiali didattici pubblicati</span>
           <h1>Le lezioni della tua classe.</h1>
-          <p>Scegli la classe e la disciplina per vedere i materiali pubblicati, organizzati lezione per lezione.</p>
+          <p>Scegli classe e disciplina per vedere esclusivamente i materiali resi disponibili lezione per lezione.</p>
         </div>
       </header>
       <MaterialBrowser />

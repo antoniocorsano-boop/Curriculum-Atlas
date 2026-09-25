@@ -1,0 +1,27 @@
+/* ATLAS-PERCHÉ prototype — route-scoped styles */
+.atlas-why-launch{display:grid;gap:16px;max-width:860px}
+.atlas-why-launch h2,.atlas-why-stage h2{margin:0;font-size:clamp(24px,4vw,38px);letter-spacing:-.025em;line-height:1.12}
+.atlas-why-launch p{margin:0;color:var(--text-secondary);line-height:1.6}
+.atlas-why-actions,.atlas-why-nav,.atlas-why-tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.atlas-primary-button,.atlas-secondary-button,.atlas-text-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 14px;border-radius:9px;font:inherit;font-weight:750;cursor:pointer}
+.atlas-primary-button{border:1px solid var(--action-primary);background:var(--action-primary);color:white}
+.atlas-primary-button:hover{background:var(--action-primary-hover)}
+.atlas-secondary-button{border:1px solid var(--border-strong);background:white;color:var(--text-primary)}
+.atlas-text-button{border:0;background:transparent;color:var(--text-secondary)}
+.atlas-primary-button:focus-visible,.atlas-secondary-button:focus-visible,.atlas-text-button:focus-visible,.atlas-why-note textarea:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+.atlas-primary-button:disabled,.atlas-secondary-button:disabled{opacity:.45;cursor:not-allowed}
+.atlas-why-privacy{padding-top:14px;border-top:1px solid var(--border-subtle);font-size:13px}
+.atlas-why-player{display:grid;gap:14px;max-width:960px}
+.atlas-why-progress{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.atlas-why-progress span{height:6px;border-radius:999px;background:var(--border-subtle)}
+.atlas-why-progress span[data-complete="true"]{background:var(--domain-atlas)}
+.atlas-why-progress span[data-current="true"]{background:var(--action-primary)}
+.atlas-why-stage{display:grid;gap:24px;min-height:360px;align-content:space-between}
+.atlas-why-note{display:grid;gap:8px}
+.atlas-why-note>span{font-size:13px;font-weight:750;color:var(--text-secondary)}
+.atlas-why-note textarea{width:100%;resize:vertical;padding:12px;border:1px solid var(--border-strong);border-radius:10px;background:#fbfcfe;color:var(--text-primary);font:inherit;line-height:1.5}
+.atlas-why-nav{justify-content:space-between;padding-top:14px;border-top:1px solid var(--border-subtle)}
+.atlas-why-done{display:inline-flex;align-items:center;gap:7px;color:var(--ui-success);font-weight:750}
+.atlas-why-tools{justify-content:space-between}
+.atlas-why-prototype-link{display:inline-flex;align-items:center;gap:8px;margin-top:12px;color:var(--action-primary);font-weight:750}
+@media(max-width:720px),(hover:none) and (pointer:coarse){.atlas-why-stage{min-height:330px;padding:16px}.atlas-why-actions,.atlas-why-tools{display:grid}.atlas-why-actions>* ,.atlas-why-tools>*{width:100%}.atlas-why-nav{display:grid;grid-template-columns:1fr 1fr}.atlas-why-done{grid-column:1/-1}}

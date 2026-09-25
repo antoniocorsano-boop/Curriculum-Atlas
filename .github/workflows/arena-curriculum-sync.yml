@@ -1,0 +1,62 @@
+name: Arena Curriculum Sync
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Fetch and validate Arena curriculum
+        run: node scripts/sync-arena-curriculum.mjs
+
+      - name: Detect curriculum change
+        id: changes
+        shell: bash
+        run: |
+          if git diff --quiet -- src/features/curriculum/arena-curriculum-export.json src/features/curriculum/fixtures.ts; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create or update governed sync PR
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH="sync/arena-curriculum"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add src/features/curriculum/arena-curriculum-export.json src/features/curriculum/fixtures.ts
+          git commit -m "sync(curriculum): update Arena curriculum snapshot"
+          git push --force origin "HEAD:$BRANCH"
+
+          AUTHORITY_STATE="$(node -e 'const x=require("./src/features/curriculum/arena-curriculum-export.json"); process.stdout.write(x.authorityState)')"
+          FINGERPRINT="$(node -e 'const x=require("./src/features/curriculum/arena-curriculum-export.json"); process.stdout.write(x.structuralFingerprint.hash)')"
+
+          EXISTING="$(gh pr list --base main --head "$BRANCH" --state open --json number --jq '.[0].number // empty')"
+          BODY="Automated Arena curriculum synchronization.\n\nAuthority state: **$AUTHORITY_STATE**\nFingerprint: `$FINGERPRINT`\n\nTransport is automatic; publication remains gated by Arena authority and Atlas review."
+          if [ -z "$EXISTING" ]; then
+            gh pr create --base main --head "$BRANCH" --title "Sync Arena curriculum → Atlas" --body "$BODY" --draft
+          else
+            gh pr edit "$EXISTING" --body "$BODY"
+          fi

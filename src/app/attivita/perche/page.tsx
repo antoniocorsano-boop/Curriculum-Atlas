@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/atlas/app-shell";
 import { ActivityPrototype } from "@/components/atlas/activity-prototype";
+import "./perche.css";
 
 export default function WhyActivityPage() {
   return (

@@ -186,6 +186,12 @@ export function RelationExplorer() {
   const mapNodes = useMemo(() => buildLayout(visibleGraph.nodes, compact), [visibleGraph.nodes, compact]);
   const mapEdges = useMemo(() => buildEdges(visibleGraph.ids), [visibleGraph.ids]);
   const selected = visibleGraph.nodes.find(node => node.id === selectedId) ?? visibleGraph.nodes[0];
+  const initialViewport = compact
+    ? { x: 18, y: 28, zoom: 0.92 }
+    : depth === "overview"
+      ? { x: 36, y: 72, zoom: 0.82 }
+      : { x: 26, y: 54, zoom: 0.74 };
+  const viewportKey = [compact ? "compact" : "wide", depth, stage, disciplineId].join(":");
 
   const onNodeClick: NodeMouseHandler = (_event, node) => {
     setSelectedId(node.id);
@@ -240,14 +246,14 @@ export function RelationExplorer() {
           {view === "map" ? (
             <div className="atlas-relation-canvas">
               <ReactFlow
+                key={viewportKey}
                 nodes={mapNodes}
                 edges={mapEdges}
                 nodeTypes={nodeTypes}
                 onNodeClick={onNodeClick}
                 onPaneClick={() => setSelectedId("institute")}
-                fitView
-                fitViewOptions={{ padding: 0.18 }}
-                minZoom={0.35}
+                defaultViewport={initialViewport}
+                minZoom={compact ? 0.68 : 0.55}
                 maxZoom={1.7}
                 nodesDraggable={false}
                 nodesConnectable={false}
@@ -256,7 +262,7 @@ export function RelationExplorer() {
                 aria-label="Mappa relazionale interattiva del curricolo"
               >
                 <Background gap={26} size={1} />
-                <MiniMap pannable zoomable aria-label="Mini mappa" />
+                {!compact ? <MiniMap pannable zoomable aria-label="Mini mappa" /> : null}
                 <Controls showInteractive={false} />
               </ReactFlow>
             </div>

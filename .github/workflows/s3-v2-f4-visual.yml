@@ -1,0 +1,67 @@
+name: R3-F0 S3-V2 F4 Mobile LIM Evidence
+
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "scripts/capture-f4-visual.mjs"
+      - "docs/S3-V2-F4-MOBILE-LIM.md"
+      - "package.json"
+      - ".github/workflows/s3-v2-f4-visual.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build
+        run: pnpm build
+
+      - name: Start app
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm start > /tmp/atlas-f4.log 2>&1 &
+          echo $! > /tmp/atlas-f4.pid
+          for i in {1..60}; do
+            if curl -fsS http://127.0.0.1:3000/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/atlas-f4.log
+          exit 1
+
+      - name: Capture mobile and LIM evidence
+        run: node scripts/capture-f4-visual.mjs
+
+      - name: Upload visual evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-f4-mobile-lim-evidence
+          path: artifacts/f4-visual/*.png
+          if-no-files-found: error
