@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "1.0-experimental",
+  "projectionKind": "ATLAS_ACTIVITY_PROJECTION",
+  "canonicalDomainType": "Activity",
+  "canonicalModelStatus": "NON_CANONICAL_PROTOTYPE_PROJECTION",
+  "activityId": "perche-p3-spiegazione",
+  "version": "0.1.0",
+  "title": "Quale spiegazione regge meglio?",
+  "schoolLevel": "PRIMARIA",
+  "ageBand": { "min": 10, "max": 11 },
+  "grades": ["PRIMARIA_5"],
+  "mode": "BOTH",
+  "cognitiveMoves": ["OBSERVE","HYPOTHESIZE","CHECK","EXPLAIN","REFLECT","REOPEN"],
+  "activityArchetypes": ["A4","A9","A10"],
+  "curriculumContext": {
+    "status": "PROTOTYPE_FIXTURE_NON_AUTHORITATIVE",
+    "authority": null,
+    "curriculumVersionRef": null,
+    "objectiveRefs": []
+  },
+  "offline": {
+    "eligible": true,
+    "requiredAssets": [],
+    "localState": "PERSISTENT_DEVICE",
+    "exportAllowed": true
+  },
+  "accessibility": {
+    "target": "WCAG_2_2_AA",
+    "keyboard": true,
+    "nonVisualEquivalent": true,
+    "reducedMotion": true
+  },
+  "rights": {
+    "status": "CLEARED",
+    "license": "PROTOTYPE-ORIGINAL-CONTENT"
+  },
+  "provenance": {
+    "createdBy": "TRAMA Atlas prototype",
+    "createdAt": "2026-09-23T00:00:00+02:00",
+    "authorityClaim": "NONE"
+  },
+  "steps": [
+    {
+      "stepId": "stimulus",
+      "kind": "STIMULUS",
+      "prompt": "Una pianta sul davanzale cresce inclinata verso la finestra. Perché?"
+    },
+    {
+      "stepId": "hypothesis",
+      "kind": "HYPOTHESIS",
+      "prompt": "Scegli la spiegazione che ti sembra più plausibile all'inizio e annota il perché."
+    },
+    {
+      "stepId": "evidence",
+      "kind": "EVIDENCE",
+      "prompt": "Confronta gli indizi: la pianta viene ruotata; dopo alcuni giorni i nuovi germogli si orientano nuovamente verso la finestra."
+    },
+    {
+      "stepId": "compare",
+      "kind": "COMPARE",
+      "prompt": "Quale spiegazione usa meglio tutti gli indizi? Quale fatto crea un problema all'altra?"
+    },
+    {
+      "stepId": "reflect",
+      "kind": "REFLECT",
+      "prompt": "La tua idea iniziale è cambiata? Spiega quale evidenza ha contato di più."
+    },
+    {
+      "stepId": "reopen",
+      "kind": "REOPEN",
+      "prompt": "Quale nuova osservazione o prova vorresti fare per capire ancora meglio?"
+    }
+  ]
+}
