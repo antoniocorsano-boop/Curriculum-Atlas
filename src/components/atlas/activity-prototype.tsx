@@ -3,16 +3,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Download, Play, RotateCcw, WifiOff } from "lucide-react";
 
-type ActivityStep = {
+type AtlasActivityProjectionStep = {
   stepId: string;
   kind: string;
   prompt: string;
 };
 
-type ActivityPackage = {
+type AtlasActivityPrototypeProjection = {
+  projectionKind: "ATLAS_ACTIVITY_PROJECTION";
+  canonicalDomainType: "Activity";
+  canonicalModelStatus: "NON_CANONICAL_PROTOTYPE_PROJECTION";
   activityId: string;
   title: string;
-  steps: ActivityStep[];
+  steps: AtlasActivityProjectionStep[];
 };
 
 const STORAGE_KEY = "atlas:perche:perche-p3-spiegazione:v1";
@@ -23,7 +26,7 @@ function atlasBasePath() {
 }
 
 export function ActivityPrototype() {
-  const [activity, setActivity] = useState<ActivityPackage | null>(null);
+  const [activity, setActivity] = useState<AtlasActivityPrototypeProjection | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
   const [note, setNote] = useState("");
   const [started, setStarted] = useState(false);
@@ -48,8 +51,15 @@ export function ActivityPrototype() {
   async function loadActivity() {
     const base = atlasBasePath();
     const response = await fetch(base + "/activity-packages/perche-p3.json");
-    if (!response.ok) throw new Error("Activity package unavailable");
-    const data = await response.json();
+    if (!response.ok) throw new Error("Activity projection unavailable");
+    const data = await response.json() as AtlasActivityPrototypeProjection;
+    if (
+      data.projectionKind !== "ATLAS_ACTIVITY_PROJECTION" ||
+      data.canonicalDomainType !== "Activity" ||
+      data.canonicalModelStatus !== "NON_CANONICAL_PROTOTYPE_PROJECTION"
+    ) {
+      throw new Error("Invalid prototype activity projection");
+    }
     setActivity(data);
     setStarted(true);
     setStepIndex(0);
@@ -128,7 +138,8 @@ export function ActivityPrototype() {
   }
 
   return (
-    <section className="atlas-why-player" aria-live="polite">\n      <p role="status" className="atlas-why-local-status">Le risposte restano salvate localmente su questo dispositivo.</p>
+    <section className="atlas-why-player" aria-live="polite">
+      <p role="status" className="atlas-why-local-status">Le risposte restano salvate localmente su questo dispositivo.</p>
       <div className="atlas-why-progress" aria-label={"Passaggio " + (stepIndex + 1) + " di " + activity.steps.length}>
         {activity.steps.map((step, index) => (
           <span key={step.stepId} data-current={index === stepIndex} data-complete={index < stepIndex} />
