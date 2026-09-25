@@ -55,15 +55,25 @@ HUMAN EXACT-HEAD REVIEW — PASS su:
 - chiarezza della distinzione Risorsa Atlas / Materiale pubblicato;
 - qualità della navigazione pubblica.
 
+## Chiarimento successivo — presenza di ATLAS-PERCHÉ su `main`
+
+Dopo la chiusura F5, il prototipo ATLAS-PERCHÉ è stato integrato su `main` con commit `f07e2447045eb8990936a917561bc4a52e722779`. La sua presenza nel codice principale **non costituisce promozione a capability di produzione** e non modifica retroattivamente l'exact head o l'esito della review F5.
+
+ATLAS-PERCHÉ deve essere interpretato esclusivamente come **prototipo governato presente nel repository**, con superfici tecniche sperimentali disponibili per verifica. Non è la capability canonica `Percorsi`, non è una baseline pedagogica generale e non autorizza uso con studenti.
+
+La capability `Percorsi` segue il gate separato TRAMA `CAP-ATLAS-PERCORSI / G1`, con costituzione child-safe, contratto di review, dossier per singolo percorso, evidenze e autorizzazione runtime separata. I prototipi esistenti possono diventare casi di studio o input di migrazione solo dopo mappatura esplicita ai contratti G1; non diventano canonici per semplice presenza su `main`.
+
 ## Non effetti
 
-La chiusura F5 non autorizza:
+La chiusura F5 e la successiva presenza del prototipo ATLAS-PERCHÉ su `main` non autorizzano:
 
 - approvazione automatica del curricolo;
 - Docente OS → Atlas runtime;
 - DOS-A1;
 - account o profili studenti;
 - tracking;
-- ATLAS-PERCHÉ in produzione.
+- uso di ATLAS-PERCHÉ con studenti;
+- promozione automatica di ATLAS-PERCHÉ a `Percorsi`;
+- runtime child-facing della capability `Percorsi`.
 
-ATLAS-PERCHÉ resta separata, sperimentale e in HOLD.
+ATLAS-PERCHÉ resta quindi **PROTOTYPE / NO PRODUCTION AUTHORIZATION**. La capability `Percorsi` resta **G1 / Runtime NOT_AUTHORIZED** fino al completamento dei propri gate.
