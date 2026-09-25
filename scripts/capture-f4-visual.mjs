@@ -82,6 +82,8 @@ try {
         if (requiredSecondary.some((href) => !secondaryHrefs.includes(href))) {
           throw new Error(`Incomplete mobile secondary navigation on ${path} / ${viewport.name}: ${secondaryHrefs.join(",")}`);
         }
+
+        await page.locator(".atlas-mobile-more > summary").click();
       }
 
       await page.screenshot({
