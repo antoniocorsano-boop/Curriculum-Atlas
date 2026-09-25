@@ -39,7 +39,7 @@ export function MissingInformationPathwayPrototype() {
           <p>Allenati a riconoscere quali informazioni servono prima di una scelta. Le risposte restano soltanto in questa sessione.</p>
         </div>
         <div className="pathwayPrototype__status" aria-label="Stato del prototipo">
-          <strong>NON AUTORIZZATO ALL'USO CON STUDENTI</strong>
+          <strong>NON AUTORIZZATO ALL&apos;USO CON STUDENTI</strong>
           <span>Validazione umana e accessibilità ancora necessarie</span>
         </div>
       </header>
@@ -81,7 +81,7 @@ export function MissingInformationPathwayPrototype() {
         </div>
 
         <div className="pathwayScene__feedback" aria-live="polite">
-          {feedback ? <><h3>Che cosa possiamo osservare</h3><p>{feedback}</p></> : <p>Scegli un'opzione per osservare che cosa rende disponibile.</p>}
+          {feedback ? <><h3>Che cosa possiamo osservare</h3><p>{feedback}</p></> : <p>Scegli un&apos;opzione per osservare che cosa rende disponibile.</p>}
         </div>
 
         <div className="pathwayScene__actions">
