@@ -11,7 +11,7 @@ Curriculum Atlas è la superficie pubblica di navigazione del curricolo e dei ma
 - **F4 Mobile + LIM** — integrata
 - **F5 Exit** — candidato alla chiusura finale sulla baseline corrente
 
-La baseline corrente include l'export curricolare completo Arena e la sincronizzazione governata Arena → Atlas. Atlas non diventa per questo autorità curricolale: lo stato e la provenienza restano vincolati ad Arena.
+La baseline corrente include l'export curricolare completo Arena e la sincronizzazione governata Arena → Atlas. Atlas non diventa per questo autorità curricolare: lo stato e la provenienza restano vincolati ad Arena.
 
 ## Superfici pubbliche
 
