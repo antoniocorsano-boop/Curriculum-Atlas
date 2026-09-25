@@ -1,5 +1,8 @@
 {
   "schemaVersion": "1.0-experimental",
+  "projectionKind": "ATLAS_ACTIVITY_PROJECTION",
+  "canonicalDomainType": "Activity",
+  "canonicalModelStatus": "NON_CANONICAL_PROTOTYPE_PROJECTION",
   "activityId": "perche-p3-spiegazione",
   "version": "0.1.0",
   "title": "Quale spiegazione regge meglio?",
@@ -9,10 +12,11 @@
   "mode": "BOTH",
   "cognitiveMoves": ["OBSERVE","HYPOTHESIZE","CHECK","EXPLAIN","REFLECT","REOPEN"],
   "activityArchetypes": ["A4","A9","A10"],
-  "curriculumBinding": {
-    "authority": "Arena",
-    "curriculumVersionRef": "PROTOTYPE-ARENA-BINDING",
-    "objectiveRefs": ["PROTOTYPE-OBJECTIVE"]
+  "curriculumContext": {
+    "status": "PROTOTYPE_FIXTURE_NON_AUTHORITATIVE",
+    "authority": null,
+    "curriculumVersionRef": null,
+    "objectiveRefs": []
   },
   "offline": {
     "eligible": true,
@@ -32,7 +36,8 @@
   },
   "provenance": {
     "createdBy": "TRAMA Atlas prototype",
-    "createdAt": "2026-09-23T00:00:00+02:00"
+    "createdAt": "2026-09-23T00:00:00+02:00",
+    "authorityClaim": "NONE"
   },
   "steps": [
     {
