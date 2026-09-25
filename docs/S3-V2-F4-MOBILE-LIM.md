@@ -1,85 +1,46 @@
 # Atlas S3-V2/F4 — Mobile + LIM
 
 **Data:** 2026-09-25  
-**Stato:** IMPLEMENTATION CONTRACT / ACTIVE — REFRESH VALIDATION ON CURRENT MAIN  
-**Riferimento:** TRAMA R3-F0/S3-V2
+**Stato:** INTEGRATED / VISUAL EVIDENCE PASS  
+**Riferimento:** TRAMA R3-F0/S3-V2  
+**Baseline validata:** `bc11577eeeeeed9c43ad62ac43fb7561e1197246`
 
-## Scopo
+## Esito
 
-F4 consolida Atlas come esperienza pubblica realmente fruibile su smartphone, tablet, desktop e LIM senza introdurre nuove capacità di dominio.
+F4 è validata sulla stessa baseline dell'Exit F5.
 
-## Principi
-
-- Atlas resta pubblico e senza account/profilo studente.
-- La shell non simula un utente autenticato.
-- Le azioni principali devono restare raggiungibili con target tattili adeguati.
-- La navigazione mobile privilegia i percorsi già maturi e pubblici.
-- LIM significa leggibilità e gerarchia a distanza, non semplice allargamento del desktop.
-- Nessun runtime Docente OS → Atlas viene autorizzato.
-
-## Perimetro
+## Copertura
 
 ### Mobile 360–430 px
 
 - nessun overflow orizzontale;
 - testata compatta e non ambigua;
-- ricerca sempre identificabile;
-- bottom navigation con cinque destinazioni pubbliche principali e accesso `Altro` alle sezioni secondarie;
-- target interattivi ≥ 44 px quando applicabile;
+- ricerca identificabile;
+- bottom navigation con cinque destinazioni pubbliche principali e accesso `Altro`;
+- target interattivi adeguati;
 - Curricolo, Esplora, Materiali e Risorse utilizzabili senza layout desktop compresso.
 
 ### LIM 1920×1080
 
-- contenuto con larghezza massima leggibile;
-- titoli, azioni e filtri distinguibili a distanza;
-- nessun allungamento incontrollato delle righe di testo;
-- mappe e cataloghi restano navigabili;
-- primo viewport comprensibile senza dipendere dallo scroll.
+- larghezza leggibile;
+- titoli, azioni e filtri distinguibili;
+- righe di testo contenute;
+- mappe e cataloghi navigabili;
+- primo viewport comprensibile.
 
-## Correzioni F4 iniziali
+## Evidenza
 
-- rimozione del falso profilo/utente “TR” dalla testata pubblica;
-- sostituzione con indicatore statico “Vista pubblica”;
-- navigazione mobile esplicita: Home, Esplora, Curricolo, Materiali, Risorse;
-- accesso mobile `Altro` a Percorsi, Obiettivi, Raccordi e Impostazioni, così nessuna sezione resta raggiungibile solo dalla sidebar desktop;
-- target tattili della bottom navigation;
-- contenimento della larghezza del contenuto su LIM.
-
-## Gate automatico
-
-Il workflow F4 produce evidenza su:
+Il workflow F4 ha generato screenshot per:
 
 - 360×800;
 - 430×932;
 - 1920×1080;
 
-per le superfici:
+sulle superfici Home, Curricolo, Esplora, Materiali e Risorse.
 
-- Home;
-- Curricolo;
-- Esplora;
-- Materiali;
-- Risorse.
+Il difetto iniziale dell'evidenza, causato dal menu mobile `Altro` lasciato aperto prima dello screenshot, è stato corretto sulla stessa PR prima della review finale. La seconda cattura è PASS.
 
-Il gate fallisce in presenza di overflow orizzontale, target mobile sotto 44 px o perdita di raggiungibilità delle sezioni secondarie.
-
-## Refresh 2026-09-25
-
-La validazione F4 viene rieseguita sulla stessa baseline della PR F5 corrente, dopo l'integrazione di Arena #329 e Atlas #29. Gli screenshot generati costituiscono evidenza visiva per la review finale di S3-V2, senza modificare authority o stato curricolare.
-
-## Gate umano
-
-Prima dell’Exit F5 verificare:
-
-- gerarchia del primo viewport;
-- leggibilità da LIM;
-- comfort dei target su smartphone reale;
-- comprensibilità della navigazione senza conoscenza dell’architettura;
-- coerenza tra vista visuale e alternativa testuale di Esplora;
-- assenza di elementi che suggeriscano account o tracking;
-- corretta percezione dello stato Arena provvisorio/approvato.
-
-## Non effetti
+## Invarianti
 
 - nessun cambio di autorità;
 - nessun login;
