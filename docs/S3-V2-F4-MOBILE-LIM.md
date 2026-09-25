@@ -1,7 +1,7 @@
 # Atlas S3-V2/F4 — Mobile + LIM
 
-**Data:** 2026-09-24  
-**Stato:** IMPLEMENTATION CONTRACT / ACTIVE  
+**Data:** 2026-09-25  
+**Stato:** IMPLEMENTATION CONTRACT / ACTIVE — REFRESH VALIDATION ON CURRENT MAIN  
 **Riferimento:** TRAMA R3-F0/S3-V2
 
 ## Scopo
@@ -63,6 +63,10 @@ per le superfici:
 
 Il gate fallisce in presenza di overflow orizzontale, target mobile sotto 44 px o perdita di raggiungibilità delle sezioni secondarie.
 
+## Refresh 2026-09-25
+
+La validazione F4 viene rieseguita sulla stessa baseline della PR F5 corrente, dopo l'integrazione di Arena #329 e Atlas #29. Gli screenshot generati costituiscono evidenza visiva per la review finale di S3-V2, senza modificare authority o stato curricolare.
+
 ## Gate umano
 
 Prima dell’Exit F5 verificare:
@@ -72,7 +76,8 @@ Prima dell’Exit F5 verificare:
 - comfort dei target su smartphone reale;
 - comprensibilità della navigazione senza conoscenza dell’architettura;
 - coerenza tra vista visuale e alternativa testuale di Esplora;
-- assenza di elementi che suggeriscano account o tracking.
+- assenza di elementi che suggeriscano account o tracking;
+- corretta percezione dello stato Arena provvisorio/approvato.
 
 ## Non effetti
 
