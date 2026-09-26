@@ -32,11 +32,13 @@ jobs:
 
       - name: Verify exact-head binding and authorization boundary
         shell: bash
+        env:
+          EXPECTED_EXACT_HEAD: ${{ inputs.exact_head }}
         run: |
           test -f preview/EXACT_HEAD.txt
-          test "$(tr -d '\r\n' < preview/EXACT_HEAD.txt)" = "${{ inputs.exact_head }}"
+          test "$(tr -d '\r\n' < preview/EXACT_HEAD.txt)" = "$EXPECTED_EXACT_HEAD"
           test -f preview/PREVIEW-MANIFEST.json
-          node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('preview/PREVIEW-MANIFEST.json','utf8')); const expected='${{ inputs.exact_head }}'; if(m.exactHead!==expected||m.channel!=='artifact-only'||m.studentAuthorized!==false){console.error('Preview manifest boundary check failed:',JSON.stringify({expectedExactHead:expected,actualExactHead:m.exactHead,expectedChannel:'artifact-only',actualChannel:m.channel,expectedStudentAuthorized:false,actualStudentAuthorized:m.studentAuthorized})); process.exit(1);}"
+          node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('preview/PREVIEW-MANIFEST.json','utf8')); const expected=process.env.EXPECTED_EXACT_HEAD; if(m.exactHead!==expected||m.channel!=='artifact-only'||m.studentAuthorized!==false){console.error('Preview manifest boundary check failed:',JSON.stringify({expectedExactHead:expected,actualExactHead:m.exactHead,expectedChannel:'artifact-only',actualChannel:m.channel,expectedStudentAuthorized:false,actualStudentAuthorized:m.studentAuthorized})); process.exit(1);}"
 
       - name: Deploy validated candidate to stable Atlas Preview site
         id: deploy
