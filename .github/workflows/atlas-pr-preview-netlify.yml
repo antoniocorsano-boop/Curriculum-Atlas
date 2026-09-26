@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       artifact_run_id:
-        description: "GitHub Actions run containing the validated atlas-pr-preview artifact"
+        description: "Successful Atlas PR Preview Artifact run ID"
         required: true
       exact_head:
-        description: "Exact candidate SHA bound to the artifact"
+        description: "Full 40-character Git commit SHA bound to the artifact"
         required: true
 
 permissions:
@@ -16,12 +16,39 @@ permissions:
 
 env:
   NETLIFY_SITE_ID: 7ee88635-ac0d-4515-8cdf-7ae99b3023c6
+  NETLIFY_STABLE_URL: https://atlas-pr-preview.netlify.app
+  NETLIFY_CLI_VERSION: 27.9.0
+
+concurrency:
+  group: atlas-pr-preview-production
+  cancel-in-progress: true
 
 jobs:
   deploy-preview:
     runs-on: ubuntu-latest
     environment: atlas-pr-preview
     steps:
+      - name: Validate dispatch inputs and source-run provenance
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          ARTIFACT_RUN_ID: ${{ inputs.artifact_run_id }}
+          EXPECTED_EXACT_HEAD: ${{ inputs.exact_head }}
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_EXACT_HEAD" =~ ^[0-9a-f]{40}$ ]] || { echo "exact_head must be a lowercase full Git SHA" >&2; exit 1; }
+          [[ "$ARTIFACT_RUN_ID" =~ ^[0-9]+$ ]] || { echo "artifact_run_id must be numeric" >&2; exit 1; }
+          RUN_JSON="$(gh api "repos/$REPOSITORY/actions/runs/$ARTIFACT_RUN_ID")"
+          RUN_NAME="$(jq -r '.name' <<<"$RUN_JSON")"
+          RUN_EVENT="$(jq -r '.event' <<<"$RUN_JSON")"
+          RUN_STATUS="$(jq -r '.status' <<<"$RUN_JSON")"
+          RUN_CONCLUSION="$(jq -r '.conclusion' <<<"$RUN_JSON")"
+          test "$RUN_NAME" = "Atlas PR Preview Artifact"
+          test "$RUN_EVENT" = "workflow_dispatch"
+          test "$RUN_STATUS" = "completed"
+          test "$RUN_CONCLUSION" = "success"
+
       - name: Download validated exact-head artifact
         uses: actions/download-artifact@v5
         with:
@@ -35,34 +62,60 @@ jobs:
         env:
           EXPECTED_EXACT_HEAD: ${{ inputs.exact_head }}
         run: |
+          set -euo pipefail
           test -f preview/EXACT_HEAD.txt
           test "$(tr -d '\r\n' < preview/EXACT_HEAD.txt)" = "$EXPECTED_EXACT_HEAD"
           test -f preview/PREVIEW-MANIFEST.json
-          node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('preview/PREVIEW-MANIFEST.json','utf8')); const expected=process.env.EXPECTED_EXACT_HEAD; if(m.exactHead!==expected||m.channel!=='artifact-only'||m.studentAuthorized!==false){console.error('Preview manifest boundary check failed:',JSON.stringify({expectedExactHead:expected,actualExactHead:m.exactHead,expectedChannel:'artifact-only',actualChannel:m.channel,expectedStudentAuthorized:false,actualStudentAuthorized:m.studentAuthorized})); process.exit(1);}"
+          node - <<'NODE'
+          const fs = require('fs');
+          const m = JSON.parse(fs.readFileSync('preview/PREVIEW-MANIFEST.json', 'utf8'));
+          const expected = process.env.EXPECTED_EXACT_HEAD;
+          if (m.exactHead !== expected || m.channel !== 'artifact-only' || m.studentAuthorized !== false) {
+            console.error('Preview manifest boundary check failed');
+            process.exit(1);
+          }
+          NODE
 
       - name: Deploy validated candidate to stable Atlas Preview site
         id: deploy
         shell: bash
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          EXPECTED_EXACT_HEAD: ${{ inputs.exact_head }}
         run: |
+          set -euo pipefail
           test -n "$NETLIFY_AUTH_TOKEN"
-          npx --yes netlify-cli@latest deploy \
+          npx --yes "netlify-cli@$NETLIFY_CLI_VERSION" deploy \
             --prod \
             --dir=preview \
             --site="$NETLIFY_SITE_ID" \
             --auth="$NETLIFY_AUTH_TOKEN" \
-            --message="Atlas Preview exact-head ${{ inputs.exact_head }} — NOT_RUNTIME_AUTHORIZED" \
+            --message="Atlas Preview exact-head $EXPECTED_EXACT_HEAD — NOT_RUNTIME_AUTHORIZED" \
             --json > netlify-deploy.json
-          node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('netlify-deploy.json','utf8')); const u=d.url||d.deploy_url; if(!u) process.exit(1); fs.appendFileSync(process.env.GITHUB_OUTPUT, 'url='+u+'\n');"
+          node - <<'NODE'
+          const fs = require('fs');
+          const d = JSON.parse(fs.readFileSync('netlify-deploy.json', 'utf8'));
+          const expected = process.env.NETLIFY_STABLE_URL;
+          const actual = d.url;
+          if (actual !== expected) {
+            console.error(`Unexpected production URL: ${actual || '<missing>'}`);
+            process.exit(1);
+          }
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `url=${actual}\n`);
+          NODE
 
       - name: Record stable preview URL
         shell: bash
+        env:
+          EXPECTED_EXACT_HEAD: ${{ inputs.exact_head }}
+          PREVIEW_URL: ${{ steps.deploy.outputs.url }}
         run: |
-          echo "### Atlas Preview" >> "$GITHUB_STEP_SUMMARY"
-          echo "Exact head: \`${{ inputs.exact_head }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "Student authorized: **false**" >> "$GITHUB_STEP_SUMMARY"
-          echo "Stable preview URL: ${{ steps.deploy.outputs.url }}" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### Atlas Preview"
+            echo "Exact head: \`$EXPECTED_EXACT_HEAD\`"
+            echo "Student authorized: **false**"
+            echo "Stable preview URL: $PREVIEW_URL"
+          } >> "$GITHUB_STEP_SUMMARY"
 
-# `--prod` means production deployment only for the dedicated atlas-pr-preview Netlify site.
+# `--prod` means production only for the dedicated atlas-pr-preview Netlify site.
 # It does not publish canonical Atlas, merge the candidate, or authorize student use.
