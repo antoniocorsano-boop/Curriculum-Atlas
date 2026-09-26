@@ -14,18 +14,45 @@ jobs:
   exact-head-preview:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout exact head
+      - name: Validate exact-head input
+        shell: bash
+        env:
+          EXPECTED_EXACT_HEAD: ${{ inputs.exact_head }}
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_EXACT_HEAD" =~ ^[0-9a-f]{40}$ ]] || { echo "exact_head must be a lowercase full Git SHA" >&2; exit 1; }
+
+      - name: Checkout governed build contract
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: governed
+
+      - name: Capture governed preview configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp governed/next.config.ts "$RUNNER_TEMP/atlas-preview-next.config.ts"
+          printf '%s\n' "${{ github.sha }}" > "$RUNNER_TEMP/GOVERNED_BUILD_CONTRACT_SHA.txt"
+
+      - name: Checkout exact-head candidate
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.exact_head }}
+          path: candidate
 
-      - name: Verify and record exact head
+      - name: Verify candidate and apply governed build contract
         shell: bash
+        working-directory: candidate
+        env:
+          EXPECTED_EXACT_HEAD: ${{ inputs.exact_head }}
         run: |
+          set -euo pipefail
           ACTUAL="$(git rev-parse HEAD)"
-          test "$ACTUAL" = "${{ inputs.exact_head }}"
+          test "$ACTUAL" = "$EXPECTED_EXACT_HEAD"
           mkdir -p artifacts/atlas-pr-preview
           printf '%s\n' "$ACTUAL" > artifacts/atlas-pr-preview/EXACT_HEAD.txt
+          cp "$RUNNER_TEMP/atlas-preview-next.config.ts" next.config.ts
 
       - uses: pnpm/action-setup@v4
         with:
@@ -37,31 +64,44 @@ jobs:
           package-manager-cache: false
 
       - name: Install
+        working-directory: candidate
         run: pnpm install --no-frozen-lockfile
 
       - name: Typecheck
+        working-directory: candidate
         run: pnpm typecheck
 
       - name: Lint
+        working-directory: candidate
         run: pnpm lint
 
-      - name: Static build
+      - name: Static build under governed root-scoped contract
+        working-directory: candidate
         env:
           ATLAS_PREVIEW_ROOT_SCOPED: "true"
         run: pnpm build
 
-      - name: Bind artifact to exact head
+      - name: Bind artifact to candidate and governed build contract
         shell: bash
+        working-directory: candidate
+        env:
+          EXPECTED_EXACT_HEAD: ${{ inputs.exact_head }}
+          GOVERNED_BUILD_CONTRACT_SHA: ${{ github.sha }}
         run: |
+          set -euo pipefail
+          test -d out
           cp artifacts/atlas-pr-preview/EXACT_HEAD.txt out/EXACT_HEAD.txt
-          printf '{"exactHead":"%s","channel":"artifact-only","studentAuthorized":false}\n' "${{ inputs.exact_head }}" > out/PREVIEW-MANIFEST.json
+          printf '{"exactHead":"%s","buildContractSha":"%s","channel":"artifact-only","studentAuthorized":false}\n' \
+            "$EXPECTED_EXACT_HEAD" "$GOVERNED_BUILD_CONTRACT_SHA" > out/PREVIEW-MANIFEST.json
 
       - name: Upload expiring preview artifact
         uses: actions/upload-artifact@v4
         with:
           name: atlas-pr-preview-${{ inputs.exact_head }}
-          path: out/
+          path: candidate/out/
           retention-days: 7
           if-no-files-found: error
 
-# Safety boundary: no pages:write, no deploy-pages, no github-pages environment.
+# Safety boundary: the candidate source is built with the preview configuration captured
+# from the workflow-dispatch revision. No pages:write, deploy-pages, github-pages
+# environment, canonical Atlas publication, or student authorization is introduced.
