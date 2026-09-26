@@ -1,0 +1,81 @@
+name: Atlas PR Preview Artifact
+
+on:
+  workflow_dispatch:
+    inputs:
+      exact_head:
+        description: "Exact commit SHA to preview"
+        required: true
+  pull_request:
+    paths:
+      - ".github/workflows/atlas-pr-preview.yml"
+      - "docs/ATLAS-PR-PREVIEW.md"
+
+permissions:
+  contents: read
+
+jobs:
+  exact-head-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve exact head
+        id: target
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "sha=${{ inputs.exact_head }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "sha=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout exact head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.target.outputs.sha }}
+
+      - name: Verify and record exact head
+        shell: bash
+        run: |
+          ACTUAL="$(git rev-parse HEAD)"
+          test "$ACTUAL" = "${{ steps.target.outputs.sha }}"
+          mkdir -p artifacts/atlas-pr-preview
+          printf '%s\n' "$ACTUAL" > artifacts/atlas-pr-preview/EXACT_HEAD.txt
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Static build
+        env:
+          ATLAS_GITHUB_PAGES: "true"
+        run: pnpm build
+
+      - name: Bind artifact to exact head
+        shell: bash
+        run: |
+          cp artifacts/atlas-pr-preview/EXACT_HEAD.txt out/EXACT_HEAD.txt
+          printf '{"exactHead":"%s","channel":"artifact-only","studentAuthorized":false}\n' "${{ steps.target.outputs.sha }}" > out/PREVIEW-MANIFEST.json
+
+      - name: Upload expiring preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-pr-preview-${{ steps.target.outputs.sha }}
+          path: out/
+          retention-days: 7
+          if-no-files-found: error
+
+# No pages:write, deploy-pages, github-pages environment, analytics or production mutation.
