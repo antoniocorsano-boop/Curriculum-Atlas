@@ -53,10 +53,6 @@ jobs:
           test "$(jq -r '.event' <<<"$RUN_JSON")" = "workflow_dispatch"
           test "$(jq -r '.status' <<<"$RUN_JSON")" = "completed"
           test "$(jq -r '.conclusion' <<<"$RUN_JSON")" = "success"
-          test "$(jq -r '.head_sha' <<<"$RUN_JSON")" = "$EXPECTED_EXACT_HEAD" || {
-            echo "source run head_sha does not match exact_head" >&2
-            exit 1
-          }
 
       - name: Download validated exact-head artifact
         uses: actions/download-artifact@v5
@@ -99,12 +95,10 @@ jobs:
           tmp="$(mktemp -d)"
           trap 'rm -rf "$tmp"' EXIT
           cp preview/EXACT_HEAD.txt preview/PREVIEW-MANIFEST.json "$tmp/"
-
           if node scripts/validate-atlas-preview-contract.mjs "$tmp" "0000000000000000000000000000000000000000"; then
             echo "validator accepted mismatched exact head" >&2
             exit 1
           fi
-
           node - "$tmp/PREVIEW-MANIFEST.json" <<'NODE'
           const fs = require('fs');
           const p = process.argv[2];
@@ -116,7 +110,6 @@ jobs:
             echo "validator accepted studentAuthorized=true" >&2
             exit 1
           fi
-
           : > "$tmp/PREVIEW-MANIFEST.json"
           if node scripts/validate-atlas-preview-contract.mjs "$tmp" "$EXPECTED_EXACT_HEAD"; then
             echo "validator accepted invalid manifest" >&2
@@ -192,5 +185,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
 # This workflow deploys only a validated static artifact to a Cloudflare Pages preview branch.
-# A successful run now proves both exact-head identity and HTTP reachability of the requested route.
+# Candidate identity is proven by the artifact name plus EXACT_HEAD.txt/PREVIEW-MANIFEST.json validation;
+# the workflow-dispatch run itself is intentionally anchored to the governed main revision.
+# A successful run also proves HTTP reachability of the requested route.
 # It does not publish canonical Atlas, merge the candidate, or authorize student use.
