@@ -1,0 +1,3 @@
+# P0 state
+
+`SCOPE_LOCKED / READY_FOR_DRAFT_PR`
