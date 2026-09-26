@@ -1,0 +1,79 @@
+name: Percorsi G1 Collaudo
+
+on:
+  pull_request:
+    paths:
+      - "src/app/percorsi/lab/**"
+      - "src/features/pathways/**"
+      - "scripts/test-g1-pathway.mjs"
+      - ".github/workflows/percorsi-g1-collaudo.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  g1-nine-scenes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@v4
+
+      - name: Record exact head
+        run: echo "G1_EXACT_HEAD=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build
+        run: pnpm build
+
+      - name: Start isolated app
+        run: |
+          pnpm start > /tmp/atlas-g1.log 2>&1 &
+          echo $! > /tmp/atlas-g1.pid
+          for i in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3000/percorsi/lab/pw-missing-information-01 > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/atlas-g1.log
+          exit 1
+
+      - name: Run L/N nine-scene browser collaudo
+        run: node scripts/test-g1-pathway.mjs
+
+      - name: Write exact-head evidence
+        run: printf '%s\n' "exact_head=$G1_EXACT_HEAD" > artifacts/g1-pathway/EXACT_HEAD.txt
+
+      - name: Upload G1 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: percorsi-g1-collaudo-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            artifacts/g1-pathway/
+            /tmp/atlas-g1.log
+          if-no-files-found: warn
+
+# Deliberately no pages:write, deploy-pages or production environment.
+# This workflow validates the PR candidate only; it cannot publish canonical Atlas.
