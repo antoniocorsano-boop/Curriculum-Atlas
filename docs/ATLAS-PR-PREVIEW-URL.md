@@ -14,10 +14,20 @@ Aggiungere al contratto `ATLAS-PR-PREVIEW` un secondo strato capace di esporre u
 - il manifest deve continuare a dichiarare `studentAuthorized=false`;
 - la pubblicazione dell'anteprima non equivale a merge, pubblicazione curricolare o autorizzazione runtime.
 
-## Provider
-Il provider di anteprima deve essere configurato come sito separato. Non va creato implicitamente un nuovo sito di hosting né riutilizzato un sito esistente senza identificazione esplicita del relativo `siteId`.
+## Provider governato
+È stato creato un sito Netlify separato esclusivamente per le anteprime Atlas:
+
+- nome: `atlas-pr-preview`;
+- siteId: `7ee88635-ac0d-4515-8cdf-7ae99b3023c6`;
+- nessun riuso del Pages canonico;
+- il workflow usa solo draft deploy (`netlify deploy`, mai `--prod`).
+
+L'autenticazione di deploy è un segreto GitHub Actions `NETLIFY_AUTH_TOKEN`, non incluso nel repository. L'environment GitHub dedicato è `atlas-pr-preview`.
+
+## Workflow
+`.github/workflows/atlas-pr-preview-netlify.yml` riceve `artifact_run_id` ed `exact_head`, scarica l'artefatto già prodotto dal workflow di build, verifica `EXACT_HEAD.txt` e `studentAuthorized=false`, quindi esegue il draft deploy sul siteId governato e registra l'URL nel riepilogo dell'esecuzione.
 
 ## G1
 Primo artefatto candidato: `atlas-pr-preview-c34420bf7a80f1f0e7e236b9b78f1e19e96cc59b`, prodotto con successo dal run GitHub Actions `36222693459`.
 
-Il deployment tramite URL può iniziare solo dopo che esiste un sito di preview separato e identificato; il Pages canonico resta fuori dal percorso.
+La PR #35 resta congelata su `c34420bf7a80f1f0e7e236b9b78f1e19e96cc59b` e `NOT_RUNTIME_AUTHORIZED`.
