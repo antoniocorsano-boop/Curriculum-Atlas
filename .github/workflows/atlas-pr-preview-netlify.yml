@@ -33,6 +33,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
+          GOVERNED_WORKFLOW_ID: "367514449"
           GOVERNED_WORKFLOW_PATH: .github/workflows/atlas-pr-preview.yml
           ARTIFACT_RUN_ID: ${{ inputs.artifact_run_id }}
           EXPECTED_EXACT_HEAD: ${{ inputs.exact_head }}
@@ -40,14 +41,10 @@ jobs:
           set -euo pipefail
           [[ "$EXPECTED_EXACT_HEAD" =~ ^[0-9a-f]{40}$ ]] || { echo "exact_head must be a lowercase full Git SHA" >&2; exit 1; }
           [[ "$ARTIFACT_RUN_ID" =~ ^[0-9]+$ ]] || { echo "artifact_run_id must be numeric" >&2; exit 1; }
-          GOVERNED_WORKFLOW_JSON="$(gh api "repos/$REPOSITORY/actions/workflows/$GOVERNED_WORKFLOW_PATH")"
-          GOVERNED_WORKFLOW_ID="$(jq -r '.id' <<<"$GOVERNED_WORKFLOW_JSON")"
-          GOVERNED_WORKFLOW_RESOLVED_PATH="$(jq -r '.path' <<<"$GOVERNED_WORKFLOW_JSON")"
-          test "$GOVERNED_WORKFLOW_RESOLVED_PATH" = "$GOVERNED_WORKFLOW_PATH"
+          [[ "$GOVERNED_WORKFLOW_ID" =~ ^[0-9]+$ ]] || { echo "governed workflow id must be numeric" >&2; exit 1; }
           RUN_JSON="$(gh api "repos/$REPOSITORY/actions/runs/$ARTIFACT_RUN_ID")"
           RUN_WORKFLOW_ID="$(jq -r '.workflow_id' <<<"$RUN_JSON")"
-          RUN_WORKFLOW_JSON="$(gh api "repos/$REPOSITORY/actions/workflows/$RUN_WORKFLOW_ID")"
-          RUN_WORKFLOW_PATH="$(jq -r '.path' <<<"$RUN_WORKFLOW_JSON")"
+          RUN_WORKFLOW_PATH="$(jq -r '.path' <<<"$RUN_JSON")"
           RUN_NAME="$(jq -r '.name' <<<"$RUN_JSON")"
           RUN_EVENT="$(jq -r '.event' <<<"$RUN_JSON")"
           RUN_STATUS="$(jq -r '.status' <<<"$RUN_JSON")"
