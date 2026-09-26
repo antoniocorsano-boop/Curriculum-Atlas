@@ -1,0 +1,106 @@
+name: Atlas Preview — Cloudflare Direct Upload
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_run_id:
+        description: "Successful Atlas PR Preview Artifact run ID"
+        required: true
+      exact_head:
+        description: "Full 40-character Git commit SHA bound to the artifact"
+        required: true
+
+permissions:
+  actions: read
+  contents: read
+
+env:
+  GOVERNED_WORKFLOW_ID: "367514449"
+  GOVERNED_WORKFLOW_PATH: .github/workflows/atlas-pr-preview.yml
+  CLOUDFLARE_PROJECT_NAME: atlas-pr-preview
+
+concurrency:
+  group: atlas-pr-preview-cloudflare
+  cancel-in-progress: true
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    environment: atlas-pr-preview
+    steps:
+      - name: Validate source-run provenance
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          ARTIFACT_RUN_ID: ${{ inputs.artifact_run_id }}
+          EXPECTED_EXACT_HEAD: ${{ inputs.exact_head }}
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_EXACT_HEAD" =~ ^[0-9a-f]{40}$ ]] || { echo "exact_head must be a lowercase full Git SHA" >&2; exit 1; }
+          [[ "$ARTIFACT_RUN_ID" =~ ^[0-9]+$ ]] || { echo "artifact_run_id must be numeric" >&2; exit 1; }
+          RUN_JSON="$(gh api "repos/$REPOSITORY/actions/runs/$ARTIFACT_RUN_ID")"
+          test "$(jq -r '.workflow_id' <<<"$RUN_JSON")" = "$GOVERNED_WORKFLOW_ID"
+          test "$(jq -r '.path' <<<"$RUN_JSON")" = "$GOVERNED_WORKFLOW_PATH"
+          test "$(jq -r '.name' <<<"$RUN_JSON")" = "Atlas PR Preview Artifact"
+          test "$(jq -r '.event' <<<"$RUN_JSON")" = "workflow_dispatch"
+          test "$(jq -r '.status' <<<"$RUN_JSON")" = "completed"
+          test "$(jq -r '.conclusion' <<<"$RUN_JSON")" = "success"
+
+      - name: Download validated exact-head artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: atlas-pr-preview-${{ inputs.exact_head }}
+          path: preview
+          run-id: ${{ inputs.artifact_run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Verify exact-head binding and authorization boundary
+        shell: bash
+        env:
+          EXPECTED_EXACT_HEAD: ${{ inputs.exact_head }}
+        run: |
+          set -euo pipefail
+          test -f preview/EXACT_HEAD.txt
+          test "$(tr -d '\r\n' < preview/EXACT_HEAD.txt)" = "$EXPECTED_EXACT_HEAD"
+          test -f preview/PREVIEW-MANIFEST.json
+          node - <<'NODE'
+          const fs = require('fs');
+          const m = JSON.parse(fs.readFileSync('preview/PREVIEW-MANIFEST.json', 'utf8'));
+          const expected = process.env.EXPECTED_EXACT_HEAD;
+          if (m.exactHead !== expected || m.channel !== 'artifact-only' || m.studentAuthorized !== false) {
+            console.error('Preview manifest boundary check failed');
+            process.exit(1);
+          }
+          NODE
+
+      - name: Deploy validated artifact to Cloudflare Pages preview
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          EXPECTED_EXACT_HEAD: ${{ inputs.exact_head }}
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+          npx --yes wrangler@latest pages deploy preview \
+            --project-name="$CLOUDFLARE_PROJECT_NAME" \
+            --branch="g1-${EXPECTED_EXACT_HEAD:0:12}" \
+            --commit-hash="$EXPECTED_EXACT_HEAD" \
+            --commit-message="Atlas G1 exact-head $EXPECTED_EXACT_HEAD — NOT_RUNTIME_AUTHORIZED"
+
+      - name: Record governance boundary
+        shell: bash
+        env:
+          EXPECTED_EXACT_HEAD: ${{ inputs.exact_head }}
+        run: |
+          {
+            echo "### Atlas Cloudflare Preview"
+            echo "Exact head: \`$EXPECTED_EXACT_HEAD\`"
+            echo "Student authorized: **false**"
+            echo "Channel: preview only"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+# This workflow deploys only a validated static artifact to a Cloudflare Pages preview branch.
+# It does not publish canonical Atlas, merge the candidate, or authorize student use.
