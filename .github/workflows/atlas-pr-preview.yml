@@ -1,0 +1,67 @@
+name: Atlas PR Preview Artifact
+
+on:
+  workflow_dispatch:
+    inputs:
+      exact_head:
+        description: "Exact commit SHA to preview"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  exact-head-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.exact_head }}
+
+      - name: Verify and record exact head
+        shell: bash
+        run: |
+          ACTUAL="$(git rev-parse HEAD)"
+          test "$ACTUAL" = "${{ inputs.exact_head }}"
+          mkdir -p artifacts/atlas-pr-preview
+          printf '%s\n' "$ACTUAL" > artifacts/atlas-pr-preview/EXACT_HEAD.txt
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Static build
+        env:
+          ATLAS_GITHUB_PAGES: "true"
+        run: pnpm build
+
+      - name: Bind artifact to exact head
+        shell: bash
+        run: |
+          cp artifacts/atlas-pr-preview/EXACT_HEAD.txt out/EXACT_HEAD.txt
+          printf '{"exactHead":"%s","channel":"artifact-only","studentAuthorized":false}\n' "${{ inputs.exact_head }}" > out/PREVIEW-MANIFEST.json
+
+      - name: Upload expiring preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-pr-preview-${{ inputs.exact_head }}
+          path: out/
+          retention-days: 7
+          if-no-files-found: error
+
+# Safety boundary: no pages:write, no deploy-pages, no github-pages environment.
