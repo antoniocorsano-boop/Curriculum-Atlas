@@ -1,0 +1,96 @@
+name: Atlas PR Preview Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number being reviewed"
+        required: true
+        type: string
+      exact_head:
+        description: "Full commit SHA to build"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate exact-head input
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "${{ inputs.exact_head }}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "exact_head must be a full 40-character commit SHA" >&2
+            exit 1
+          fi
+
+      - name: Checkout exact head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.exact_head }}
+          persist-credentials: false
+
+      - name: Verify checkout binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "${{ inputs.exact_head }}"
+          printf '%s\n' "$actual" > /tmp/EXACT_HEAD.txt
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Static export build
+        env:
+          ATLAS_GITHUB_PAGES: "true"
+        run: pnpm build
+
+      - name: Write preview manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp /tmp/EXACT_HEAD.txt out/EXACT_HEAD.txt
+          cat > out/PREVIEW-MANIFEST.json <<EOF
+          {
+            "kind": "atlas-pr-preview-build",
+            "prNumber": "${{ inputs.pr_number }}",
+            "exactHead": "${{ inputs.exact_head }}",
+            "runId": "${{ github.run_id }}",
+            "runtimeAuthorized": false,
+            "studentUseAuthorized": false,
+            "canonicalPagesDeployment": false
+          }
+          EOF
+
+      - name: Upload immutable preview candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-pr-${{ inputs.pr_number }}-${{ inputs.exact_head }}
+          path: out/
+          if-no-files-found: error
+          retention-days: 7
+
+# BUILD ONLY. Deliberately no pages:write, id-token:write, environments,
+# deploy-pages, provider credentials or publication step.
