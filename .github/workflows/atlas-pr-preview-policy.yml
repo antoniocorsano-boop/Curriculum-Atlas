@@ -1,0 +1,23 @@
+name: Atlas PR Preview Policy
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/atlas-pr-preview-build.yml"
+      - ".github/workflows/atlas-pr-preview-policy.yml"
+      - "scripts/verify-preview-workflow.mjs"
+      - "docs/ATLAS-PR-PREVIEW.md"
+
+permissions:
+  contents: read
+
+jobs:
+  preview-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Verify production isolation
+        run: node scripts/verify-preview-workflow.mjs
