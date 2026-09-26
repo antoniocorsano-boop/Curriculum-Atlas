@@ -36,7 +36,7 @@ jobs:
           test -f preview/EXACT_HEAD.txt
           test "$(tr -d '\r\n' < preview/EXACT_HEAD.txt)" = "${{ inputs.exact_head }}"
           test -f preview/PREVIEW-MANIFEST.json
-          grep -F '"studentAuthorized":false' preview/PREVIEW-MANIFEST.json
+          node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('preview/PREVIEW-MANIFEST.json','utf8')); if(m.exactHead!=='${{ inputs.exact_head }}'||m.channel!=='artifact-only'||m.studentAuthorized!==false) process.exit(1);"
 
       - name: Deploy validated candidate to stable Atlas Preview site
         id: deploy
@@ -49,7 +49,6 @@ jobs:
             --prod \
             --dir=preview \
             --site="$NETLIFY_SITE_ID" \
-            --auth="$NETLIFY_AUTH_TOKEN" \
             --message="Atlas Preview exact-head ${{ inputs.exact_head }} — NOT_RUNTIME_AUTHORIZED" \
             --json > netlify-deploy.json
           node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('netlify-deploy.json','utf8')); const u=d.url||d.deploy_url; if(!u) process.exit(1); fs.appendFileSync(process.env.GITHUB_OUTPUT, 'url='+u+'\n');"
