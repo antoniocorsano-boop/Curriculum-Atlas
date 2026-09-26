@@ -47,7 +47,7 @@ jobs:
 
       - name: Static build
         env:
-          ATLAS_GITHUB_PAGES: "true"
+          ATLAS_PREVIEW_ROOT_SCOPED: "true"
         run: pnpm build
 
       - name: Bind artifact to exact head
