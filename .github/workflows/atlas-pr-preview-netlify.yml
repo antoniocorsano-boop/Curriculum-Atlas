@@ -1,0 +1,64 @@
+name: Atlas PR Preview — Netlify URL
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_run_id:
+        description: "GitHub Actions run containing the validated atlas-pr-preview artifact"
+        required: true
+      exact_head:
+        description: "Exact candidate SHA bound to the artifact"
+        required: true
+
+permissions:
+  actions: read
+  contents: read
+
+env:
+  NETLIFY_SITE_ID: 7ee88635-ac0d-4515-8cdf-7ae99b3023c6
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    environment: atlas-pr-preview
+    steps:
+      - name: Download validated exact-head artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: atlas-pr-preview-${{ inputs.exact_head }}
+          path: preview
+          run-id: ${{ inputs.artifact_run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Verify exact-head binding and authorization boundary
+        shell: bash
+        run: |
+          test -f preview/EXACT_HEAD.txt
+          test "$(tr -d '\r\n' < preview/EXACT_HEAD.txt)" = "${{ inputs.exact_head }}"
+          test -f preview/PREVIEW-MANIFEST.json
+          grep -F '"studentAuthorized":false' preview/PREVIEW-MANIFEST.json
+
+      - name: Deploy temporary preview to dedicated Netlify site
+        id: deploy
+        shell: bash
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: |
+          test -n "$NETLIFY_AUTH_TOKEN"
+          npx --yes netlify-cli@latest deploy \
+            --dir=preview \
+            --site="$NETLIFY_SITE_ID" \
+            --auth="$NETLIFY_AUTH_TOKEN" \
+            --message="Atlas exact-head ${{ inputs.exact_head }} — NOT_RUNTIME_AUTHORIZED" \
+            --json > netlify-deploy.json
+          node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('netlify-deploy.json','utf8')); if(!d.deploy_url) process.exit(1); fs.appendFileSync(process.env.GITHUB_OUTPUT, 'url='+d.deploy_url+'\n');"
+
+      - name: Record preview URL
+        shell: bash
+        run: |
+          echo "### Atlas PR Preview" >> "$GITHUB_STEP_SUMMARY"
+          echo "Exact head: \`${{ inputs.exact_head }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "Student authorized: **false**" >> "$GITHUB_STEP_SUMMARY"
+          echo "Preview URL: ${{ steps.deploy.outputs.url }}" >> "$GITHUB_STEP_SUMMARY"
+
+# This workflow performs a draft deploy only: no --prod and no canonical GitHub Pages mutation.
