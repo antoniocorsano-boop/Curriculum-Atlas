@@ -16,21 +16,24 @@ async function run(viewport, grammar){
  if(grammar==='N') await page.getByLabel('Narrativo').check();
  const start=await page.locator('main').getAttribute('data-session');
  const choices=page.locator('.pathwayScene__options button');
+ const continueButton=page.getByRole('button',{name:'Continua'});
+ assert(await continueButton.isDisabled(),`${grammar} Continue disabled before an activated choice`);
+ assert((await page.getByRole('button',{name:'Nuovo percorso'}).count())===0,`${grammar} no disruptive reset action during active scene`);
  const first=choices.first(); await first.focus(); assert(await first.evaluate(el=>el===document.activeElement),`${grammar} keyboard focusable choice`); await first.press('Enter');
+ assert((await first.getAttribute('aria-pressed'))==='true',`${grammar} activated choice exposes selected state`);
  assert((await page.locator('[role=status]').innerText()).length>20,`${grammar} announced feedback region`);
+ assert(!(await continueButton.isDisabled()),`${grammar} Continue enabled after activated choice`);
  await page.keyboard.press('Tab');
  assert(await choices.nth(1).evaluate(el=>el===document.activeElement),`${grammar} natural tab order reaches second choice`);
  await page.keyboard.press('Tab');
- const continueButton=page.getByRole('button',{name:'Continua'});
- assert(await continueButton.evaluate(el=>el===document.activeElement),`${grammar} natural tab order reaches Continue before New pathway`);
+ assert(await continueButton.evaluate(el=>el===document.activeElement),`${grammar} natural tab order reaches Continue after choices`);
  await continueButton.press('Enter');
  assert(await page.getByRole('heading',{level:2}).evaluate(el=>el===document.activeElement),`${grammar} focus moves to new scene heading`);
- // Branch-specific consequence then transfer.
  await page.locator('.pathwayScene__options button').first().click(); await page.getByRole('button',{name:'Continua'}).click();
  assert((await page.getByRole('heading',{name:/nuovo contesto|nuova decisione/i}).count())===1,`${grammar} reaches transfer scene`);
  await page.locator('.pathwayScene__options button').first().click(); await page.getByRole('button',{name:'Continua'}).click();
  assert((await page.getByRole('heading',{name:'Hai completato il percorso'}).count())===1,`${grammar} explicit terminal`);
- assert((await page.getByRole('link',{name:'Esci'}).count())===1 && (await page.getByRole('button',{name:'Nuovo percorso'}).count())===1,`${grammar} exit and new session distinct`);
+ assert((await page.getByRole('link',{name:'Esci'}).count())===1 && (await page.getByRole('button',{name:'Nuovo percorso'}).count())===1,`${grammar} exit and new session distinct at terminal`);
  await page.getByRole('button',{name:'Nuovo percorso'}).click();
  const fresh=await page.locator('main').getAttribute('data-session'); assert(fresh!==start,`${grammar} deterministic fresh session`);
  assert((await page.getByRole('heading',{name:/Quale informazione manca|Due materiali sul tavolo/}).count())===1,`${grammar} reset to entry`);
