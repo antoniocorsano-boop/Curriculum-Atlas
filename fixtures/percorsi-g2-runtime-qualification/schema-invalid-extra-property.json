@@ -1,0 +1,7 @@
+{
+  "schemaVersion":"percorsi-g2-runtime-qualification/v1",
+  "unexpected":"must-fail-schema",
+  "candidate":{"runtimeExactHead":"700e91bd38ae8543335ab0c96f28d3495229c72e","pathwayId":"pw-test","contentVersion":"v1","publicationId":"pub-1","publicationState":"LAB","authorityRef":"issue-44","qualificationContractVersion":"v1"},
+  "gates":{},
+  "decision":{"status":"NOT_RUNTIME_AUTHORIZED","authorityRef":null,"decidedAt":null}
+}
