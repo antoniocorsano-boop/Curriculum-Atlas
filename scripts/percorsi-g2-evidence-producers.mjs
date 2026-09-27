@@ -1,48 +1,73 @@
 import crypto from 'node:crypto';
 
 export const CONTRACT_VERSION='percorsi-g2-evidence-producer/v1';
+export const POLICY_VERSION='v1';
 const gates={Q5:'publication-provenance',Q6:'editorial-admission',Q1:'public-surface-reachability'};
+const accepted={Q5:{gateId:'Q5',producerId:'percorsi-g2-publication-provenance',producerVersion:'v1'},Q6:{gateId:'Q6',producerId:'percorsi-g2-editorial-admission',producerVersion:'v1'}};
+const allowedEdges=new Set(['LAB>QUALIFIED','QUALIFIED>PUBLISHED','PUBLISHED>WITHDRAWN']);
 const iso=()=>new Date().toISOString();
+const isRfc3339=v=>typeof v==='string'&&!Number.isNaN(Date.parse(v))&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(v);
+const sameBinding=(a,b)=>!!a&&!!b&&['runtimeExactHead','pathwayId','contentVersion','publicationId'].every(k=>typeof a[k]==='string'&&a[k]!==''&&a[k]===b[k]);
 const runId=(gate,binding,input)=>crypto.createHash('sha256').update(JSON.stringify([gate,binding,input])).digest('hex');
 const obs=(assertionId,outcome,evidenceRef,absenceReason)=>({assertionId,outcome,...(evidenceRef?{evidenceRef}:{absenceReason})});
 const result=(gate,binding,input,observations,deps=[])=>{
   const status=observations.some(o=>o.outcome==='FAIL')?'FAIL':observations.some(o=>o.outcome==='BLOCKED')?'BLOCKED':'PASS';
-  return {contractVersion:CONTRACT_VERSION,producerId:`percorsi-g2-${gates[gate]}`,producerVersion:'v1',runId:runId(gate,binding,input),gateId:gate,candidateBinding:binding,status,observations,evidenceRefs:[...new Set(observations.flatMap(o=>o.evidenceRef?[o.evidenceRef]:[]))],checkedAt:iso(),policyVersion:'v1',dependencyLineage:deps};
+  return {contractVersion:CONTRACT_VERSION,producerId:`percorsi-g2-${gates[gate]}`,producerVersion:'v1',runId:runId(gate,binding,input),gateId:gate,candidateBinding:binding,status,observations,evidenceRefs:[...new Set(observations.flatMap(o=>o.evidenceRef?[o.evidenceRef]:[]))],checkedAt:iso(),policyVersion:POLICY_VERSION,dependencyLineage:deps};
 };
 const ev=(prefix,id)=>`${prefix}:${id}`;
+const lineage=d=>d?[{producerId:d.producerId,producerVersion:d.producerVersion,runId:d.runId,gateId:d.gateId,candidateBinding:d.candidateBinding,checkedAt:d.checkedAt}]:[];
+
+export function validateConsumableEvidence(expectedGate,binding,dependency){
+  if(!dependency) return {ok:false,reason:`${expectedGate}_EVIDENCE_MISSING`};
+  const exp=accepted[expectedGate];
+  if(dependency.status!=='PASS') return {ok:false,reason:`${expectedGate}_NOT_PASS`};
+  if(!sameBinding(dependency.candidateBinding,binding)) return {ok:false,reason:`${expectedGate}_CANDIDATE_MISMATCH`};
+  if(dependency.gateId!==exp.gateId||dependency.producerId!==exp.producerId) return {ok:false,reason:`${expectedGate}_PRODUCER_IDENTITY_MISMATCH`};
+  if(dependency.contractVersion!==CONTRACT_VERSION||dependency.producerVersion!==exp.producerVersion||dependency.policyVersion!==POLICY_VERSION) return {ok:false,reason:`${expectedGate}_VERSION_INCOMPATIBLE`};
+  if(typeof dependency.runId!=='string'||!dependency.runId||!isRfc3339(dependency.checkedAt)) return {ok:false,reason:`${expectedGate}_LINEAGE_INVALID`};
+  return {ok:true};
+}
 
 export function produceQ5(binding,transition){
-  const allowed=new Set(['LAB>QUALIFIED','QUALIFIED>PUBLISHED','PUBLISHED>WITHDRAWN']);
-  const complete=['eventId','previousState','requestedTransition','resultingState','publicationId','authorityRef','authorityEvidenceRef','transitionAt'].every(k=>typeof transition?.[k]==='string'&&transition[k]);
-  const observations=[];
-  observations.push(obs('q5.transition.complete',complete?'PASS':'BLOCKED',complete?ev('transition',transition.eventId):null,complete?null:'TRANSITION_PROVENANCE_INCOMPLETE'));
+  const required=['eventId','previousState','requestedTransition','resultingState','publicationId','authorityRef','authorityEvidenceRef','transitionAt'];
+  const complete=required.every(k=>typeof transition?.[k]==='string'&&transition[k])&&transition?.candidateBinding;
+  const observations=[obs('q5.transition.complete',complete?'PASS':'BLOCKED',complete?ev('transition',transition.eventId):null,complete?null:'TRANSITION_PROVENANCE_INCOMPLETE')];
   if(complete){
     const edge=`${transition.previousState}>${transition.resultingState}`;
-    observations.push(obs('q5.transition.allowed',allowed.has(edge)&&transition.requestedTransition===edge?'PASS':'FAIL',ev('transition',transition.eventId)));
+    observations.push(obs('q5.transition.timestamp',isRfc3339(transition.transitionAt)?'PASS':'FAIL',ev('transition',transition.eventId)));
+    observations.push(obs('q5.transition.candidate-binding',sameBinding(transition.candidateBinding,binding)?'PASS':'FAIL',ev('transition',transition.eventId)));
+    observations.push(obs('q5.transition.allowed',allowedEdges.has(edge)&&transition.requestedTransition===edge?'PASS':'FAIL',ev('transition',transition.eventId)));
     observations.push(obs('q5.publication.binding',transition.publicationId===binding.publicationId?'PASS':'FAIL',ev('transition',transition.eventId)));
     observations.push(obs('q5.authority.present',transition.authorityRef&&transition.authorityEvidenceRef?'PASS':'FAIL',transition.authorityEvidenceRef));
+    if(edge==='QUALIFIED>PUBLISHED') observations.push(obs('q5.q9.authority',transition.q9Authorization?.status==='RUNTIME_AUTHORIZED'&&sameBinding(transition.q9Authorization?.candidateBinding,binding)&&transition.q9Authorization?.authorityRef===transition.authorityRef?'PASS':'FAIL',ev('transition',transition.eventId)));
   }
   return result('Q5',binding,transition,observations);
 }
 
 export function produceQ6(binding,artifact,q5){
-  const dep=q5?[{producerId:q5.producerId,producerVersion:q5.producerVersion,runId:q5.runId,gateId:q5.gateId,candidateBinding:q5.candidateBinding,checkedAt:q5.checkedAt}]:[];
   const observations=[];
-  if(!q5) observations.push(obs('q6.q5.required','BLOCKED',null,'Q5_EVIDENCE_MISSING'));
-  else observations.push(obs('q6.q5.pass',q5.status==='PASS'?'PASS':'BLOCKED',`producer-run:${q5.runId}`));
-  const admissible=artifact?.kind==='QUALIFIED_CONTENT'&&artifact?.publicationId===binding.publicationId&&artifact?.authorityRef&&artifact?.receiptRef;
-  observations.push(obs('q6.editorial.admission',admissible?'PASS':'FAIL',ev('artifact',artifact?.id??'unknown')));
-  return result('Q6',binding,artifact,observations,dep);
+  const dep=validateConsumableEvidence('Q5',binding,q5);
+  observations.push(obs('q6.q5.consumable',dep.ok?'PASS':'BLOCKED',dep.ok?`producer-run:${q5.runId}`:null,dep.ok?null:dep.reason));
+  const identity=artifact?.candidateBinding&&sameBinding(artifact.candidateBinding,binding)&&artifact?.publicationId===binding.publicationId;
+  const provenance=artifact?.authorityRef&&artifact?.receiptRef&&artifact?.receiptCandidateBinding&&sameBinding(artifact.receiptCandidateBinding,binding)&&artifact?.receiptAuthorityRef===artifact.authorityRef;
+  const state=artifact?.kind==='QUALIFIED_CONTENT'&&artifact?.publicationState==='QUALIFIED';
+  observations.push(obs('q6.editorial.identity',identity?'PASS':'FAIL',ev('artifact',artifact?.id??'unknown')));
+  observations.push(obs('q6.editorial.provenance',provenance?'PASS':'FAIL',ev('artifact',artifact?.id??'unknown')));
+  observations.push(obs('q6.editorial.state',state?'PASS':'FAIL',ev('artifact',artifact?.id??'unknown')));
+  return result('Q6',binding,artifact,observations,lineage(q5));
 }
 
 export function produceQ1(binding,surface,q6){
-  const dep=q6?[{producerId:q6.producerId,producerVersion:q6.producerVersion,runId:q6.runId,gateId:q6.gateId,candidateBinding:q6.candidateBinding,checkedAt:q6.checkedAt}]:[];
   const observations=[];
-  if(!q6) observations.push(obs('q1.q6.required','BLOCKED',null,'Q6_EVIDENCE_MISSING'));
-  else observations.push(obs('q1.q6.pass',q6.status==='PASS'?'PASS':'BLOCKED',`producer-run:${q6.runId}`));
+  const dep=validateConsumableEvidence('Q6',binding,q6);
+  observations.push(obs('q1.q6.consumable',dep.ok?'PASS':'BLOCKED',dep.ok?`producer-run:${q6.runId}`:null,dep.ok?null:dep.reason));
   const routes=Array.isArray(surface?.reachableRoutes)?surface.reachableRoutes:[];
+  const identity=surface?.candidateBinding&&sameBinding(surface.candidateBinding,binding)&&surface?.publicationId===binding.publicationId&&surface?.q6RunId===q6?.runId;
+  const publishable=surface?.publicationState==='PUBLISHED'&&surface?.runtimeAuthorization?.status==='RUNTIME_AUTHORIZED'&&sameBinding(surface?.runtimeAuthorization?.candidateBinding,binding);
+  observations.push(obs('q1.surface.identity',identity?'PASS':'FAIL',ev('surface',surface?.id??'unknown')));
+  observations.push(obs('q1.surface.publishable',publishable?'PASS':'FAIL',ev('surface',surface?.id??'unknown')));
   observations.push(obs('q1.lab.unreachable',routes.some(r=>r.startsWith('/percorsi/lab/'))?'FAIL':'PASS',ev('surface',surface?.id??'unknown')));
-  observations.push(obs('q1.public.entrypoint',surface?.publicEntrypoint===true?'PASS':'FAIL',ev('surface',surface?.id??'unknown')));
-  observations.push(obs('q1.fail.closed',surface?.missingAuthorityBehavior==='DENY'&&surface?.missingReceiptBehavior==='DENY'?'PASS':'FAIL',ev('surface',surface?.id??'unknown')));
-  return result('Q1',binding,surface,observations,dep);
+  observations.push(obs('q1.public.entrypoint',surface?.publicEntrypoint===true&&typeof surface?.entrypoint==='string'&&routes.includes(surface.entrypoint)?'PASS':'FAIL',ev('surface',surface?.id??'unknown')));
+  observations.push(obs('q1.fail.closed',surface?.missingAuthorityBehavior==='DENY'&&surface?.missingReceiptBehavior==='DENY'&&surface?.nonPublishableBehavior==='DENY'&&surface?.unknownRouteBehavior==='DENY'?'PASS':'FAIL',ev('surface',surface?.id??'unknown')));
+  return result('Q1',binding,surface,observations,lineage(q6));
 }
