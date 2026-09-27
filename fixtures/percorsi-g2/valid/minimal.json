@@ -1,0 +1,15 @@
+{
+  "schemaVersion":"2.0","pathwayId":"g2-minimal","version":"1.0.0","entryNodeId":"start",
+  "semanticUnits":[
+    {"id":"u1","kind":"question","canonicalMeaning":"Riconoscere quale informazione manca","provenanceRef":"ADR-009"},
+    {"id":"u2","kind":"choice_meaning","canonicalMeaning":"Cercare il dato mancante prima di decidere","provenanceRef":"ADR-009"},
+    {"id":"u3","kind":"terminal_meaning","canonicalMeaning":"La strategia è stata applicata","provenanceRef":"ADR-009"}
+  ],
+  "nodes":[
+    {"id":"start","cognitiveFunction":{"registry":"TRAMA_COGNITIVE_FUNCTIONS","registryVersion":"1","id":"identify_missing_information"},"contentRef":{"semanticUnitIds":["u1"],"resourceKey":"start","locale":"it-IT"},"cyclePolicy":{"mode":"forbidden"},"choices":[{"id":"c1","labelRef":{"semanticUnitIds":["u2"],"resourceKey":"choice","locale":"it-IT"},"feedbackRef":{"semanticUnitIds":["u2"],"resourceKey":"feedback","locale":"it-IT"},"targetNodeId":"end"}]},
+    {"id":"end","cognitiveFunction":{"registry":"TRAMA_COGNITIVE_FUNCTIONS","registryVersion":"1","id":"reflect_on_strategy"},"contentRef":{"semanticUnitIds":["u3"],"resourceKey":"end","locale":"it-IT"},"cyclePolicy":{"mode":"forbidden"},"choices":[],"terminal":{"terminalId":"done","contentRef":{"semanticUnitIds":["u3"],"resourceKey":"done","locale":"it-IT"},"postCompletionActions":["exit","new_session"]}}
+  ],
+  "presentationGrammars":[{"id":"L","renderer":"literal","semanticCoverage":["u1","u2","u3"]},{"id":"N","renderer":"narrative","semanticCoverage":["u1","u2","u3"]}],
+  "governance":{"authorizationState":"NOT_RUNTIME_AUTHORIZED","learnerNetworkWrite":"forbidden","learnerTelemetry":"forbidden","localPersistence":"forbidden","allowedPresentationGrammarIds":["L","N"]},
+  "accessibilityContract":{"semanticControls":true,"focusManaged":true,"announcedFeedback":true,"notColorOnly":true,"reducedMotion":true}
+}
