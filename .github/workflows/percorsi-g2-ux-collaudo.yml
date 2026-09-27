@@ -1,0 +1,62 @@
+name: Percorsi G2 UX Collaudo
+
+on:
+  pull_request:
+    paths:
+      - "src/app/percorsi/lab/**"
+      - "src/features/pathways/**"
+      - "scripts/test-g2-ux-prototype.mjs"
+      - "docs/PERCORSI-G2-UX-FOCUS-REMEDIATION.md"
+      - ".github/workflows/percorsi-g2-ux-collaudo.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  g2-graph-ux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record exact head
+        run: echo "G2_EXACT_HEAD=${{ github.event.pull_request.head.sha || github.sha }}" >> "$GITHUB_ENV"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Lint
+        run: pnpm lint
+      - name: Build
+        run: pnpm build
+      - name: Start isolated prototype
+        run: |
+          pnpm start > /tmp/atlas-g2.log 2>&1 &
+          for i in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3000/percorsi/lab/pw-missing-information-01 >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/atlas-g2.log; exit 1
+      - name: Graph UX behavioural collaudo
+        run: node scripts/test-g2-ux-prototype.mjs
+      - name: Contract validator remains green
+        run: npm run validate:percorsi:g2
+      - name: Record exact-head evidence
+        run: printf '%s\n' "exact_head=$G2_EXACT_HEAD" > artifacts/g2-ux/EXACT_HEAD.txt
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: percorsi-g2-ux-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            artifacts/g2-ux/
+            /tmp/atlas-g2.log
+          if-no-files-found: warn
+
+# Prototype evidence only. No deployment or student-runtime authorization.
