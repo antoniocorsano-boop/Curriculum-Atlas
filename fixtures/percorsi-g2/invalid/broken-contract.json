@@ -1,0 +1,8 @@
+{
+  "schemaVersion":"2.0","pathwayId":"g2-broken","version":"1.0.0","entryNodeId":"missing-entry",
+  "semanticUnits":[{"id":"u1","kind":"question","canonicalMeaning":"Dato","provenanceRef":"ADR-009"}],
+  "nodes":[{"id":"a","cognitiveFunction":{"registry":"FREE_TEXT","registryVersion":"0","id":"x"},"contentRef":{"semanticUnitIds":["unknown"],"resourceKey":"a","locale":"it-IT"},"cyclePolicy":{"mode":"forbidden"},"choices":[{"id":"c","labelRef":{"semanticUnitIds":["u1"],"resourceKey":"c","locale":"it-IT"},"feedbackRef":{"semanticUnitIds":["u1"],"resourceKey":"f","locale":"it-IT"},"targetNodeId":"ghost"}]}],
+  "presentationGrammars":[{"id":"L","renderer":"literal","semanticCoverage":[]}],
+  "governance":{"authorizationState":"RUNTIME_AUTHORIZED","learnerNetworkWrite":"forbidden","learnerTelemetry":"forbidden","localPersistence":"separately_authorized","allowedPresentationGrammarIds":["L"]},
+  "accessibilityContract":{"semanticControls":false,"focusManaged":false,"announcedFeedback":false,"notColorOnly":false,"reducedMotion":false}
+}

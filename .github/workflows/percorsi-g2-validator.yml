@@ -1,0 +1,29 @@
+name: Percorsi G2 Validator
+
+on:
+  pull_request:
+    paths:
+      - 'docs/percorsi/PERCORSI-G2-CONTRACT.md'
+      - 'docs/adr/ADR-009-percorsi-g2-graph-contract.md'
+      - 'scripts/validate-g2-pathway.mjs'
+      - 'scripts/test-g2-validator.mjs'
+      - 'fixtures/percorsi-g2/**'
+      - 'package.json'
+      - '.github/workflows/percorsi-g2-validator.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Positive and negative fixtures
+        run: npm run validate:percorsi:g2
+      - name: Atomic adversarial matrix
+        run: node scripts/test-g2-validator.mjs
