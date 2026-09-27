@@ -6,6 +6,7 @@ on:
       - "src/app/percorsi/lab/**"
       - "src/features/pathways/**"
       - "scripts/test-g2-ux-prototype.mjs"
+      - "docs/PERCORSI-G2-UX-FOCUS-REMEDIATION.md"
       - ".github/workflows/percorsi-g2-ux-collaudo.yml"
   workflow_dispatch:
 
