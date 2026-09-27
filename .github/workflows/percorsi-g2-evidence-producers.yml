@@ -1,0 +1,22 @@
+name: Percorsi G2 Evidence Producers
+on:
+  pull_request:
+    paths:
+      - 'schemas/percorsi-g2-evidence-producer-result.schema.json'
+      - 'scripts/percorsi-g2-evidence-producers.mjs'
+      - 'scripts/test-percorsi-g2-evidence-producers.mjs'
+      - '.github/workflows/percorsi-g2-evidence-producers.yml'
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run Q5 Q6 Q1 producer tests
+        run: node scripts/test-percorsi-g2-evidence-producers.mjs
+      - name: Validate EvidenceProducerResult schema is parseable
+        run: node -e "JSON.parse(require('fs').readFileSync('schemas/percorsi-g2-evidence-producer-result.schema.json','utf8')); console.log('PASS schema parse')"
