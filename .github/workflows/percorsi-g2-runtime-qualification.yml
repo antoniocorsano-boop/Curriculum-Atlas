@@ -1,0 +1,41 @@
+name: Percorsi G2 Runtime Qualification
+
+on:
+  pull_request:
+    paths:
+      - 'schemas/percorsi-g2-runtime-qualification.schema.json'
+      - 'scripts/validate-percorsi-g2-runtime-qualification.mjs'
+      - 'scripts/validate-percorsi-g2-runtime-schema.mjs'
+      - 'scripts/test-percorsi-g2-runtime-qualification.mjs'
+      - 'fixtures/percorsi-g2-runtime-qualification/**'
+      - 'docs/PERCORSI-G2-RUNTIME-QUALIFICATION.md'
+      - '.github/workflows/percorsi-g2-runtime-qualification.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualification-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated schema validator
+        run: npm install --no-save --ignore-scripts ajv@8 ajv-formats@3
+      - name: Enforce Draft 2020-12 schema on baseline receipt
+        run: node scripts/validate-percorsi-g2-runtime-schema.mjs fixtures/percorsi-g2-runtime-qualification/not-authorized.valid.json
+      - name: Prove schema rejects an invalid receipt
+        shell: bash
+        run: |
+          if node scripts/validate-percorsi-g2-runtime-schema.mjs fixtures/percorsi-g2-runtime-qualification/schema-invalid-extra-property.json; then
+            echo 'FAIL schema accepted deliberately invalid receipt'
+            exit 1
+          fi
+          echo 'PASS schema fails closed'
+      - name: Validate baseline NOT_RUNTIME_AUTHORIZED receipt semantics
+        run: node scripts/validate-percorsi-g2-runtime-qualification.mjs fixtures/percorsi-g2-runtime-qualification/not-authorized.valid.json
+      - name: Enforce mandatory fail-closed aggregation cases
+        run: node scripts/test-percorsi-g2-runtime-qualification.mjs

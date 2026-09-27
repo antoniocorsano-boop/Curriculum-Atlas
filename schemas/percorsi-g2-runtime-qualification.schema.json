@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://atlas.local/schemas/percorsi-g2-runtime-qualification.schema.json",
+  "title": "Percorsi G2 Runtime Qualification Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "candidate", "gates", "decision"],
+  "properties": {
+    "schemaVersion": {"const": "percorsi-g2-runtime-qualification/v1"},
+    "candidate": {"$ref": "#/$defs/candidate"},
+    "gates": {"type":"object","additionalProperties":false,"required":["Q1","Q2","Q3","Q4","Q5","Q6","Q7","Q8"],"properties":{"Q1":{"$ref":"#/$defs/gate"},"Q2":{"$ref":"#/$defs/gate"},"Q3":{"$ref":"#/$defs/gate"},"Q4":{"$ref":"#/$defs/gate"},"Q5":{"$ref":"#/$defs/gate"},"Q6":{"$ref":"#/$defs/gate"},"Q7":{"$ref":"#/$defs/gate"},"Q8":{"$ref":"#/$defs/gate"}}},
+    "decision": {"$ref":"#/$defs/decision"}
+  },
+  "$defs": {
+    "candidate": {"type":"object","additionalProperties":false,"required":["runtimeExactHead","pathwayId","contentVersion","publicationId","publicationState","authorityRef","qualificationContractVersion"],"properties":{"runtimeExactHead":{"type":"string","pattern":"^[0-9a-f]{40}$"},"pathwayId":{"type":"string","minLength":1},"contentVersion":{"type":"string","minLength":1},"publicationId":{"type":"string","minLength":1},"publicationState":{"enum":["LAB","QUALIFIED","PUBLISHED","WITHDRAWN"]},"authorityRef":{"type":"string","minLength":1},"qualificationContractVersion":{"const":"v1"}}},
+    "gate": {"type":"object","additionalProperties":false,"required":["status","evidenceRefs","reviewerClass","checkedAt","candidateBinding"],"properties":{"status":{"enum":["NOT_RUN","PASS","FAIL","BLOCKED"]},"evidenceRefs":{"type":"array","items":{"type":"string","minLength":1},"uniqueItems":true},"reviewerClass":{"enum":["AUTOMATED","HUMAN_ACCESSIBILITY","INDEPENDENT","FINAL_AUTHORITY"]},"checkedAt":{"type":"string","format":"date-time"},"candidateBinding":{"type":"object","additionalProperties":false,"required":["runtimeExactHead","pathwayId","contentVersion","publicationId"],"properties":{"runtimeExactHead":{"type":"string","pattern":"^[0-9a-f]{40}$"},"pathwayId":{"type":"string","minLength":1},"contentVersion":{"type":"string","minLength":1},"publicationId":{"type":"string","minLength":1}}}}},
+    "decision": {"type":"object","additionalProperties":false,"required":["status","authorityRef","decidedAt"],"properties":{"status":{"enum":["NOT_RUNTIME_AUTHORIZED","RUNTIME_AUTHORIZED"]},"authorityRef":{"type":["string","null"]},"decidedAt":{"anyOf":[{"type":"null"},{"type":"string","format":"date-time"}]}}}
+  }
+}
