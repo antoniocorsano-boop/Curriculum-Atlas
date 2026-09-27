@@ -1,8 +1,9 @@
 # Percorsi G2 — H1 Pedagogical / Editorial Review
 
-Status: `H1 = PASS_WITH_REMEDIATION_REQUIRED`
+Status: `H1 = PASS`
 
-Reviewed implementation head at start of review: `dfce6591d853ca7c73352a37586d7ec82ade4c7c`.
+Initial reviewed implementation head: `dfce6591d853ca7c73352a37586d7ec82ade4c7c`.
+Remediated implementation head verified by CI: `255edacca82a4f7cf0a074d9e9a324df49ee89e1`.
 
 Scope: human pedagogical/editorial comparison of the Literal (`L`) and Narrative (`N`) presentations of `pw-missing-information-01`. This review does not constitute assistive-technology validation and does not authorize student runtime.
 
@@ -33,23 +34,29 @@ Feedback in both grammars explains what information the selected strategy makes 
 ### H1-05 — Transfer demand — PASS
 Both grammars require recognition of travel time as the missing decision-relevant datum in a changed context; neither grammar supplies the answer in advance.
 
-### H1-06 — Editorial inconsistency in Narrative revision feedback — REMEDIATION REQUIRED
-Narrative `inspect → revise` currently says: `senza perdere punti: qui non ce ne sono.` Literal says only `senza penalizzazioni`, and Narrative `infer → revise` also uses `senza penalizzazioni`.
-
-The phrase does not create scoring functionality, but it unnecessarily introduces the concept of points in learner-facing copy and breaks editorial symmetry with the governed no-scoring model. Replace it with neutral process language equivalent to the other revision feedback.
-
-Required replacement:
+### H1-06 — Narrative revision feedback — REMEDIATED / PASS
+The initial Narrative `inspect → revise` copy unnecessarily introduced the concept of points. It was replaced with neutral process language:
 
 `Puoi tornare alla decisione iniziale e rivedere la strategia senza penalizzazioni.`
 
+The remediation preserves graph semantics and aligns learner-facing copy with the governed no-scoring model.
+
+## Post-remediation evidence
+
+On exact head `255edacca82a4f7cf0a074d9e9a324df49ee89e1`:
+
+- `Percorsi G2 UX Collaudo`: PASS;
+- `R3-F0 S3-V2 Foundation`: PASS;
+- F1 Visual Evidence: PASS;
+- F2 Visual Evidence: PASS;
+- F3 Visual Evidence: PASS;
+- F4 Mobile LIM Evidence: PASS;
+- F5 Exit: PASS;
+- `TRAMA Perceptible Write`: PASS;
+- G1 collaudo: correctly skipped for the isolated G2 change.
+
 ## Decision
 
-`H1 = PASS_WITH_REMEDIATION_REQUIRED`.
+`H1 = PASS`.
 
-The pedagogical equivalence is substantively sound, with one bounded editorial remediation. H1 becomes final `PASS` only after:
-
-1. the H1-06 copy correction is committed;
-2. automated G2 UX/contract gates rerun successfully on the new exact head;
-3. this review record is updated to reference that exact head.
-
-`H2` human assistive-technology validation remains separate and pending. `PROTOTYPE_ONLY / NOT_RUNTIME_AUTHORIZED` remains binding.
+The Literal/Narrative pedagogical-editorial equivalence gate is complete for this prototype implementation. `H2` human assistive-technology validation remains separate and pending. `PROTOTYPE_ONLY / NOT_RUNTIME_AUTHORIZED` remains binding until the later authorization gates are explicitly satisfied.
