@@ -1,8 +1,10 @@
 # ADR-009 — Percorsi G2 come grafo didattico versionato
 
-Status: `PROPOSED`
+Status: `APPROVED`
 
 Date: 2026-09-26
+Approved: 2026-09-27
+Approval basis: `CONTRACT_REVIEW = PASS` + `VALIDATOR_PASS = PASS` on exact head `cac7f3be6c8f808934130ea0a400b0472ed96640`.
 
 ## Context
 G1 ha validato un percorso controllato di nove scene, ma ha mostrato limiti strutturali: sequenzialità rigida, identificatori tecnici visibili, densità verticale mobile e mancata distinzione semantica fra completamento e nuova sessione. G2 deve consentire branching e grammatiche differenti senza compromettere equivalenza cognitiva, privacy, accessibilità o verificabilità automatica.
@@ -41,4 +43,4 @@ Costs:
 - trattare test automatici di accessibilità come sostituti della verifica umana assistiva.
 
 ## Governance
-`PROPOSED` non modifica runtime e non autorizza studenti. L'ADR potrà diventare `APPROVED` solo dopo seconda review del contratto e dopo che il validatore G2, con fixture positive e negative, dimostri gli invarianti sul medesimo modello.
+`APPROVED` approva il contratto architetturale G2 come base governata per le fasi successive. Non modifica il runtime G1, non autorizza l'uso con studenti e non promuove automaticamente alcun prototipo G2 a runtime. Ogni implementazione resta soggetta ai gate `UX_PROTOTYPE_REVIEW`, `IMPLEMENTATION_CANDIDATE` ed `EXACT_HEAD_REVIEW`; l'autorizzazione studenti rimane separata e richiede anche la verifica umana valida con tecnologia assistiva.
