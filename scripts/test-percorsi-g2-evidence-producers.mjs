@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {produceQ5,produceQ6,produceQ1} from './percorsi-g2-evidence-producers.mjs';
+const binding={runtimeExactHead:'4887c4306ff062734d34b9dc82ca53832efacf05',pathwayId:'pw-test',contentVersion:'v1',publicationId:'pub-1'};
+const transition={eventId:'evt-1',previousState:'LAB',requestedTransition:'LAB>QUALIFIED',resultingState:'QUALIFIED',publicationId:'pub-1',authorityRef:'authority:test',authorityEvidenceRef:'evidence:authority',transitionAt:'2026-09-27T13:00:00Z'};
+const artifact={id:'artifact-1',kind:'QUALIFIED_CONTENT',publicationId:'pub-1',authorityRef:'authority:test',receiptRef:'receipt:test'};
+const surface={id:'surface-1',reachableRoutes:['/percorsi'],publicEntrypoint:true,missingAuthorityBehavior:'DENY',missingReceiptBehavior:'DENY'};
+const q5=produceQ5(binding,transition); assert.equal(q5.status,'PASS');
+const q6=produceQ6(binding,artifact,q5); assert.equal(q6.status,'PASS'); assert.equal(q6.dependencyLineage[0].runId,q5.runId);
+const q1=produceQ1(binding,surface,q6); assert.equal(q1.status,'PASS'); assert.equal(q1.dependencyLineage[0].runId,q6.runId);
+assert.equal(produceQ5(binding,{...transition,resultingState:'PUBLISHED'}).status,'FAIL');
+assert.equal(produceQ5(binding,{...transition,authorityEvidenceRef:''}).status,'BLOCKED');
+assert.equal(produceQ6(binding,{...artifact,kind:'LAB_FIXTURE'},q5).status,'FAIL');
+assert.equal(produceQ6(binding,artifact,null).status,'BLOCKED');
+assert.equal(produceQ1(binding,{...surface,reachableRoutes:['/percorsi/lab/test']},q6).status,'FAIL');
+assert.equal(produceQ1(binding,{...surface,missingReceiptBehavior:'ALLOW'},q6).status,'FAIL');
+assert.equal(produceQ1(binding,surface,null).status,'BLOCKED');
+console.log('PASS Q5 -> Q6 -> Q1 producer positive/negative cases');
