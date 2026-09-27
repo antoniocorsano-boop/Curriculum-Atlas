@@ -45,9 +45,11 @@ export function produceQ5(binding,transition){
 }
 
 export function produceQ6(binding,artifact,q5){
-  const observations=[];
   const dep=validateConsumableEvidence('Q5',binding,q5);
-  observations.push(obs('q6.q5.consumable',dep.ok?'PASS':'BLOCKED',dep.ok?`producer-run:${q5.runId}`:null,dep.ok?null:dep.reason));
+  if(!dep.ok){
+    return result('Q6',binding,{dependencyRunId:q5?.runId??null},[obs('q6.q5.consumable','BLOCKED',null,dep.reason)],lineage(q5));
+  }
+  const observations=[obs('q6.q5.consumable','PASS',`producer-run:${q5.runId}`)];
   const identity=artifact?.candidateBinding&&sameBinding(artifact.candidateBinding,binding)&&artifact?.publicationId===binding.publicationId;
   const provenance=artifact?.authorityRef&&artifact?.receiptRef&&artifact?.receiptCandidateBinding&&sameBinding(artifact.receiptCandidateBinding,binding)&&artifact?.receiptAuthorityRef===artifact.authorityRef;
   const state=artifact?.kind==='QUALIFIED_CONTENT'&&artifact?.publicationState==='QUALIFIED';
@@ -58,11 +60,13 @@ export function produceQ6(binding,artifact,q5){
 }
 
 export function produceQ1(binding,surface,q6){
-  const observations=[];
   const dep=validateConsumableEvidence('Q6',binding,q6);
-  observations.push(obs('q1.q6.consumable',dep.ok?'PASS':'BLOCKED',dep.ok?`producer-run:${q6.runId}`:null,dep.ok?null:dep.reason));
+  if(!dep.ok){
+    return result('Q1',binding,{dependencyRunId:q6?.runId??null},[obs('q1.q6.consumable','BLOCKED',null,dep.reason)],lineage(q6));
+  }
+  const observations=[obs('q1.q6.consumable','PASS',`producer-run:${q6.runId}`)];
   const routes=Array.isArray(surface?.reachableRoutes)?surface.reachableRoutes:[];
-  const identity=surface?.candidateBinding&&sameBinding(surface.candidateBinding,binding)&&surface?.publicationId===binding.publicationId&&surface?.q6RunId===q6?.runId;
+  const identity=surface?.candidateBinding&&sameBinding(surface.candidateBinding,binding)&&surface?.publicationId===binding.publicationId&&surface?.q6RunId===q6.runId;
   const publishable=surface?.publicationState==='PUBLISHED'&&surface?.runtimeAuthorization?.status==='RUNTIME_AUTHORIZED'&&sameBinding(surface?.runtimeAuthorization?.candidateBinding,binding);
   observations.push(obs('q1.surface.identity',identity?'PASS':'FAIL',ev('surface',surface?.id??'unknown')));
   observations.push(obs('q1.surface.publishable',publishable?'PASS':'FAIL',ev('surface',surface?.id??'unknown')));
