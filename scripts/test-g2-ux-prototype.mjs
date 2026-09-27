@@ -15,9 +15,15 @@ async function run(viewport, grammar){
  assert((await page.getByText(/^S\d/).count())===0,`${grammar} no technical scene id`);
  if(grammar==='N') await page.getByLabel('Narrativo').check();
  const start=await page.locator('main').getAttribute('data-session');
- const first=page.locator('.pathwayScene__options button').first(); await first.focus(); assert(await first.evaluate(el=>el===document.activeElement),`${grammar} keyboard focusable choice`); await first.click();
+ const choices=page.locator('.pathwayScene__options button');
+ const first=choices.first(); await first.focus(); assert(await first.evaluate(el=>el===document.activeElement),`${grammar} keyboard focusable choice`); await first.press('Enter');
  assert((await page.locator('[role=status]').innerText()).length>20,`${grammar} announced feedback region`);
- await page.getByRole('button',{name:'Continua'}).click();
+ await page.keyboard.press('Tab');
+ assert(await choices.nth(1).evaluate(el=>el===document.activeElement),`${grammar} natural tab order reaches second choice`);
+ await page.keyboard.press('Tab');
+ const continueButton=page.getByRole('button',{name:'Continua'});
+ assert(await continueButton.evaluate(el=>el===document.activeElement),`${grammar} natural tab order reaches Continue before New pathway`);
+ await continueButton.press('Enter');
  assert(await page.getByRole('heading',{level:2}).evaluate(el=>el===document.activeElement),`${grammar} focus moves to new scene heading`);
  // Branch-specific consequence then transfer.
  await page.locator('.pathwayScene__options button').first().click(); await page.getByRole('button',{name:'Continua'}).click();
