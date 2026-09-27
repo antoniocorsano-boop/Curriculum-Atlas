@@ -4,31 +4,42 @@
 
 PR #46 — `feat(percorsi): G2.4 isolated UX prototype`.
 
-Governance invariata: `PROTOTYPE_ONLY / NOT_RUNTIME_AUTHORIZED`. Il gate `UX_PROTOTYPE_REVIEW` resta aperto fino a collaudo G2 verde e successiva revisione prevista.
+Governance invariata: `PROTOTYPE_ONLY / NOT_RUNTIME_AUTHORIZED`. H1 resta PASS. H2 non viene promosso automaticamente: la nuova implementazione deve superare il collaudo exact-head e una nuova verifica umana mirata.
 
-## Evidenza che ha originato la correzione
+## Evidenza umana che ha originato la seconda correzione strutturale
 
-Sul precedente exact head `90966e747a74be77be2d8ef9717a04c1315d855b` il workflow `Percorsi G2 UX Collaudo` ha superato installazione, typecheck, lint e build, ma il collaudo comportamentale ha rilevato:
+Nel collaudo H2 reale su PC/Chrome, la navigazione da tastiera ha mostrato una sequenza confondente: con `Continua` ancora disabilitato, il browser lo esclude correttamente dall'ordine di tabulazione e il focus può raggiungere l'azione secondaria `Nuovo percorso`. L'evidenza umana ha quindi mostrato che il modello era tecnicamente coerente ma non sufficientemente autoesplicativo per il collaudo assistivo.
 
-`Error: L focus moves to new scene heading`
+Questo rilievo è trattato come difetto reale di interazione. Non viene corretto con `tabindex` artificiale e non viene indebolito il test.
 
-Il rilievo è trattato come difetto reale di accessibilità/interazione. Non viene abbassata né rimossa l'asserzione del test.
+## Decisione strutturale
 
-## Causa
+Il contratto di interazione G2 è ora:
 
-Il componente richiedeva il focus con `requestAnimationFrame` immediatamente dopo `setNodeId`. Questo lega il trasferimento del focus al frame successivo, non al commit effettivo della nuova scena React.
+1. prima dell'attivazione di una scelta, `Continua` resta disabilitato;
+2. la scelta deve essere attivata esplicitamente con mouse, tocco, `Invio` o `Barra spaziatrice`;
+3. la scelta attivata espone semanticamente lo stato tramite `aria-pressed` basato sull'identità della scelta, non sulla destinazione del grafo;
+4. il feedback è una regione `role=status`, `aria-live=polite`, `aria-atomic=true` ed è associato al gruppo delle scelte;
+5. il feedback rende esplicito che, dopo l'attivazione, è possibile continuare oppure cambiare scelta;
+6. `Continua` si abilita solo dopo una scelta attivata ed entra allora nell'ordine naturale del focus dopo le alternative;
+7. `Nuovo percorso` viene rimosso dalle scene attive: un reset distruttivo non interrompe più il flusso decisionale;
+8. `Nuovo percorso` resta disponibile nello stato terminale, dove ha significato esplicito di nuova sessione;
+9. dopo `Continua` o `Nuovo percorso` terminale, il trasferimento del focus resta post-commit: il titolo `h2` della nuova scena riceve focus tramite `useEffect` dopo l'aggiornamento React;
+10. nessun `tabindex` positivo e nessun ordine del focus costruito artificialmente.
 
-## Decisione correttiva
+## Contratto di regressione automatica
 
-Il trasferimento del focus è ora post-commit:
+Il collaudo G2 deve ora verificare anche:
 
-1. l'azione di navigazione marca esplicitamente che la scena successiva deve ricevere focus;
-2. aggiorna lo stato (`nodeId` oppure `session`);
-3. un `useEffect` dipendente dallo stato della scena viene eseguito dopo il commit;
-4. il titolo `h2` della scena, già programmaticamente focalizzabile con `tabIndex=-1`, riceve il focus;
-5. lo scorrimento viene riallineato al titolo senza animazione forzata.
-
-La stessa regola vale per `Continua` e `Nuovo percorso`. Il caricamento iniziale non sottrae il focus all'utente.
+- `Continua` disabilitato prima della scelta;
+- assenza di `Nuovo percorso` durante una scena attiva;
+- stato `aria-pressed=true` dopo attivazione da tastiera;
+- feedback annunciabile;
+- `Continua` abilitato dopo la scelta;
+- ordine naturale: prima scelta → seconda scelta → `Continua`;
+- focus sul titolo della scena dopo la transizione;
+- `Esci` e `Nuovo percorso` distinti solo nello stato terminale;
+- nuova sessione deterministica.
 
 ## Invarianti
 
@@ -37,8 +48,9 @@ La stessa regola vale per `Continua` e `Nuovo percorso`. Il caricamento iniziale
 - nessun punteggio, profilo, analitica o persistenza studente;
 - nessuna autorizzazione runtime implicita;
 - modalità Letterale e Narrativa conservate;
-- feedback annunciabile e ramificazione G2 conservati.
+- ramificazione G2 conservata;
+- nessun dato personale o risposta inviato ad Atlas.
 
 ## Gate
 
-La correzione è candidata al nuovo collaudo automatico sull'exact head della PR. Un esito verde del workflow è evidenza necessaria ma non sufficiente a promuovere il prototipo oltre `UX_PROTOTYPE_REVIEW`.
+La correzione deve essere valutata sul nuovo exact head della PR. Un workflow verde è necessario ma non sufficiente: `H2 = PASS` richiede ancora evidenza umana sul comportamento effettivo con tecnologia assistiva.
