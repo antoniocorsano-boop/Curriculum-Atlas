@@ -7,6 +7,14 @@ const browser = await chromium.launch({headless:true});
 const evidence=[];
 const assert=(ok,label)=>{if(!ok)throw new Error(label);evidence.push(`PASS ${label}`)};
 
+async function tabUntil(page,predicate,max=20){
+ for(let i=0;i<max;i++){
+  await page.keyboard.press('Tab');
+  if(await predicate()) return i+1;
+ }
+ return 0;
+}
+
 async function run(viewport, grammar){
  const page=await browser.newPage({viewportSize:viewport});
  await page.goto(url,{waitUntil:'networkidle'});
@@ -20,19 +28,24 @@ async function run(viewport, grammar){
  assert((await radios.count())===2,`${grammar} choices use native radio semantics`);
  assert(await continueButton.isDisabled(),`${grammar} Continue disabled before a choice`);
  assert((await page.getByRole('button',{name:'Nuovo percorso'}).count())===0,`${grammar} no disruptive reset action during active scene`);
- const first=radios.first(); await first.focus(); assert(await first.evaluate(el=>el===document.activeElement),`${grammar} radio group keyboard focusable`);
- await first.press('Space');
- assert(await first.isChecked(),`${grammar} first choice selected with keyboard`);
+
+ // Critical H2 regression: reproduce a human keyboard path from the document,
+ // never injecting focus with locator.focus().
+ await page.evaluate(()=>{if(document.activeElement instanceof HTMLElement) document.activeElement.blur()});
+ const reachedRadio=await tabUntil(page,async()=>await radios.first().evaluate(el=>el===document.activeElement));
+ assert(reachedRadio>0,`${grammar} real Tab traversal reaches first radio from document`);
+ await page.keyboard.press('Space');
+ assert(await radios.first().isChecked(),`${grammar} Space selects focused radio after real Tab traversal`);
  assert((await page.locator('[role=status]').innerText()).length>20,`${grammar} announced feedback region`);
- assert(!(await continueButton.isDisabled()),`${grammar} Continue enabled after choice`);
+ assert(!(await continueButton.isDisabled()),`${grammar} Continue enabled after keyboard choice`);
  await page.keyboard.press('ArrowDown');
- const second=radios.nth(1);
- assert(await second.evaluate(el=>el===document.activeElement),`${grammar} arrow key moves within radio group`);
- assert(await second.isChecked(),`${grammar} arrow key changes native radio selection`);
+ assert(await radios.nth(1).evaluate(el=>el===document.activeElement),`${grammar} ArrowDown moves focus inside radio group after real traversal`);
+ assert(await radios.nth(1).isChecked(),`${grammar} ArrowDown changes native radio selection`);
  await page.keyboard.press('Tab');
- assert(await continueButton.evaluate(el=>el===document.activeElement),`${grammar} Tab leaves radio group for Continue`);
+ assert(await continueButton.evaluate(el=>el===document.activeElement),`${grammar} Tab exits radio group to Continue`);
  await continueButton.press('Enter');
  assert(await page.getByRole('heading',{level:2}).evaluate(el=>el===document.activeElement),`${grammar} focus moves to new scene heading`);
+
  const sceneRadios=page.locator('.pathwayScene__options input[type=radio]'); await sceneRadios.first().check(); await page.getByRole('button',{name:'Continua'}).click();
  assert((await page.getByRole('heading',{name:/nuovo contesto|nuova decisione/i}).count())===1,`${grammar} reaches transfer scene`);
  await page.locator('.pathwayScene__options input[type=radio]').first().check(); await page.getByRole('button',{name:'Continua'}).click();
