@@ -6,6 +6,11 @@ on:
       - 'scripts/percorsi-g2-evidence-producers.mjs'
       - 'scripts/test-percorsi-g2-evidence-producers.mjs'
       - 'scripts/validate-percorsi-g2-evidence-producer-schema.mjs'
+      - 'scripts/percorsi-g2-invalidation.mjs'
+      - 'scripts/test-percorsi-g2-invalidation.mjs'
+      - 'scripts/validate-percorsi-g2-compliance-matrix.mjs'
+      - 'governance/percorsi-g2-q5-q6-q1-compliance-matrix.json'
+      - 'docs/TRAMA-CONTRACT-MATERIALIZATION-GOVERNANCE.md'
       - '.github/workflows/percorsi-g2-evidence-producers.yml'
 jobs:
   validate:
@@ -17,9 +22,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Run Q5 Q6 Q1 producer tests
+      - name: Run governed Q5 Q6 Q1 producer tests
         run: node scripts/test-percorsi-g2-evidence-producers.mjs
+      - name: Run invalidation and revalidation tests
+        run: node scripts/test-percorsi-g2-invalidation.mjs
       - name: Install isolated schema validator
         run: npm install --no-save --ignore-scripts ajv@8 ajv-formats@3
       - name: Enforce EvidenceProducerResult v1 on real producer outputs
         run: node scripts/validate-percorsi-g2-evidence-producer-schema.mjs
+      - name: Capture dependency audit evidence
+        run: npm audit --json > percorsi-g2-npm-audit.json || true
+      - name: Fail on production-reachable high vulnerabilities
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const a=JSON.parse(fs.readFileSync('percorsi-g2-npm-audit.json','utf8'));
+          const vulns=a.vulnerabilities||{};
+          const prodHigh=Object.entries(vulns).filter(([,v])=>v.severity==='high' && v.isDirect===true && v.nodes?.some(n=>!String(n).includes('node_modules/.cache')));
+          console.log(JSON.stringify({metadata:a.metadata,high:Object.entries(vulns).filter(([,v])=>v.severity==='high').map(([name,v])=>({name,isDirect:v.isDirect,via:v.via}))},null,2));
+          if(prodHigh.length){console.error('Production-reachable direct HIGH vulnerability:',prodHigh.map(([n])=>n));process.exit(1)}
+          NODE
+      - name: Enforce compliance matrix review readiness
+        run: node scripts/validate-percorsi-g2-compliance-matrix.mjs
