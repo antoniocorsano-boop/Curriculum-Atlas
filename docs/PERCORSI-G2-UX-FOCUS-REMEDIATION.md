@@ -4,40 +4,42 @@
 
 PR #46 — `feat(percorsi): G2.4 isolated UX prototype`.
 
-Governance invariata: `PROTOTYPE_ONLY / NOT_RUNTIME_AUTHORIZED`. H1 resta PASS. H2 non viene promosso automaticamente: la nuova implementazione deve superare il collaudo exact-head e una nuova verifica umana mirata.
+Governance invariata: `PROTOTYPE_ONLY / NOT_RUNTIME_AUTHORIZED`. H1 resta PASS. H2 non viene promosso automaticamente.
 
-## Evidenza umana che ha originato la seconda correzione strutturale
+## Evidenza umana vincolante
 
-Nel collaudo H2 reale su PC/Chrome, la navigazione da tastiera ha mostrato una sequenza confondente: con `Continua` ancora disabilitato, il browser lo esclude correttamente dall'ordine di tabulazione e il focus può raggiungere l'azione secondaria `Nuovo percorso`. L'evidenza umana ha quindi mostrato che il modello era tecnicamente coerente ma non sufficientemente autoesplicativo per il collaudo assistivo.
+Il collaudo H2 reale su PC/Chrome dell'exact head `8e3cd1d8481def2a6ccbf38601dd38178d83963c` ha riprodotto lo stesso comportamento problematico precedente. L'esito è quindi `H2 = FAIL` per quell'exact head. Il precedente collaudo automatico verde è considerato insufficiente perché modellava le alternative come pulsanti indipendenti e verificava una sequenza di Tab che non coincideva con il modello semantico maturo di una scelta mutuamente esclusiva.
 
-Questo rilievo è trattato come difetto reale di interazione. Non viene corretto con `tabindex` artificiale e non viene indebolito il test.
+Non si richiede un'ulteriore ripetizione umana sullo stesso modello.
 
-## Decisione strutturale
+## Correzione strutturale
 
-Il contratto di interazione G2 è ora:
+Le alternative di una scena sono ora un gruppo nativo di `input type=radio` racchiuso in `fieldset`/`legend`:
 
-1. prima dell'attivazione di una scelta, `Continua` resta disabilitato;
-2. la scelta deve essere attivata esplicitamente con mouse, tocco, `Invio` o `Barra spaziatrice`;
-3. la scelta attivata espone semanticamente lo stato tramite `aria-pressed` basato sull'identità della scelta, non sulla destinazione del grafo;
-4. il feedback è una regione `role=status`, `aria-live=polite`, `aria-atomic=true` ed è associato al gruppo delle scelte;
-5. il feedback rende esplicito che, dopo l'attivazione, è possibile continuare oppure cambiare scelta;
-6. `Continua` si abilita solo dopo una scelta attivata ed entra allora nell'ordine naturale del focus dopo le alternative;
-7. `Nuovo percorso` viene rimosso dalle scene attive: un reset distruttivo non interrompe più il flusso decisionale;
-8. `Nuovo percorso` resta disponibile nello stato terminale, dove ha significato esplicito di nuova sessione;
-9. dopo `Continua` o `Nuovo percorso` terminale, il trasferimento del focus resta post-commit: il titolo `h2` della nuova scena riceve focus tramite `useEffect` dopo l'aggiornamento React;
-10. nessun `tabindex` positivo e nessun ordine del focus costruito artificialmente.
+1. una domanda con alternative mutuamente esclusive usa controlli nativi radio, non pulsanti con `aria-pressed`;
+2. Tab entra nel gruppo una sola volta; i tasti freccia spostano selezione e focus tra le alternative secondo il comportamento nativo del browser;
+3. Tab successivo esce dal gruppo e raggiunge `Continua` quando è abilitato;
+4. `Continua` resta disabilitato finché non esiste una scelta;
+5. il feedback resta `role=status`, `aria-live=polite`, `aria-atomic=true` ed è associato al gruppo;
+6. `Nuovo percorso` resta assente dalle scene attive e disponibile solo allo stato terminale;
+7. dopo `Continua` o `Nuovo percorso` terminale, il titolo `h2` della nuova scena riceve focus post-commit tramite `useEffect`;
+8. nessun `tabindex` positivo e nessun ordine del focus artificiale.
+
+Questa soluzione privilegia la semantica HTML nativa e il comportamento interoperabile browser/tecnologie assistive rispetto a una ricostruzione manuale del pattern con pulsanti ARIA.
 
 ## Contratto di regressione automatica
 
-Il collaudo G2 deve ora verificare anche:
+Il collaudo G2 deve verificare:
 
+- due alternative esposte come radio native;
 - `Continua` disabilitato prima della scelta;
 - assenza di `Nuovo percorso` durante una scena attiva;
-- stato `aria-pressed=true` dopo attivazione da tastiera;
+- selezione della prima alternativa da tastiera;
 - feedback annunciabile;
 - `Continua` abilitato dopo la scelta;
-- ordine naturale: prima scelta → seconda scelta → `Continua`;
-- focus sul titolo della scena dopo la transizione;
+- freccia nel gruppo radio: focus e selezione passano alla seconda alternativa;
+- Tab dal gruppo: focus su `Continua`;
+- focus sul titolo della nuova scena dopo la transizione;
 - `Esci` e `Nuovo percorso` distinti solo nello stato terminale;
 - nuova sessione deterministica.
 
@@ -53,4 +55,4 @@ Il collaudo G2 deve ora verificare anche:
 
 ## Gate
 
-La correzione deve essere valutata sul nuovo exact head della PR. Un workflow verde è necessario ma non sufficiente: `H2 = PASS` richiede ancora evidenza umana sul comportamento effettivo con tecnologia assistiva.
+Il nuovo exact head deve prima superare i controlli automatici. Solo dopo si esegue una nuova verifica umana mirata sul nuovo modello nativo. `H2 = PASS` richiede evidenza umana sul comportamento effettivo con tecnologia assistiva; fino ad allora la PR resta Draft e `NO MERGE`.
