@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import "./pathway.css";
 
 type Grammar = "L" | "N";
@@ -25,10 +25,11 @@ const copy: Record<Grammar, Record<Exclude<NodeId,"terminal">, Node>> = {
 
 export function MissingInformationPathwayG2Prototype(){
   const [grammar,setGrammar]=useState<Grammar>("L"); const [nodeId,setNodeId]=useState<NodeId>("entry"); const [feedback,setFeedback]=useState(""); const [next,setNext]=useState<NodeId|null>(null); const [session,setSession]=useState(1);
-  const headingRef=useRef<HTMLHeadingElement>(null); const groupId=useId(); const terminal=nodeId==="terminal"; const node=terminal?null:copy[grammar][nodeId];
+  const headingRef=useRef<HTMLHeadingElement>(null); const shouldFocusScene=useRef(false); const groupId=useId(); const terminal=nodeId==="terminal"; const node=terminal?null:copy[grammar][nodeId];
+  useEffect(()=>{if(!shouldFocusScene.current)return;shouldFocusScene.current=false;headingRef.current?.focus({preventScroll:true});headingRef.current?.scrollIntoView({block:"start",behavior:"auto"})},[nodeId,session]);
   function choose(c:Choice){setFeedback(c.feedback);setNext(c.target)}
-  function proceed(){if(!next)return;setNodeId(next);setFeedback("");setNext(null);requestAnimationFrame(()=>headingRef.current?.focus())}
-  function fresh(){setNodeId("entry");setFeedback("");setNext(null);setSession(v=>v+1);requestAnimationFrame(()=>headingRef.current?.focus())}
+  function proceed(){if(!next)return;shouldFocusScene.current=true;setNodeId(next);setFeedback("");setNext(null)}
+  function fresh(){shouldFocusScene.current=true;setNodeId("entry");setFeedback("");setNext(null);setSession(v=>v+1)}
   return <main className={`pathwayPrototype pathwayPrototype--${grammar.toLowerCase()}`} aria-labelledby="pathway-title" data-session={session}>
     <header className="pathwayPrototype__header"><div><p className="pathwayPrototype__eyebrow">Percorsi · prototipo G2</p><h1 id="pathway-title">Prima di decidere, cosa manca?</h1><p>Un percorso per allenare una strategia: riconoscere l’informazione pertinente che manca prima di scegliere.</p></div><div className="pathwayPrototype__status"><strong>PROTOTIPO · NON AUTORIZZATO AGLI STUDENTI</strong><span>Nessun punteggio, profilo o analitica.</span></div></header>
     <fieldset className="pathwayPrototype__condition"><legend>Modo di presentazione</legend><label><input type="radio" name="grammar" checked={grammar==="L"} onChange={()=>{setGrammar("L");setFeedback("");setNext(null)}}/> Letterale</label><label><input type="radio" name="grammar" checked={grammar==="N"} onChange={()=>{setGrammar("N");setFeedback("");setNext(null)}}/> Narrativo</label></fieldset>
