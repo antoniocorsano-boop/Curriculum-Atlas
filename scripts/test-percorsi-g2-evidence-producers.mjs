@@ -42,15 +42,13 @@ assert.equal(q6.dependencyLineage[0].runId,q5.runId);
 
 const target={id:'surface-1',publicationId:'pub-1',candidateBinding:binding,q6RunId:q6.runId,publicationState:'QUALIFIED',probeMode:'SEALED_PREAUTH',surfaceArtifactDigest:'sha256:test-surface',entrypoint:'/percorsi'};
 const adapter=makeAdapter();
-const probeReceipt=await executeSealedPreauthProbe(binding,target,q6,adapter);
+let q1=await produceQ1(binding,target,q6,adapter);
+assert.equal(q1.status,'PASS');
+assert.equal(q1.dependencyLineage[0].runId,q6.runId);
+assert.ok(q1.evidenceRefs.some(x=>x.startsWith('probe-run:')));
 assert.ok(adapter.calls.some(c=>c.op==='discover'));
 assert.ok(adapter.calls.filter(c=>c.op==='request').length>=5);
 assert.ok(adapter.calls.some(c=>c.op==='exposure'));
-
-let q1=produceQ1(binding,probeReceipt,q6);
-assert.equal(q1.status,'PASS');
-assert.equal(q1.dependencyLineage[0].runId,q6.runId);
-assert.ok(q1.evidenceRefs.includes(`probe-run:${probeReceipt.probeRunId}`));
 
 for(const gateResult of [q5,q6,q1]){
   const receipt=mapEvidenceProducerResultToGateReceipt(gateResult.gateId,binding,gateResult);
@@ -105,29 +103,34 @@ for(const a of [
 assert.equal(produceQ6(binding,artifact,{...q5,authorityRef:'authority:foreign'}).status,'FAIL');
 assert.equal(produceQ6(binding,artifact,null).status,'BLOCKED');
 
-await assert.rejects(()=>executeSealedPreauthProbe(binding,target,q6,null),/PROBE_ADAPTER_REQUIRED/);
-await assert.rejects(()=>executeSealedPreauthProbe(binding,{...target,q6RunId:'stale-run'},q6,makeAdapter()),/PROBE_TARGET_INCOMPATIBLE/);
+const noAdapter=await produceQ1(binding,target,q6,null);
+assert.equal(noAdapter.status,'BLOCKED');
+assert.match(noAdapter.observations[0].absenceReason,/PROBE_ADAPTER_REQUIRED/);
 
-const legacySurface={...target,publicExposure:false,reachableRoutes:['/percorsi'],publicEntrypoint:true,missingAuthorityBehavior:'DENY',missingReceiptBehavior:'DENY',nonPublishableBehavior:'DENY',unknownRouteBehavior:'DENY'};
-assert.equal(produceQ1(binding,legacySurface,q6).status,'BLOCKED');
+const staleTarget=await produceQ1(binding,{...target,q6RunId:'stale-run'},q6,makeAdapter());
+assert.equal(staleTarget.status,'BLOCKED');
+assert.match(staleTarget.observations[0].absenceReason,/PROBE_TARGET_INCOMPATIBLE/);
 
-const tampered={...probeReceipt,observations:{...probeReceipt.observations,publicExposure:true}};
-assert.equal(produceQ1(binding,tampered,q6).status,'BLOCKED');
+const directReceipt=await executeSealedPreauthProbe(binding,target,q6,makeAdapter());
+const forgedInput=await produceQ1(binding,directReceipt,q6,makeAdapter());
+assert.equal(forgedInput.status,'BLOCKED');
+assert.match(forgedInput.observations[0].absenceReason,/PROBE_TARGET_INCOMPATIBLE/);
 
-const staleReceipt=await executeSealedPreauthProbe(binding,target,q6,makeAdapter(),()=> '2026-09-27T12:00:00Z');
-const staleResult=produceQ1(binding,staleReceipt,q6);
-assert.equal(staleResult.status,'BLOCKED');
-assert.equal(staleResult.observations[0].absenceReason,'PROBE_RECEIPT_STALE');
+const declarativeSafeTarget={
+  ...target,
+  reachableRoutes:['/percorsi'],
+  publicExposure:false,
+  missingAuthorityBehavior:'DENY',
+  missingReceiptBehavior:'DENY',
+  nonPublishableBehavior:'DENY',
+  unknownRouteBehavior:'DENY'
+};
+const observedUnsafe=await produceQ1(binding,declarativeSafeTarget,q6,makeAdapter({publicExposure:true}));
+assert.equal(observedUnsafe.status,'FAIL');
 
-const foreignReceipt={...probeReceipt,candidateBinding:foreign};
-assert.equal(produceQ1(binding,foreignReceipt,q6).status,'BLOCKED');
-
-const q6Other={...q6,runId:'different-valid-run'};
-const otherTarget={...target,q6RunId:q6Other.runId};
-const mismatchedQ6Receipt=await executeSealedPreauthProbe(binding,otherTarget,q6Other,makeAdapter());
-const mismatchedQ6Result=produceQ1(binding,mismatchedQ6Receipt,q6);
-assert.equal(mismatchedQ6Result.status,'BLOCKED');
-assert.equal(mismatchedQ6Result.observations[0].absenceReason,'PROBE_RECEIPT_BINDING_MISMATCH');
+const staleObservation=await produceQ1(binding,target,q6,makeAdapter(),()=> '2026-09-27T12:00:00Z');
+assert.equal(staleObservation.status,'BLOCKED');
+assert.equal(staleObservation.observations[0].absenceReason,'PROBE_RECEIPT_STALE');
 
 for(const bad of [
   {publicExposure:true},
@@ -138,17 +141,17 @@ for(const bad of [
   {nonPublishableBehavior:'ALLOW'},
   {unknownRouteBehavior:'ALLOW'}
 ]){
-  const receipt=await executeSealedPreauthProbe(binding,target,q6,makeAdapter(bad));
-  assert.equal(produceQ1(binding,receipt,q6).status,'FAIL');
+  const r=await produceQ1(binding,target,q6,makeAdapter(bad));
+  assert.equal(r.status,'FAIL');
 }
 
-assert.equal(produceQ1(binding,probeReceipt,null).status,'BLOCKED');
-assert.equal(produceQ1(binding,probeReceipt,{...q6,policyVersion:'v0'}).status,'BLOCKED');
+assert.equal((await produceQ1(binding,target,null,makeAdapter())).status,'BLOCKED');
+assert.equal((await produceQ1(binding,target,{...q6,policyVersion:'v0'},makeAdapter())).status,'BLOCKED');
 const q6Rerun={...q6,runId:'rerun-after-probe'};
-assert.equal(produceQ1(binding,probeReceipt,q6Rerun).status,'BLOCKED');
+assert.equal((await produceQ1(binding,target,q6Rerun,makeAdapter())).status,'BLOCKED');
 
 for(const r of [q5,q6,q1,crashed]){
   assert.equal('decision' in r,false);
   assert.equal(JSON.stringify(r).includes('"RUNTIME_AUTHORIZED"'),false);
 }
-console.log('PASS governed Q5 authority continuity -> Q6 -> active sealed-preauth Q1 probe, including foreign authority and forged/stale/mismatched receipt cases');
+console.log('PASS governed Q5 authority continuity -> Q6 -> Q1-owned active sealed-preauth probe; declarative/receipt injection cannot substitute observed behavior');
