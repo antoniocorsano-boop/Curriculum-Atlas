@@ -4,9 +4,8 @@ version: 1
 activityId: sistema-tecnologico
 status: DRAFT
 
-# This manifest materializes the governed package identity only.
-# publicRef, provenanceRef and digest MUST be populated from real resources;
-# they are intentionally null until those resources are located/published.
+# Governed package identity. Publication remains fail-closed until every
+# required resource has a real publicRef, provenanceRef and verified digest.
 resources:
   - resourceId: sistema-tecnologico-infografica-metodo
     kind: INFOGRAPHIC
@@ -18,6 +17,7 @@ resources:
     publicRef: null
     provenanceRef: null
     digest: null
+    verificationState: SOURCE_BYTES_UNAVAILABLE
 
   - resourceId: sistema-tecnologico-infografica-dispositivo-elettronico
     kind: INFOGRAPHIC
@@ -29,6 +29,7 @@ resources:
     publicRef: null
     provenanceRef: null
     digest: null
+    verificationState: SOURCE_BYTES_UNAVAILABLE
 
   - resourceId: sistema-tecnologico-presentazione-lim
     kind: PRESENTATION
@@ -40,11 +41,32 @@ resources:
       - LIM_VIEW
     publicRef: null
     provenanceRef: null
-    digest: null
+    digest: sha256:6b6b5beb3f73769404b16d1db0e608cac829bf2594d9ee93e511cdbad1ca5beb
+    byteSize: 41827
+    verificationState: BYTES_VERIFIED_PUBLICATION_PENDING
+
+  - resourceId: sistema-tecnologico-scheda-alunno
+    kind: WORKSHEET
+    title: Analizzare un sistema tecnologico — scheda alunno
+    audience: STUDENT
+    required: false
+    materialSlotRoles:
+      - STUDENT_HANDOUT
+    publicRef: null
+    provenanceRef: null
+    digest: sha256:c6bd44a974e14f56c6b35d8b9b670b7ee739bc8821737d2b7c579ee8c8b86b31
+    byteSize: 40109
+    verificationState: BYTES_VERIFIED_PUBLICATION_PENDING
+    deliveryConstraint: OPTIONAL_NO_DOWNLOAD_OR_PRINT_REQUIREMENT
 
 readiness:
   derivedFromCanonicalLessonPreparation: true
   localOverrideForbidden: true
+  packageReady: false
+  blockingReasons:
+    - REQUIRED_INFOGRAPHIC_SOURCE_BYTES_UNAVAILABLE
+    - REQUIRED_PUBLIC_REFS_UNRESOLVED
+    - REQUIRED_PROVENANCE_REFS_UNRESOLVED
 
 crossSystem:
   materialTransport: LessonPreparationManifest.materialSlots
