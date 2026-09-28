@@ -19,7 +19,7 @@ Il resolver non decide quale Attività Smart appartenga a quale Percorso. Consum
 
 Il resolver:
 
-- non accetta un path arbitrario al registro nel percorso canonico;
+- ancora il percorso canonico alla root reale del repository derivata da `import.meta.url`; l'API pubblica non accetta né `root` né path alternativi;
 - non accetta binding inline dal chiamante;
 - non crea automaticamente entry mancanti;
 - non converte similarità di nome, activityId o contenuto in un binding;
@@ -50,7 +50,9 @@ Il resolver emette una `SmartPathwayBindingEvidence v1` compatibile con SMART-PE
 
 ## Integrazione canonica
 
-`buildSmartPercorsiHandoffFromGovernedRegistry()` compone il bridge con il resolver canonico. Il chiamante passa manifest e contesto, ma non può sostituire l'adapter.
+`buildSmartPercorsiHandoffFromGovernedRegistry()` compone il bridge con il resolver canonico. Il chiamante passa soltanto manifest e contesto: non può sostituire adapter, root o registro.
+
+Il percorso reale di lettura valida sempre il documento contro `schemas/smart-percorsi-binding-registry.schema.json`; controlli semantici ulteriori (come unicità dei `bindingRef`) vengono applicati dopo la validazione schema. Le seam esportate con prefisso `__testOnly` operano soltanto su documenti già forniti in memoria e non sono usate dall'API canonica.
 
 ## Stato iniziale
 
