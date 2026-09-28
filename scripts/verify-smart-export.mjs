@@ -51,15 +51,16 @@ for (const manifestPath of manifests) {
     }
     const bytes = fs.readFileSync(exported);
     const digest = `sha256:${crypto.createHash("sha256").update(bytes).digest("hex")}`;
+    const actualIdentity = `actualDigest=${digest} actualByteSize=${bytes.byteLength}`;
     if (digest !== resource.digest) {
-      fail(`${resource.resourceId}: exported digest mismatch`);
+      fail(`${resource.resourceId}: exported digest mismatch; expectedDigest=${resource.digest} ${actualIdentity}`);
       continue;
     }
     if (resource.byteSize != null && bytes.byteLength !== resource.byteSize) {
-      fail(`${resource.resourceId}: exported byteSize mismatch`);
+      fail(`${resource.resourceId}: exported byteSize mismatch; expectedByteSize=${resource.byteSize} ${actualIdentity}`);
       continue;
     }
-    console.log(`PASS ${resource.resourceId}: ${relative}`);
+    console.log(`PASS ${resource.resourceId}: ${relative} ${actualIdentity}`);
   }
 }
 
