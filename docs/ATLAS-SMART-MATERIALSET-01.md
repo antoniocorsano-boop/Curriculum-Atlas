@@ -8,20 +8,23 @@ Dipende da: `ATLAS-SMART-ACTIVITY-01`.
 
 `materialSetRef` identifica in modo stabile il **corredo didattico coerente** associato a una Attività smart Atlas. Non identifica una cartella né impone duplicazione fisica dei file.
 
-**Vincolo di compatibilità ECO-01/ECO-02:** `materialSetRef` NON costituisce un nuovo percorso materiali tra Atlas e Docente OS. Ogni risorsa Atlas destinata alla preparazione/lezione deve continuare a transitare attraverso i canonici `LessonPreparationManifest.materialSlots`.
+**Vincolo ECO-01/ECO-02:** `materialSetRef` NON costituisce un nuovo percorso materiali tra Atlas e Docente OS. Ogni risorsa Atlas destinata alla preparazione/lezione continua a transitare attraverso i canonici `LessonPreparationManifest.materialSlots`.
 
-Pertanto:
+Principio di prodotto:
 
-- `materialSetRef` è un descrittore/aggregatore Atlas del corredo;
-- `materialSlots` resta il contratto canonico di trasporto/consumo dei materiali nella preparazione della lezione;
-- l'eventuale proiezione di un material set verso Docente OS deve essere una trasformazione deterministica `materialSet resources -> materialSlots`, non un secondo canale;
-- nessun runtime di tale trasformazione è autorizzato da questo documento.
+> **rigore interno, semplicità esterna**
 
-Invariante concettuale:
+Il docente non deve compilare o ricostruire manualmente `materialSetRef`, digest, provenienza, versioni, URL tecnici o mapping verso `materialSlots` nel flusso ordinario.
 
-`lezione ↔ LessonPreparationManifest.materialSlots ↔ risorse Atlas`
+Invariante tecnico:
 
-con `materialSetRef` utilizzabile in Atlas per dichiarare che più risorse appartengono allo stesso corredo didattico.
+`Atlas materialSetRef → risorse governate → mapping deterministico → LessonPreparationManifest.materialSlots → NextLessonPreparation → decisione docente`.
+
+Invariante percepito dal docente:
+
+`lezione → pacchetto pronto → usa / modifica-sostituisci / escludi`.
+
+Nessun runtime di trasformazione è autorizzato da questo documento.
 
 ## 2. Identità
 
@@ -34,14 +37,13 @@ materialSetRef = atlas-materialset:<materialSetId>@<version>
 Requisiti:
 - `materialSetId` stabile e non dipendente dal titolo visualizzato;
 - `version` immutabile per una fotografia validata del corredo;
-- titolo e descrizione possono cambiare solo generando una nuova versione quando il cambiamento modifica il contenuto didattico o la risorsa effettivamente fruita;
-- un alias `latest` può esistere solo per navigazione editoriale e non può sostituire il riferimento versionato usato da una pubblicazione validata.
-
-Il naming resta proposto finché una decisione umana non lo stabilizza.
+- una modifica sostanziale del contenuto genera una nuova versione;
+- un eventuale alias `latest` è solo editoriale e non sostituisce il riferimento versionato di una pubblicazione validata;
+- l'identità tecnica è normalmente nascosta nella vista docente primaria.
 
 ## 3. Manifest concettuale Atlas
 
-Il manifest minimo proposto è:
+Manifest minimo proposto:
 
 ```yaml
 schemaVersion: atlas.smart.materialset/v1
@@ -62,158 +64,224 @@ resources:
     materialSlotRole: to-be-mapped-to-canonical-vocabulary
 ```
 
-Questo è un contratto dati Atlas, non un'autorizzazione a introdurre database, API, nuova persistenza o un manifest parallelo in Docente OS.
+È un contratto dati Atlas, non un'autorizzazione a introdurre database, API, nuova persistenza o un manifest parallelo in Docente OS.
 
 ## 4. Risorsa
 
-Ogni elemento di `resources` deve poter dichiarare:
+Ogni risorsa deve poter dichiarare internamente:
 
-- `resourceId`: identità stabile nel material set;
+- `resourceId`;
 - `kind`: almeno `INFOGRAPHIC`, `PRESENTATION`, `REFERENCE_TEXT`, `DIAGRAM`, `IMAGE`, `TEACHER_MATERIAL`, `OTHER`;
 - `title`;
 - `audience`: `STUDENT`, `TEACHER`, `BOTH`;
-- `required`: se la risorsa appartiene alla fotografia minima validata;
-- `publicRef`: destinazione pubblica solo quando appropriata;
-- `provenanceRef`: riferimento alla provenienza del contenuto;
-- `digest`: impronta del contenuto effettivamente validato, quando materializzato/pubblicato;
-- `materialSlotRole`: mapping verso il vocabolario canonico dei ruoli di `materialSlots`, da riusare e non ridefinire;
-- `mediaType` e `language` quando utili;
-- `accessibility`: eventuali metadati necessari, ad esempio testo alternativo o disponibilità di equivalente testuale.
+- `required`;
+- `publicRef` quando appropriato;
+- `provenanceRef`;
+- `digest`;
+- `materialSlotRole`, mappato sul vocabolario canonico esistente;
+- `mediaType`, `language` e metadati di accessibilità quando necessari.
 
-`kind` descrive il formato/uso editoriale Atlas; **non sostituisce il ruolo canonico del materiale nella preparazione della lezione**.
+`kind` descrive formato/uso editoriale Atlas e **non sostituisce** il ruolo canonico del materiale nella preparazione della lezione.
 
 ## 5. Regole di provenienza e versione
 
-Una risorsa richiesta non è considerata integra per la pubblicazione se manca la provenienza prevista o se il digest dichiarato non corrisponde al contenuto distribuito.
+1. sostituire un file mantenendo lo stesso titolo non conserva automaticamente la validazione precedente;
+2. una modifica didatticamente sostanziale richiede nuova versione;
+3. correzioni editoriali minori devono comunque restare tracciabili;
+4. una Attività smart pubblicata riferisce una versione determinata del material set;
+5. una risorsa `TEACHER` non diventa pubblica per semplice presenza nel set;
+6. `materialSetRef` non attribuisce autorità curricolare: Arena resta autorità curricolare e Atlas superficie subordinata per pubblicazione/navigazione/LO/materiali.
 
-Regole:
+## 6. Esperienza ordinaria del docente
 
-1. sostituire un file mantenendo lo stesso titolo **non** conserva automaticamente la validazione precedente;
-2. una modifica didatticamente sostanziale richiede nuova versione del material set;
-3. una correzione puramente editoriale può seguire una politica di revisione minore, da definire separatamente, ma deve restare tracciabile;
-4. una Attività smart pubblicata deve riferirsi a una versione determinata del material set, non a una collezione mutevole;
-5. una risorsa `TEACHER` non può acquisire un `publicRef` studente per semplice presenza nel set;
-6. `materialSetRef` non attribuisce autorità curricolare alle risorse: Arena resta l'autorità curricolare e Atlas resta subordinato per pubblicazione/navigazione/LO/materiali.
+La procedura ordinaria deve richiedere il **minimo numero di decisioni necessarie**.
 
-## 6. Required, optional e sostituzioni nella lezione
+### Flusso canonico
 
-`required: true` significa: la risorsa fa parte del pacchetto con cui quella versione dell'attività è stata progettata/validata. Non significa che ogni docente sia obbligato a usarla durante ogni lezione.
+1. il docente prepara o richiede l'attività per una lezione;
+2. Atlas compone automaticamente **Attività smart + corredo didattico coerente**;
+3. il sistema controlla in background identità, versione, audience, provenienza, integrità e disponibilità;
+4. il pacchetto viene proiettato nei canonici `materialSlots`;
+5. Docente OS lo presenta in **Prima della lezione**;
+6. il docente sceglie, quando necessario: **Usa**, **Modifica/Sostituisci**, **Escludi**;
+7. Atlas espone agli studenti solo attività e materiali `STUDENT/BOTH` pubblicabili.
 
-Nel contesto Docente OS il docente conserva l'autorità già governata di modificare, escludere, sostituire e adattare le proposte. Questa personalizzazione:
+Il docente non deve effettuare passaggi tecnici intermedi per ottenere il pacchetto.
+
+### Progressive disclosure
+
+Vista primaria:
+- titolo dell'attività;
+- materiali disponibili, riconoscibili per funzione;
+- anteprima;
+- destinatari quando rilevanti;
+- stato semplice: **Pronto** oppure **Da verificare**;
+- azioni professionali essenziali.
+
+Vista `Dettagli`:
+- versione;
+- provenienza;
+- digest/impronta;
+- identificatori tecnici;
+- mapping e altre evidenze di integrità.
+
+I dettagli tecnici non devono occupare il percorso primario.
+
+## 7. Personalizzazione della lezione
+
+`required: true` significa che la risorsa appartiene alla fotografia minima validata del pacchetto; non obbliga ogni docente a usarla in ogni lezione.
+
+Il docente conserva l'autorità governata di modificare, escludere, sostituire e adattare le proposte. La personalizzazione:
 
 - avviene nel modello canonico della preparazione/lezione e nei suoi `materialSlots`;
 - non riscrive il material set Atlas;
-- non modifica silenziosamente la versione pubblicata Atlas;
-- deve essere distinguibile dal corredo Atlas di provenienza;
-- non trasforma un materiale locale in risorsa Atlas o curricolare approvata.
+- non modifica silenziosamente la versione pubblicata;
+- resta distinguibile dal corredo Atlas di provenienza;
+- non trasforma materiale locale in risorsa Atlas o curricolare approvata.
 
-## 7. Esposizione Atlas
+## 8. Esposizione Atlas allo studente
 
-Nella pagina dell'Attività smart, quando il material set contiene risorse `STUDENT` o `BOTH` pubblicate, Atlas deve poter mostrare un'area **Materiali dell'attività** con collegamenti riconoscibili per tipo e titolo.
+Nella pagina dell'Attività smart, Atlas mostra quando pertinenti i **Materiali dell'attività** destinati a `STUDENT/BOTH`.
 
-La navigazione non deve obbligare lo studente a scaricare o stampare un documento per poter completare l'attività. Un file scaricabile può essere un supporto, non il prerequisito operativo implicito.
+Vincoli:
+- nessuna autenticazione aggiuntiva per le risorse pubbliche previste;
+- nessun materiale `TEACHER` esposto accidentalmente;
+- nessun obbligo di download o stampa per completare l'attività;
+- il materiale può supportare il compito senza anticiparne meccanicamente la risposta;
+- attività e materiali condividono una grammatica concettuale/visuale riconoscibile.
 
-Le risorse `TEACHER` non compaiono nella superficie pubblica studente.
+## 9. Proiezione verso Docente OS
 
-## 8. Proiezione verso Docente OS
-
-La lezione deve poter ricevere una vista del pacchetto:
+La vista prevista è semplice:
 
 ```text
 Prima della lezione
-├─ Materiali da mostrare / consultare
-├─ Attività smart da aprire o condividere
-└─ Eventuali materiali docente
+└─ Analizzare un sistema tecnologico              [Pronto]
+   ├─ Attività smart
+   ├─ Infografica metodo
+   ├─ Infografica dispositivo elettronico
+   └─ Presentazione LIM
+
+   Usa     Modifica/Sostituisci     Escludi     Dettagli
 ```
 
-Questa vista **deve derivare dai canonici `LessonPreparationManifest.materialSlots`**. Non è autorizzato un consumo diretto di `materialSetRef` da parte di Docente OS come percorso alternativo.
+Questa vista **deriva dai canonici `LessonPreparationManifest.materialSlots`**. Docente OS non consuma `materialSetRef` come canale alternativo.
 
-Proiezione concettuale futura:
+Proiezione tecnica futura:
 
 ```text
 Atlas materialSetRef
-  -> risorse versionate/provenienza
-  -> mapping ai ruoli canonici
-  -> LessonPreparationManifest.materialSlots
-  -> NextLessonPreparation / revisione docente
+  → risorse versionate/provenienza
+  → mapping ai ruoli canonici
+  → LessonPreparationManifest.materialSlots
+  → NextLessonPreparation
+  → revisione docente
 ```
 
-Il docente mantiene la decisione finale. Il trasporto può in futuro essere automatizzato secondo governance, ma `automatic transport != automatic persistence != institutional authority`.
+`automatic transport != automatic persistence != institutional authority`.
 
-## 9. Validazione minima
+## 10. Stati e gestione degli errori
 
-Prima della pubblicazione canonica di una Attività smart con material set:
+Gli stati visibili devono restare pochi e comprensibili:
 
-- `materialSetRef` deve risolversi a una versione determinata;
-- tutti i `required` devono esistere;
-- le risorse pubbliche studente devono essere raggiungibili senza autenticazione aggiuntiva;
-- audience e superficie di esposizione devono coincidere;
-- provenienza e digest richiesti devono essere presenti e coerenti;
-- nessun collegamento deve puntare a una risorsa ritirata o mancante;
-- attività e materiali devono risultare coerenti sul piano concettuale e visuale;
-- ogni risorsa destinata alla lezione deve avere un mapping valido verso il vocabolario canonico `materialSlots` prima di qualsiasi integrazione cross-system;
-- nessuna risorsa Atlas può bypassare `materialSlots` per arrivare a Docente OS;
-- la decisione di pubblicazione resta umana.
+- **Pronto**: il pacchetto può essere utilizzato nel perimetro previsto;
+- **Da verificare**: almeno un elemento richiede attenzione prima di dichiarare il pacchetto integralmente pronto.
+
+I sottostati tecnici restano nei dettagli/log.
+
+Se una singola risorsa presenta un problema, il sistema deve:
+
+1. identificare la risorsa interessata;
+2. spiegare il problema in linguaggio operativo;
+3. offrire, quando consentito, **Riprova**, **Sostituisci**, **Escludi**;
+4. preservare il resto del pacchetto quando il contratto lo consente.
+
+Se manca o non è integra una risorsa `required`, il pacchetto non può essere dichiarato integralmente **Pronto**. Nessun errore deve essere nascosto dietro uno stato positivo.
+
+## 11. Validazione minima automatizzabile
+
+Prima della pubblicazione/uso governato il sistema deve poter verificare automaticamente:
+
+- risoluzione di `materialSetRef` a una versione determinata;
+- esistenza dei `required`;
+- raggiungibilità delle risorse studente dichiarate pubbliche;
+- coerenza `audience ↔ superficie`;
+- provenienza e digest previsti;
+- assenza di riferimenti a risorse ritirate/mancanti;
+- mapping valido verso `materialSlots` per le risorse destinate alla lezione;
+- coerenza minima tra attività e corredo.
 
 Fail closed per mismatch di versione, provenienza/digest richiesti mancanti, risorsa obbligatoria assente o mapping cross-system non valido.
 
-## 10. SP-01 — manifest iniziale proposto
+Questi controlli devono essere **automatici e invisibili nel caso positivo**: non diventano una lista di conferme manuali per il docente.
 
-Identità proposta:
+## 12. SP-01 — pacchetto di riferimento
 
 ```text
 activityId: sistema-tecnologico
 materialSetRef: atlas-materialset:sistema-tecnologico-analisi@1
 ```
 
-Corredo minimo da materializzare/ricollegare:
+Pacchetto minimo:
 
 1. `sistema-tecnologico-infografica-metodo` — `INFOGRAPHIC` — `STUDENT` — required;
 2. `sistema-tecnologico-infografica-dispositivo-elettronico` — `INFOGRAPHIC` — `STUDENT` — required;
 3. `sistema-tecnologico-presentazione-lim` — `PRESENTATION` — `BOTH` — required;
 4. eventuale testo di riferimento — `REFERENCE_TEXT` — audience da confermare — optional.
 
-L'Attività smart interattiva non viene duplicata dentro `resources`: è il soggetto che riferisce il material set.
+L'Attività smart interattiva è il soggetto che riferisce il material set e non viene duplicata in `resources`.
 
-Prima di assegnare `publicRef`, `provenanceRef`, `digest` e `materialSlotRole` reali occorre individuare le risorse effettivamente pubblicate/materializzate e il vocabolario canonico applicabile. **È vietato inventare URL, digest o nuovi ruoli quando esiste già un vocabolario governato.**
+Prima di assegnare `publicRef`, `provenanceRef`, `digest` e `materialSlotRole` reali occorre individuare risorse effettive e vocabolario canonico. È vietato inventare URL, digest o nuovi ruoli.
 
-## 11. Esito del controllo di compatibilità ECO-01/ECO-02
+### Risultato utente atteso
 
-Controllo eseguito rispetto alla memoria governata integrata Arena/Docente OS.
+Il docente deve percepire una sola unità:
 
-### Compatibile
+**Analizzare un sistema tecnologico** — `Pronto/Da verificare`
 
+con attività e tre materiali già raccolti. Non deve ricostruire collegamenti, cercare file o verificare manualmente versioni e provenienza.
+
+## 13. Esito compatibilità ECO-01/ECO-02
+
+Compatibile con:
 - Atlas come superficie subordinata per pubblicazione/navigazione/LO/materiali;
 - Docente OS teacher-first;
 - personalizzazione finale del docente;
-- riferimenti versionati e provenienza visibile;
+- riferimenti versionati e provenienza;
 - nessuna approvazione automatica;
 - nessuna nuova persistenza server autorizzata;
 - nessuna modifica automatica dei contratti Percorsi.
 
-### Correzione necessaria recepita
+Correzione già recepita: `materialSetRef` è aggregatore Atlas e non percorso parallelo verso Docente OS.
 
-La prima formulazione di `materialSetRef` poteva essere interpretata come un percorso parallelo `Atlas materialSet -> Docente OS`. Questo sarebbe in conflitto con l'invariante ECO-01/ECO-02 secondo cui **ogni risorsa Atlas-backed deve restare nei canonici `LessonPreparationManifest.materialSlots` e nessun percorso materiali parallelo è autorizzato**.
+Prima del runtime restano da risolvere:
+- schema fisico e vocabolario corrente di `materialSlots`;
+- mapping tra `kind` Atlas e ruoli canonici;
+- identificatore di provenienza Atlas già previsto dal contratto canonico;
+- regole di digest/versionamento già esistenti da riusare.
 
-Il contratto è quindi corretto: `materialSetRef` è un aggregatore Atlas e, per l'uso nella lezione, deve essere proiettato nei `materialSlots` canonici.
+Questi punti bloccano l'implementazione cross-system, non la progettazione locale Atlas.
 
-### Non ancora verificato / da risolvere prima del runtime
+## 14. Criterio di accettazione della semplicità
 
-- schema fisico esatto e vocabolario corrente dei `materialSlots` nelle baseline integrate;
-- mapping uno-a-uno o uno-a-molti tra `kind` Atlas e ruoli canonici;
-- eventuale identificatore di provenienza Atlas già previsto dal contratto canonico;
-- regole esatte di digest/versionamento già presenti, da riusare senza duplicazione.
+Una implementazione non è conforme se, nel caso ordinario, il docente deve:
 
-Questi punti bloccano una implementazione cross-system, **non** la progettazione locale Atlas del material set.
+- copiare/incollare URL tecnici;
+- scegliere manualmente versioni o digest;
+- conoscere `materialSetRef` o `materialSlots`;
+- ricostruire il pacchetto cercando file separati;
+- confermare individualmente controlli tecnici già verificabili dal sistema;
+- ripetere la stessa scelta in Atlas e Docente OS senza necessità didattica.
 
-## 12. Decisioni ancora umane
+Obiettivo: **una richiesta didattica → un pacchetto coerente → una decisione professionale**.
+
+## 15. Decisioni ancora umane
 
 Prima della stabilizzazione devono essere confermati:
-
-- naming definitivo del riferimento (`materialSetRef` è la proposta corrente);
+- naming definitivo `materialSetRef`;
 - politica versioni maggiori/minori;
 - fonte canonica e formato fisico del manifest Atlas;
-- mapping esatto sul contratto `LessonPreparationManifest.materialSlots` già integrato;
-- materializzazione e provenienza delle tre risorse SP-01 già prodotte;
+- mapping esatto su `LessonPreparationManifest.materialSlots`;
+- materializzazione/provenienza delle risorse SP-01;
 - comportamento UI definitivo in Atlas;
-- qualsiasi successiva integrazione con Docente OS, che resta separatamente governata.
+- qualsiasi integrazione runtime con Docente OS, separatamente governata.
