@@ -24,27 +24,32 @@ Per produrre Q1 PASS devono essere dimostrati tutti i seguenti punti:
 2. Nessuna decisione `RUNTIME_AUTHORIZED` è presente nel producer Q1.
 3. `probeMode=SEALED_PREAUTH` e `publicExposure=false`.
 4. Il probe è vincolato alla stessa `candidateBinding` e allo stesso `q6RunId` consumato da Q1.
-5. `surfaceArtifactDigest` identifica deterministicamente l'artefatto/grafo di superficie verificato.
-6. Route ed entrypoint sono quelli destinati all'attivazione; `/percorsi/lab/**` non è raggiungibile come superficie autorizzabile.
-7. Mancanza di authority/receipt, stato non qualificato, route sconosciuta o entrypoint non dichiarato falliscono chiusi.
-8. L'attivazione post-Q9 è **activation-only**: può cambiare soltanto il gate di esposizione. Qualunque modifica a codice, contenuto, build/index, route, entrypoint, digest o candidate identity invalida Q1 e richiede revalidation.
-9. Il probe non è indicizzato, pubblicizzato o accessibile alla popolazione studente e non costituisce pubblicazione.
-10. Merge, deploy tecnico, cache o disponibilità dell'ambiente di probe non equivalgono a Q9 né a `PUBLISHED`.
+5. Q1 consuma una `ProbeObservationReceipt` prodotta dall'esecuzione del runner del probe; un oggetto che descrive soltanto la superficie non costituisce evidenza osservata.
+6. `surfaceArtifactDigest` identifica deterministicamente l'artefatto/grafo di superficie verificato.
+7. Route ed entrypoint osservati sono quelli destinati all'attivazione; `/percorsi/lab/**` non è raggiungibile come superficie autorizzabile.
+8. La ricevuta è vincolata tramite digest al contenuto osservato; manomissione, `q6RunId` diverso, candidate identity diversa o osservazione antecedente a Q6 falliscono chiusi.
+9. Mancanza di authority/receipt, stato non qualificato, route sconosciuta o entrypoint non dichiarato falliscono chiusi.
+10. L'attivazione post-Q9 è **activation-only**: può cambiare soltanto il gate di esposizione. Qualunque modifica a codice, contenuto, build/index, route, entrypoint, digest o candidate identity invalida Q1 e richiede revalidation.
+11. Il probe non è indicizzato, pubblicizzato o accessibile alla popolazione studente e non costituisce pubblicazione.
+12. Merge, deploy tecnico, cache o disponibilità dell'ambiente di probe non equivalgono a Q9 né a `PUBLISHED`.
 
 ## Evidenza minima Q1
 
-L'input Q1 deve includere almeno:
+L'input consumabile da Q1 deve essere una `ProbeObservationReceipt` emessa dal runner `SEALED_PREAUTH` e includere almeno:
 
+- versione e identità del produttore del probe;
+- `probeRunId` e digest della ricevuta;
 - `candidateBinding`;
 - `publicationId`;
-- `q6RunId`;
+- exact `q6RunId`;
 - `publicationState=QUALIFIED`;
 - `probeMode=SEALED_PREAUTH`;
-- `publicExposure=false`;
 - `surfaceArtifactDigest` non vuoto;
-- `reachableRoutes` osservate nel probe;
-- `entrypoint` e `publicEntrypoint=true` come dichiarazione della futura superficie;
-- comportamenti `DENY` per authority mancante, receipt mancante, stato non pubblicabile e route sconosciuta.
+- `observedAt` successivo o uguale alla Q6 consumata;
+- `reachableRoutes`, `entrypoint`, `publicEntrypoint` e `publicExposure` **osservati dall'esecuzione**;
+- comportamenti osservati `DENY` per authority mancante, receipt mancante, stato non pubblicabile e route sconosciuta.
+
+Un semplice oggetto descrittivo della superficie, anche se contiene valori formalmente corretti, non può produrre Q1 PASS.
 
 Q1 PASS significa: **la superficie candidata è stata realmente esercitata e rispetta i confini di raggiungibilità richiesti, restando non esposta agli studenti**. Non significa `RUNTIME_AUTHORIZED` e non significa `PUBLISHED`.
 
