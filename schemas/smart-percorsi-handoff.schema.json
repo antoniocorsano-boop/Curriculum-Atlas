@@ -11,6 +11,7 @@
     "candidateBinding",
     "authorityRef",
     "authorityEvidenceRef",
+    "smartPathwayBindingRef",
     "resources",
     "handoffState",
     "runtimeAuthorized",
@@ -132,6 +133,10 @@
     },
     "q5Produced": {
       "const": false
+    },
+    "smartPathwayBindingRef": {
+      "type": "string",
+      "minLength": 1
     }
   }
 }
