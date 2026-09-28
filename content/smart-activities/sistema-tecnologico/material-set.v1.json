@@ -43,9 +43,9 @@
       "materialSlotRoles": ["MINI_DECK", "LIM_VIEW"],
       "publicationPath": "/materials/smart/sistema-tecnologico/v2/presentazione-lim.pdf",
       "publicRef": null,
-      "provenanceRef": "chat-generated-artifact:file_0000000053c88210a523a52f05e80c16",
-      "digest": "sha256:ea415253a4f1ae397b50bf209525c844652842c356b096fc0dd967ac9d2bbe18",
-      "byteSize": 6855,
+      "provenanceRef": "chat-generated-artifact:file_00000000da548210b89268364aac89de",
+      "digest": "sha256:e9f942d2dd4acec6901fffcca897370914f4702564a94aa0eceee122aa9cb1d1",
+      "byteSize": 4692,
       "verificationState": "BYTES_VERIFIED_PUBLICATION_PENDING"
     }
   ],
