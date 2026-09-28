@@ -67,3 +67,10 @@ La transizione `QUALIFIED -> PUBLISHED` resta successiva a Q9.
 - `PUBLISHED` registra l'avvenuta transizione autorizzata.
 
 I quattro concetti restano distinti e nessuno implica automaticamente il successivo.
+
+
+## Adapter runtime
+
+Questa PR materializza il **contratto del producer Q1 e del probe adapter**, ma non autorizza né installa un adapter runtime di produzione. Gli adapter sintetici usati nei test dimostrano la logica fail-closed del producer e non costituiscono una Q1 qualification receipt per un candidato reale.
+
+Un futuro adapter runtime dovrà essere introdotto in una tranche separata, essere vincolato al candidato effettivo e all'ambiente SEALED_PREAUTH, produrre il digest della superficie osservata e passare review indipendente prima che una sua esecuzione possa essere usata come evidenza Q1 reale. Fino ad allora resta valido `PROTOTYPE_ONLY / NOT_RUNTIME_AUTHORIZED`.
