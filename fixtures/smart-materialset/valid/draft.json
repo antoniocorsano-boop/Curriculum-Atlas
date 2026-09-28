@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "atlas.smart.materialset/v1",
+  "materialSetId": "fixture-draft",
+  "version": 1,
+  "activityId": "fixture-activity",
+  "resources": [
+    {
+      "resourceId": "visual-1",
+      "kind": "INFOGRAPHIC",
+      "audience": "STUDENT",
+      "required": true,
+      "materialSlotRoles": ["VISUAL_AID"],
+      "publicationPath": "/materials/fixture-activity/visual-1.png",
+      "digest": "sha256:f337f4300af0fb3997eceeec377bc2919c8bf584333306cb44f7a12aed79cbf3",
+      "byteSize": 481619,
+      "publicRef": null,
+      "provenanceRef": "conversation-attachment:verified"
+    }
+  ],
+  "readiness": { "packageReady": false },
+  "publication": { "stage": "DRAFT" }
+}

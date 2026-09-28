@@ -1,0 +1,41 @@
+name: SMART-FLOW SP-01 Qualification
+
+on:
+  pull_request:
+    paths:
+      - "content/smart-activities/**"
+      - "scripts/*smart*.mjs"
+      - "fixtures/smart-materialset/**"
+      - "docs/contracts/ATLAS-SMART-*.md"
+      - "package.json"
+      - ".github/workflows/smart-flow-sp01.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: smart-flow-sp01-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualify:
+    name: SP-01 end-to-end fail-closed qualification
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Run reusable Smart validators
+        run: npm run validate:smart
+
+      - name: Run SP-01 end-to-end qualification
+        run: npm run test:smart:sp01
