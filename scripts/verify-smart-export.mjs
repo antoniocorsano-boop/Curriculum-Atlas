@@ -6,6 +6,7 @@ const root = process.cwd();
 const contentRoot = path.join(root, "content", "smart-activities");
 const exportRoot = path.join(root, "out");
 const fail = (message) => { console.error(message); process.exitCode = 2; };
+const materialSetName = /^material-set\.v([1-9][0-9]*)\.json$/;
 
 const manifests = [];
 const walk = (dir) => {
@@ -13,16 +14,22 @@ const walk = (dir) => {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) walk(full);
-    else if (entry.isFile() && entry.name === "material-set.v1.json") manifests.push(full);
+    else if (entry.isFile() && materialSetName.test(entry.name)) manifests.push(full);
   }
 };
 walk(contentRoot);
 manifests.sort();
 
 for (const manifestPath of manifests) {
+  const filename = path.basename(manifestPath);
+  const filenameVersion = Number(filename.match(materialSetName)?.[1]);
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
   if (manifest.schemaVersion !== "atlas.smart.materialset/v1") {
     fail(`${manifestPath}: unsupported schemaVersion`);
+    continue;
+  }
+  if (!Number.isInteger(manifest.version) || manifest.version !== filenameVersion) {
+    fail(`${manifestPath}: manifest version must match versioned filename`);
     continue;
   }
   for (const resource of manifest.resources || []) {
@@ -60,7 +67,7 @@ for (const manifestPath of manifests) {
       fail(`${resource.resourceId}: exported byteSize mismatch; expectedByteSize=${resource.byteSize} ${actualIdentity}`);
       continue;
     }
-    console.log(`PASS ${resource.resourceId}: ${relative} ${actualIdentity}`);
+    console.log(`PASS v${manifest.version} ${resource.resourceId}: ${relative} ${actualIdentity}`);
   }
 }
 
