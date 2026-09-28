@@ -1,0 +1,56 @@
+schemaVersion: atlas.smart.materialset/v1
+materialSetId: sistema-tecnologico-analisi
+version: 1
+activityId: sistema-tecnologico
+status: DRAFT
+
+# This manifest materializes the governed package identity only.
+# publicRef, provenanceRef and digest MUST be populated from real resources;
+# they are intentionally null until those resources are located/published.
+resources:
+  - resourceId: sistema-tecnologico-infografica-metodo
+    kind: INFOGRAPHIC
+    title: Analizzare un sistema tecnologico — metodo
+    audience: STUDENT
+    required: true
+    materialSlotRoles:
+      - VISUAL_AID
+    publicRef: null
+    provenanceRef: null
+    digest: null
+
+  - resourceId: sistema-tecnologico-infografica-dispositivo-elettronico
+    kind: INFOGRAPHIC
+    title: Analizzare un dispositivo elettronico
+    audience: STUDENT
+    required: true
+    materialSlotRoles:
+      - VISUAL_AID
+    publicRef: null
+    provenanceRef: null
+    digest: null
+
+  - resourceId: sistema-tecnologico-presentazione-lim
+    kind: PRESENTATION
+    title: Analizzare un sistema tecnologico — presentazione LIM
+    audience: BOTH
+    required: true
+    materialSlotRoles:
+      - MINI_DECK
+      - LIM_VIEW
+    publicRef: null
+    provenanceRef: null
+    digest: null
+
+readiness:
+  derivedFromCanonicalLessonPreparation: true
+  localOverrideForbidden: true
+
+crossSystem:
+  materialTransport: LessonPreparationManifest.materialSlots
+  parallelMaterialChannelForbidden: true
+  runtimeAdapterAuthorized: false
+
+publication:
+  humanDecisionRequired: true
+  failClosedWhenRequiredResourceUnresolved: true
