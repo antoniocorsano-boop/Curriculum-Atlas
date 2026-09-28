@@ -1,0 +1,6 @@
+{
+  "schemaVersion": "atlas.smart.pathway-binding-registry/v1",
+  "status": "GOVERNED",
+  "authorityModel": "HUMAN_REVIEWED_REPOSITORY_REGISTRY",
+  "bindings": []
+}
