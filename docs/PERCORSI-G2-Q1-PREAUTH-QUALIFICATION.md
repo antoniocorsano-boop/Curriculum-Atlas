@@ -1,0 +1,64 @@
+# Percorsi G2 — Q1 Pre-authorization Reachability Qualification
+
+## Stato
+
+Decisione contrattuale locale per la PR #50. Stato runtime invariato: `PROTOTYPE_ONLY / NOT_RUNTIME_AUTHORIZED`.
+
+Questa specifica risolve la circolarità Q1↔Q9 senza anticipare Q9, senza trasformare Q1 in Q6 e senza esporre una superficie studente prima dell'autorizzazione finale.
+
+## Principio
+
+Q1 qualifica **la raggiungibilità effettiva del candidato attraverso un probe pre-autorizzazione sigillato**, non la sua pubblicazione agli studenti.
+
+Il probe deve esercitare lo stesso artefatto, lo stesso grafo di route, lo stesso entrypoint e la stessa configurazione di superficie destinati alla pubblicazione, ma dietro un confine tecnico che impedisce l'accesso pubblico/studente. La differenza tra probe e attivazione finale può essere esclusivamente il gate di esposizione governato da Q9; non sono ammessi rebuild, sostituzione di contenuto, modifica di route, entrypoint o identity tra Q1 PASS e Q9.
+
+Quindi:
+
+`QUALIFIED + Q6 PASS -> SEALED_PREAUTH_PROBE -> Q1 PASS -> Q2..Q8 PASS -> review indipendente PASS -> Q9 RUNTIME_AUTHORIZED -> activation-only -> PUBLISHED`
+
+## Invarianti del probe
+
+Per produrre Q1 PASS devono essere dimostrati tutti i seguenti punti:
+
+1. `publicationState=QUALIFIED`; Q1 non richiede e non può simulare `PUBLISHED`.
+2. Nessuna decisione `RUNTIME_AUTHORIZED` è presente nel producer Q1.
+3. `probeMode=SEALED_PREAUTH` e `publicExposure=false`.
+4. Il probe è vincolato alla stessa `candidateBinding` e allo stesso `q6RunId` consumato da Q1.
+5. `surfaceArtifactDigest` identifica deterministicamente l'artefatto/grafo di superficie verificato.
+6. Route ed entrypoint sono quelli destinati all'attivazione; `/percorsi/lab/**` non è raggiungibile come superficie autorizzabile.
+7. Mancanza di authority/receipt, stato non qualificato, route sconosciuta o entrypoint non dichiarato falliscono chiusi.
+8. L'attivazione post-Q9 è **activation-only**: può cambiare soltanto il gate di esposizione. Qualunque modifica a codice, contenuto, build/index, route, entrypoint, digest o candidate identity invalida Q1 e richiede revalidation.
+9. Il probe non è indicizzato, pubblicizzato o accessibile alla popolazione studente e non costituisce pubblicazione.
+10. Merge, deploy tecnico, cache o disponibilità dell'ambiente di probe non equivalgono a Q9 né a `PUBLISHED`.
+
+## Evidenza minima Q1
+
+L'input Q1 deve includere almeno:
+
+- `candidateBinding`;
+- `publicationId`;
+- `q6RunId`;
+- `publicationState=QUALIFIED`;
+- `probeMode=SEALED_PREAUTH`;
+- `publicExposure=false`;
+- `surfaceArtifactDigest` non vuoto;
+- `reachableRoutes` osservate nel probe;
+- `entrypoint` e `publicEntrypoint=true` come dichiarazione della futura superficie;
+- comportamenti `DENY` per authority mancante, receipt mancante, stato non pubblicabile e route sconosciuta.
+
+Q1 PASS significa: **la superficie candidata è stata realmente esercitata e rispetta i confini di raggiungibilità richiesti, restando non esposta agli studenti**. Non significa `RUNTIME_AUTHORIZED` e non significa `PUBLISHED`.
+
+## Attivazione dopo Q9
+
+Q9 resta l'unica autorità finale. Dopo Q9 PASS, l'attivazione può usare l'evidenza Q1 solo se candidate identity, `q6RunId` e `surfaceArtifactDigest` coincidono esattamente con quelli qualificati. Se uno di questi elementi cambia, l'attivazione è bloccata e Q1 torna non consumabile fino a nuova qualificazione.
+
+La transizione `QUALIFIED -> PUBLISHED` resta successiva a Q9.
+
+## Conseguenza sulla semantica
+
+- Q6 prova l'ammissione editoriale.
+- Q1 prova la raggiungibilità reale della superficie in un ambiente pre-autorizzazione sigillato.
+- Q9 autorizza l'esposizione pubblica.
+- `PUBLISHED` registra l'avvenuta transizione autorizzata.
+
+I quattro concetti restano distinti e nessuno implica automaticamente il successivo.
