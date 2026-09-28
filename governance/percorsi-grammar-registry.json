@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "atlas.percorsi.grammar-registry/v1",
+  "status": "RESEARCH_REGISTRY",
+  "grammars": [
+    {
+      "id": "sequential-visual-narrative",
+      "label": "Narrazione visuale sequenziale"
+    },
+    {
+      "id": "audiovisual",
+      "label": "Audiovisiva"
+    },
+    {
+      "id": "branching-consequences",
+      "label": "Ramificazione e conseguenze"
+    },
+    {
+      "id": "inquiry-evidence",
+      "label": "Indagine ed evidenze"
+    },
+    {
+      "id": "construction-lab",
+      "label": "Costruzione e laboratorio"
+    },
+    {
+      "id": "simulation-microworld",
+      "label": "Simulazione e micromondo"
+    },
+    {
+      "id": "theatre-viewpoints",
+      "label": "Teatro e punti di vista"
+    },
+    {
+      "id": "reflective-notebook",
+      "label": "Taccuino riflessivo"
+    },
+    {
+      "id": "map-exploration",
+      "label": "Mappa ed esplorazione"
+    },
+    {
+      "id": "shared-construction",
+      "label": "Costruzione condivisa"
+    },
+    {
+      "id": "environmental-narrative",
+      "label": "Narrazione ambientale"
+    }
+  ]
+}
