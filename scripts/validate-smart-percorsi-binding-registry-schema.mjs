@@ -14,6 +14,7 @@ const mutations=[];
 {const x=structuredClone(base);x.bindings[0].extra=true;mutations.push(x);}
 {const x=structuredClone(base);x.bindings[0].candidateBinding.extra=true;mutations.push(x);}
 {const x=structuredClone(base);x.bindings[0].checkedAt="bad";mutations.push(x);}
+{const x=structuredClone(base);x.bindings[0].checkedAt="2026-02-31T18:00:00Z";mutations.push(x);}
 {const x=structuredClone(base);x.bindings[0].manifestDigest="bad";mutations.push(x);}
 {const x=structuredClone(base);x.bindings[0].status="UNKNOWN";mutations.push(x);}
 for(const x of mutations) if(validate(x)){console.error("invalid mutation accepted");process.exit(1);}
