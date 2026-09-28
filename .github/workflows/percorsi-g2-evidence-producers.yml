@@ -26,21 +26,45 @@ jobs:
         run: node scripts/test-percorsi-g2-evidence-producers.mjs
       - name: Run invalidation and revalidation tests
         run: node scripts/test-percorsi-g2-invalidation.mjs
+      - name: Create isolated schema-validator lockfile
+        run: |
+          rm -rf .percorsi-g2-audit
+          mkdir .percorsi-g2-audit
+          cd .percorsi-g2-audit
+          npm init -y >/dev/null
+          npm install --package-lock-only --ignore-scripts ajv@8 ajv-formats@3
       - name: Install isolated schema validator
-        run: npm install --no-save --ignore-scripts ajv@8 ajv-formats@3
+        run: npm install --prefix .percorsi-g2-audit --ignore-scripts
       - name: Enforce EvidenceProducerResult v1 on real producer outputs
+        env:
+          NODE_PATH: ${{ github.workspace }}/.percorsi-g2-audit/node_modules
         run: node scripts/validate-percorsi-g2-evidence-producer-schema.mjs
-      - name: Capture dependency audit evidence
-        run: npm audit --json > percorsi-g2-npm-audit.json || true
-      - name: Fail on production-reachable high vulnerabilities
+      - name: Capture isolated dependency audit evidence
+        run: |
+          set +e
+          cd .percorsi-g2-audit
+          npm audit --json > ../percorsi-g2-npm-audit.json
+          audit_exit=$?
+          set -e
+          test -s ../percorsi-g2-npm-audit.json || { echo 'Audit evidence missing'; exit 1; }
+          node -e "JSON.parse(require('fs').readFileSync('../percorsi-g2-npm-audit.json','utf8'))" || { echo 'Audit evidence is not valid JSON'; exit 1; }
+          echo "audit_exit=$audit_exit" >> "$GITHUB_ENV"
+      - name: Qualify dependency audit evidence
         run: |
           node - <<'NODE'
           const fs=require('fs');
           const a=JSON.parse(fs.readFileSync('percorsi-g2-npm-audit.json','utf8'));
-          const vulns=a.vulnerabilities||{};
-          const prodHigh=Object.entries(vulns).filter(([,v])=>v.severity==='high' && v.isDirect===true && v.nodes?.some(n=>!String(n).includes('node_modules/.cache')));
-          console.log(JSON.stringify({metadata:a.metadata,high:Object.entries(vulns).filter(([,v])=>v.severity==='high').map(([name,v])=>({name,isDirect:v.isDirect,via:v.via}))},null,2));
-          if(prodHigh.length){console.error('Production-reachable direct HIGH vulnerability:',prodHigh.map(([n])=>n));process.exit(1)}
+          if(!a.metadata || !a.metadata.vulnerabilities || typeof a.vulnerabilities!=='object'){
+            console.error('Audit evidence incomplete or structurally invalid'); process.exit(1);
+          }
+          const entries=Object.entries(a.vulnerabilities);
+          const high=entries.filter(([,v])=>v.severity==='high');
+          const critical=entries.filter(([,v])=>v.severity==='critical');
+          console.log(JSON.stringify({auditExit:process.env.audit_exit,metadata:a.metadata,high:high.map(([name,v])=>({name,isDirect:v.isDirect,via:v.via})),critical:critical.map(([name,v])=>({name,isDirect:v.isDirect,via:v.via}))},null,2));
+          if(high.length||critical.length){
+            console.error('Isolated validator dependency graph contains HIGH/CRITICAL vulnerabilities');
+            process.exit(1);
+          }
           NODE
       - name: Enforce compliance matrix review readiness
         run: node scripts/validate-percorsi-g2-compliance-matrix.mjs
