@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://curriculum-atlas.local/schemas/smart-percorsi-first-binding-decision.schema.json",
+  "title": "Smart Percorsi First Binding Decision v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "baseline",
+    "status",
+    "smartCandidate",
+    "evaluatedExistingPathways",
+    "bindingRegistrationAuthorized",
+    "runtimeAuthorized",
+    "nextRequiredEvidence"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "atlas.smart.percorsi-first-binding-decision/v1"
+    },
+    "baseline": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "status": {
+      "const": "BLOCKED_NO_GOVERNED_PATHWAY_TARGET"
+    },
+    "smartCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "activityId",
+        "activityRef",
+        "materialSetId",
+        "materialSetVersion",
+        "sourceRefs"
+      ],
+      "properties": {
+        "activityId": {
+          "const": "sistema-tecnologico"
+        },
+        "activityRef": {
+          "const": "SP-01"
+        },
+        "materialSetId": {
+          "const": "sistema-tecnologico-analisi"
+        },
+        "materialSetVersion": {
+          "const": 2
+        },
+        "sourceRefs": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "evaluatedExistingPathways": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "pathwayId",
+          "title",
+          "decision",
+          "reasonCode",
+          "sourceRef"
+        ],
+        "properties": {
+          "pathwayId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "decision": {
+            "const": "NOT_BOUND"
+          },
+          "reasonCode": {
+            "const": "NO_GOVERNED_ASSOCIATION_EVIDENCE"
+          },
+          "sourceRef": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "bindingRegistrationAuthorized": {
+      "const": false
+    },
+    "runtimeAuthorized": {
+      "const": false
+    },
+    "nextRequiredEvidence": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "GOVERNED_TARGET_PATHWAY_ID",
+          "PATHWAY_DOSSIER_OR_IMPLEMENTATION_SPEC_REF",
+          "EXPLICIT_HUMAN_PROMOTION_OR_ASSOCIATION_DECISION",
+          "SMART_MATERIAL_REUSE_PLAN",
+          "COMPLETE_PERCORSI_CANDIDATE_IDENTITY",
+          "AUTHORITY_EVIDENCE"
+        ]
+      },
+      "minItems": 6
+    }
+  }
+}
