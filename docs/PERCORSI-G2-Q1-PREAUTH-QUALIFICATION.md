@@ -24,7 +24,7 @@ Per produrre Q1 PASS devono essere dimostrati tutti i seguenti punti:
 2. Nessuna decisione `RUNTIME_AUTHORIZED` è presente nel producer Q1.
 3. `probeMode=SEALED_PREAUTH` e `publicExposure=false`.
 4. Il probe è vincolato alla stessa `candidateBinding` e allo stesso `q6RunId` consumato da Q1.
-5. Q1 consuma una `ProbeObservationReceipt` prodotta dall'esecuzione del runner del probe; un oggetto che descrive soltanto la superficie non costituisce evidenza osservata.
+5. Q1 **avvia direttamente** il runner `SEALED_PREAUTH` tramite l'adapter del probe e consuma internamente la `ProbeObservationReceipt` appena prodotta; una ricevuta preconfezionata o un oggetto che descrive soltanto la superficie non costituiscono input consumabile da Q1.
 6. `surfaceArtifactDigest` identifica deterministicamente l'artefatto/grafo di superficie verificato.
 7. Route ed entrypoint osservati sono quelli destinati all'attivazione; `/percorsi/lab/**` non è raggiungibile come superficie autorizzabile.
 8. La ricevuta è vincolata tramite digest al contenuto osservato; manomissione, `q6RunId` diverso, candidate identity diversa o osservazione antecedente a Q6 falliscono chiusi.
@@ -35,7 +35,7 @@ Per produrre Q1 PASS devono essere dimostrati tutti i seguenti punti:
 
 ## Evidenza minima Q1
 
-L'input consumabile da Q1 deve essere una `ProbeObservationReceipt` emessa dal runner `SEALED_PREAUTH` e includere almeno:
+Q1 non accetta una `ProbeObservationReceipt` fornita dal chiamante. Il suo input è il target sigillato più l'adapter del probe; Q1 esegue il runner e consuma internamente la ricevuta risultante. La ricevuta interna deve includere almeno:
 
 - versione e identità del produttore del probe;
 - `probeRunId` e digest della ricevuta;
@@ -49,7 +49,7 @@ L'input consumabile da Q1 deve essere una `ProbeObservationReceipt` emessa dal r
 - `reachableRoutes`, `entrypoint`, `publicEntrypoint` e `publicExposure` **osservati dall'esecuzione**;
 - comportamenti osservati `DENY` per authority mancante, receipt mancante, stato non pubblicabile e route sconosciuta.
 
-Un semplice oggetto descrittivo della superficie, anche se contiene valori formalmente corretti, non può produrre Q1 PASS.
+Un semplice oggetto descrittivo della superficie, una ricevuta ricostruita dal chiamante o valori dichiarativi inseriti nel target, anche se formalmente corretti, non possono sostituire l'esecuzione del probe né produrre Q1 PASS.
 
 Q1 PASS significa: **la superficie candidata è stata realmente esercitata e rispetta i confini di raggiungibilità richiesti, restando non esposta agli studenti**. Non significa `RUNTIME_AUTHORIZED` e non significa `PUBLISHED`.
 
