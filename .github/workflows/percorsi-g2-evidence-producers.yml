@@ -30,11 +30,11 @@ jobs:
         run: |
           rm -rf .percorsi-g2-audit
           mkdir .percorsi-g2-audit
-          cd .percorsi-g2-audit
-          npm init -y >/dev/null
-          npm install --package-lock-only --ignore-scripts ajv@8 ajv-formats@3
+          printf '%s\n' '{"name":"percorsi-g2-audit","version":"1.0.0","private":true}' > .percorsi-g2-audit/package.json
+          npm install --prefix .percorsi-g2-audit --package-lock-only --ignore-scripts ajv@8 ajv-formats@3
+          test -s .percorsi-g2-audit/package-lock.json
       - name: Install isolated schema validator
-        run: npm install --prefix .percorsi-g2-audit --ignore-scripts
+        run: npm ci --prefix .percorsi-g2-audit --ignore-scripts
       - name: Enforce EvidenceProducerResult v1 on real producer outputs
         env:
           NODE_PATH: ${{ github.workspace }}/.percorsi-g2-audit/node_modules
