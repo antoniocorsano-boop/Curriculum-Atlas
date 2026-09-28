@@ -7,6 +7,7 @@ const contentRoot = path.join(root, "content", "smart-activities");
 const exportRoot = path.join(root, "out");
 const fail = (message) => { console.error(message); process.exitCode = 2; };
 const materialSetName = /^material-set\.v([1-9][0-9]*)\.json$/;
+const allowedEligibility = new Set(["HISTORICAL_NON_PUBLISHABLE", "PUBLICATION_CANDIDATE"]);
 
 const manifests = [];
 const walk = (dir) => {
@@ -20,6 +21,7 @@ const walk = (dir) => {
 walk(contentRoot);
 manifests.sort();
 
+let candidates = 0;
 for (const manifestPath of manifests) {
   const filename = path.basename(manifestPath);
   const filenameVersion = Number(filename.match(materialSetName)?.[1]);
@@ -32,6 +34,18 @@ for (const manifestPath of manifests) {
     fail(`${manifestPath}: manifest version must match versioned filename`);
     continue;
   }
+  const eligibility = manifest.publication?.eligibility;
+  if (!allowedEligibility.has(eligibility)) {
+    fail(`${manifestPath}: publication.eligibility must be explicit`);
+    continue;
+  }
+  if (eligibility === "HISTORICAL_NON_PUBLISHABLE") {
+    if (manifest.readiness?.packageReady !== false) fail(`${manifestPath}: historical manifest cannot be packageReady`);
+    console.log(`HISTORY v${manifest.version}: preserved; binary publication gate not applicable`);
+    continue;
+  }
+
+  candidates += 1;
   for (const resource of manifest.resources || []) {
     if (resource.required !== true) continue;
     if (!resource.provenanceRef) {
@@ -71,5 +85,6 @@ for (const manifestPath of manifests) {
   }
 }
 
+if (manifests.length > 0 && candidates === 0) fail("No Smart material set is explicitly eligible as PUBLICATION_CANDIDATE");
 if (process.exitCode) process.exit(process.exitCode);
-console.log(`SMART EXPORT GATE: PASS — ${manifests.length} material set(s) checked.`);
+console.log(`SMART EXPORT GATE: PASS — ${manifests.length} material set(s), ${candidates} publication candidate(s) checked.`);
