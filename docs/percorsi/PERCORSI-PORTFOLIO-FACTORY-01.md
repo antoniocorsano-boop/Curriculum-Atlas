@@ -1,82 +1,66 @@
 # PERCORSI-PORTFOLIO-FACTORY-01
 
-**Stato:** DRAFT / FACTORY_IMPLEMENTED / NOT_RUNTIME_AUTHORIZED  
-**Baseline:** `362972202208ada9798e089ea20ac2aa90ded264`
+**Stato:** FACTORY_IMPLEMENTED / AUTHORITY_REALIGNED / NOT_RUNTIME_AUTHORIZED
 
-## Obiettivo
+## Correzione di autorità
 
-Trasformare Percorsi da sviluppo artigianale per singolo caso a pipeline governata e ripetibile:
+La prima versione della Factory ha commesso un errore di ricostruzione: ha interpretato gli otto journey operativi B01–B08 come otto Percorsi studente.
 
-`portfolio → seed → candidate G2 → dossier → validator → review`
+La fonte canonica recuperata è invece **TRAMA PR #96**, exact head:
 
-La Factory non autorizza runtime e non sostituisce la revisione pedagogica umana. Riduce il lavoro manuale ripetitivo e impedisce backlog informale.
+`dfb5b106708bee88016907c13ee0d104c093e7ca`
+
+Riferimenti principali:
+- `workflow/CANONICAL-INDEX-v1.md`;
+- `workflow/backlog-zero-consolidation-plan-v1.md`;
+- `architecture/productive-pathway-workflow-v1.md`;
+- `grammars/registry.yaml`;
+- `templates/PATHWAY-DOSSIER-TEMPLATE.md`;
+- `pedagogical-model.md`.
+
+## Modello corretto
+
+Percorsi non ha un numero fisso di otto elementi.
+
+La struttura corretta è:
+
+`territori di competenza → intake → dossier → evidenze → grammatica → narrativa → safeguards → storyboard → validazione → specifica → autorizzazione runtime separata`
+
+Il registry è **aperto e governato**: contiene solo pathway realmente identificati. Un nuovo pathway entra nel registry mediante decisione governata; la Factory non crea slot vuoti e non inventa nomi.
 
 ## Backlog-zero
 
-Il portafoglio canonico usa solo tre stati:
+`BACKLOG_ZERO` significa che ogni artefatto significativo termina il ciclo classificato e rintracciabile. Non significa preallocare un numero di percorsi.
 
-- `IMPLEMENTED`: percorso reale già materializzato;
-- `RECOVERED_NAME_ONLY`: nome certo recuperato, identità tecnica non ancora ricostruita;
-- `RECOVERY_PENDING`: slot noto del portafoglio, ma nome non recuperato con affidabilità.
+La classificazione canonica TRAMA è:
+- `CANONICAL`;
+- `SUPPORTING`;
+- `EXPERIMENTAL`;
+- `SUPERSEDED`;
+- `ARCHIVE_CANDIDATE`.
 
-Nessun percorso nuovo viene creato fuori dal portafoglio.
+## Territori
 
-## Territori trasversali recuperati
+I sei territori restano organizzativi, non corsi fissi né dimensioni psicologiche:
+1. Conosci te stesso;
+2. Impara a imparare;
+3. Incontra gli altri;
+4. Affronta problemi;
+5. Agisci nel mondo;
+6. Progetta.
 
-1. Conosci te stesso
-2. Impara a imparare
-3. Incontra gli altri
-4. Affronta problemi
-5. Agisci nel mondo
-6. Progetta
+## Factory
 
-## Grammatiche recuperate
+La Factory resta valida come automazione di **candidati strutturali**:
 
-Il registro canonico comprende 11 grammatiche di progetto: narrazione visuale sequenziale; audiovisiva; ramificazione/conseguenze; indagine/evidenze; costruzione/laboratorio; simulazione/micromondo; teatro/punti di vista; taccuino riflessivo; mappa/esplorazione; costruzione condivisa; narrazione ambientale.
+`seed registrato → PathwayDefinition G2 → dossier → validator → review`
 
-Sono repertorio di progettazione, non autorizzazioni automatiche.
+Non sostituisce W0–W10 di TRAMA e non autorizza qualità pedagogica, pubblicazione o runtime.
 
-## Seed v1
+## Vincolo
 
-Un seed contiene il minimo necessario per costruire un candidato strutturale:
+`Verificare e correggere` appartiene al vecchio insieme di journey operativi B01–B08 e non deve comparire come Percorso studente Atlas.
 
-- `pathwayId`, titolo, versione;
-- territori;
-- competenza trasversale;
-- strategia centrale;
-- evidenza attesa;
-- contesto iniziale e contesto di trasferimento;
-- provenienza;
-- quattro funzioni cognitive governate.
+## Runtime
 
-Il compilatore produce automaticamente:
-
-- `PathwayDefinition 2.0`;
-- semantic units canoniche;
-- grafo orientamento → pratica → trasferimento → riflessione;
-- grammatiche L/N con parità semantica;
-- governance `NOT_RUNTIME_AUTHORIZED`;
-- dossier standard.
-
-Il risultato è un **implementation candidate scaffold**, non contenuto finale pubblicabile.
-
-## Gate
-
-La Factory è valida solo se:
-
-1. il seed rispetta lo schema;
-2. il candidato prodotto passa `validate-g2-pathway.mjs`;
-3. output identico da input identico;
-4. nessun output contiene `RUNTIME_AUTHORIZED`;
-5. nessun seed può inventare un percorso fuori dal portafoglio senza prima registrarlo con decisione governata.
-
-## Review umana residua
-
-Restano umani e non automatizzabili:
-
-- qualità pedagogica;
-- adeguatezza per età;
-- validità delle evidenze;
-- equivalenza editoriale reale L/N;
-- accessibilità con tecnologie assistive;
-- decisione Q9/runtime.
+Sempre `NOT_RUNTIME_AUTHORIZED` finché i gate governati non autorizzano esplicitamente il candidato.
