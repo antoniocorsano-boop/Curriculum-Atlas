@@ -8,6 +8,7 @@ on:
       - 'scripts/smart-percorsi-binding-resolver.mjs'
       - 'scripts/build-smart-percorsi-handoff-from-registry.mjs'
       - 'scripts/test-smart-percorsi-binding-resolver.mjs'
+      - 'scripts/validate-smart-percorsi-binding-registry-schema.mjs'
       - '.github/workflows/smart-percorsi-binding-resolver.yml'
 jobs:
   validate:
@@ -19,8 +20,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Run resolver and canonical-registry adversarial tests
+      - name: Run resolver adversarial tests
         run: node scripts/test-smart-percorsi-binding-resolver.mjs
-      - name: Assert production registry has no bindings in this tranche
+      - name: Create isolated schema-validator lockfile
+        run: |
+          rm -rf .smart-percorsi-resolver-audit
+          mkdir .smart-percorsi-resolver-audit
+          printf '%s\n' '{"name":"smart-percorsi-resolver-audit","version":"1.0.0","private":true}' > .smart-percorsi-resolver-audit/package.json
+          npm install --prefix .smart-percorsi-resolver-audit --package-lock-only --ignore-scripts ajv@8 ajv-formats@3
+      - name: Install isolated schema validator
+        run: npm ci --prefix .smart-percorsi-resolver-audit --ignore-scripts
+      - name: Validate canonical registry and adversarial fixtures with AJV
+        run: node scripts/validate-smart-percorsi-binding-registry-schema.mjs
+      - name: Assert production registry remains empty
         run: |
           node -e "const r=JSON.parse(require('fs').readFileSync('governance/smart-percorsi-binding-registry.json','utf8')); if(r.bindings.length!==0) process.exit(1); console.log('NO_ACTIVE_BINDINGS PASS')"
