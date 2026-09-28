@@ -15,25 +15,25 @@ Il bridge produce esclusivamente un descrittore di handoff. **Non produce Eviden
 2. **Autorità esterna e verificabile.** Il Material Set Smart non è fonte di autorità. `authorityRef` e `authorityEvidenceRef` devono provenire dal contesto governato e coincidere con la binding evidence.
 3. **Provenienza completa.** Ogni risorsa obbligatoria deve avere `provenanceRef`, digest SHA-256, byteSize e publicationPath deterministico.
 4. **Nessuna receipt sintetica.** Il bridge non può emettere Q5, Q6, Q1, `RUNTIME_AUTHORIZED` o una receipt finale di pubblicazione.
-5. **Binding Smart ↔ Percorsi verificato.** Il bridge consuma una `SmartPathwayBindingEvidence v1` strutturata; una stringa opaca non è prova sufficiente.
+5. **Binding Smart ↔ Percorsi osservato dalla sorgente governata.** Il chiamante fornisce solo `smartPathwayBindingRef`; il bridge risolve direttamente una `SmartPathwayBindingEvidence v1` tramite il binding adapter. Una evidence preconfezionata dal chiamante non è accettata.
 6. **Digest deterministico.** `manifestDigest` usa una serializzazione canonica ricorsiva del manifest.
 7. **Fail-closed.** Binding foreign/stale/mismatched, evidence version non supportata, autorità diversa, dati mancanti o manifest non eleggibile bloccano l'handoff.
 
 ## SmartPathwayBindingEvidence v1
 
-L'evidenza consumabile deve contenere:
+Il bridge riceve `smartPathwayBindingRef` e invoca `bindingAdapter.resolveBindingEvidence(ref)`. L'evidenza restituita dalla sorgente deve contenere:
 
 - `contractVersion = atlas.smart.pathway-binding/v1`;
 - `producerId = atlas-smart-pathway-binding`;
 - `producerVersion = 1`;
 - `evidenceId` immutabile non vuoto;
 - `checkedAt` RFC3339;
-- `sourceRef` governato non vuoto;
+- `sourceRef` uguale al `smartPathwayBindingRef` richiesto;
 - `materialSetId`, `materialSetVersion`, `manifestDigest`;
 - `candidateBinding` completo con i quattro campi Percorsi;
 - `authorityRef` e `authorityEvidenceRef`.
 
-Il bridge verifica uguaglianza esatta tra evidence e input corrente per manifest digest, Material Set, candidate binding e autorità. In questa tranche la freshness è **identity/lineage freshness**: una evidence riferita a un diverso exact head, contentVersion, publicationId, Material Set version o digest è stale e viene respinta. `checkedAt` futuro/non RFC3339 è respinto.
+Il bridge verifica inoltre che l'adapter dichiari `adapterId = atlas-smart-pathway-binding-resolver` e `adapterVersion = 1`, che la evidence provenga dal `sourceRef` richiesto e che uguaglianza esatta sussista tra evidence e input corrente per manifest digest, Material Set, candidate binding e autorità. In questa tranche la freshness è **identity/lineage freshness**: una evidence riferita a un diverso exact head, contentVersion, publicationId, Material Set version o digest è stale e viene respinta. `checkedAt` futuro/non RFC3339 è respinto.
 
 ## Output
 
@@ -60,7 +60,9 @@ Il bridge rifiuta:
 - binding Percorsi incompleto;
 - proprietà supplementari nel `candidateBinding` di input;
 - authority mancante o diversa dalla binding evidence;
-- binding evidence foreign, stale, mismatched o con producer/version non supportati;
+- binding evidence foreign, stale, mismatched, proveniente da un sourceRef diverso o con producer/version non supportati;
+- adapter mancante/incompatibile;
+- evidence preconfezionata iniettata dal chiamante;
 - tentativi di fornire `q5Evidence`, `q6Evidence`, `q1Evidence` o `runtimeAuthorized=true`.
 
 ## Relazione con i contratti esistenti
@@ -69,4 +71,4 @@ Smart resta responsabile di Material Set e asset. Il bridge conserva e verifica 
 
 ## Stato operativo
 
-Nessun adapter runtime, route studente, deploy aggiuntivo, credenziale o automazione di pubblicazione viene introdotto da questa tranche.
+Questa tranche materializza il **contratto dell'adapter di risoluzione** e la logica consumer fail-closed; gli adapter sintetici dei test non costituiscono evidenza reale. Un adapter governato verso una sorgente reale richiede tranche/review separata. Nessuna route studente, deploy aggiuntivo, credenziale o automazione di pubblicazione viene introdotto.
