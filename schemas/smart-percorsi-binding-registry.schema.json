@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://curriculum-atlas.local/schemas/smart-percorsi-binding-registry.schema.json",
+  "title": "Smart Percorsi Binding Registry v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "status",
+    "authorityModel",
+    "bindings"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "atlas.smart.pathway-binding-registry/v1"
+    },
+    "status": {
+      "const": "GOVERNED"
+    },
+    "authorityModel": {
+      "const": "HUMAN_REVIEWED_REPOSITORY_REGISTRY"
+    },
+    "bindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "bindingRef",
+          "status",
+          "materialSetId",
+          "materialSetVersion",
+          "manifestDigest",
+          "candidateBinding",
+          "authorityRef",
+          "authorityEvidenceRef",
+          "checkedAt",
+          "governanceRef"
+        ],
+        "properties": {
+          "bindingRef": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "REVOKED"
+            ]
+          },
+          "materialSetId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "materialSetVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "manifestDigest": {
+            "type": "string",
+            "pattern": "^sha256:[a-f0-9]{64}$"
+          },
+          "candidateBinding": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "runtimeExactHead",
+              "pathwayId",
+              "contentVersion",
+              "publicationId"
+            ],
+            "properties": {
+              "runtimeExactHead": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{40}$"
+              },
+              "pathwayId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "contentVersion": {
+                "type": "string",
+                "minLength": 1
+              },
+              "publicationId": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "authorityRef": {
+            "type": "string",
+            "minLength": 1
+          },
+          "authorityEvidenceRef": {
+            "type": "string",
+            "minLength": 1
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "governanceRef": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}
