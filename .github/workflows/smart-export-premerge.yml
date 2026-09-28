@@ -1,0 +1,59 @@
+name: SMART Export Pre-Merge
+
+on:
+  pull_request:
+    paths:
+      - 'content/smart-activities/**'
+      - 'public/materials/smart/**'
+      - 'scripts/verify-smart-export.mjs'
+      - '.github/workflows/smart-export-premerge.yml'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-smart-export:
+    name: verify-smart-export
+    runs-on: ubuntu-latest
+    env:
+      ATLAS_GITHUB_PAGES: "true"
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Record exact head
+        run: |
+          echo "expected=${{ github.event.pull_request.head.sha || github.sha }}"
+          echo "actual=$(git rev-parse HEAD)"
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build static Atlas
+        run: pnpm build
+
+      - name: Verify Smart export bytes
+        run: node scripts/verify-smart-export.mjs

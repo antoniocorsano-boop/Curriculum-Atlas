@@ -1,7 +1,8 @@
 {
   "schemaVersion": "atlas.smart.materialset/v1",
   "materialSetId": "sistema-tecnologico-analisi",
-  "version": 1,
+  "version": 2,
+  "supersedesVersion": 1,
   "activityId": "sistema-tecnologico",
   "status": "DRAFT",
   "resources": [
@@ -12,11 +13,11 @@
       "audience": "STUDENT",
       "required": true,
       "materialSlotRoles": ["VISUAL_AID"],
-      "publicationPath": "/materials/smart/sistema-tecnologico/v1/analizzare-un-sistema-tecnologico.png",
+      "publicationPath": "/materials/smart/sistema-tecnologico/v2/analizzare-un-sistema-tecnologico.svg",
       "publicRef": null,
-      "provenanceRef": "chat-project-attachment:file_00000000b4b882108d53e6db76fe4c6f",
-      "digest": "sha256:f337f4300af0fb3997eceeec377bc2919c8bf584333306cb44f7a12aed79cbf3",
-      "byteSize": 481619,
+      "provenanceRef": "smart-remediation:PR55:reconstructed-from-governed-SP01-content",
+      "digest": "sha256:fe7cecfe99097e0141974c17997cd99bb250a4548ae73fd93ed5e8a2cad7aa07",
+      "byteSize": 1764,
       "verificationState": "BYTES_VERIFIED_PUBLICATION_PENDING"
     },
     {
@@ -26,11 +27,11 @@
       "audience": "STUDENT",
       "required": true,
       "materialSlotRoles": ["VISUAL_AID"],
-      "publicationPath": "/materials/smart/sistema-tecnologico/v1/smartphone-sistema-tecnologico.png",
+      "publicationPath": "/materials/smart/sistema-tecnologico/v2/smartphone-sistema-tecnologico.svg",
       "publicRef": null,
-      "provenanceRef": "chat-project-attachment:file_0000000097b48210801b28feaf5fe158",
-      "digest": "sha256:26374b368336a16d583f43d67fa0256faee062ec67bfcaafe5729e4eb868c546",
-      "byteSize": 506219,
+      "provenanceRef": "smart-remediation:PR55:reconstructed-from-governed-SP01-content",
+      "digest": "sha256:6785b7abea214e2cc7336214a793f6f28f5a9328e1267f6ba4f157595bd1363b",
+      "byteSize": 1365,
       "verificationState": "BYTES_VERIFIED_PUBLICATION_PENDING"
     },
     {
@@ -40,11 +41,11 @@
       "audience": "BOTH",
       "required": true,
       "materialSlotRoles": ["MINI_DECK", "LIM_VIEW"],
-      "publicationPath": "/materials/smart/sistema-tecnologico/v1/presentazione-lim.pdf",
+      "publicationPath": "/materials/smart/sistema-tecnologico/v2/presentazione-lim.pdf",
       "publicRef": null,
-      "provenanceRef": null,
-      "digest": "sha256:6b6b5beb3f73769404b16d1db0e608cac829bf2594d9ee93e511cdbad1ca5beb",
-      "byteSize": 41827,
+      "provenanceRef": "chat-generated-artifact:file_00000000da548210b89268364aac89de",
+      "digest": "sha256:35be95e3950fa77fcedc66315da2c6145015581005d29276bb9cf16e8f8fc18a",
+      "byteSize": 4689,
       "verificationState": "BYTES_VERIFIED_PUBLICATION_PENDING"
     },
     {
@@ -59,8 +60,13 @@
       "provenanceRef": null,
       "digest": "sha256:c6bd44a974e14f56c6b35d8b9b670b7ee739bc8821737d2b7c579ee8c8b86b31",
       "byteSize": 40109,
-      "verificationState": "BYTES_VERIFIED_PUBLICATION_PENDING",
-      "deliveryConstraint": "OPTIONAL_NO_DOWNLOAD_OR_PRINT_REQUIREMENT"
+      "verificationState": "SUPERSEDED_OPTIONAL_RESOURCE_NOT_REMATERIALIZED",
+      "deliveryConstraint": "OPTIONAL_NO_DOWNLOAD_OR_PRINT_REQUIREMENT",
+      "lineage": {
+        "fromVersion": 1,
+        "decision": "PRESERVED_AS_OPTIONAL_LINEAGE_ONLY",
+        "reason": "Optional worksheet remains recorded without becoming a v2 publication requirement."
+      }
     }
   ],
   "readiness": {
@@ -76,9 +82,8 @@
   },
   "publication": {
     "stage": "DRAFT",
-    "eligibility": "HISTORICAL_NON_PUBLISHABLE",
+    "eligibility": "PUBLICATION_CANDIDATE",
     "humanDecisionRequired": true,
-    "failClosedWhenRequiredResourceUnresolved": true,
-    "lineageNote": "Preserved as immutable historical evidence; incomplete required assets prevent publication eligibility."
+    "failClosedWhenRequiredResourceUnresolved": true
   }
 }
