@@ -36,6 +36,7 @@ for(const mutate of [
  r=>r.bindings[0].extra=true,
  r=>r.bindings[0].candidateBinding.extra=true,
  r=>r.bindings[0].checkedAt="not-a-date",
+ r=>r.bindings[0].checkedAt="2026-02-31T18:00:00Z",
  r=>r.bindings[0].manifestDigest="bad",
  r=>r.bindings[0].status="UNKNOWN"
 ]){
