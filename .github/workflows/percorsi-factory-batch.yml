@@ -1,0 +1,23 @@
+name: Percorsi Factory Batch
+on:
+  pull_request:
+    paths:
+      - 'content/percorsi/seeds/**'
+      - 'scripts/run-percorsi-factory-batch.mjs'
+      - 'scripts/test-percorsi-factory-batch.mjs'
+      - 'scripts/build-percorsi-pathway-candidate.mjs'
+      - 'governance/percorsi-portfolio.json'
+      - 'package.json'
+      - '.github/workflows/percorsi-factory-batch.yml'
+jobs:
+  batch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run batch factory
+        run: npm run percorsi:factory:check
