@@ -100,7 +100,7 @@ function probeReceiptPayload(receipt){
 }
 const receiptDigest=receipt=>hash(probeReceiptPayload(receipt));
 
-export function executeSealedPreauthProbe(binding,target,q6,probeExecutor){
+export function executeSealedPreauthProbe(binding,target,q6,probeExecutor,clock=iso){
   const dep=validateConsumableEvidence('Q6',binding,q6);
   if(!dep.ok) throw new Error(dep.reason);
   if(typeof probeExecutor!=='function') throw new TypeError('PROBE_EXECUTOR_REQUIRED');
@@ -114,7 +114,7 @@ export function executeSealedPreauthProbe(binding,target,q6,probeExecutor){
     entrypoint:target.entrypoint
   });
   if(!observed||typeof observed!=='object') throw new Error('PROBE_OBSERVATION_MISSING');
-  const observedAt=iso();
+  const observedAt=clock();
   const receipt={
     receiptVersion:PROBE_RECEIPT_VERSION,
     probeProducerId:'percorsi-g2-sealed-preauth-probe',
