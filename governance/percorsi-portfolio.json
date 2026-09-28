@@ -40,7 +40,8 @@
       "pathwayId": null,
       "title": "Verificare e correggere",
       "state": "RECOVERED_NAME_ONLY",
-      "evidenceRef": "RECOVERED_PRIOR_DESIGN"
+      "recoverySourceClass": "RECOVERED_CONVERSATION_CONTEXT",
+      "recoveryNote": "Nome certo recuperato; pathwayId e dossier originari non ancora reperiti in una fonte repository verificabile."
     },
     {
       "portfolioSlot": 3,
