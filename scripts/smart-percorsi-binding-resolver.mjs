@@ -25,7 +25,14 @@ function validateBySchema(value,schema,at="$"){
   if(typeof value==="string"){
     if(schema.minLength!=null && value.length<schema.minLength) fail("BINDING_REGISTRY_SCHEMA_INVALID",at+" is too short");
     if(schema.pattern && !(new RegExp(schema.pattern)).test(value)) fail("BINDING_REGISTRY_SCHEMA_INVALID",at+" does not match pattern");
-    if(schema.format==="date-time" && (Number.isNaN(Date.parse(value)) || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(value))) fail("BINDING_REGISTRY_SCHEMA_INVALID",at+" is not RFC3339 date-time");
+    if(schema.format==="date-time"){
+      const m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-](\d{2}):(\d{2}))$/.exec(value);
+      const y=m?Number(m[1]):NaN, mo=m?Number(m[2]):NaN, d=m?Number(m[3]):NaN, h=m?Number(m[4]):NaN, mi=m?Number(m[5]):NaN, s=m?Number(m[6]):NaN;
+      const calendarOk=Number.isInteger(y)&&mo>=1&&mo<=12&&d>=1&&d<=31&&h<=23&&mi<=59&&s<=59&&
+        new Date(Date.UTC(y,mo-1,d)).getUTCFullYear()===y&&new Date(Date.UTC(y,mo-1,d)).getUTCMonth()===mo-1&&new Date(Date.UTC(y,mo-1,d)).getUTCDate()===d;
+      const offsetOk=!m || m[7]===undefined || (Number(m[7])<=23 && Number(m[8])<=59);
+      if(!m||!calendarOk||!offsetOk||Number.isNaN(Date.parse(value))) fail("BINDING_REGISTRY_SCHEMA_INVALID",at+" is not RFC3339 date-time");
+    }
   }
   if(Number.isInteger(value) && schema.minimum!=null && value<schema.minimum) fail("BINDING_REGISTRY_SCHEMA_INVALID",at+" is below minimum");
   if(Array.isArray(value)){
