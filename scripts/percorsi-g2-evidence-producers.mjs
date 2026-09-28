@@ -3,7 +3,11 @@ import crypto from 'node:crypto';
 export const CONTRACT_VERSION='percorsi-g2-evidence-producer/v1';
 export const POLICY_VERSION='v1';
 const gates={Q5:'publication-provenance',Q6:'editorial-admission',Q1:'public-surface-reachability'};
-const accepted={Q5:{gateId:'Q5',producerId:'percorsi-g2-publication-provenance',producerVersion:'v1'},Q6:{gateId:'Q6',producerId:'percorsi-g2-editorial-admission',producerVersion:'v1'}};
+const accepted={
+  Q1:{gateId:'Q1',producerId:'percorsi-g2-public-surface-reachability',producerVersion:'v1'},
+  Q5:{gateId:'Q5',producerId:'percorsi-g2-publication-provenance',producerVersion:'v1'},
+  Q6:{gateId:'Q6',producerId:'percorsi-g2-editorial-admission',producerVersion:'v1'}
+};
 const allowedEdges=new Set(['LAB>QUALIFIED','QUALIFIED>PUBLISHED','PUBLISHED>WITHDRAWN']);
 const iso=()=>new Date().toISOString();
 const isRfc3339=v=>typeof v==='string'&&!Number.isNaN(Date.parse(v))&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(v);
@@ -17,15 +21,34 @@ const result=(gate,binding,input,observations,deps=[])=>{
 const ev=(prefix,id)=>`${prefix}:${id}`;
 const lineage=d=>d?[{producerId:d.producerId,producerVersion:d.producerVersion,runId:d.runId,gateId:d.gateId,candidateBinding:d.candidateBinding,checkedAt:d.checkedAt}]:[];
 
+function producerEnvelopeValid(expectedGate,binding,d){
+  const exp=accepted[expectedGate];
+  if(!d||!exp||d.gateId!==exp.gateId||d.producerId!==exp.producerId) return false;
+  if(!sameBinding(d.candidateBinding,binding)) return false;
+  if(d.contractVersion!==CONTRACT_VERSION||d.producerVersion!==exp.producerVersion||d.policyVersion!==POLICY_VERSION) return false;
+  if(!['PASS','FAIL','BLOCKED'].includes(d.status)||typeof d.runId!=='string'||!d.runId||!isRfc3339(d.checkedAt)) return false;
+  if(!Array.isArray(d.evidenceRefs)||d.evidenceRefs.some(x=>typeof x!=='string'||!x)||new Set(d.evidenceRefs).size!==d.evidenceRefs.length) return false;
+  if(!Array.isArray(d.observations)||!d.observations.length||d.observations.some(o=>!o||typeof o.assertionId!=='string'||!o.assertionId||!['PASS','FAIL','BLOCKED'].includes(o.outcome)||((typeof o.evidenceRef==='string'&&o.evidenceRef.length>0)===(typeof o.absenceReason==='string'&&o.absenceReason.length>0)))) return false;
+  return true;
+}
+
 export function validateConsumableEvidence(expectedGate,binding,dependency){
   if(!dependency) return {ok:false,reason:`${expectedGate}_EVIDENCE_MISSING`};
-  const exp=accepted[expectedGate];
+  if(!producerEnvelopeValid(expectedGate,binding,dependency)) return {ok:false,reason:`${expectedGate}_EVIDENCE_INCOMPATIBLE`};
   if(dependency.status!=='PASS') return {ok:false,reason:`${expectedGate}_NOT_PASS`};
-  if(!sameBinding(dependency.candidateBinding,binding)) return {ok:false,reason:`${expectedGate}_CANDIDATE_MISMATCH`};
-  if(dependency.gateId!==exp.gateId||dependency.producerId!==exp.producerId) return {ok:false,reason:`${expectedGate}_PRODUCER_IDENTITY_MISMATCH`};
-  if(dependency.contractVersion!==CONTRACT_VERSION||dependency.producerVersion!==exp.producerVersion||dependency.policyVersion!==POLICY_VERSION) return {ok:false,reason:`${expectedGate}_VERSION_INCOMPATIBLE`};
-  if(typeof dependency.runId!=='string'||!dependency.runId||!isRfc3339(dependency.checkedAt)) return {ok:false,reason:`${expectedGate}_LINEAGE_INVALID`};
   return {ok:true};
+}
+
+export function mapEvidenceProducerResultToGateReceipt(expectedGate,binding,producerResult){
+  if(!producerEnvelopeValid(expectedGate,binding,producerResult)){
+    return {status:'NOT_RUN',evidenceRefs:[],reviewerClass:'automatic',checkedAt:iso(),producerTrace:null};
+  }
+  return {status:producerResult.status,evidenceRefs:[...producerResult.evidenceRefs],reviewerClass:'automatic',checkedAt:producerResult.checkedAt,producerTrace:{producerId:producerResult.producerId,producerVersion:producerResult.producerVersion,runId:producerResult.runId}};
+}
+
+export function executeProducerSafely(gate,binding,input,producer){
+  try{return producer();}
+  catch(error){return result(gate,binding,input,[obs(`${gate.toLowerCase()}.execution`,'BLOCKED',null,`PRODUCER_ERROR:${error?.name||'Error'}`)]);}
 }
 
 export function produceQ5(binding,transition){
@@ -46,9 +69,7 @@ export function produceQ5(binding,transition){
 
 export function produceQ6(binding,artifact,q5){
   const dep=validateConsumableEvidence('Q5',binding,q5);
-  if(!dep.ok){
-    return result('Q6',binding,{dependencyRunId:q5?.runId??null},[obs('q6.q5.consumable','BLOCKED',null,dep.reason)],lineage(q5));
-  }
+  if(!dep.ok) return result('Q6',binding,{dependencyRunId:q5?.runId??null},[obs('q6.q5.consumable','BLOCKED',null,dep.reason)],lineage(q5));
   const observations=[obs('q6.q5.consumable','PASS',`producer-run:${q5.runId}`)];
   const identity=artifact?.candidateBinding&&sameBinding(artifact.candidateBinding,binding)&&artifact?.publicationId===binding.publicationId;
   const provenance=artifact?.authorityRef&&artifact?.receiptRef&&artifact?.receiptCandidateBinding&&sameBinding(artifact.receiptCandidateBinding,binding)&&artifact?.receiptAuthorityRef===artifact.authorityRef;
@@ -61,9 +82,7 @@ export function produceQ6(binding,artifact,q5){
 
 export function produceQ1(binding,surface,q6){
   const dep=validateConsumableEvidence('Q6',binding,q6);
-  if(!dep.ok){
-    return result('Q1',binding,{dependencyRunId:q6?.runId??null},[obs('q1.q6.consumable','BLOCKED',null,dep.reason)],lineage(q6));
-  }
+  if(!dep.ok) return result('Q1',binding,{dependencyRunId:q6?.runId??null},[obs('q1.q6.consumable','BLOCKED',null,dep.reason)],lineage(q6));
   const observations=[obs('q1.q6.consumable','PASS',`producer-run:${q6.runId}`)];
   const routes=Array.isArray(surface?.reachableRoutes)?surface.reachableRoutes:[];
   const identity=surface?.candidateBinding&&sameBinding(surface.candidateBinding,binding)&&surface?.publicationId===binding.publicationId&&surface?.q6RunId===q6.runId;
