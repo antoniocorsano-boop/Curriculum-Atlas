@@ -10,6 +10,7 @@ on:
       - 'fixtures/percorsi-factory/**'
       - 'scripts/build-percorsi-pathway-candidate.mjs'
       - 'scripts/test-percorsi-pathway-factory.mjs'
+      - 'scripts/validate-percorsi-pathway-seed-schema.mjs'
       - '.github/workflows/percorsi-portfolio-factory.yml'
 jobs:
   factory:
@@ -23,6 +24,16 @@ jobs:
           node-version: '22'
       - name: Factory deterministic and G2 validation
         run: node scripts/test-percorsi-pathway-factory.mjs
+      - name: Create isolated seed-schema validator
+        run: |
+          rm -rf .percorsi-factory-audit
+          mkdir .percorsi-factory-audit
+          printf '%s\n' '{"name":"percorsi-factory-audit","version":"1.0.0","private":true}' > .percorsi-factory-audit/package.json
+          npm install --prefix .percorsi-factory-audit --package-lock-only --ignore-scripts ajv@8
+      - name: Install isolated validator
+        run: npm ci --prefix .percorsi-factory-audit --ignore-scripts
+      - name: Enforce seed schema
+        run: node scripts/validate-percorsi-pathway-seed-schema.mjs
       - name: Validate portfolio backlog-zero shape
         run: |
           node - <<'NODE'
