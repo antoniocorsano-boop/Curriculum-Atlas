@@ -15,7 +15,7 @@
     "smart:asset:verify-public": "node scripts/verify-smart-public-asset.mjs",
     "smart:asset:apply-receipt": "node scripts/apply-smart-asset-receipt.mjs",
     "validate:smart:valid": "node scripts/validate-smart-materialset.mjs fixtures/smart-materialset/valid/draft.json",
-    "validate:smart:invalid": "node scripts/validate-smart-materialset.mjs fixtures/smart-materialset/invalid/false-ready.json --expect-invalid",
+    "validate:smart:invalid": "node scripts/validate-smart-materialset.mjs fixtures/smart-materialset/invalid/false-ready.json --expect-invalid && node scripts/validate-smart-materialset.mjs fixtures/smart-materialset/invalid/publication-path.json --expect-invalid",
     "validate:smart": "npm run validate:smart:valid && npm run validate:smart:invalid",
     "test:smart:sp01": "node scripts/test-smart-flow-sp01.mjs",
     "validate:percorsi:g2:valid": "node scripts/validate-g2-pathway.mjs fixtures/percorsi-g2/valid/minimal.json",
