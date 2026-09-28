@@ -6,6 +6,7 @@ on:
       - 'schemas/smart-percorsi-handoff.schema.json'
       - 'scripts/build-smart-percorsi-handoff.mjs'
       - 'scripts/test-smart-percorsi-handoff.mjs'
+      - 'scripts/validate-smart-percorsi-handoff-schema.mjs'
       - '.github/workflows/smart-percorsi-bridge.yml'
 jobs:
   validate:
@@ -19,5 +20,15 @@ jobs:
           node-version: '22'
       - name: Run adversarial bridge tests
         run: node scripts/test-smart-percorsi-handoff.mjs
-      - name: Validate handoff schema JSON
-        run: node -e "JSON.parse(require('fs').readFileSync('schemas/smart-percorsi-handoff.schema.json','utf8')); console.log('schema PASS')"
+      - name: Create isolated schema-validator lockfile
+        run: |
+          rm -rf .smart-percorsi-bridge-audit
+          mkdir .smart-percorsi-bridge-audit
+          printf '%s\n' '{"name":"smart-percorsi-bridge-audit","version":"1.0.0","private":true}' > .smart-percorsi-bridge-audit/package.json
+          npm install --prefix .smart-percorsi-bridge-audit --package-lock-only --ignore-scripts ajv@8 ajv-formats@3
+      - name: Install isolated schema validator
+        run: npm ci --prefix .smart-percorsi-bridge-audit --ignore-scripts
+      - name: Enforce schema on real builder output
+        env:
+          NODE_PATH: ${{ github.workspace }}/.smart-percorsi-bridge-audit/node_modules
+        run: node scripts/validate-smart-percorsi-handoff-schema.mjs
