@@ -11,10 +11,11 @@ try {
   await page.goto(base + "/attivita/sistema-tecnologico", { waitUntil: "networkidle" });
 
   await page.getByRole("status").getByText(
-    "Nessun account · le risposte restano salvate localmente su questo dispositivo"
+    "Nessun account · risposte salvate solo su questo dispositivo"
   ).waitFor();
+  await page.getByText("Passaggio 1 di 7").waitFor();
 
-  const field = page.getByPlaceholder("Scrivi con parole tue…");
+  const field = page.getByPlaceholder("Scrivi qui un sistema diverso…");
   await field.fill("Sistema locale di prova");
   await page.waitForFunction(
     ({ key, expected }) => localStorage.getItem(key)?.includes(expected),
@@ -27,8 +28,8 @@ try {
   }
 
   await page.reload({ waitUntil: "networkidle" });
-  await page.getByPlaceholder("Scrivi con parole tue…").waitFor();
-  if ((await page.getByPlaceholder("Scrivi con parole tue…").inputValue()) !== "Sistema locale di prova") {
+  await page.getByPlaceholder("Scrivi qui un sistema diverso…").waitFor();
+  if ((await page.getByPlaceholder("Scrivi qui un sistema diverso…").inputValue()) !== "Sistema locale di prova") {
     throw new Error("Local persistence was not restored after reload");
   }
 
