@@ -27,7 +27,10 @@ assert.equal(report.valid,true);
 for(const mut of [
  s=>delete s.coreStrategy,
  s=>s.schemaVersion="foreign/v1",
- s=>delete s.cognitiveFunctions.transfer
+ s=>delete s.cognitiveFunctions.transfer,
+ s=>s.pathwayId="pw-unregistered-01",
+ s=>s.territoryIds=["unknown"],
+ s=>s.version="v2"
 ]){
  const x=structuredClone(seed);mut(x);
  assert.throws(()=>buildPathwayCandidate(x));
