@@ -4,7 +4,9 @@ on:
     paths:
       - 'docs/contracts/SMART-PERCORSI-FIRST-BINDING-DECISION-01.md'
       - 'governance/smart-percorsi-first-binding-decision.json'
+      - 'schemas/smart-percorsi-first-binding-decision.schema.json'
       - 'scripts/validate-smart-percorsi-first-binding-decision.mjs'
+      - 'scripts/validate-smart-percorsi-first-binding-decision-schema.mjs'
       - '.github/workflows/smart-percorsi-first-binding-decision.yml'
 jobs:
   validate:
@@ -16,5 +18,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Validate first-binding decision remains fail-closed
+      - name: Validate first-binding decision semantics
         run: node scripts/validate-smart-percorsi-first-binding-decision.mjs
+      - name: Create isolated decision-schema validator
+        run: |
+          rm -rf .smart-percorsi-first-binding-audit
+          mkdir .smart-percorsi-first-binding-audit
+          printf '%s\n' '{"name":"smart-percorsi-first-binding-audit","version":"1.0.0","private":true}' > .smart-percorsi-first-binding-audit/package.json
+          npm install --prefix .smart-percorsi-first-binding-audit --package-lock-only --ignore-scripts ajv@8 ajv-formats@3
+      - name: Install isolated validator
+        run: npm ci --prefix .smart-percorsi-first-binding-audit --ignore-scripts
+      - name: Enforce decision schema
+        run: node scripts/validate-smart-percorsi-first-binding-decision-schema.mjs
