@@ -13,7 +13,9 @@ const manifest={schemaVersion:"atlas.smart.materialset/v1",materialSetId:"schema
 const binding={runtimeExactHead:"a".repeat(40),pathwayId:"pw",contentVersion:"v1",publicationId:"pub"};
 const md="sha256:"+crypto.createHash("sha256").update(stable(manifest)).digest("hex");
 const context={candidateBinding:binding,authorityRef:"authority:1",authorityEvidenceRef:"authority-evidence:1",smartPathwayBindingEvidence:{contractVersion:"atlas.smart.pathway-binding/v1",producerId:"atlas-smart-pathway-binding",producerVersion:"1",evidenceId:"bind",checkedAt:"2026-09-28T17:00:00Z",sourceRef:"governance:bind",materialSetId:"schema-set",materialSetVersion:1,manifestDigest:md,candidateBinding:binding,authorityRef:"authority:1",authorityEvidenceRef:"authority-evidence:1"}};
-const output=buildSmartPercorsiHandoff(manifest,context);
+context.smartPathwayBindingRef="governance:bind"; delete context.smartPathwayBindingEvidence;
+const adapter={adapterId:"atlas-smart-pathway-binding-resolver",adapterVersion:"1",async resolveBindingEvidence(ref){return {contractVersion:"atlas.smart.pathway-binding/v1",producerId:"atlas-smart-pathway-binding",producerVersion:"1",evidenceId:"bind",checkedAt:"2026-09-28T17:00:00Z",sourceRef:ref,materialSetId:"schema-set",materialSetVersion:1,manifestDigest:md,candidateBinding:binding,authorityRef:"authority:1",authorityEvidenceRef:"authority-evidence:1"};}};
+const output=await buildSmartPercorsiHandoff(manifest,context,adapter);
 if(!validate(output)){console.error("FAIL real builder output",validate.errors);process.exit(1);}
 const mutations=[];
 {const x=structuredClone(output);x.candidateBinding.extra="forbidden";mutations.push(["extra binding property",x]);}
