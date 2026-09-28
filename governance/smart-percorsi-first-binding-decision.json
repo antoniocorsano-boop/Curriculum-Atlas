@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "atlas.smart.percorsi-first-binding-decision/v1",
+  "baseline": "337761cc5219c54a3f3c3628e2c14ec20c49d3ae",
+  "status": "BLOCKED_NO_GOVERNED_PATHWAY_TARGET",
+  "smartCandidate": {
+    "activityId": "sistema-tecnologico",
+    "activityRef": "SP-01",
+    "materialSetId": "sistema-tecnologico-analisi",
+    "materialSetVersion": 2,
+    "sourceRefs": [
+      "docs/ATLAS-SMART-ACTIVITY-01.md",
+      "content/smart-activities/sistema-tecnologico/material-set.v2.json"
+    ]
+  },
+  "evaluatedExistingPathways": [
+    {
+      "pathwayId": "pw-missing-information-01",
+      "title": "Prima di decidere, cosa manca?",
+      "decision": "NOT_BOUND",
+      "reasonCode": "NO_GOVERNED_ASSOCIATION_EVIDENCE",
+      "sourceRef": "docs/governance/ATLAS-PERCORSI-G1-BOUNDARY.md"
+    }
+  ],
+  "bindingRegistrationAuthorized": false,
+  "runtimeAuthorized": false,
+  "nextRequiredEvidence": [
+    "GOVERNED_TARGET_PATHWAY_ID",
+    "PATHWAY_DOSSIER_OR_IMPLEMENTATION_SPEC_REF",
+    "EXPLICIT_HUMAN_PROMOTION_OR_ASSOCIATION_DECISION",
+    "SMART_MATERIAL_REUSE_PLAN",
+    "COMPLETE_PERCORSI_CANDIDATE_IDENTITY",
+    "AUTHORITY_EVIDENCE"
+  ]
+}
