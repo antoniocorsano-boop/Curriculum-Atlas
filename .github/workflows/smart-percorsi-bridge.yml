@@ -1,5 +1,4 @@
 name: SMART Percorsi Bridge
-
 on:
   pull_request:
     paths:
@@ -8,25 +7,17 @@ on:
       - 'scripts/build-smart-percorsi-handoff.mjs'
       - 'scripts/test-smart-percorsi-handoff.mjs'
       - '.github/workflows/smart-percorsi-bridge.yml'
-  workflow_dispatch:
-
-permissions:
-  contents: read
-
 jobs:
-  contract:
+  validate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-      - name: Exact head
-        run: test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha || github.sha }}"
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 22
-          package-manager-cache: false
-      - name: Adversarial bridge tests
+          node-version: '22'
+      - name: Run adversarial bridge tests
         run: node scripts/test-smart-percorsi-handoff.mjs
-      - name: Schema is valid JSON
-        run: node -e "JSON.parse(require('fs').readFileSync('schemas/smart-percorsi-handoff.schema.json','utf8')); console.log('schema: PASS')"
+      - name: Validate handoff schema JSON
+        run: node -e "JSON.parse(require('fs').readFileSync('schemas/smart-percorsi-handoff.schema.json','utf8')); console.log('schema PASS')"
