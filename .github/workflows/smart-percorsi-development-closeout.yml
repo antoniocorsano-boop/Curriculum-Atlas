@@ -1,0 +1,20 @@
+name: SMART Percorsi Development Closeout
+on:
+  pull_request:
+    paths:
+      - 'docs/SMART-PERCORSI-DEVELOPMENT-CLOSEOUT-01.md'
+      - 'governance/smart-percorsi-development-closeout.json'
+      - 'scripts/validate-smart-percorsi-development-closeout.mjs'
+      - '.github/workflows/smart-percorsi-development-closeout.yml'
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate closeout invariants
+        run: node scripts/validate-smart-percorsi-development-closeout.mjs
