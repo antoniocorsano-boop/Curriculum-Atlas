@@ -114,14 +114,20 @@ assert.equal(produceQ1(binding,legacySurface,q6).status,'BLOCKED');
 const tampered={...probeReceipt,observations:{...probeReceipt.observations,publicExposure:true}};
 assert.equal(produceQ1(binding,tampered,q6).status,'BLOCKED');
 
-const stale={...probeReceipt,observedAt:'2026-09-27T12:00:00Z'};
-assert.equal(produceQ1(binding,stale,q6).status,'BLOCKED');
+const staleReceipt=executeSealedPreauthProbe(binding,target,q6,observedPass,()=> '2026-09-27T12:00:00Z');
+const staleResult=produceQ1(binding,staleReceipt,q6);
+assert.equal(staleResult.status,'BLOCKED');
+assert.equal(staleResult.observations[0].absenceReason,'PROBE_RECEIPT_STALE');
 
 const foreignReceipt={...probeReceipt,candidateBinding:foreign};
 assert.equal(produceQ1(binding,foreignReceipt,q6).status,'BLOCKED');
 
-const mismatchedQ6={...probeReceipt,q6RunId:'stale-run'};
-assert.equal(produceQ1(binding,mismatchedQ6,q6).status,'BLOCKED');
+const q6Other={...q6,runId:'different-valid-run'};
+const otherTarget={...target,q6RunId:q6Other.runId};
+const mismatchedQ6Receipt=executeSealedPreauthProbe(binding,otherTarget,q6Other,observedPass);
+const mismatchedQ6Result=produceQ1(binding,mismatchedQ6Receipt,q6);
+assert.equal(mismatchedQ6Result.status,'BLOCKED');
+assert.equal(mismatchedQ6Result.observations[0].absenceReason,'PROBE_RECEIPT_BINDING_MISMATCH');
 
 for(const observed of [
   {...observedPass(),publicExposure:true},
@@ -138,7 +144,7 @@ for(const observed of [
 
 assert.equal(produceQ1(binding,probeReceipt,null).status,'BLOCKED');
 assert.equal(produceQ1(binding,probeReceipt,{...q6,policyVersion:'v0'}).status,'BLOCKED');
-const q6Rerun={...q6,runId:'different-valid-run'};
+const q6Rerun={...q6,runId:'rerun-after-probe'};
 assert.equal(produceQ1(binding,probeReceipt,q6Rerun).status,'BLOCKED');
 
 for(const r of [q5,q6,q1,crashed]){
