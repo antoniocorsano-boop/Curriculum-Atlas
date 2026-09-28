@@ -22,7 +22,9 @@
     "validate:percorsi:g2:invalid": "node scripts/validate-g2-pathway.mjs fixtures/percorsi-g2/invalid/broken-contract.json --expect-invalid",
     "validate:percorsi:g2": "npm run validate:percorsi:g2:valid && npm run validate:percorsi:g2:invalid",
     "normalize:image": "node scripts/normalize-image.mjs",
-    "normalize:image:selftest": "node scripts/normalize-image.mjs --self-test"
+    "normalize:image:selftest": "node scripts/normalize-image.mjs --self-test",
+    "percorsi:factory:build": "node scripts/run-percorsi-factory-batch.mjs --out=.artifacts/percorsi-factory",
+    "percorsi:factory:check": "node scripts/test-percorsi-pathway-factory.mjs && node scripts/test-percorsi-factory-batch.mjs"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
