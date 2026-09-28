@@ -103,13 +103,15 @@ const receiptDigest=receipt=>hash(probeReceiptPayload(receipt));
 export async function executeSealedPreauthProbe(binding,target,q6,adapter,clock=iso){
   const dep=validateConsumableEvidence('Q6',binding,q6);
   if(!dep.ok) throw new Error(dep.reason);
-  const requiredMethods=['discoverReachableRoutes','request','isPubliclyExposed'];
+  const requiredMethods=['inspectSurface','request','isPubliclyExposed'];
   if(!adapter||requiredMethods.some(name=>typeof adapter[name]!=='function')) throw new TypeError('PROBE_ADAPTER_REQUIRED');
   const targetValid=target?.candidateBinding&&sameBinding(target.candidateBinding,binding)&&target?.publicationId===binding.publicationId&&target?.q6RunId===q6.runId&&target?.publicationState==='QUALIFIED'&&target?.probeMode==='SEALED_PREAUTH'&&typeof target?.surfaceArtifactDigest==='string'&&target.surfaceArtifactDigest&&typeof target?.entrypoint==='string'&&target.entrypoint;
   if(!targetValid) throw new Error('PROBE_TARGET_INCOMPATIBLE');
 
-  const routes=await adapter.discoverReachableRoutes({candidateBinding:binding,publicationId:binding.publicationId,q6RunId:q6.runId,surfaceArtifactDigest:target.surfaceArtifactDigest});
-  if(!Array.isArray(routes)) throw new Error('PROBE_ROUTE_DISCOVERY_INVALID');
+  const inspection=await adapter.inspectSurface({candidateBinding:binding,publicationId:binding.publicationId,q6RunId:q6.runId,expectedSurfaceArtifactDigest:target.surfaceArtifactDigest});
+  if(!inspection||!Array.isArray(inspection.reachableRoutes)||typeof inspection.surfaceArtifactDigest!=='string'||!inspection.surfaceArtifactDigest) throw new Error('PROBE_SURFACE_INSPECTION_INVALID');
+  if(inspection.surfaceArtifactDigest!==target.surfaceArtifactDigest) throw new Error('PROBE_SURFACE_DIGEST_MISMATCH');
+  const routes=inspection.reachableRoutes;
 
   const request=async overrides=>{
     const response=await adapter.request({
