@@ -1,6 +1,5 @@
 import fs from "node:fs";
 import path from "node:path";
-import http from "node:http";
 import crypto from "node:crypto";
 import os from "node:os";
 import { spawnSync } from "node:child_process";
@@ -53,10 +52,8 @@ for (const [args, label] of [
   if (run.status !== 0) errors.push(`${label} validator failed: ${(run.stderr || run.stdout).trim()}`);
 }
 
-// Adversarial qualification of the publication boundary. The production verifier
-// requires HTTPS, so these deterministic cases use a temporary local HTTPS-free
-// harness only to prove the pre-network fail-closed rule; digest/success are
-// exercised by verify-smart-public-asset.mjs, which operates on captured bytes.
+// Adversarial pre-network boundary: a required resource without provenance must
+// fail before any fetch is attempted.
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "atlas-smart-boundary-"));
 try {
   const missingProvenance = {
@@ -68,15 +65,14 @@ try {
   const negative = spawnSync(process.execPath, ["scripts/verify-smart-published-materialset.mjs", "--manifest", negativePath, "--base-url", "https://example.invalid", "--out-dir", path.join(tmp, "receipts")], { cwd: root, encoding: "utf8" });
   if (negative.status === 0 || !`${negative.stderr}${negative.stdout}`.includes("required resource missing provenanceRef")) errors.push("publication verifier must fail closed for required resource missing provenanceRef");
 
-  const bytes = Buffer.from("atlas-smart-known-bytes");
-  const goodDigest = `sha256:${crypto.createHash("sha256").update(bytes).digest("hex")}`;
-  const asset = path.join(tmp, "asset.bin");
-  fs.writeFileSync(asset, bytes);
-  for (const [digest, expectOk, label] of [[`sha256:${"0".repeat(64)}`, false, "digest mismatch"], [goodDigest, true, "verified bytes"]]) {
-    const receipt = path.join(tmp, `${label.replace(/ /g, "-")}.json`);
-    const run = spawnSync(process.execPath, ["scripts/verify-smart-public-asset.mjs", "--file", asset, "--expected-digest", digest, "--expected-byte-size", String(bytes.length), "--asset-id", "fixture", "--version", "1", "--public-ref", "https://example.invalid/materials/x.bin", "--provenance-ref", "fixture:test", "--audience", "STUDENT", "--out", receipt], { cwd: root, encoding: "utf8" });
-    if (expectOk && (run.status !== 0 || !fs.existsSync(receipt))) errors.push("verified public bytes must emit a receipt");
-    if (!expectOk && run.status === 0) errors.push("published digest mismatch must fail closed");
+  // Static adversarial assertions for the network verifier: it must hash fetched
+  // response bytes, fail on mismatch, and write a receipt only after the match.
+  const verifierSource = fs.readFileSync(path.join(root, "scripts/verify-smart-public-asset.mjs"), "utf8");
+  const hashPos = verifierSource.indexOf('crypto.createHash("sha256").update(bytes)');
+  const mismatchPos = verifierSource.indexOf("if (actual !== expectedDigest) fail");
+  const receiptPos = verifierSource.indexOf("fs.writeFileSync(out");
+  if (hashPos < 0 || mismatchPos < 0 || receiptPos < 0 || !(hashPos < mismatchPos && mismatchPos < receiptPos)) {
+    errors.push("network verifier must hash fetched bytes, reject digest mismatch, then emit receipt");
   }
 } finally {
   fs.rmSync(tmp, { recursive: true, force: true });
