@@ -100,25 +100,52 @@ function probeReceiptPayload(receipt){
 }
 const receiptDigest=receipt=>hash(probeReceiptPayload(receipt));
 
-export function executeSealedPreauthProbe(binding,target,q6,probeExecutor,clock=iso){
+export async function executeSealedPreauthProbe(binding,target,q6,adapter,clock=iso){
   const dep=validateConsumableEvidence('Q6',binding,q6);
   if(!dep.ok) throw new Error(dep.reason);
-  if(typeof probeExecutor!=='function') throw new TypeError('PROBE_EXECUTOR_REQUIRED');
-  const targetValid=target?.candidateBinding&&sameBinding(target.candidateBinding,binding)&&target?.publicationId===binding.publicationId&&target?.q6RunId===q6.runId&&target?.publicationState==='QUALIFIED'&&target?.probeMode==='SEALED_PREAUTH'&&typeof target?.surfaceArtifactDigest==='string'&&target.surfaceArtifactDigest;
+  const requiredMethods=['discoverReachableRoutes','request','isPubliclyExposed'];
+  if(!adapter||requiredMethods.some(name=>typeof adapter[name]!=='function')) throw new TypeError('PROBE_ADAPTER_REQUIRED');
+  const targetValid=target?.candidateBinding&&sameBinding(target.candidateBinding,binding)&&target?.publicationId===binding.publicationId&&target?.q6RunId===q6.runId&&target?.publicationState==='QUALIFIED'&&target?.probeMode==='SEALED_PREAUTH'&&typeof target?.surfaceArtifactDigest==='string'&&target.surfaceArtifactDigest&&typeof target?.entrypoint==='string'&&target.entrypoint;
   if(!targetValid) throw new Error('PROBE_TARGET_INCOMPATIBLE');
-  const observed=probeExecutor({
-    candidateBinding:binding,
-    publicationId:binding.publicationId,
-    q6RunId:q6.runId,
-    surfaceArtifactDigest:target.surfaceArtifactDigest,
-    entrypoint:target.entrypoint
-  });
-  if(!observed||typeof observed!=='object') throw new Error('PROBE_OBSERVATION_MISSING');
+
+  const routes=await adapter.discoverReachableRoutes({candidateBinding:binding,publicationId:binding.publicationId,q6RunId:q6.runId,surfaceArtifactDigest:target.surfaceArtifactDigest});
+  if(!Array.isArray(routes)) throw new Error('PROBE_ROUTE_DISCOVERY_INVALID');
+
+  const request=async overrides=>{
+    const response=await adapter.request({
+      route:target.entrypoint,
+      authorityPresent:true,
+      receiptPresent:true,
+      publicationState:'QUALIFIED',
+      ...overrides
+    });
+    if(!response||!['ALLOW','DENY'].includes(response.outcome)) throw new Error('PROBE_REQUEST_RESULT_INVALID');
+    return response.outcome;
+  };
+
+  const validEntrypoint=await request({});
+  const missingAuthority=await request({authorityPresent:false});
+  const missingReceipt=await request({receiptPresent:false});
+  const nonPublishable=await request({publicationState:'LAB'});
+  const unknownRoute=await request({route:'/percorsi/__probe_unknown__'});
+  const publicExposure=await adapter.isPubliclyExposed({candidateBinding:binding,publicationId:binding.publicationId,surfaceArtifactDigest:target.surfaceArtifactDigest});
+  if(typeof publicExposure!=='boolean') throw new Error('PROBE_EXPOSURE_RESULT_INVALID');
+
   const observedAt=clock();
+  const observations={
+    reachableRoutes:[...routes],
+    entrypoint:target.entrypoint,
+    publicEntrypoint:validEntrypoint==='ALLOW',
+    publicExposure,
+    missingAuthorityBehavior:missingAuthority,
+    missingReceiptBehavior:missingReceipt,
+    nonPublishableBehavior:nonPublishable,
+    unknownRouteBehavior:unknownRoute
+  };
   const receipt={
     receiptVersion:PROBE_RECEIPT_VERSION,
     probeProducerId:'percorsi-g2-sealed-preauth-probe',
-    probeRunId:hash(['sealed-preauth',binding,q6.runId,target.surfaceArtifactDigest,observedAt,observed]),
+    probeRunId:hash(['sealed-preauth',binding,q6.runId,target.surfaceArtifactDigest,observedAt,observations]),
     candidateBinding:binding,
     publicationId:binding.publicationId,
     q6RunId:q6.runId,
@@ -126,16 +153,7 @@ export function executeSealedPreauthProbe(binding,target,q6,probeExecutor,clock=
     probeMode:'SEALED_PREAUTH',
     surfaceArtifactDigest:target.surfaceArtifactDigest,
     observedAt,
-    observations:{
-      reachableRoutes:Array.isArray(observed.reachableRoutes)?[...observed.reachableRoutes]:[],
-      entrypoint:observed.entrypoint,
-      publicEntrypoint:observed.publicEntrypoint,
-      publicExposure:observed.publicExposure,
-      missingAuthorityBehavior:observed.missingAuthorityBehavior,
-      missingReceiptBehavior:observed.missingReceiptBehavior,
-      nonPublishableBehavior:observed.nonPublishableBehavior,
-      unknownRouteBehavior:observed.unknownRouteBehavior
-    }
+    observations
   };
   return {...receipt,receiptDigest:receiptDigest(receipt)};
 }
