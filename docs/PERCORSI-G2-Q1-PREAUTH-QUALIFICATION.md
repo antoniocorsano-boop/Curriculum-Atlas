@@ -25,7 +25,7 @@ Per produrre Q1 PASS devono essere dimostrati tutti i seguenti punti:
 3. `probeMode=SEALED_PREAUTH` e `publicExposure=false`.
 4. Il probe è vincolato alla stessa `candidateBinding` e allo stesso `q6RunId` consumato da Q1.
 5. Q1 **avvia direttamente** il runner `SEALED_PREAUTH` tramite l'adapter del probe e consuma internamente la `ProbeObservationReceipt` appena prodotta; una ricevuta preconfezionata o un oggetto che descrive soltanto la superficie non costituiscono input consumabile da Q1.
-6. `surfaceArtifactDigest` identifica deterministicamente l'artefatto/grafo di superficie verificato.
+6. `surfaceArtifactDigest` identifica deterministicamente l'artefatto/grafo di superficie verificato e deve coincidere con il digest **osservato dall'adapter durante il probe**; il solo valore dichiarato dal target non è sufficiente.
 7. Route ed entrypoint osservati sono quelli destinati all'attivazione; `/percorsi/lab/**` non è raggiungibile come superficie autorizzabile.
 8. La ricevuta è vincolata tramite digest al contenuto osservato; manomissione, `q6RunId` diverso, candidate identity diversa o osservazione antecedente a Q6 falliscono chiusi.
 9. Mancanza di authority/receipt, stato non qualificato, route sconosciuta o entrypoint non dichiarato falliscono chiusi.
