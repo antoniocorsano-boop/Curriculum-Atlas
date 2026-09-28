@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "atlas.smart.materialset/v1",
+  "materialSetId": "sistema-tecnologico-analisi",
+  "version": 1,
+  "activityId": "sistema-tecnologico",
+  "status": "DRAFT",
+  "resources": [
+    {
+      "resourceId": "sistema-tecnologico-infografica-metodo",
+      "kind": "INFOGRAPHIC",
+      "title": "Analizzare un sistema tecnologico — metodo",
+      "audience": "STUDENT",
+      "required": true,
+      "materialSlotRoles": ["VISUAL_AID"],
+      "publicationPath": "/materials/smart/sistema-tecnologico/v1/analizzare-un-sistema-tecnologico.png",
+      "publicRef": null,
+      "provenanceRef": "chat-project-attachment:file_00000000b4b882108d53e6db76fe4c6f",
+      "digest": "sha256:f337f4300af0fb3997eceeec377bc2919c8bf584333306cb44f7a12aed79cbf3",
+      "byteSize": 481619,
+      "verificationState": "BYTES_VERIFIED_PUBLICATION_PENDING"
+    },
+    {
+      "resourceId": "sistema-tecnologico-infografica-dispositivo-elettronico",
+      "kind": "INFOGRAPHIC",
+      "title": "Lo smartphone: un sistema tecnologico",
+      "audience": "STUDENT",
+      "required": true,
+      "materialSlotRoles": ["VISUAL_AID"],
+      "publicationPath": "/materials/smart/sistema-tecnologico/v1/smartphone-sistema-tecnologico.png",
+      "publicRef": null,
+      "provenanceRef": "chat-project-attachment:file_0000000097b48210801b28feaf5fe158",
+      "digest": "sha256:26374b368336a16d583f43d67fa0256faee062ec67bfcaafe5729e4eb868c546",
+      "byteSize": 506219,
+      "verificationState": "BYTES_VERIFIED_PUBLICATION_PENDING"
+    },
+    {
+      "resourceId": "sistema-tecnologico-presentazione-lim",
+      "kind": "PRESENTATION",
+      "title": "Analizzare un sistema tecnologico — presentazione LIM",
+      "audience": "BOTH",
+      "required": true,
+      "materialSlotRoles": ["MINI_DECK", "LIM_VIEW"],
+      "publicationPath": "/materials/smart/sistema-tecnologico/v1/presentazione-lim.pdf",
+      "publicRef": null,
+      "provenanceRef": null,
+      "digest": "sha256:6b6b5beb3f73769404b16d1db0e608cac829bf2594d9ee93e511cdbad1ca5beb",
+      "byteSize": 41827,
+      "verificationState": "BYTES_VERIFIED_PUBLICATION_PENDING"
+    },
+    {
+      "resourceId": "sistema-tecnologico-scheda-alunno",
+      "kind": "WORKSHEET",
+      "title": "Analizzare un sistema tecnologico — scheda alunno",
+      "audience": "STUDENT",
+      "required": false,
+      "materialSlotRoles": ["STUDENT_HANDOUT"],
+      "publicationPath": "/materials/smart/sistema-tecnologico/v1/scheda-alunno.pdf",
+      "publicRef": null,
+      "provenanceRef": null,
+      "digest": "sha256:c6bd44a974e14f56c6b35d8b9b670b7ee739bc8821737d2b7c579ee8c8b86b31",
+      "byteSize": 40109,
+      "verificationState": "BYTES_VERIFIED_PUBLICATION_PENDING",
+      "deliveryConstraint": "OPTIONAL_NO_DOWNLOAD_OR_PRINT_REQUIREMENT"
+    }
+  ],
+  "readiness": {
+    "derivedFromCanonicalLessonPreparation": true,
+    "localOverrideForbidden": true,
+    "packageReady": false,
+    "blockingReasons": ["REQUIRED_PUBLIC_REFS_UNRESOLVED", "REQUIRED_BINARY_PUBLICATION_PENDING"]
+  },
+  "crossSystem": {
+    "materialTransport": "LessonPreparationManifest.materialSlots",
+    "parallelMaterialChannelForbidden": true,
+    "runtimeAdapterAuthorized": false
+  },
+  "publication": {
+    "stage": "DRAFT",
+    "humanDecisionRequired": true,
+    "failClosedWhenRequiredResourceUnresolved": true
+  }
+}
