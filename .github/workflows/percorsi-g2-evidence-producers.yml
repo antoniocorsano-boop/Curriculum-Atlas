@@ -8,6 +8,8 @@ on:
       - 'scripts/validate-percorsi-g2-evidence-producer-schema.mjs'
       - 'scripts/percorsi-g2-invalidation.mjs'
       - 'scripts/test-percorsi-g2-invalidation.mjs'
+      - 'scripts/qualify-percorsi-g2-audit.mjs'
+      - 'scripts/test-percorsi-g2-audit-qualification.mjs'
       - 'scripts/validate-percorsi-g2-compliance-matrix.mjs'
       - 'governance/percorsi-g2-q5-q6-q1-compliance-matrix.json'
       - 'docs/TRAMA-CONTRACT-MATERIALIZATION-GOVERNANCE.md'
@@ -26,6 +28,8 @@ jobs:
         run: node scripts/test-percorsi-g2-evidence-producers.mjs
       - name: Run invalidation and revalidation tests
         run: node scripts/test-percorsi-g2-invalidation.mjs
+      - name: Test fail-closed audit qualification
+        run: node scripts/test-percorsi-g2-audit-qualification.mjs
       - name: Create isolated schema-validator lockfile
         run: |
           rm -rf .percorsi-g2-audit
@@ -50,21 +54,6 @@ jobs:
           node -e "JSON.parse(require('fs').readFileSync('../percorsi-g2-npm-audit.json','utf8'))" || { echo 'Audit evidence is not valid JSON'; exit 1; }
           echo "audit_exit=$audit_exit" >> "$GITHUB_ENV"
       - name: Qualify dependency audit evidence
-        run: |
-          node - <<'NODE'
-          const fs=require('fs');
-          const a=JSON.parse(fs.readFileSync('percorsi-g2-npm-audit.json','utf8'));
-          if(!a.metadata || !a.metadata.vulnerabilities || typeof a.vulnerabilities!=='object'){
-            console.error('Audit evidence incomplete or structurally invalid'); process.exit(1);
-          }
-          const entries=Object.entries(a.vulnerabilities);
-          const high=entries.filter(([,v])=>v.severity==='high');
-          const critical=entries.filter(([,v])=>v.severity==='critical');
-          console.log(JSON.stringify({auditExit:process.env.audit_exit,metadata:a.metadata,high:high.map(([name,v])=>({name,isDirect:v.isDirect,via:v.via})),critical:critical.map(([name,v])=>({name,isDirect:v.isDirect,via:v.via}))},null,2));
-          if(high.length||critical.length){
-            console.error('Isolated validator dependency graph contains HIGH/CRITICAL vulnerabilities');
-            process.exit(1);
-          }
-          NODE
+        run: node scripts/qualify-percorsi-g2-audit.mjs percorsi-g2-npm-audit.json
       - name: Enforce compliance matrix review readiness
         run: node scripts/validate-percorsi-g2-compliance-matrix.mjs
