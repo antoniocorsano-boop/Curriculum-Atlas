@@ -11,9 +11,9 @@ function makeAdapter(overrides={}){
   const calls=[];
   return {
     calls,
-    async discoverReachableRoutes(){
-      calls.push({op:'discover'});
-      return overrides.routes??['/percorsi'];
+    async inspectSurface(){
+      calls.push({op:'inspect'});
+      return {reachableRoutes:overrides.routes??['/percorsi'],surfaceArtifactDigest:overrides.surfaceArtifactDigest??'sha256:test-surface'};
     },
     async isPubliclyExposed(){
       calls.push({op:'exposure'});
@@ -46,7 +46,7 @@ let q1=await produceQ1(binding,target,q6,adapter);
 assert.equal(q1.status,'PASS');
 assert.equal(q1.dependencyLineage[0].runId,q6.runId);
 assert.ok(q1.evidenceRefs.some(x=>x.startsWith('probe-run:')));
-assert.ok(adapter.calls.some(c=>c.op==='discover'));
+assert.ok(adapter.calls.some(c=>c.op==='inspect'));
 assert.ok(adapter.calls.filter(c=>c.op==='request').length>=5);
 assert.ok(adapter.calls.some(c=>c.op==='exposure'));
 
@@ -131,6 +131,10 @@ assert.equal(observedUnsafe.status,'FAIL');
 const staleObservation=await produceQ1(binding,target,q6,makeAdapter(),()=> '2026-09-27T12:00:00Z');
 assert.equal(staleObservation.status,'BLOCKED');
 assert.equal(staleObservation.observations[0].absenceReason,'PROBE_RECEIPT_STALE');
+
+const digestMismatch=await produceQ1(binding,target,q6,makeAdapter({surfaceArtifactDigest:'sha256:foreign-surface'}));
+assert.equal(digestMismatch.status,'BLOCKED');
+assert.match(digestMismatch.observations[0].absenceReason,/PROBE_SURFACE_DIGEST_MISMATCH/);
 
 for(const bad of [
   {publicExposure:true},
