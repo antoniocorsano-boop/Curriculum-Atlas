@@ -82,6 +82,7 @@
   },
   "publication": {
     "stage": "DRAFT",
+    "eligibility": "PUBLICATION_CANDIDATE",
     "humanDecisionRequired": true,
     "failClosedWhenRequiredResourceUnresolved": true
   }
