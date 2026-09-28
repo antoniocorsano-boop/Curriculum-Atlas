@@ -22,4 +22,5 @@ jobs:
       - name: Run resolver and canonical-registry adversarial tests
         run: node scripts/test-smart-percorsi-binding-resolver.mjs
       - name: Assert production registry has no bindings in this tranche
-        run: node -e "const r=JSON.parse(require('fs').readFileSync('governance/smart-percorsi-binding-registry.json','utf8')); if(r.bindings.length!==0) process.exit(1); console.log('NO_ACTIVE_BINDINGS: PASS')"
+        run: |
+          node -e "const r=JSON.parse(require('fs').readFileSync('governance/smart-percorsi-binding-registry.json','utf8')); if(r.bindings.length!==0) process.exit(1); console.log('NO_ACTIVE_BINDINGS PASS')"
