@@ -26,7 +26,8 @@ const baseContext = {
     publicationId: "pub-1"
   },
   authorityRef: "arena:authority:1",
-  authorityEvidenceRef: "evidence:authority:1"
+  authorityEvidenceRef: "evidence:authority:1",
+  smartPathwayBindingRef: "binding:smart-set:pathway-1"
 };
 
 const clone = (v) => structuredClone(v);
@@ -39,6 +40,19 @@ assert.equal(result.q5Produced, false);
 assert.equal(result.authorityRef, baseContext.authorityRef);
 assert.deepEqual(result.candidateBinding, baseContext.candidateBinding);
 assert.equal(result.resources.length, 1);
+assert.equal(result.smartPathwayBindingRef, baseContext.smartPathwayBindingRef);
+
+{
+  const reordered = {
+    resources: clone(baseManifest.resources),
+    publication: clone(baseManifest.publication),
+    activityId: baseManifest.activityId,
+    version: baseManifest.version,
+    materialSetId: baseManifest.materialSetId,
+    schemaVersion: baseManifest.schemaVersion
+  };
+  assert.equal(buildSmartPercorsiHandoff(reordered, baseContext).manifestDigest, result.manifestDigest, "manifest digest must be property-order independent");
+}
 
 for (const eligibility of ["HISTORICAL_NON_PUBLISHABLE", "DRAFT", undefined]) {
   const m = clone(baseManifest);
@@ -56,6 +70,12 @@ for (const key of ["authorityRef","authorityEvidenceRef"]) {
   const c = clone(baseContext);
   c[key] = "";
   expectCode(() => buildSmartPercorsiHandoff(baseManifest, c), "AUTHORITY_INCOMPLETE");
+}
+
+{
+  const c = clone(baseContext);
+  c.smartPathwayBindingRef = "";
+  expectCode(() => buildSmartPercorsiHandoff(baseManifest, c), "SMART_PATHWAY_BINDING_MISSING");
 }
 
 for (const key of ["provenanceRef","digest","publicationPath"]) {
