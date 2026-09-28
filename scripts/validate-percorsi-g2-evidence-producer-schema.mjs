@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import {createRequire} from 'node:module';
-import {produceQ5,produceQ6,produceQ1,executeSealedPreauthProbe} from './percorsi-g2-evidence-producers.mjs';
+import {produceQ5,produceQ6,produceQ1} from './percorsi-g2-evidence-producers.mjs';
 
 const require=createRequire(new URL('../.percorsi-g2-audit/package.json',import.meta.url));
 const Ajv2020=require('ajv/dist/2020.js').default;
@@ -25,8 +25,7 @@ const adapter={
     return {outcome:input.route==='/percorsi'?'ALLOW':'DENY'};
   }
 };
-const probeReceipt=await executeSealedPreauthProbe(binding,target,q6,adapter);
-const q1=produceQ1(binding,probeReceipt,q6);
+const q1=await produceQ1(binding,target,q6,adapter);
 
 for(const r of [q5,q6,q1]){
   if(r.status!=='PASS'||!validate(r)){
