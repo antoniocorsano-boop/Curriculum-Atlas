@@ -1,0 +1,88 @@
+{
+  "schemaVersion": "atlas.percorsi.portfolio/v1",
+  "policy": "BACKLOG_ZERO",
+  "territories": [
+    {
+      "id": "self",
+      "label": "Conosci te stesso"
+    },
+    {
+      "id": "learning",
+      "label": "Impara a imparare"
+    },
+    {
+      "id": "others",
+      "label": "Incontra gli altri"
+    },
+    {
+      "id": "problems",
+      "label": "Affronta problemi"
+    },
+    {
+      "id": "world",
+      "label": "Agisci nel mondo"
+    },
+    {
+      "id": "design",
+      "label": "Progetta"
+    }
+  ],
+  "pathways": [
+    {
+      "portfolioSlot": 1,
+      "pathwayId": "pw-missing-information-01",
+      "title": "Prima di decidere, cosa manca?",
+      "state": "IMPLEMENTED",
+      "evidenceRef": "docs/PERCORSI-G1-PW-MISSING-INFORMATION-01-IMPLEMENTATION.md"
+    },
+    {
+      "portfolioSlot": 2,
+      "pathwayId": null,
+      "title": "Verificare e correggere",
+      "state": "RECOVERED_NAME_ONLY",
+      "evidenceRef": "RECOVERED_PRIOR_DESIGN"
+    },
+    {
+      "portfolioSlot": 3,
+      "pathwayId": null,
+      "title": null,
+      "state": "RECOVERY_PENDING",
+      "evidenceRef": null
+    },
+    {
+      "portfolioSlot": 4,
+      "pathwayId": null,
+      "title": null,
+      "state": "RECOVERY_PENDING",
+      "evidenceRef": null
+    },
+    {
+      "portfolioSlot": 5,
+      "pathwayId": null,
+      "title": null,
+      "state": "RECOVERY_PENDING",
+      "evidenceRef": null
+    },
+    {
+      "portfolioSlot": 6,
+      "pathwayId": null,
+      "title": null,
+      "state": "RECOVERY_PENDING",
+      "evidenceRef": null
+    },
+    {
+      "portfolioSlot": 7,
+      "pathwayId": null,
+      "title": null,
+      "state": "RECOVERY_PENDING",
+      "evidenceRef": null
+    },
+    {
+      "portfolioSlot": 8,
+      "pathwayId": null,
+      "title": null,
+      "state": "RECOVERY_PENDING",
+      "evidenceRef": null
+    }
+  ]
+}
