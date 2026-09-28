@@ -17,16 +17,15 @@ const artifact={id:'artifact-schema',kind:'QUALIFIED_CONTENT',publicationState:'
 const q5=produceQ5(binding,transition);
 const q6=produceQ6(binding,artifact,q5);
 const target={id:'surface-schema',publicationId:'pub-schema',candidateBinding:binding,q6RunId:q6.runId,publicationState:'QUALIFIED',probeMode:'SEALED_PREAUTH',surfaceArtifactDigest:'sha256:schema-surface',entrypoint:'/percorsi'};
-const probeReceipt=executeSealedPreauthProbe(binding,target,q6,()=>({
-  reachableRoutes:['/percorsi'],
-  entrypoint:'/percorsi',
-  publicEntrypoint:true,
-  publicExposure:false,
-  missingAuthorityBehavior:'DENY',
-  missingReceiptBehavior:'DENY',
-  nonPublishableBehavior:'DENY',
-  unknownRouteBehavior:'DENY'
-}));
+const adapter={
+  async discoverReachableRoutes(){return ['/percorsi'];},
+  async isPubliclyExposed(){return false;},
+  async request(input){
+    if(input.route==='/percorsi/__probe_unknown__'||input.authorityPresent===false||input.receiptPresent===false||input.publicationState!=='QUALIFIED') return {outcome:'DENY'};
+    return {outcome:input.route==='/percorsi'?'ALLOW':'DENY'};
+  }
+};
+const probeReceipt=await executeSealedPreauthProbe(binding,target,q6,adapter);
 const q1=produceQ1(binding,probeReceipt,q6);
 
 for(const r of [q5,q6,q1]){
@@ -51,4 +50,4 @@ for(const [name,x] of mutations){
     process.exit(1);
   }
 }
-console.log(`PASS Q5 authority-bound Q6 and observed sealed-preauth Q1 outputs conform; ${mutations.length} malformed envelope/status mutations rejected`);
+console.log(`PASS Q5 authority-bound Q6 and active sealed-preauth Q1 outputs conform; ${mutations.length} malformed envelope/status mutations rejected`);
