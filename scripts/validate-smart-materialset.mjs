@@ -21,6 +21,15 @@ const allowedRoles = new Set([
 ]);
 const allowedAudiences = new Set(["STUDENT", "TEACHER", "BOTH"]);
 const errors = [];
+const publicationPaths = new Set();
+
+const validPublicationPath = (value) => {
+  if (typeof value !== "string" || !value.startsWith("/materials/")) return false;
+  if (value.includes("\\") || value.includes("?") || value.includes("#")) return false;
+  const segments = value.split("/").filter(Boolean);
+  if (segments.some((segment) => segment === "." || segment === "..")) return false;
+  return segments.length >= 2;
+};
 
 let manifest;
 try {
@@ -48,6 +57,14 @@ for (const [index, resource] of (manifest.resources || []).entries()) {
   if (resource.digest && !/^sha256:[a-f0-9]{64}$/.test(resource.digest)) errors.push(`${label}: digest must be sha256:<64 lowercase hex>`);
   if (resource.byteSize != null && (!Number.isInteger(resource.byteSize) || resource.byteSize < 0)) errors.push(`${label}: byteSize must be a non-negative integer`);
 
+  if (!validPublicationPath(resource.publicationPath)) {
+    errors.push(`${label}: publicationPath must be an absolute /materials/... path without traversal, query or fragment`);
+  } else if (publicationPaths.has(resource.publicationPath)) {
+    errors.push(`${label}: publicationPath must be unique within the material set`);
+  } else {
+    publicationPaths.add(resource.publicationPath);
+  }
+
   if (resource.localPath) {
     const absolute = path.resolve(path.dirname(manifestPath), resource.localPath);
     if (!fs.existsSync(absolute)) {
@@ -73,7 +90,7 @@ for (const [index, resource] of (manifest.resources || []).entries()) {
 
 if (manifest.readiness?.packageReady === true) {
   for (const resource of (manifest.resources || []).filter((item) => item.required === true)) {
-    if (!resource.publicRef || !resource.provenanceRef || !resource.digest || !resource.publicationReceiptRef) {
+    if (!resource.publicRef || !resource.provenanceRef || !resource.digest || !resource.publicationReceiptRef || !validPublicationPath(resource.publicationPath)) {
       errors.push(`${resource.resourceId}: packageReady cannot be true with unresolved required resource`);
     }
   }
