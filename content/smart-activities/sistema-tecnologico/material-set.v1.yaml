@@ -11,6 +11,7 @@ resources:
     audience: STUDENT
     required: true
     materialSlotRoles: [VISUAL_AID]
+    publicationPath: /materials/smart/sistema-tecnologico/v1/analizzare-un-sistema-tecnologico.png
     publicRef: null
     provenanceRef: chat-project-attachment:file_00000000b4b882108d53e6db76fe4c6f
     digest: sha256:f337f4300af0fb3997eceeec377bc2919c8bf584333306cb44f7a12aed79cbf3
@@ -19,10 +20,11 @@ resources:
 
   - resourceId: sistema-tecnologico-infografica-dispositivo-elettronico
     kind: INFOGRAPHIC
-    title: Il smartphone: un sistema tecnologico
+    title: Lo smartphone: un sistema tecnologico
     audience: STUDENT
     required: true
     materialSlotRoles: [VISUAL_AID]
+    publicationPath: /materials/smart/sistema-tecnologico/v1/smartphone-sistema-tecnologico.png
     publicRef: null
     provenanceRef: chat-project-attachment:file_0000000097b48210801b28feaf5fe158
     digest: sha256:26374b368336a16d583f43d67fa0256faee062ec67bfcaafe5729e4eb868c546
@@ -35,6 +37,7 @@ resources:
     audience: BOTH
     required: true
     materialSlotRoles: [MINI_DECK, LIM_VIEW]
+    publicationPath: /materials/smart/sistema-tecnologico/v1/presentazione-lim.pdf
     publicRef: null
     provenanceRef: null
     digest: sha256:6b6b5beb3f73769404b16d1db0e608cac829bf2594d9ee93e511cdbad1ca5beb
@@ -47,6 +50,7 @@ resources:
     audience: STUDENT
     required: false
     materialSlotRoles: [STUDENT_HANDOUT]
+    publicationPath: /materials/smart/sistema-tecnologico/v1/scheda-alunno.pdf
     publicRef: null
     provenanceRef: null
     digest: sha256:c6bd44a974e14f56c6b35d8b9b670b7ee739bc8821737d2b7c579ee8c8b86b31
