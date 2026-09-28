@@ -15,14 +15,17 @@ Il bridge produce esclusivamente un descrittore di handoff. **Non produce Eviden
 2. **Autorità esterna e verificabile.** Il Material Set Smart non è fonte di autorità. `authorityRef` e `authorityEvidenceRef` devono provenire da un contesto governato separato.
 3. **Provenienza completa.** Ogni risorsa obbligatoria deve avere `provenanceRef`, digest SHA-256, byteSize e publicationPath deterministico.
 4. **Nessuna receipt sintetica.** Il bridge non può emettere Q5, Q6, Q1, `RUNTIME_AUTHORIZED` o una receipt finale di pubblicazione.
-5. **Fail-closed.** Qualunque mismatch, dato mancante, eligibility diversa da `PUBLICATION_CANDIDATE`, manifest storico, digest invalido o autorità incompleta blocca l'handoff.
+5. **Binding Smart ↔ Percorsi esplicito.** Il bridge non può associare liberamente un Material Set a un `pathwayId`: richiede un `smartPathwayBindingRef` governato.
+6. **Digest deterministico.** `manifestDigest` è calcolato su una serializzazione canonica ricorsiva del manifest, così l'ordine delle proprietà JSON non cambia l'identità logica.
+7. **Fail-closed.** Qualunque mismatch, dato mancante, eligibility diversa da `PUBLICATION_CANDIDATE`, manifest storico, digest invalido o autorità incompleta blocca l'handoff.
 
 ## Input minimo
 
 - Material Set Smart canonico;
 - `candidateBinding` Percorsi completo;
 - `authorityRef`;
-- `authorityEvidenceRef`.
+- `authorityEvidenceRef`;
+- `smartPathwayBindingRef`, riferimento governato che dimostra il legame tra il Material Set Smart e il `pathwayId` Percorsi.
 
 ## Output
 
@@ -32,6 +35,8 @@ Il bridge produce esclusivamente un descrittore di handoff. **Non produce Eviden
 - identità del Material Set;
 - candidate binding Percorsi;
 - autorità governata e relativo riferimento di evidenza;
+- `smartPathwayBindingRef` che rende esplicito il legame Smart ↔ Percorsi;
+- digest canonico e deterministico del manifest Smart, indipendente dall'ordine delle proprietà JSON;
 - sole risorse required con identità, provenienza e digest;
 - `handoffState = READY_FOR_Q5_INPUT`;
 - `runtimeAuthorized = false`;
@@ -48,6 +53,7 @@ Il bridge deve rifiutare:
 - risorse required senza provenienza/digest/byteSize/publicationPath;
 - binding Percorsi incompleto;
 - authority mancante o vuota;
+- `smartPathwayBindingRef` mancante o vuoto;
 - tentativi di fornire `q5Evidence`, `q6Evidence`, `q1Evidence`, `runtimeAuthorized=true` o stati equivalenti.
 
 ## Relazione con i contratti esistenti
