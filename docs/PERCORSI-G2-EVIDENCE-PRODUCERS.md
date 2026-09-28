@@ -73,7 +73,7 @@ Cambio di uno dei quattro campi di candidate identity invalida tutte le evidenze
 
 Confine esclusivo: **raggiungibilità della superficie pubblica/runtime**.
 
-Verifica route/entrypoint effettivamente raggiungibili, assenza di `/percorsi/lab/**` dalla superficie autorizzabile e comportamento fail-closed della superficie quando receipt/authority sono mancanti o lo stato non è pubblicabile. Q1 non accetta una descrizione dichiarativa della superficie: consuma esclusivamente una ricevuta osservabile prodotta dall'esecuzione del runner `SEALED_PREAUTH`, vincolata a candidate identity, exact Q6 run, `surfaceArtifactDigest` e istante di osservazione. Una ricevuta manomessa, stale o con binding diverso non è consumabile. Non decide se un artefatto può entrare nell'indice/build editoriale: quello è Q6.
+Verifica route/entrypoint effettivamente raggiungibili, assenza di `/percorsi/lab/**` dalla superficie autorizzabile e comportamento fail-closed della superficie quando receipt/authority sono mancanti o lo stato non è pubblicabile. Q1 non accetta una descrizione dichiarativa della superficie né una ricevuta preconfezionata: avvia direttamente il runner `SEALED_PREAUTH` tramite l'adapter di probe e consuma internamente la `ProbeObservationReceipt` appena prodotta, vincolata a candidate identity, exact Q6 run, `surfaceArtifactDigest` e istante di osservazione. Dati dichiarativi presenti nel target non sostituiscono i risultati osservati dall'adapter. Non decide se un artefatto può entrare nell'indice/build editoriale: quello è Q6.
 
 Automatizzabile: inventario route, link graph, policy assertions. Evidenza umana solo se la raggiungibilità non è deducibile automaticamente.
 
