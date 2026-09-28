@@ -1,0 +1,20 @@
+name: SMART Percorsi First Binding Decision
+on:
+  pull_request:
+    paths:
+      - 'docs/contracts/SMART-PERCORSI-FIRST-BINDING-DECISION-01.md'
+      - 'governance/smart-percorsi-first-binding-decision.json'
+      - 'scripts/validate-smart-percorsi-first-binding-decision.mjs'
+      - '.github/workflows/smart-percorsi-first-binding-decision.yml'
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate first-binding decision remains fail-closed
+        run: node scripts/validate-smart-percorsi-first-binding-decision.mjs
