@@ -1,0 +1,13 @@
+{
+  "schemaVersion":"trama-contract-conflict/v1",
+  "conflictId":"PERCORSI-G2-Q1-Q9-CYCLE-01",
+  "status":"RESOLVED_TESTED_PENDING_INDEPENDENT_REVIEW",
+  "scope":"percorsi-g2-q5-q6-q1",
+  "resolution":"Q1 qualifies real reachability through a SEALED_PREAUTH probe while publicationState remains QUALIFIED and publicExposure=false. Q9 remains the sole runtime authorization; only after Q9 may activation-only exposure and QUALIFIED>PUBLISHED occur.",
+  "evidence":["docs/PERCORSI-G2-Q1-PREAUTH-QUALIFICATION.md","scripts/test-percorsi-g2-evidence-producers.mjs","scripts/validate-percorsi-g2-evidence-producer-schema.mjs"],
+  "preservedInvariants":["Q9 remains after Q1-Q8 PASS","Q1 is not editorial admission","Q1 does not emit RUNTIME_AUTHORIZED","student/public exposure is false before Q9","post-Q9 activation may not rebuild or mutate candidate identity","relevant mutation invalidates Q1"],
+  "forbiddenShortcuts":["Q9 before Q1","merge/deploy/cache as authority","Q1 reinterpreted as Q6","student exposure before Q9","status-only compliance promotion without executable evidence"],
+  "runtimeChangeAuthorized":false,
+  "publicationChangeAuthorized":false,
+  "nextGate":"INDEPENDENT_REVIEW"
+}

@@ -73,7 +73,7 @@ Cambio di uno dei quattro campi di candidate identity invalida tutte le evidenze
 
 Confine esclusivo: **raggiungibilità della superficie pubblica/runtime**.
 
-Verifica route/entrypoint effettivamente raggiungibili, assenza di `/percorsi/lab/**` dalla superficie autorizzabile e comportamento fail-closed della superficie quando receipt/authority sono mancanti o lo stato non è pubblicabile. Non decide se un artefatto può entrare nell'indice/build editoriale: quello è Q6.
+Verifica route/entrypoint effettivamente raggiungibili, assenza di `/percorsi/lab/**` dalla superficie autorizzabile e comportamento fail-closed della superficie quando receipt/authority sono mancanti o lo stato non è pubblicabile. Q1 non accetta una descrizione dichiarativa della superficie né una ricevuta preconfezionata: avvia direttamente il runner `SEALED_PREAUTH` tramite l'adapter di probe e consuma internamente la `ProbeObservationReceipt` appena prodotta, vincolata a candidate identity, exact Q6 run, `surfaceArtifactDigest` e istante di osservazione. Dati dichiarativi presenti nel target non sostituiscono i risultati osservati dall'adapter. Non decide se un artefatto può entrare nell'indice/build editoriale: quello è Q6.
 
 Automatizzabile: inventario route, link graph, policy assertions. Evidenza umana solo se la raggiungibilità non è deducibile automaticamente.
 
@@ -110,7 +110,7 @@ Sono ammesse soltanto le transizioni previste da `LAB -> QUALIFIED -> PUBLISHED 
 
 Confine esclusivo: **ammissione a build/index/catalogo editoriale pubblicabile**, prima della raggiungibilità runtime verificata da Q1.
 
-Verifica automaticamente che fixture, laboratorio, contenuti non qualificati, receipt/authority mancanti e mismatch di identità non possano essere ammessi all'indice/build/catalogo pubblicabile. Il suo output è un'ammissione/rifiuto editoriale verificabile; non prova che una route pubblica sia effettivamente irraggiungibile, responsabilità di Q1.
+Verifica automaticamente che fixture, laboratorio, contenuti non qualificati, receipt/authority mancanti e mismatch di identità non possano essere ammessi all'indice/build/catalogo pubblicabile. L'autorità dell'artefatto e della receipt deve inoltre coincidere con l'`authorityRef` normalizzata dalla specifica evidenza Q5 consumata: una coppia artefatto/receipt internamente coerente ma riferita a un'autorità estranea rispetto a Q5 deve fallire. Il suo output è un'ammissione/rifiuto editoriale verificabile; non prova che una route pubblica sia effettivamente irraggiungibile, responsabilità di Q1.
 
 Handoff: Q6 deve risultare PASS prima che un artefatto sia candidato alla verifica di raggiungibilità Q1; un successivo cambiamento di build/index invalida Q1 se modifica la superficie raggiungibile.
 
