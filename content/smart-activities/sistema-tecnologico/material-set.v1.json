@@ -76,7 +76,9 @@
   },
   "publication": {
     "stage": "DRAFT",
+    "eligibility": "HISTORICAL_NON_PUBLISHABLE",
     "humanDecisionRequired": true,
-    "failClosedWhenRequiredResourceUnresolved": true
+    "failClosedWhenRequiredResourceUnresolved": true,
+    "lineageNote": "Preserved as immutable historical evidence; incomplete required assets prevent publication eligibility."
   }
 }
