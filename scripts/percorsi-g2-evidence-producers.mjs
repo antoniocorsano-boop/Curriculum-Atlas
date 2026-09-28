@@ -168,11 +168,20 @@ function validateProbeReceipt(binding,receipt,q6){
   return {ok:true};
 }
 
-export function produceQ1(binding,probeReceipt,q6){
+export async function produceQ1(binding,target,q6,adapter,clock=iso){
   const dep=validateConsumableEvidence('Q6',binding,q6);
   if(!dep.ok) return result('Q1',binding,{dependencyRunId:q6?.runId??null},[obs('q1.q6.consumable','BLOCKED',null,dep.reason)],lineage(q6));
+
+  let probeReceipt;
+  try{
+    probeReceipt=await executeSealedPreauthProbe(binding,target,q6,adapter,clock);
+  }catch(error){
+    return result('Q1',binding,{dependencyRunId:q6.runId,targetDigest:target?.surfaceArtifactDigest??null},[obs('q1.probe.execution','BLOCKED',null,`PROBE_EXECUTION_ERROR:${error?.message||error?.name||'Error'}`)],lineage(q6));
+  }
+
   const receiptValidation=validateProbeReceipt(binding,probeReceipt,q6);
   if(!receiptValidation.ok) return result('Q1',binding,{dependencyRunId:q6.runId,probeRunId:probeReceipt?.probeRunId??null},[obs('q1.probe.receipt','BLOCKED',null,receiptValidation.reason)],lineage(q6));
+
   const observations=[obs('q1.q6.consumable','PASS',`producer-run:${q6.runId}`),obs('q1.probe.receipt','PASS',`probe-run:${probeReceipt.probeRunId}`)];
   const observed=probeReceipt.observations;
   const routes=Array.isArray(observed.reachableRoutes)?observed.reachableRoutes:[];
