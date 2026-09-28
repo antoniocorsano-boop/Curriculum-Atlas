@@ -5,12 +5,27 @@ const fail=(m)=>{throw new Error(m);};
 const ref=(ids,key)=>({semanticUnitIds:ids,resourceKey:key,locale:"it-IT"});
 const cog=id=>({registry:"TRAMA_COGNITIVE_FUNCTIONS",registryVersion:"1",id});
 
-export function buildPathwayCandidate(seed){
+function validateSeed(seed,{portfolioPath="governance/percorsi-portfolio.json"}={}){
  if(seed?.schemaVersion!=="atlas.percorsi.seed/v1") fail("invalid seed schemaVersion");
  const required=["pathwayId","title","version","competence","coreStrategy","evidenceGoal","initialContext","transferContext","provenanceRef"];
  for(const k of required) if(typeof seed[k]!=="string"||!seed[k].trim()) fail("missing "+k);
+ if(!/^pw-[a-z0-9-]+$/.test(seed.pathwayId)) fail("invalid pathwayId");
+ if(!/^[0-9]+\.[0-9]+\.[0-9]+$/.test(seed.version)) fail("invalid version");
+ const allowedTerritories=new Set(["self","learning","others","problems","world","design"]);
+ if(!Array.isArray(seed.territoryIds)||seed.territoryIds.length===0||new Set(seed.territoryIds).size!==seed.territoryIds.length||seed.territoryIds.some(x=>!allowedTerritories.has(x))) fail("invalid territoryIds");
  const cf=seed.cognitiveFunctions||{};
- for(const k of ["orient","practice","transfer","reflect"]) if(!cf[k]) fail("missing cognitiveFunctions."+k);
+ for(const k of ["orient","practice","transfer","reflect"]) if(typeof cf[k]!=="string"||!cf[k]) fail("missing cognitiveFunctions."+k);
+ let portfolio;
+ try{portfolio=JSON.parse(fs.readFileSync(portfolioPath,"utf8"));}catch{fail("portfolio unavailable");}
+ const registered=portfolio?.pathways?.find(x=>x.pathwayId===seed.pathwayId);
+ if(!registered) fail("pathwayId not registered in backlog-zero portfolio");
+ if(registered.title&&registered.title!==seed.title) fail("seed title does not match registered portfolio title");
+ return seed;
+}
+
+export function buildPathwayCandidate(seed,options={}){
+ validateSeed(seed,options);
+ const cf=seed.cognitiveFunctions;
 
  const semanticUnits=[
   {id:"u-orient",kind:"question",canonicalMeaning:seed.initialContext,provenanceRef:seed.provenanceRef},
