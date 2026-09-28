@@ -1,7 +1,10 @@
 import fs from 'node:fs';
 const matrix=JSON.parse(fs.readFileSync('governance/percorsi-g2-q5-q6-q1-compliance-matrix.json','utf8'));
-const allowed=new Set(['IMPLEMENTED_TESTED','PARTIAL_EXISTING']);
-const bad=matrix.rows.filter(r=>!allowed.has(r.status));
+const bad=matrix.rows.filter(r=>r.status!=='IMPLEMENTED_TESTED');
 if(bad.length){console.error('NOT READY:',bad.map(r=>`${r.requirementId}:${r.status}`).join(','));process.exit(1);}
 if(matrix.impactAssessment?.decision!=='SAFE_TO_MATERIALIZE_LOCALLY_WITH_REVIEW'){console.error('BLOCKED impact assessment');process.exit(1);}
-console.log(`PASS compliance matrix review readiness: ${matrix.rows.length} governed requirements`);
+if(matrix.status!=='IMPLEMENTED_TESTED'){console.error(`NOT READY: matrix status ${matrix.status}`);process.exit(1);}
+for(const row of matrix.rows){
+  if(!Array.isArray(row.evidence)||row.evidence.length===0){console.error(`NOT READY: ${row.requirementId} has no evidence mapping`);process.exit(1);}
+}
+console.log(`PASS compliance matrix review readiness: ${matrix.rows.length} governed requirements fully implemented, tested and evidence-mapped`);
