@@ -17,6 +17,7 @@
     "validate:smart:valid": "node scripts/validate-smart-materialset.mjs fixtures/smart-materialset/valid/draft.json",
     "validate:smart:invalid": "node scripts/validate-smart-materialset.mjs fixtures/smart-materialset/invalid/false-ready.json --expect-invalid",
     "validate:smart": "npm run validate:smart:valid && npm run validate:smart:invalid",
+    "test:smart:sp01": "node scripts/test-smart-flow-sp01.mjs",
     "validate:percorsi:g2:valid": "node scripts/validate-g2-pathway.mjs fixtures/percorsi-g2/valid/minimal.json",
     "validate:percorsi:g2:invalid": "node scripts/validate-g2-pathway.mjs fixtures/percorsi-g2/invalid/broken-contract.json --expect-invalid",
     "validate:percorsi:g2": "npm run validate:percorsi:g2:valid && npm run validate:percorsi:g2:invalid",
