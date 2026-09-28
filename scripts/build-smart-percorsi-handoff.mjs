@@ -7,7 +7,12 @@ const fail = (code, message) => {
   throw error;
 };
 
-const canonicalJson = (value) => JSON.stringify(value, Object.keys(value).sort());
+const stableStringify = (value) => {
+  if (value === null || typeof value !== "object") return JSON.stringify(value);
+  if (Array.isArray(value)) return "[" + value.map(stableStringify).join(",") + "]";
+  const keys = Object.keys(value).sort();
+  return "{" + keys.map((key) => JSON.stringify(key) + ":" + stableStringify(value[key])).join(",") + "}";
+};
 
 export function buildSmartPercorsiHandoff(manifest, context) {
   if (!manifest || manifest.schemaVersion !== "atlas.smart.materialset/v1") fail("MANIFEST_INVALID", "unsupported Smart material set");
@@ -19,6 +24,7 @@ export function buildSmartPercorsiHandoff(manifest, context) {
     fail("CANDIDATE_BINDING_INCOMPLETE", "Percorsi candidate binding is incomplete");
   }
   if (!context?.authorityRef || !context?.authorityEvidenceRef) fail("AUTHORITY_INCOMPLETE", "governed authority is required");
+  if (!context?.smartPathwayBindingRef) fail("SMART_PATHWAY_BINDING_MISSING", "governed Smart to pathway binding is required");
 
   for (const forbidden of ["q5Evidence","q6Evidence","q1Evidence"]) {
     if (context?.[forbidden] != null) fail("FORBIDDEN_EVIDENCE_INJECTION", forbidden + " cannot be supplied to the bridge");
@@ -45,7 +51,7 @@ export function buildSmartPercorsiHandoff(manifest, context) {
     };
   });
 
-  const manifestDigest = "sha256:" + crypto.createHash("sha256").update(JSON.stringify(manifest)).digest("hex");
+  const manifestDigest = "sha256:" + crypto.createHash("sha256").update(stableStringify(manifest)).digest("hex");
 
   return {
     schemaVersion: "atlas.smart.percorsi-handoff/v1",
@@ -59,6 +65,7 @@ export function buildSmartPercorsiHandoff(manifest, context) {
     candidateBinding: { ...binding },
     authorityRef: context.authorityRef,
     authorityEvidenceRef: context.authorityEvidenceRef,
+    smartPathwayBindingRef: context.smartPathwayBindingRef,
     resources,
     handoffState: "READY_FOR_Q5_INPUT",
     runtimeAuthorized: false,
