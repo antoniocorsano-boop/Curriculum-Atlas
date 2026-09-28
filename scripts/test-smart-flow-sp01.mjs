@@ -1,5 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
+import http from "node:http";
+import crypto from "node:crypto";
+import os from "node:os";
 import { spawnSync } from "node:child_process";
 
 const root = process.cwd();
@@ -49,9 +52,39 @@ for (const [args, label] of [
   const run = spawnSync(process.execPath, args, { cwd: root, encoding: "utf8" });
   if (run.status !== 0) errors.push(`${label} validator failed: ${(run.stderr || run.stdout).trim()}`);
 }
+
+// Adversarial qualification of the publication boundary. The production verifier
+// requires HTTPS, so these deterministic cases use a temporary local HTTPS-free
+// harness only to prove the pre-network fail-closed rule; digest/success are
+// exercised by verify-smart-public-asset.mjs, which operates on captured bytes.
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "atlas-smart-boundary-"));
+try {
+  const missingProvenance = {
+    schemaVersion: "atlas.smart.materialset/v1", materialSetId: "negative-missing-provenance", version: 1,
+    resources: [{ resourceId: "required", required: true, publicationPath: "/materials/x.bin", digest: `sha256:${"0".repeat(64)}`, byteSize: 1, provenanceRef: null }]
+  };
+  const negativePath = path.join(tmp, "missing-provenance.json");
+  fs.writeFileSync(negativePath, JSON.stringify(missingProvenance));
+  const negative = spawnSync(process.execPath, ["scripts/verify-smart-published-materialset.mjs", "--manifest", negativePath, "--base-url", "https://example.invalid", "--out-dir", path.join(tmp, "receipts")], { cwd: root, encoding: "utf8" });
+  if (negative.status === 0 || !`${negative.stderr}${negative.stdout}`.includes("required resource missing provenanceRef")) errors.push("publication verifier must fail closed for required resource missing provenanceRef");
+
+  const bytes = Buffer.from("atlas-smart-known-bytes");
+  const goodDigest = `sha256:${crypto.createHash("sha256").update(bytes).digest("hex")}`;
+  const asset = path.join(tmp, "asset.bin");
+  fs.writeFileSync(asset, bytes);
+  for (const [digest, expectOk, label] of [[`sha256:${"0".repeat(64)}`, false, "digest mismatch"], [goodDigest, true, "verified bytes"]]) {
+    const receipt = path.join(tmp, `${label.replace(/ /g, "-")}.json`);
+    const run = spawnSync(process.execPath, ["scripts/verify-smart-public-asset.mjs", "--file", asset, "--expected-digest", digest, "--expected-byte-size", String(bytes.length), "--asset-id", "fixture", "--version", "1", "--public-ref", "https://example.invalid/materials/x.bin", "--provenance-ref", "fixture:test", "--audience", "STUDENT", "--out", receipt], { cwd: root, encoding: "utf8" });
+    if (expectOk && (run.status !== 0 || !fs.existsSync(receipt))) errors.push("verified public bytes must emit a receipt");
+    if (!expectOk && run.status === 0) errors.push("published digest mismatch must fail closed");
+  }
+} finally {
+  fs.rmSync(tmp, { recursive: true, force: true });
+}
+
 if (errors.length) {
   console.error("SP-01 SMART FLOW QUALIFICATION: FAIL");
   for (const error of errors) console.error(`- ${error}`);
   process.exit(1);
 }
-console.log(`SP-01 SMART FLOW QUALIFICATION: PASS — ${requiredResources.length} required resources checked from canonical JSON; fail-closed publication boundary preserved.`);
+console.log(`SP-01 SMART FLOW QUALIFICATION: PASS — ${requiredResources.length} required resources checked from canonical JSON; adversarial fail-closed publication boundary preserved.`);
