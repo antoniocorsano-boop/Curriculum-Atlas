@@ -1,0 +1,25 @@
+{
+  "schemaVersion":"trama-contract-conflict/v1",
+  "conflictId":"PERCORSI-G2-Q1-Q9-CYCLE-01",
+  "status":"BLOCKED_FOR_ANALYSIS",
+  "scope":"percorsi-g2-q5-q6-q1",
+  "sources":["docs/PERCORSI-G2-EVIDENCE-PRODUCERS.md","docs/PERCORSI-G2-RUNTIME-QUALIFICATION.md"],
+  "observations":[
+    "The governed first-tranche order is Q5 -> Q6 -> Q1.",
+    "Q9 may issue RUNTIME_AUTHORIZED only after Q1-Q8 are PASS while publicationState is QUALIFIED.",
+    "Only after Q9 may QUALIFIED -> PUBLISHED occur.",
+    "Q1 is defined as effective public/runtime surface reachability and fail-closed behavior for non-publishable states.",
+    "The current Q1 implementation requires publicationState=PUBLISHED and RUNTIME_AUTHORIZED to PASS, which creates a cycle because those conditions require Q9, while Q9 requires Q1 PASS first."
+  ],
+  "consequence":"Q1 publication-state semantics cannot be declared IMPLEMENTED_TESTED and PR #50 cannot become review-ready until the contract distinguishes pre-Q9 reachability qualification from post-Q9 publication activation without weakening the rule that Q1 is real reachability evidence.",
+  "forbiddenShortcuts":[
+    "Do not move Q9 before Q1.",
+    "Do not treat merge/deploy/cache as runtime authorization.",
+    "Do not reinterpret Q1 as Q6 editorial admission.",
+    "Do not expose a student runtime before Q9.",
+    "Do not mark the compliance matrix green by status editing alone."
+  ],
+  "impact":"CONTRACT_CLARIFICATION_REQUIRED",
+  "runtimeChangeAuthorized":false,
+  "publicationChangeAuthorized":false
+}
