@@ -15,7 +15,7 @@ try {
   ).waitFor();
   await page.getByText("Passaggio 1 di 7").waitFor();
 
-  const field = page.getByPlaceholder("Scrivi qui un sistema diverso…");
+  const field = page.getByPlaceholder("Scrivi il nome del sistema…");
   await field.fill("Sistema locale di prova");
   await page.waitForFunction(
     ({ key, expected }) => localStorage.getItem(key)?.includes(expected),
@@ -28,8 +28,8 @@ try {
   }
 
   await page.reload({ waitUntil: "networkidle" });
-  await page.getByPlaceholder("Scrivi qui un sistema diverso…").waitFor();
-  if ((await page.getByPlaceholder("Scrivi qui un sistema diverso…").inputValue()) !== "Sistema locale di prova") {
+  await page.getByPlaceholder("Scrivi il nome del sistema…").waitFor();
+  if ((await page.getByPlaceholder("Scrivi il nome del sistema…").inputValue()) !== "Sistema locale di prova") {
     throw new Error("Local persistence was not restored after reload");
   }
 
