@@ -18,7 +18,7 @@ const q5=produceQ5(binding,transition);
 const q6=produceQ6(binding,artifact,q5);
 const target={id:'surface-schema',publicationId:'pub-schema',candidateBinding:binding,q6RunId:q6.runId,publicationState:'QUALIFIED',probeMode:'SEALED_PREAUTH',surfaceArtifactDigest:'sha256:schema-surface',entrypoint:'/percorsi'};
 const adapter={
-  async discoverReachableRoutes(){return ['/percorsi'];},
+  async inspectSurface(){return {reachableRoutes:['/percorsi'],surfaceArtifactDigest:'sha256:schema-surface'};},
   async isPubliclyExposed(){return false;},
   async request(input){
     if(input.route==='/percorsi/__probe_unknown__'||input.authorityPresent===false||input.receiptPresent===false||input.publicationState!=='QUALIFIED') return {outcome:'DENY'};
