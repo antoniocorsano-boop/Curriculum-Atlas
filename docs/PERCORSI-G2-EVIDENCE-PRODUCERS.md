@@ -110,7 +110,7 @@ Sono ammesse soltanto le transizioni previste da `LAB -> QUALIFIED -> PUBLISHED 
 
 Confine esclusivo: **ammissione a build/index/catalogo editoriale pubblicabile**, prima della raggiungibilità runtime verificata da Q1.
 
-Verifica automaticamente che fixture, laboratorio, contenuti non qualificati, receipt/authority mancanti e mismatch di identità non possano essere ammessi all'indice/build/catalogo pubblicabile. L'autorità dell'artefatto e della receipt deve inoltre coincidere con l'\`authorityRef\` normalizzata dalla specifica evidenza Q5 consumata: una coppia artefatto/receipt internamente coerente ma riferita a un'autorità estranea rispetto a Q5 deve fallire. Il suo output è un'ammissione/rifiuto editoriale verificabile; non prova che una route pubblica sia effettivamente irraggiungibile, responsabilità di Q1.
+Verifica automaticamente che fixture, laboratorio, contenuti non qualificati, receipt/authority mancanti e mismatch di identità non possano essere ammessi all'indice/build/catalogo pubblicabile. L'autorità dell'artefatto e della receipt deve inoltre coincidere con l'`authorityRef` normalizzata dalla specifica evidenza Q5 consumata: una coppia artefatto/receipt internamente coerente ma riferita a un'autorità estranea rispetto a Q5 deve fallire. Il suo output è un'ammissione/rifiuto editoriale verificabile; non prova che una route pubblica sia effettivamente irraggiungibile, responsabilità di Q1.
 
 Handoff: Q6 deve risultare PASS prima che un artefatto sia candidato alla verifica di raggiungibilità Q1; un successivo cambiamento di build/index invalida Q1 se modifica la superficie raggiungibile.
 
