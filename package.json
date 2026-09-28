@@ -12,6 +12,7 @@
     "validate:materials:invalid": "node scripts/validate-material-publication.mjs --invalid fixtures/material-publication/invalid/student-data.json fixtures/material-publication/invalid/asset-contract.json",
     "validate:materials": "npm run validate:materials:valid && npm run validate:materials:invalid",
     "smart:asset:register": "node scripts/register-smart-asset.mjs",
+    "smart:asset:apply-receipt": "node scripts/apply-smart-asset-receipt.mjs",
     "validate:smart:valid": "node scripts/validate-smart-materialset.mjs fixtures/smart-materialset/valid/draft.json",
     "validate:smart:invalid": "node scripts/validate-smart-materialset.mjs fixtures/smart-materialset/invalid/false-ready.json --expect-invalid",
     "validate:smart": "npm run validate:smart:valid && npm run validate:smart:invalid",
