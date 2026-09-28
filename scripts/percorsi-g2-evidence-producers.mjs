@@ -40,9 +40,7 @@ export function validateConsumableEvidence(expectedGate,binding,dependency){
 }
 
 export function mapEvidenceProducerResultToGateReceipt(expectedGate,binding,producerResult){
-  if(!producerEnvelopeValid(expectedGate,binding,producerResult)){
-    return {status:'NOT_RUN',evidenceRefs:[],reviewerClass:'automatic',checkedAt:iso(),producerTrace:null};
-  }
+  if(!producerEnvelopeValid(expectedGate,binding,producerResult)) return {status:'NOT_RUN',evidenceRefs:[],reviewerClass:'automatic',checkedAt:iso(),producerTrace:null};
   return {status:producerResult.status,evidenceRefs:[...producerResult.evidenceRefs],reviewerClass:'automatic',checkedAt:producerResult.checkedAt,producerTrace:{producerId:producerResult.producerId,producerVersion:producerResult.producerVersion,runId:producerResult.runId}};
 }
 
@@ -86,9 +84,9 @@ export function produceQ1(binding,surface,q6){
   const observations=[obs('q1.q6.consumable','PASS',`producer-run:${q6.runId}`)];
   const routes=Array.isArray(surface?.reachableRoutes)?surface.reachableRoutes:[];
   const identity=surface?.candidateBinding&&sameBinding(surface.candidateBinding,binding)&&surface?.publicationId===binding.publicationId&&surface?.q6RunId===q6.runId;
-  const publishable=surface?.publicationState==='PUBLISHED'&&surface?.runtimeAuthorization?.status==='RUNTIME_AUTHORIZED'&&sameBinding(surface?.runtimeAuthorization?.candidateBinding,binding);
+  const sealedPreauth=surface?.publicationState==='QUALIFIED'&&surface?.probeMode==='SEALED_PREAUTH'&&surface?.publicExposure===false&&typeof surface?.surfaceArtifactDigest==='string'&&surface.surfaceArtifactDigest.length>0&&surface?.runtimeAuthorization==null;
   observations.push(obs('q1.surface.identity',identity?'PASS':'FAIL',ev('surface',surface?.id??'unknown')));
-  observations.push(obs('q1.surface.publishable',publishable?'PASS':'FAIL',ev('surface',surface?.id??'unknown')));
+  observations.push(obs('q1.surface.sealed-preauth',sealedPreauth?'PASS':'FAIL',ev('surface',surface?.id??'unknown')));
   observations.push(obs('q1.lab.unreachable',routes.some(r=>r.startsWith('/percorsi/lab/'))?'FAIL':'PASS',ev('surface',surface?.id??'unknown')));
   observations.push(obs('q1.public.entrypoint',surface?.publicEntrypoint===true&&typeof surface?.entrypoint==='string'&&routes.includes(surface.entrypoint)?'PASS':'FAIL',ev('surface',surface?.id??'unknown')));
   observations.push(obs('q1.fail.closed',surface?.missingAuthorityBehavior==='DENY'&&surface?.missingReceiptBehavior==='DENY'&&surface?.nonPublishableBehavior==='DENY'&&surface?.unknownRouteBehavior==='DENY'?'PASS':'FAIL',ev('surface',surface?.id??'unknown')));
