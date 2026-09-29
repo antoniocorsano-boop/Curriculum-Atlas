@@ -23,6 +23,13 @@ if (baseUrl.protocol !== "https:") fail("--base-url must use https");
 const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
 if (manifest.schemaVersion !== "atlas.smart.materialset/v1") fail("Unsupported Smart material-set schema");
 if (!Array.isArray(manifest.resources)) fail("Manifest resources must be an array");
+const eligibility = manifest.publication?.eligibility;
+if (eligibility === "HISTORICAL_NON_PUBLISHABLE") {
+  if (manifest.readiness?.packageReady !== false) fail("Historical Smart material set cannot be packageReady");
+  console.log(`SKIP historical v${manifest.version}: not eligible for publication verification`);
+  process.exit(0);
+}
+if (eligibility !== "PUBLICATION_CANDIDATE") fail("publication.eligibility must explicitly select PUBLICATION_CANDIDATE or HISTORICAL_NON_PUBLISHABLE");
 
 const validPath = (p) => typeof p === "string" && p.startsWith("/materials/") && !p.includes("..") && !p.includes("\\") && !p.includes("?") && !p.includes("#");
 fs.mkdirSync(outDir, { recursive: true });
@@ -64,7 +71,7 @@ for (const resource of manifest.resources) {
     materialSetId: manifest.materialSetId,
     releaseSha: process.env.GITHUB_SHA || null
   };
-  const output = path.join(outDir, `${manifest.materialSetId}--${resource.resourceId}.receipt.json`);
+  const output = path.join(outDir, `${manifest.materialSetId}--v${manifest.version}--${resource.resourceId}.receipt.json`);
   fs.writeFileSync(output, JSON.stringify(receipt, null, 2) + "\n");
-  console.log(`PASS ${resource.resourceId} -> ${publicUrl.href}`);
+  console.log(`PASS v${manifest.version} ${resource.resourceId} -> ${publicUrl.href}`);
 }

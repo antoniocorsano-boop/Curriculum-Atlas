@@ -1,0 +1,28 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://atlas.local/schemas/percorsi-g2-evidence-producer-result.schema.json",
+  "title":"Percorsi G2 EvidenceProducerResult v1",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["contractVersion","producerId","producerVersion","runId","gateId","candidateBinding","status","observations","evidenceRefs","checkedAt","policyVersion","dependencyLineage"],
+  "properties":{
+    "contractVersion":{"const":"percorsi-g2-evidence-producer/v1"},
+    "producerId":{"type":"string","minLength":1},
+    "producerVersion":{"type":"string","minLength":1},
+    "runId":{"type":"string","minLength":1},
+    "gateId":{"enum":["Q1","Q2","Q3","Q4","Q5","Q6","Q7","Q8"]},
+    "candidateBinding":{"$ref":"#/$defs/binding"},
+    "status":{"enum":["PASS","FAIL","BLOCKED"]},
+    "observations":{"type":"array","minItems":1,"items":{"$ref":"#/$defs/observation"}},
+    "evidenceRefs":{"type":"array","items":{"type":"string","minLength":1},"uniqueItems":true},
+    "checkedAt":{"type":"string","format":"date-time"},
+    "policyVersion":{"type":"string","minLength":1},
+    "dependencyLineage":{"type":"array","items":{"$ref":"#/$defs/dependency"}},
+    "authorityRef":{"type":"string","minLength":1}
+  },
+  "$defs":{
+    "binding":{"type":"object","additionalProperties":false,"required":["runtimeExactHead","pathwayId","contentVersion","publicationId"],"properties":{"runtimeExactHead":{"type":"string","pattern":"^[0-9a-f]{40}$"},"pathwayId":{"type":"string","minLength":1},"contentVersion":{"type":"string","minLength":1},"publicationId":{"type":"string","minLength":1}}},
+    "observation":{"type":"object","additionalProperties":false,"required":["assertionId","outcome"],"properties":{"assertionId":{"type":"string","minLength":1},"outcome":{"enum":["PASS","FAIL","BLOCKED"]},"evidenceRef":{"type":"string","minLength":1},"absenceReason":{"type":"string","minLength":1}},"oneOf":[{"properties":{"evidenceRef":{"type":"string","minLength":1},"absenceReason":false},"required":["evidenceRef"]},{"properties":{"absenceReason":{"type":"string","minLength":1},"evidenceRef":false},"required":["absenceReason"]}]},
+    "dependency":{"type":"object","additionalProperties":false,"required":["producerId","producerVersion","runId","gateId","candidateBinding","checkedAt"],"properties":{"producerId":{"type":"string","minLength":1},"producerVersion":{"type":"string","minLength":1},"runId":{"type":"string","minLength":1},"gateId":{"enum":["Q1","Q2","Q3","Q4","Q5","Q6","Q7","Q8"]},"candidateBinding":{"$ref":"#/$defs/binding"},"checkedAt":{"type":"string","format":"date-time"}}}
+  }
+}

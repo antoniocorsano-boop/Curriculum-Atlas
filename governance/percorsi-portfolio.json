@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "atlas.percorsi.registry/v2",
+  "policy": "BACKLOG_ZERO",
+  "authority": {
+    "sourceRepo": "antoniocorsano-boop/trama-ecosistema",
+    "sourcePr": 96,
+    "sourceExactHead": "dfb5b106708bee88016907c13ee0d104c093e7ca",
+    "canonicalIndex": "docs/capabilities/atlas-percorsi/workflow/CANONICAL-INDEX-v1.md"
+  },
+  "territories": [
+    {
+      "id": "self",
+      "label": "Conosci te stesso",
+      "sourceLabel": "Me"
+    },
+    {
+      "id": "learning",
+      "label": "Impara a imparare",
+      "sourceLabel": "Me as a learner"
+    },
+    {
+      "id": "others",
+      "label": "Incontra gli altri",
+      "sourceLabel": "Me and others"
+    },
+    {
+      "id": "problems",
+      "label": "Affronta problemi",
+      "sourceLabel": "Me facing problems"
+    },
+    {
+      "id": "world",
+      "label": "Agisci nel mondo",
+      "sourceLabel": "Me in the world"
+    },
+    {
+      "id": "design",
+      "label": "Progetta",
+      "sourceLabel": "Me as a planner/agent"
+    }
+  ],
+  "pathways": [
+    {
+      "pathwayId": "pw-missing-information-01",
+      "title": "Prima di decidere, cosa manca?",
+      "state": "IMPLEMENTED_CANDIDATE",
+      "evidenceRef": "docs/PERCORSI-G1-PW-MISSING-INFORMATION-01-IMPLEMENTATION.md",
+      "tramaDossierRef": "docs/capabilities/atlas-percorsi/pathways/PW-MISSING-INFORMATION-01/dossier-v1.md"
+    }
+  ],
+  "excludedRecoveries": [
+    {
+      "title": "Verificare e correggere",
+      "classification": "NOT_ATLAS_PERCORSI_STUDENT_PATHWAY",
+      "reason": "Recovered from the older B01-B08 operational journey set; must not populate the student pathway registry."
+    }
+  ]
+}

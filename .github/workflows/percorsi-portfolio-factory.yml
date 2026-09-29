@@ -1,0 +1,48 @@
+name: Percorsi Portfolio Factory
+on:
+  pull_request:
+    paths:
+      - 'docs/percorsi/PERCORSI-PORTFOLIO-FACTORY-01.md'
+      - 'docs/percorsi/PATHWAY-DOSSIER-TEMPLATE.md'
+      - 'governance/percorsi-portfolio.json'
+      - 'governance/percorsi-grammar-registry.json'
+      - 'schemas/percorsi-pathway-seed.schema.json'
+      - 'fixtures/percorsi-factory/**'
+      - 'scripts/build-percorsi-pathway-candidate.mjs'
+      - 'scripts/test-percorsi-pathway-factory.mjs'
+      - 'scripts/validate-percorsi-pathway-seed-schema.mjs'
+      - '.github/workflows/percorsi-portfolio-factory.yml'
+jobs:
+  factory:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Factory deterministic and G2 validation
+        run: node scripts/test-percorsi-pathway-factory.mjs
+      - name: Create isolated seed-schema validator
+        run: |
+          rm -rf .percorsi-factory-audit
+          mkdir .percorsi-factory-audit
+          printf '%s\n' '{"name":"percorsi-factory-audit","version":"1.0.0","private":true}' > .percorsi-factory-audit/package.json
+          npm install --prefix .percorsi-factory-audit --package-lock-only --ignore-scripts ajv@8
+      - name: Install isolated validator
+        run: npm ci --prefix .percorsi-factory-audit --ignore-scripts
+      - name: Enforce seed schema
+        run: node scripts/validate-percorsi-pathway-seed-schema.mjs
+      - name: Validate open backlog-zero registry
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const p=JSON.parse(fs.readFileSync('governance/percorsi-portfolio.json','utf8'));
+          if(p.schemaVersion!=='atlas.percorsi.registry/v2'||p.policy!=='BACKLOG_ZERO') process.exit(1);
+          if(!Array.isArray(p.pathways)||p.pathways.length<1) process.exit(1);
+          if(p.pathways.some(x=>!x.pathwayId||!x.title)) process.exit(1);
+          if(p.pathways.some(x=>Object.hasOwn(x,'portfolioSlot'))) process.exit(1);
+          if(!p.excludedRecoveries?.some(x=>x.title==='Verificare e correggere'&&x.classification==='NOT_ATLAS_PERCORSI_STUDENT_PATHWAY')) process.exit(1);
+          console.log('OPEN BACKLOG_ZERO REGISTRY PASS');
+          NODE

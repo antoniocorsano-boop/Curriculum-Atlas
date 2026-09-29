@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "atlas.smart.percorsi-development-closeout/v1",
+  "baseline": "c386e7b8561c8efc7d4b519230ffcddb09ba555f",
+  "status": "COMPLETE",
+  "runtimeAuthorized": false,
+  "activeBindingCount": 0,
+  "firstBindingDecision": "BLOCKED_NO_GOVERNED_PATHWAY_TARGET",
+  "integratedMilestones": [
+    {
+      "pr": 50,
+      "mergeCommit": "50ab5fa6de548d357f8e91c99ae3ce0c84fdc6d3",
+      "scope": "Q5_Q6_Q1_EVIDENCE_PRODUCERS"
+    },
+    {
+      "pr": 58,
+      "mergeCommit": "446ff80ef6129f6c38e22d203c0f2339738836f6",
+      "scope": "SMART_PERCORSI_BRIDGE"
+    },
+    {
+      "pr": 59,
+      "mergeCommit": "337761cc5219c54a3f3c3628e2c14ec20c49d3ae",
+      "scope": "GOVERNED_BINDING_RESOLVER"
+    },
+    {
+      "pr": 60,
+      "mergeCommit": "c386e7b8561c8efc7d4b519230ffcddb09ba555f",
+      "scope": "FIRST_BINDING_DECISION_GATE"
+    }
+  ],
+  "futureWorkClass": "NEW_GOVERNANCE_DECISION_NOT_TECHNICAL_BACKLOG"
+}

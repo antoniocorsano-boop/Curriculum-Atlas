@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "atlas.percorsi.seed/v1",
+  "pathwayId": "pw-missing-information-01",
+  "title": "Prima di decidere, cosa manca?",
+  "version": "2.0.0",
+  "territoryIds": [
+    "learning",
+    "problems"
+  ],
+  "competence": "Riconoscere le informazioni pertinenti mancanti prima di assumere una decisione.",
+  "coreStrategy": "Sospendere la scelta, individuare il dato mancante e cercarlo prima di procedere.",
+  "evidenceGoal": "Lo studente riconosce l'informazione mancante e riapplica la strategia in un contesto diverso.",
+  "initialContext": "Una decisione quotidiana presenta informazioni incomplete e richiede di capire che cosa manca.",
+  "transferContext": "Una seconda situazione cambia contenuto ma richiede la stessa strategia prima della scelta.",
+  "provenanceRef": "PW-MISSING-INFORMATION-01",
+  "cognitiveFunctions": {
+    "orient": "identify_missing_information",
+    "practice": "choose_information_strategy",
+    "transfer": "transfer_information_strategy",
+    "reflect": "reflect_on_strategy"
+  }
+}
