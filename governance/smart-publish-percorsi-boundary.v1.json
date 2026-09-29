@@ -1,0 +1,115 @@
+{
+  "schemaVersion": "atlas.smart-publication-boundary/v1",
+  "status": "PROPOSED_GOVERNANCE_ONLY",
+  "runtimeChangeAuthorized": false,
+  "publicationChangeAuthorized": false,
+  "sourceBaseline": "ae18cc60d7d5401041e43d2e8c94fa4baa2d4076",
+  "workstreams": {
+    "smartPublish": {
+      "owns": [
+        "materialSetId",
+        "materialSetVersion",
+        "activityId",
+        "resourceIdentity",
+        "resourceDigest",
+        "byteSize",
+        "provenanceRef",
+        "materialSlotRoles",
+        "candidatePublicationPath",
+        "packageReadinessEvidence",
+        "assetVerificationEvidence"
+      ],
+      "mustNotOwn": [
+        "publicationId",
+        "candidateBinding",
+        "publicationAuthority",
+        "Q5",
+        "Q6",
+        "Q1",
+        "Q9",
+        "RUNTIME_AUTHORIZED",
+        "PUBLISHED"
+      ]
+    },
+    "publicationQualification": {
+      "owns": [
+        "publicationId",
+        "candidateBinding",
+        "authorityRef",
+        "Q5",
+        "Q6",
+        "Q1",
+        "invalidationLineage",
+        "Q9",
+        "RUNTIME_AUTHORIZED",
+        "PUBLISHED"
+      ]
+    }
+  },
+  "handoff": {
+    "version": "atlas.smart-publication-candidate-handoff/v1",
+    "requiredFields": [
+      "handoffVersion",
+      "materialSetId",
+      "materialSetVersion",
+      "activityId",
+      "candidateContentDigest",
+      "requiredResourceDigests",
+      "provenanceRefs",
+      "sourceManifestRef",
+      "publicationEligibility",
+      "humanDecisionRequired",
+      "runtimeAuthorization",
+      "publicationId",
+      "authorityRef",
+      "candidateBinding"
+    ],
+    "requiredValues": {
+      "publicationEligibility": "PUBLICATION_CANDIDATE",
+      "humanDecisionRequired": true,
+      "runtimeAuthorization": null,
+      "publicationId": null,
+      "authorityRef": null,
+      "candidateBinding": null
+    }
+  },
+  "forbiddenPromotions": [
+    "SMART_DRAFT_TO_QUALIFIED",
+    "PUBLICATION_CANDIDATE_TO_Q6_PASS",
+    "ASSET_RECEIPT_TO_Q1_PASS",
+    "ANONYMOUS_ASSET_REACHABILITY_TO_RUNTIME_AUTHORIZED",
+    "SMART_VERIFIER_TO_Q5_AUTHORITY",
+    "SMART_VERIFIER_TO_Q9_AUTHORITY"
+  ],
+  "crossComponentTriggers": [
+    "publicationAuthority",
+    "publicationStateMachine",
+    "publicationReceiptSemantics",
+    "candidateIdentity",
+    "runtimeReachability",
+    "Q5",
+    "Q6",
+    "Q1",
+    "Q9",
+    "invalidationRules"
+  ],
+  "integrationSequence": [
+    "SMART_MATERIAL_SET_VERIFIED",
+    "SMART_PUBLICATION_CANDIDATE_HANDOFF",
+    "PUBLICATION_CANDIDATE_BINDING",
+    "Q5",
+    "Q6",
+    "Q1",
+    "REMAINING_GATES",
+    "INDEPENDENT_REVIEW",
+    "Q9",
+    "ACTIVATION_PUBLICATION"
+  ],
+  "currentCoordination": {
+    "pr50": "MERGED_Q5_Q6_Q1_QUALIFICATION",
+    "pr55": "MERGED_SMART_FAIL_CLOSED_MATERIAL_PUBLICATION_EVIDENCE",
+    "implementationCouplingAuthorized": false
+  },
+  "sourceBaselineRole": "HISTORICAL_PROVENANCE",
+  "reviewBaseline": "f68be1d9913fed77483685158e38848d3d0a19b2"
+}
