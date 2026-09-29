@@ -2,7 +2,9 @@
 
 Status: **PROPOSED / GOVERNANCE ONLY / NO RUNTIME CHANGE**
 
-Baseline: `ae18cc60d7d5401041e43d2e8c94fa4baa2d4076`.
+Historical source baseline: `ae18cc60d7d5401041e43d2e8c94fa4baa2d4076`.
+
+Current review baseline after governed realignment: `f68be1d9913fed77483685158e38848d3d0a19b2`.
 
 ## Purpose
 
@@ -106,8 +108,8 @@ Changes limited to material bytes, provenance, material-set structure, education
 
 ## Current PR coordination
 
-- PR #50 remains responsible for Q5 → Q6 → Q1 qualification semantics.
-- PR #55 remains responsible for fail-closed Smart material export/publication evidence.
+- PR #50 is merged; its integrated responsibility is Q5 → Q6 → Q1 qualification semantics.
+- PR #55 is merged; its integrated responsibility is fail-closed Smart material export/publication evidence.
 - This boundary contract is intentionally a separate governance tranche.
 - No code from PR #50 is copied into PR #55 and no Smart publication verifier is promoted into a Percorsi gate by implication.
 
