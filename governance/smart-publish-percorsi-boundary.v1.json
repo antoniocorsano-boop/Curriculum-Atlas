@@ -106,8 +106,10 @@
     "ACTIVATION_PUBLICATION"
   ],
   "currentCoordination": {
-    "pr50": "Q5_Q6_Q1_QUALIFICATION",
-    "pr55": "SMART_FAIL_CLOSED_MATERIAL_PUBLICATION_EVIDENCE",
+    "pr50": "MERGED_Q5_Q6_Q1_QUALIFICATION",
+    "pr55": "MERGED_SMART_FAIL_CLOSED_MATERIAL_PUBLICATION_EVIDENCE",
     "implementationCouplingAuthorized": false
-  }
+  },
+  "sourceBaselineRole": "HISTORICAL_PROVENANCE",
+  "reviewBaseline": "f68be1d9913fed77483685158e38848d3d0a19b2"
 }
