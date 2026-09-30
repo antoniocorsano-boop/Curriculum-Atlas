@@ -11,6 +11,7 @@ on:
       - "src/app/globals.css"
       - "package.json"
       - "pnpm-lock.yaml"
+      - "tsconfig.json"
       - "test-infrastructure/atlas-component-isolation/**"
       - "scripts/capture-atlas-component-isolation.mjs"
       - "docs/TRAMA-ATLAS-COMPONENT-ISOLATION-R1.md"
@@ -58,9 +59,12 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf artifacts/atlas-component-isolation
-          mkdir -p artifacts/atlas-component-isolation/site
+          mkdir -p artifacts/atlas-component-isolation/site artifacts/atlas-component-isolation/evidence
           cp test-infrastructure/atlas-component-isolation/index.html artifacts/atlas-component-isolation/site/index.html
           pnpm dlx esbuild@0.25.10             test-infrastructure/atlas-component-isolation/entry.tsx             --bundle             --format=esm             --platform=browser             --jsx=automatic             --conditions=style             --outfile=artifacts/atlas-component-isolation/site/bundle.js             --alias:next/link=./test-infrastructure/atlas-component-isolation/next-link.tsx
+          pnpm list --depth Infinity --json > artifacts/atlas-component-isolation/evidence/resolved-dependencies.json
+          node --version > artifacts/atlas-component-isolation/evidence/node-version.txt
+          pnpm --version > artifacts/atlas-component-isolation/evidence/pnpm-version.txt
 
       - name: Capture exact-head isolated evidence
         run: node scripts/capture-atlas-component-isolation.mjs
