@@ -1,0 +1,48 @@
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+}
+
+.atlas-isolation-shell {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.atlas-isolation-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.atlas-isolation-meta strong {
+  color: var(--text-primary);
+}
+
+.atlas-isolation-component {
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  .atlas-isolation-shell {
+    padding: 10px;
+  }
+
+  .atlas-isolation-meta {
+    margin-bottom: 10px;
+  }
+}
