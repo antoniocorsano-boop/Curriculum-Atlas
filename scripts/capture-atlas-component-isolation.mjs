@@ -70,14 +70,15 @@ async function verifyRelationExplorer(page) {
   await page.getByRole("button", { name: "Elenco" }).click();
   await page.locator(".atlas-equivalent-outline").waitFor();
   const outlineButtons = page.locator(".atlas-equivalent-outline button");
-  assert.ok(await outlineButtons.count() > 0, "RelationExplorer isolated outline must expose selectable nodes");
+  const selectableNodes = await outlineButtons.count();
+  assert.ok(selectableNodes > 0, "RelationExplorer isolated outline must expose selectable nodes");
   await outlineButtons.first().click();
   await page.getByRole("button", { name: "Mappa" }).click();
   await page.getByLabel("Mappa relazionale interattiva del curricolo").waitFor();
   return {
     map: true,
     equivalentOutline: true,
-    selectableNodes: await outlineButtons.count(),
+    selectableNodes,
   };
 }
 
