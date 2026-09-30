@@ -141,9 +141,28 @@ async function main() {
           serviceWorkers: "block",
         });
         const page = await context.newPage();
+        const diagnostics = [];
+        page.on("pageerror", (error) => diagnostics.push({ type: "pageerror", message: error.message, stack: error.stack || null }));
+        page.on("console", (message) => {
+          if (["error", "warning"].includes(message.type())) {
+            diagnostics.push({ type: "console", level: message.type(), message: message.text() });
+          }
+        });
+        page.on("requestfailed", (request) => diagnostics.push({
+          type: "requestfailed",
+          url: request.url(),
+          error: request.failure()?.errorText || null,
+        }));
 
         await page.goto(`http://127.0.0.1:${port}/?target=${target.query}`, { waitUntil: "networkidle" });
-        await page.locator('html[data-atlas-isolation-ready="true"]').waitFor();
+        try {
+          await page.locator('html[data-atlas-isolation-ready="true"]').waitFor({ timeout: 8000 });
+        } catch (error) {
+          const bodyText = await page.locator("body").innerText().catch(() => "");
+          throw new Error(
+            `ATLAS_ISOLATION_NOT_READY target=${target.query} viewport=${viewport.label} diagnostics=${JSON.stringify(diagnostics)} body=${bodyText.slice(0, 500)} cause=${error.message}`
+          );
+        }
 
         const checks = await target.verify(page);
         const layout = await viewportState(page);
