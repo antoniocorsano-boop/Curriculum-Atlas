@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { createHash } from "node:crypto";
 import { chromium } from "playwright";
 
 const siteDir = path.resolve(process.env.ATLAS_ISOLATION_SITE || "artifacts/atlas-component-isolation/site");
@@ -9,6 +10,7 @@ const outDir = path.resolve(process.env.ATLAS_ISOLATION_OUT || "artifacts/atlas-
 const port = Number(process.env.ATLAS_ISOLATION_PORT || 4178);
 const exactHead = process.env.ATLAS_EXACT_HEAD || null;
 const runId = process.env.ATLAS_RUN_ID || null;
+const dependencyGraphFile = path.join(outDir, "resolved-dependencies.json");
 
 const mime = new Map([
   [".html", "text/html; charset=utf-8"],
@@ -128,6 +130,9 @@ async function main() {
   try {
     browser = await chromium.launch({ headless: true });
 
+    const dependencyGraph = await fs.readFile(dependencyGraphFile);
+    const dependencyGraphSha256 = "sha256:" + createHash("sha256").update(dependencyGraph).digest("hex");
+
     const evidence = {
       schemaVersion: "trama.atlas.component-isolation-evidence/v1",
       exactHead,
@@ -135,6 +140,10 @@ async function main() {
       generatedAt: new Date().toISOString(),
       runtimeSurfaceChanged: false,
       productDependencyAdded: false,
+      dependencyGraph: {
+        ref: "resolved-dependencies.json",
+        sha256: dependencyGraphSha256,
+      },
       targets: [],
       status: "PASS",
     };
@@ -196,7 +205,7 @@ async function main() {
           viewport: { width: viewport.width, height: viewport.height },
           noHorizontalOverflow: true,
           checks,
-          screenshot: path.relative(process.cwd(), screenshot),
+          screenshot: path.relative(outDir, screenshot).split(path.sep).join("/"),
           status: "PASS",
         });
 
