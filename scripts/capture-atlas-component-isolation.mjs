@@ -71,14 +71,21 @@ async function verifyRelationExplorer(page) {
   await page.locator(".atlas-equivalent-outline").waitFor();
   const outlineButtons = page.locator(".atlas-equivalent-outline button");
   const selectableNodes = await outlineButtons.count();
-  assert.ok(selectableNodes > 0, "RelationExplorer isolated outline must expose selectable nodes");
-  await outlineButtons.first().click();
+  assert.ok(selectableNodes > 1, "RelationExplorer isolated outline must expose more than the initially selected institution node");
+  const alternateNode = outlineButtons.nth(1);
+  const alternateLabel = (await alternateNode.locator("strong").innerText()).trim();
+  await alternateNode.click();
+  await alternateNode.waitFor();
+  assert.equal(await alternateNode.getAttribute("aria-current"), "true", "Selecting an alternate node must update aria-current");
+  const selectedHeading = (await page.locator(".atlas-explore-context h2").innerText()).trim();
+  assert.equal(selectedHeading, alternateLabel, "Selecting an alternate node must update the context panel");
   await page.getByRole("button", { name: "Mappa" }).click();
   await page.getByLabel("Mappa relazionale interattiva del curricolo").waitFor();
   return {
     map: true,
     equivalentOutline: true,
     selectableNodes,
+    alternateSelectionVerified: true,
   };
 }
 
@@ -97,12 +104,19 @@ async function verifyCurriculumTree(page) {
 
   const stage = page.getByLabel("Ordine di scuola");
   await stage.selectOption({ label: "Primaria" });
-  assert.ok(await page.locator(".atlas-tree-year").count() > 0, "Stage filtering must retain matching disclosure groups");
+  const filteredGroups = page.locator(".atlas-tree-year");
+  const filteredCount = await filteredGroups.count();
+  assert.ok(filteredCount > 0, "Stage filtering must retain matching disclosure groups");
+  assert.ok(filteredCount < count, "Stage filtering must reduce the initially rendered disclosure groups");
+  const filteredLabels = await filteredGroups.locator("summary strong").allInnerTexts();
+  assert.ok(filteredLabels.every(label => label.trim().startsWith("Primaria ·")), "Every filtered disclosure group must belong to Primaria");
 
   return {
     nativeDisclosure: true,
     initialGroups: count,
     stageFilter: "Primaria",
+    filteredGroups: filteredCount,
+    stageFilterVerified: true,
   };
 }
 
@@ -166,6 +180,8 @@ async function main() {
         }
 
         const checks = await target.verify(page);
+        await page.waitForTimeout(50);
+        assert.deepEqual(diagnostics, [], `Browser diagnostics must remain empty for isolated ${target.query} at ${viewport.label}: ${JSON.stringify(diagnostics)}`);
         const layout = await viewportState(page);
         assert.equal(layout.activeTarget, target.query);
         assert.ok(
