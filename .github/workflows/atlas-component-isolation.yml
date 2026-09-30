@@ -9,6 +9,8 @@ on:
       - "src/features/curriculum/**"
       - "src/features/explore/**"
       - "src/app/globals.css"
+      - "package.json"
+      - "pnpm-lock.yaml"
       - "test-infrastructure/atlas-component-isolation/**"
       - "scripts/capture-atlas-component-isolation.mjs"
       - "docs/TRAMA-ATLAS-COMPONENT-ISOLATION-R1.md"
