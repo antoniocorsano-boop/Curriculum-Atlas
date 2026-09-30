@@ -1,0 +1,78 @@
+name: TRAMA Atlas Component Isolation R1
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/components/atlas/relation-explorer.tsx"
+      - "src/components/atlas/curriculum-tree.tsx"
+      - "src/features/curriculum/**"
+      - "src/features/explore/**"
+      - "src/app/globals.css"
+      - "test-infrastructure/atlas-component-isolation/**"
+      - "scripts/capture-atlas-component-isolation.mjs"
+      - "docs/TRAMA-ATLAS-COMPONENT-ISOLATION-R1.md"
+      - ".github/workflows/atlas-component-isolation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+      ATLAS_RUN_ID: ${{ github.run_id }}
+
+    steps:
+      - name: Checkout exact head
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install existing product dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Typecheck product source
+        run: pnpm typecheck
+
+      - name: Build isolated browser host without adopting a product dependency
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf artifacts/atlas-component-isolation
+          mkdir -p artifacts/atlas-component-isolation/site
+          cp test-infrastructure/atlas-component-isolation/index.html artifacts/atlas-component-isolation/site/index.html
+          pnpm dlx esbuild@0.25.10             test-infrastructure/atlas-component-isolation/entry.tsx             --bundle             --format=esm             --platform=browser             --outfile=artifacts/atlas-component-isolation/site/bundle.js             --alias:next/link=./test-infrastructure/atlas-component-isolation/next-link.tsx
+
+      - name: Capture exact-head isolated evidence
+        run: node scripts/capture-atlas-component-isolation.mjs
+
+      - name: Upload governed evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-component-isolation-${{ github.event.pull_request.head.sha || github.sha }}
+          path: artifacts/atlas-component-isolation/evidence
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Qualification boundary
+        if: always()
+        run: |
+          echo "This workflow proves isolated renderability only."
+          echo "It does not authorize lifecycle promotion, dependency adoption, or runtime migration."
