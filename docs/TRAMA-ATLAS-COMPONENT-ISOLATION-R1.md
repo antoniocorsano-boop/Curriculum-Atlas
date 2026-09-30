@@ -37,6 +37,8 @@ CI:
 
 The host is bundled during CI with a pinned temporary `esbuild` invocation. `esbuild` is **not added to package.json** and is not a product dependency.
 
+Because Atlas currently has no committed pnpm lockfile, each governed artifact also records the exact dependency graph resolved for that run and binds its SHA-256 into `evidence.json`. This keeps reruns on the same source SHA distinguishable and prevents two different dependency resolutions from being treated as identical evidence.
+
 ## Evidence cases
 
 ### RelationExplorer
@@ -67,6 +69,8 @@ A successful run produces:
 - exact-head workflow identity;
 - screenshot evidence for each target and viewport;
 - `evidence.json`;
+- the resolved dependency graph used by the run, with its SHA-256 bound into `evidence.json`;
+- Node and pnpm version receipts;
 - explicit `ISOLATED = PASS` per component.
 
 This slice does **not** automatically claim:
