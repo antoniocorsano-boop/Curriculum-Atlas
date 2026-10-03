@@ -34,5 +34,5 @@ jobs:
         run: pnpm typecheck
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
-      - name: Experience runtime
+      - name: Experience runtime and public catalog
         run: pnpm exec playwright test tests/experience-runtime.spec.ts --project=chromium
