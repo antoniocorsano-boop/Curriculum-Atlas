@@ -250,22 +250,23 @@
         "title": "Nuovo progetto, stessi strumenti?",
         "facts": [
           "Ora devi progettare una piccola postazione espositiva portatile per un evento scolastico.",
-          "Cambiano i vincoli: spazio disponibile, trasporto, tempo di montaggio e riuso dei materiali."
+          "Deve passare attraverso un accesso stretto ed essere montata rapidamente.",
+          "Sono già disponibili pannelli riutilizzabili; puoi ridurre la superficie espositiva se serve a proteggere trasporto, montaggio e riuso."
         ],
-        "prompt": "Che cosa trasferisci dal progetto precedente?",
+        "prompt": "Quale scelta applica il metodo ai nuovi vincoli, rendendo esplicito il compromesso?",
         "feedbackCategory": "TRANSFER_SUCCESSFUL",
         "transitions": [
           {
             "id": "transfer-method",
             "targetNodeId": "C8_TRACE",
-            "label": "Riparto dai nuovi vincoli, collego alternative e conseguenze e sono pronto a rivedere la soluzione",
-            "feedback": "Hai trasferito il metodo di progetto, non l’oggetto precedente."
+            "label": "Uso pannelli modulari più piccoli e riutilizzabili: accetto meno superficie espositiva per facilitare trasporto e montaggio",
+            "feedback": "Hai applicato il metodo ai nuovi vincoli: hai collegato una scelta concreta alle sue conseguenze e reso esplicito il compromesso."
           },
           {
             "id": "copy-solution",
             "targetNodeId": "C8_TRACE",
             "label": "Copio la soluzione del cortile perché ha già funzionato",
-            "feedback": "Il nuovo oggetto ha vincoli diversi: ciò che può essere trasferito è il metodo di confronto e revisione."
+            "feedback": "Il nuovo oggetto ha vincoli diversi: copiare la soluzione precedente non applica il metodo al nuovo contesto."
           }
         ]
       },
