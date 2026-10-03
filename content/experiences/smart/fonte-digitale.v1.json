@@ -1,0 +1,136 @@
+{
+  "schemaVersion": "atlas.experience/v1",
+  "experienceId": "fonte-digitale",
+  "version": "1.0.0",
+  "mode": "SMART",
+  "kernelRef": "smart-fonte-digitale-v1",
+  "qualificationProfileId": "SMART_FAST_V1",
+  "runtime": {
+    "statePolicy": "LOCAL_DEVICE",
+    "learnerIdentityRequired": false,
+    "telemetryAllowed": false
+  },
+  "presentationGrammarIds": [
+    "inquiry-evidence"
+  ],
+  "graph": {
+    "entryNodeId": "osserva",
+    "nodes": [
+      {
+        "id": "osserva",
+        "primitive": "EXPLORE",
+        "interaction": "summary",
+        "title": "Una pagina sembra convincente",
+        "prompt": "Grafica curata e tono sicuro non bastano: osserva la situazione e decidi quale controllo fare per primo.",
+        "feedbackCategory": "EVIDENCE_INCOMPLETE",
+        "transitions": [
+          {
+            "targetNodeId": "scegli-controllo"
+          }
+        ]
+      },
+      {
+        "id": "scegli-controllo",
+        "primitive": "CHOOSE",
+        "interaction": "choice",
+        "title": "Da dove inizi?",
+        "prompt": "Quale mossa rende il giudizio più fondato?",
+        "feedbackCategory": "DECISION_PREMATURE",
+        "transitions": [
+          {
+            "id": "autore",
+            "label": "Controllo chi pubblica e se è responsabile del contenuto",
+            "feedback": "Stai cercando un indizio pertinente: autore ed ente aiutano a capire responsabilità e competenza.",
+            "targetNodeId": "indaga"
+          },
+          {
+            "id": "grafica",
+            "label": "Mi fido: la pagina ha un aspetto professionale",
+            "feedback": "L'aspetto grafico può essere curato anche quando le prove sono deboli. Serve un controllo più pertinente.",
+            "targetNodeId": "riformula"
+          }
+        ]
+      },
+      {
+        "id": "riformula",
+        "primitive": "REFRAME",
+        "interaction": "summary",
+        "title": "Aspetto non significa affidabilità",
+        "prompt": "Rivedi il criterio: serve qualcosa che possa essere controllato, non solo un'impressione.",
+        "feedbackCategory": "MODEL_NEEDS_REVISION",
+        "transitions": [
+          {
+            "targetNodeId": "indaga"
+          }
+        ]
+      },
+      {
+        "id": "indaga",
+        "primitive": "INVESTIGATE",
+        "interaction": "choice",
+        "title": "Cerca prove verificabili",
+        "prompt": "Quale controllo riduce meglio l'incertezza?",
+        "feedbackCategory": "EVIDENCE_INCOMPLETE",
+        "transitions": [
+          {
+            "id": "prove",
+            "label": "Cerco dati, fonti citate, data e metodo",
+            "feedback": "Questi elementi permettono di verificare ciò che la pagina afferma.",
+            "targetNodeId": "confronta"
+          },
+          {
+            "id": "popolarita",
+            "label": "Guardo solo quante condivisioni ha ricevuto",
+            "feedback": "La popolarità non verifica una dichiarazione. Occorrono prove e contesto.",
+            "targetNodeId": "confronta"
+          }
+        ]
+      },
+      {
+        "id": "confronta",
+        "primitive": "CONNECT",
+        "interaction": "summary",
+        "title": "Confronta fuori dalla pagina",
+        "prompt": "Ora verifica se una fonte indipendente e pertinente conferma i punti essenziali e considera lo scopo della pagina.",
+        "feedbackCategory": "EVIDENCE_SUPPORTED",
+        "transitions": [
+          {
+            "targetNodeId": "trasferisci"
+          }
+        ]
+      },
+      {
+        "id": "trasferisci",
+        "primitive": "TRANSFER",
+        "interaction": "choice",
+        "title": "Stesso metodo, nuova fonte",
+        "prompt": "Una seconda pagina tratta un tema diverso. Quale strategia trasferisci?",
+        "feedbackCategory": "TRANSFER_SUCCESSFUL",
+        "transitions": [
+          {
+            "id": "metodo",
+            "label": "Controllo autore, prove, data, scopo e confronto indipendente",
+            "feedback": "Hai trasferito il metodo invece di affidarti a un singolo segnale.",
+            "targetNodeId": "conclusione"
+          },
+          {
+            "id": "intuizione",
+            "label": "Decido subito in base al tono del testo",
+            "feedback": "Il tono è un'impressione: il metodo richiede indizi verificabili.",
+            "targetNodeId": "conclusione"
+          }
+        ]
+      },
+      {
+        "id": "conclusione",
+        "primitive": "REFRAME",
+        "interaction": "summary",
+        "title": "Affidabilità come giudizio motivato",
+        "prompt": "Una fonte non riceve un bollino automatico: il giudizio nasce dalla qualità e coerenza degli indizi raccolti.",
+        "feedbackCategory": "EVIDENCE_SUPPORTED",
+        "terminal": true,
+        "transitions": []
+      }
+    ]
+  }
+}
