@@ -76,3 +76,22 @@ test("SP-01 shared runtime preserves the seven-step summary and restart", async 
   await page.getByRole("button",{name:"Ricomincia"}).click();
   await expect(page.getByRole("heading",{name:"Scegli il sistema"})).toBeVisible();
 });
+
+
+test("PW-MISSING uses shared runtime with revision, transfer and L/N variants", async ({ page }) => {
+  const writes:string[]=[];
+  page.on("request", req => { if (["POST","PUT","PATCH","DELETE"].includes(req.method())) writes.push(req.method()+" "+req.url()); });
+  await page.goto("/percorsi/lab/pw-missing-information-01");
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content",/noindex/);
+  await expect(page.locator("main.experienceRuntime")).toBeVisible();
+  await expect(page.getByRole("heading",{name:"Quale informazione manca?"})).toBeVisible();
+  await page.getByRole("radio",{name:"Fare una stima usando ciò che sappiamo"}).check();
+  await page.getByRole("button",{name:"Continua"}).click();
+  await expect(page.getByRole("heading",{name:"Hai lavorato con una stima"})).toBeVisible();
+  await page.getByRole("radio",{name:"Riconsiderare la scelta precedente"}).check();
+  await page.getByRole("button",{name:"Continua"}).click();
+  await expect(page.getByRole("heading",{name:"Quale informazione manca?"})).toBeVisible();
+  await page.getByRole("radio",{name:"Narrativo"}).check();
+  await expect(page.getByRole("heading",{name:"Due materiali sul tavolo"})).toBeVisible();
+  expect(writes).toEqual([]);
+});
