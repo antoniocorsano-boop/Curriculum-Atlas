@@ -46,3 +46,10 @@ test("text interaction persists locally without network writes", async ({ page }
   await expect(page.getByRole("heading",{name:"Completed"})).toBeVisible();
   expect(writes).toEqual([]);
 });
+
+
+test("SP-01 uses the shared local experience session", async ({ page }) => {
+  await page.goto("/attivita/sistema-tecnologico");
+  await page.getByLabel("Oppure scegli un altro sistema").fill("Pompa di calore");
+  await expect.poll(async () => page.evaluate(() => localStorage.getItem("atlas:experience:sistema-tecnologico:v1"))).not.toBeNull();
+});
