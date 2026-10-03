@@ -40,7 +40,12 @@ function readRecord(): LocalGrowthRecord {
 }
 
 function writeRecord(record: LocalGrowthRecord) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(record));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(record));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function useLocalPathwayGrowth({
@@ -54,24 +59,35 @@ export function useLocalPathwayGrowth({
 }) {
   const [record, setRecord] = useState<LocalGrowthRecord>(EMPTY);
   const [ready, setReady] = useState(false);
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     setRecord(readRecord());
     setReady(true);
   }, []);
 
-  const save = useCallback((next: LocalGrowthRecord) => {
+  const save = useCallback((next: LocalGrowthRecord, successMessage: string) => {
+    if (!writeRecord(next)) {
+      setNotice("Non è stato possibile salvare i traguardi su questo dispositivo. Puoi continuare il percorso senza conservarli.");
+      return false;
+    }
     setRecord(next);
-    writeRecord(next);
+    setNotice(successMessage);
+    return true;
   }, []);
 
   const enable = useCallback(() => {
-    save({ ...record, enabled: true });
+    save({ ...record, enabled: true }, "Crescita locale attivata. I traguardi resteranno soltanto su questo dispositivo.");
   }, [record, save]);
 
   const reset = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
-    setRecord(EMPTY);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      setRecord(EMPTY);
+      setNotice("I progressi locali sono stati cancellati da questo dispositivo.");
+    } catch {
+      setNotice("Non è stato possibile cancellare i progressi locali. Riprova dal dispositivo.");
+    }
   }, []);
 
   const noteNode = useCallback((nodeId: string) => {
@@ -91,7 +107,10 @@ export function useLocalPathwayGrowth({
       }))
       .filter((item) => !existing.has(item.key));
 
-    if (additions.length) save({ ...record, earned: [...record.earned, ...additions] });
+    if (additions.length) save(
+      { ...record, earned: [...record.earned, ...additions] },
+      additions.length === 1 ? "Nuovo traguardo conservato sul dispositivo." : "Nuovi traguardi conservati sul dispositivo.",
+    );
   }, [achievements, pathwayId, pathwayVersion, ready, record, save]);
 
   const earnedHere = useMemo(
@@ -109,7 +128,7 @@ export function useLocalPathwayGrowth({
     URL.revokeObjectURL(url);
   }, [record]);
 
-  return { ready, enabled: record.enabled, earnedHere, totalEarned: record.earned.length, enable, reset, noteNode, exportRecord };
+  return { ready, enabled: record.enabled, earnedHere, totalEarned: record.earned.length, notice, enable, reset, noteNode, exportRecord };
 }
 
 const stageLabel: Record<LocalGrowthAchievement["stage"], string> = {
@@ -127,10 +146,12 @@ export function LocalGrowthPanel({
   onEnable,
   onReset,
   onExport,
+  notice,
 }: {
   enabled: boolean;
   earned: EarnedAchievement[];
   totalEarned: number;
+  notice: string;
   onEnable: () => void;
   onReset: () => void;
   onExport: () => void;
@@ -144,6 +165,10 @@ export function LocalGrowthPanel({
           Nessun account e nessuna classifica. Puoi conservare su questo dispositivo soltanto i traguardi didattici che raggiungi.
         </p>
       </div>
+
+      <p role="status" aria-live="polite" aria-atomic="true" className="pathwayGrowth__status">
+        {notice || "La crescita locale è facoltativa e resta sotto il tuo controllo."}
+      </p>
 
       {!enabled ? (
         <button type="button" className="pathwayButton" onClick={onEnable}>Conserva i miei traguardi su questo dispositivo</button>
