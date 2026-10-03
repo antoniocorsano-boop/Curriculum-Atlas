@@ -64,6 +64,15 @@ test.describe("PW-MISSING shared-engine conformance", () => {
     await expect(page.getByRole("heading", { name: "Hai completato il percorso" })).toBeFocused();
   });
 
+  test("preserves L and N presentation grammars on the shared runtime", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-missing-information-01");
+    await expect(page.locator(".experience-runtime")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Quale informazione manca?" })).toBeVisible();
+    await page.getByRole("radio", { name: "Narrativo" }).check();
+    await expect(page.getByRole("heading", { name: "Due materiali sul tavolo" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Cercare quanto dura ciascun materiale" })).toBeVisible();
+  });
+
   test("remains volatile and emits no learner network writes", async ({ page }) => {
     const writes: string[] = [];
     page.on("request", (request) => {
