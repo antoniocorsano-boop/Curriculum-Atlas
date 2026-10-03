@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "atlas.challenge-kernel/v1",
+  "kernelId": "fixture-kernel",
+  "title": "Fixture",
+  "situation": "A learner must decide with incomplete evidence.",
+  "generativeQuestion": "What evidence is needed?",
+  "competenceTargets": [
+    "reason-with-evidence"
+  ],
+  "evidenceModel": {
+    "required": [
+      "claim",
+      "evidence"
+    ]
+  },
+  "decisionModel": {
+    "strategy": "compare-evidence"
+  },
+  "transferPrinciple": "Apply the strategy in a changed context.",
+  "completionEvidence": [
+    "reasoned-decision"
+  ],
+  "provenanceRefs": [
+    "fixture:kernel"
+  ]
+}
