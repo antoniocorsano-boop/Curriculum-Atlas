@@ -9,7 +9,7 @@ const canonicalTerritories = ["self","learning","others","problems","world","des
 assert.equal(library.schemaVersion, "atlas.percorsi.student-library/v1");
 assert.equal(library.runtimeAuthorization, "NOT_RUNTIME_AUTHORIZED");
 assert.deepEqual(portfolio.territories.map((item) => item.id), canonicalTerritories);
-assert.deepEqual(library.territories.map((item) => item.id === "project" ? "design" : item.id), canonicalTerritories);
+assert.deepEqual(library.territories.map((item) => item.id), canonicalTerritories);
 
 const growthStages = [
   "BEGINNING_TO_RECOGNISE",
