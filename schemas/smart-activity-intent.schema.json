@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "atlas.smart.intent/v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "activityId",
+    "requestType",
+    "teacherRequest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "atlas.smart.intent/v1"
+    },
+    "activityId": {
+      "type": "string"
+    },
+    "requestType": {
+      "enum": [
+        "NEW_ACTIVITY",
+        "ADD_MATERIAL",
+        "REPLACE_MATERIAL",
+        "MATERIAL_ONLY"
+      ]
+    },
+    "teacherRequest": {
+      "type": "string"
+    }
+  }
+}
