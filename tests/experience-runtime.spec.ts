@@ -143,3 +143,64 @@ test.describe("Public Percorsi catalog", () => {
     await expect(page.locator('a[href*="/percorsi/lab/"]')).toHaveCount(0);
   });
 });
+
+
+test.describe("PW-CONSTRAINTS shared-engine runtime readiness", () => {
+  test("branches, revises, transfers and completes through ExperienceRuntime", async ({ page }) => {
+    await page.goto("/percorsi/pw-constraints-tradeoffs-01");
+    await expect(page.locator(".experience-runtime")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Una soluzione, molti vincoli" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: /Privilegiare durata e manutenzione ridotta/ }).check();
+    await expect(page.getByRole("status")).toContainText("budget");
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    await page.getByRole("radio", { name: /Mantengo la soluzione robusta/ }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await expect(page.getByText("Il budget disponibile si riduce del 25%")).toBeVisible();
+
+    await page.getByRole("radio", { name: /Riduco elementi non essenziali/ }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    await page.getByRole("radio", { name: /Esplicito i vincoli, collego scelte e conseguenze/ }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await expect(page.getByText(/Strategia esercitata/)).toBeVisible();
+  });
+
+  test("is volatile, emits no learner network writes and reflows on mobile", async ({ page }) => {
+    const writes: string[] = [];
+    page.on("request", (request) => {
+      if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method())) writes.push(request.method());
+    });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/percorsi/pw-constraints-tradeoffs-01");
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: /Privilegiare costo iniziale/ }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    expect(writes).toEqual([]);
+    const localKeys = await page.evaluate(() => Object.keys(localStorage).filter((key) => key.includes("pw-constraints-tradeoffs-01")));
+    expect(localKeys).toEqual([]);
+    const width = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(width).toBeLessThanOrEqual(390);
+  });
+});
+
+test.describe("PW-MISSING public-surface runtime readiness", () => {
+  test("uses the governed public route without persistence or learner writes", async ({ page }) => {
+    const writes: string[] = [];
+    page.on("request", (request) => {
+      if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method())) writes.push(request.method());
+    });
+    await page.goto("/percorsi/pw-missing-information-01");
+    await expect(page.locator(".experience-runtime")).toBeVisible();
+    await expect(page.getByText("Nessun account, punteggio, profilo o telemetria dello studente.")).toBeVisible();
+    await page.getByRole("radio", { name: "Cercare il dato sulla durata" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    expect(writes).toEqual([]);
+    const localKeys = await page.evaluate(() => Object.keys(localStorage).filter((key) => key.includes("pw-missing-information-01")));
+    expect(localKeys).toEqual([]);
+  });
+});
