@@ -1,0 +1,59 @@
+name: Experience Engine
+
+on:
+  pull_request:
+  push:
+    branches:
+      - feat/atlas-experience-engine-v1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: experience-engine-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualify:
+    name: Shared engine qualification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+      - name: Experience contracts
+        run: pnpm test:experience:contracts
+      - name: Experience grammar registry
+        run: pnpm test:experience:grammar
+      - name: Generic experience factory
+        run: pnpm test:experience:factory
+      - name: Percorsi portfolio factory
+        run: pnpm test:percorsi:factory
+      - name: Smart material contracts
+        run: pnpm validate:smart
+      - name: Smart conformance cases
+        run: pnpm test:smart:all
+      - name: Percorsi G2 contracts
+        run: pnpm validate:percorsi:g2
+      - name: Four-case generality proof
+        run: pnpm test:experience:generality
+      - name: Smart publication reconciliation
+        run: pnpm test:smart:publication
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Lint
+        run: pnpm lint
+      - name: Production build
+        run: pnpm build
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Browser conformance
+        run: pnpm exec playwright test tests/experience-runtime.spec.ts --project=chromium

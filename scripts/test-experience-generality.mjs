@@ -6,8 +6,28 @@ import { spawnSync } from "node:child_process";
 import { buildPathwayCandidate } from "./build-percorsi-pathway-candidate.mjs";
 import { buildExperienceCandidate } from "./build-experience-candidate.mjs";
 
+const conformanceCases = Object.freeze([
+  { lane: "SMART", id: "sistema-tecnologico", role: "SP-01 compatibility" },
+  { lane: "SMART", id: "fonte-digitale", role: "second Smart generality proof" },
+  { lane: "PATHWAY", id: "pw-missing-information-01", role: "PW-MISSING compatibility" },
+  { lane: "PATHWAY", id: "pw-constraints-tradeoffs-01", role: "second Percorso generality proof" },
+]);
+
+assert.deepEqual(
+  conformanceCases.map(({ lane, id }) => `${lane}:${id}`),
+  [
+    "SMART:sistema-tecnologico",
+    "SMART:fonte-digitale",
+    "PATHWAY:pw-missing-information-01",
+    "PATHWAY:pw-constraints-tradeoffs-01",
+  ],
+  "Experience Engine qualification requires exactly the four governed conformance cases",
+);
+assert.equal(conformanceCases.length, 4, "Experience Engine qualification must not silently add or omit proof cases");
+
 const required = [
   "scripts/build-smart-flow-package.mjs",
+  "content/smart-activities/sistema-tecnologico/flow-package.v1.json",
   "content/smart-activities/fonte-digitale/request.md",
   "content/smart-activities/fonte-digitale/intent.v1.json",
   "content/smart-activities/fonte-digitale/plan.v1.json",
@@ -16,11 +36,17 @@ const required = [
   "content/experience-kernels/smart/fonte-digitale.v1.json",
   "content/experiences/smart/fonte-digitale.v1.json",
   "public/materials/smart/fonte-digitale/v1/segnali-affidabilita.svg",
-  "src/app/attivita/fonte-digitale/page.tsx"
+  "src/app/attivita/fonte-digitale/page.tsx",
+  "fixtures/percorsi-factory/valid/missing-information.seed.json",
+  "content/experience-kernels/pathways/pw-missing-information-01.v1.json",
+  "content/experiences/pathways/pw-missing-information-01.v1.json",
+  "fixtures/percorsi-factory/valid/constraints-tradeoffs.seed.json",
+  "content/experience-kernels/pathways/pw-constraints-tradeoffs-01.v1.json",
+  "content/experiences/pathways/pw-constraints-tradeoffs-01.v1.json",
 ];
 
 const missing = required.filter((file) => !fs.existsSync(file));
-assert.deepEqual(missing, [], `missing Smart generality artifacts: ${missing.join(", ")}`);
+assert.deepEqual(missing, [], `missing Experience Engine conformance artifacts: ${missing.join(", ")}`);
 
 const { buildSmartFlowPackage } = await import("./build-smart-flow-package.mjs");
 
@@ -54,11 +80,11 @@ const genericFiles = [
   "scripts/lib/experience-contracts.mjs",
   "scripts/build-experience-candidate.mjs",
   "scripts/build-percorsi-pathway-candidate.mjs",
-  ".github/workflows/experience-engine-tdd.yml",
+  ".github/workflows/experience-engine.yml",
 ];
 for (const file of genericFiles) {
   const source = fs.readFileSync(file, "utf8");
-  for (const forbidden of ["sistema-tecnologico", "fonte-digitale", "pw-missing-information-01", "pw-constraints-tradeoffs-01"]) {
+  for (const forbidden of conformanceCases.map(({ id }) => id)) {
     assert.equal(source.includes(forbidden), false, `${file} contains case-specific literal ${forbidden}`);
   }
 }
@@ -72,15 +98,28 @@ assert.notEqual(sourceFlow.stages.F10.teacherStatus, "Pronto");
 
 console.log("EXPERIENCE GENERALITY SMART: PASS — SP-01 + fonte-digitale use the same deterministic flow/runtime contracts.");
 
+const firstPathwaySeed = JSON.parse(fs.readFileSync("fixtures/percorsi-factory/valid/missing-information.seed.json", "utf8"));
+const firstPathwayCandidate = buildPathwayCandidate(firstPathwaySeed);
+assert.equal(firstPathwayCandidate.governance.authorizationState, "NOT_RUNTIME_AUTHORIZED");
+assert.equal(firstPathwayCandidate.governance.learnerNetworkWrite, "forbidden");
+assert.equal(firstPathwayCandidate.governance.learnerTelemetry, "forbidden");
+
+const firstPersistedExperience = JSON.parse(fs.readFileSync("content/experiences/pathways/pw-missing-information-01.v1.json", "utf8"));
+const firstValidation = spawnSync(
+  process.execPath,
+  ["scripts/validate-experience-contracts.mjs", "experience", "content/experiences/pathways/pw-missing-information-01.v1.json"],
+  { encoding: "utf8" },
+);
+assert.equal(firstValidation.status, 0, `PW-MISSING failed shared ExperienceDefinition validation:\n${firstValidation.stdout}\n${firstValidation.stderr}`);
+assert.equal(firstPersistedExperience.mode, "PATHWAY");
+assert.equal(firstPersistedExperience.runtime.statePolicy, "VOLATILE_MEMORY");
+assert.equal(firstPersistedExperience.runtime.learnerIdentityRequired, false);
+assert.equal(firstPersistedExperience.runtime.telemetryAllowed, false);
+assert.ok(firstPersistedExperience.graph.nodes.some((node) => node.primitive === "TRANSFER"), "PW-MISSING compatibility case must exercise transfer");
 
 const secondSeedPath = "fixtures/percorsi-factory/valid/constraints-tradeoffs.seed.json";
 const secondKernelPath = "content/experience-kernels/pathways/pw-constraints-tradeoffs-01.v1.json";
 const secondExperiencePath = "content/experiences/pathways/pw-constraints-tradeoffs-01.v1.json";
-
-for (const requiredPath of [secondSeedPath, secondKernelPath, secondExperiencePath]) {
-  assert.equal(fs.existsSync(requiredPath), true, `missing second Percorso artifact: ${requiredPath}`);
-}
-
 const secondSeed = JSON.parse(fs.readFileSync(secondSeedPath, "utf8"));
 const portfolio = JSON.parse(fs.readFileSync("governance/percorsi-portfolio.json", "utf8"));
 const registeredSecondPathway = portfolio.pathways.find((entry) => entry.pathwayId === "pw-constraints-tradeoffs-01");
@@ -135,4 +174,5 @@ for (const [kind, file] of [["kernel", secondKernelPath], ["experience", secondE
 }
 
 console.log("PERCORSI AUTHORITY GUARD: PASS — registration is exact-head governed and still fails closed when authority is absent.");
-console.log("PERCORSI GENERALITY: PASS — second pathway uses the shared factory/runtime contract with EXPLORE → CONNECT → BUILD → REFRAME → TRANSFER.");
+console.log("PERCORSI GENERALITY: PASS — PW-MISSING compatibility + constraints/tradeoffs proof share governed factory/runtime contracts.");
+console.log("EXPERIENCE ENGINE FOUR-CASE COMPLETENESS: PASS — exactly two Smart and two Percorsi conformance cases are present.");

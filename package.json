@@ -28,7 +28,11 @@
     "test:experience:grammar": "node scripts/test-experience-grammar-registry.mjs",
     "test:experience:factory": "node scripts/test-experience-factory.mjs",
     "test:experience:runtime": "playwright test tests/experience-runtime.spec.ts --project=chromium",
-    "smart:publication:reconcile": "node scripts/reconcile-smart-publication-receipts.mjs"
+    "smart:publication:reconcile": "node scripts/reconcile-smart-publication-receipts.mjs",
+    "test:smart:all": "pnpm test:smart:sp01 && node scripts/test-smart-flow.mjs --flow-package content/smart-activities/fonte-digitale/flow-package.v1.json",
+    "test:percorsi:factory": "node scripts/test-percorsi-pathway-factory.mjs",
+    "test:experience:generality": "node scripts/test-experience-generality.mjs",
+    "test:smart:publication": "node scripts/test-smart-publication-reconciliation.mjs"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
