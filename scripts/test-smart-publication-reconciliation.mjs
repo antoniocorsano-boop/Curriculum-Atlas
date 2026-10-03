@@ -86,16 +86,21 @@ function writeReceipt(dir, receipt, name = "receipt.json") {
   assert.deepEqual(first.unchangedManifests, []);
   const updated = JSON.parse(fs.readFileSync(f.manifestPath, "utf8"));
   assert.equal(updated.resources[0].publicRef, "https://example.test/materials/smart/test/v1/required.svg");
-  assert.equal(updated.resources[0].publicationReceiptRef, receiptPath);
+  const canonicalReceiptPath = path.join(path.dirname(f.manifestPath), "publication-receipts", path.basename(receiptPath));
+  assert.equal(updated.resources[0].publicationReceiptRef, canonicalReceiptPath);
+  assert.equal(fs.existsSync(canonicalReceiptPath), true, "receipt proof must persist beside the canonical MaterialSet");
+  assert.deepEqual(JSON.parse(fs.readFileSync(canonicalReceiptPath, "utf8")), makeReceipt());
   assert.equal(updated.resources[0].verificationState, "PUBLISHED_VERIFIED");
   assert.equal(updated.readiness.packageReady, true);
   assert.deepEqual(updated.readiness.blockingReasons, []);
   assert.equal(updated.publication.stage, "PUBLISHED");
   assert.equal(updated.publication.humanDecisionRequired, true);
 
+  fs.writeFileSync(receiptPath, JSON.stringify(makeReceipt({ verifiedAt: "2026-10-03T18:00:00Z", releaseSha: "feedface" }), null, 2) + "\n");
   const second = reconcileReceiptDirectory({ manifestPaths: [f.manifestPath], receiptDir: f.receiptDir });
   assert.deepEqual(second.changedManifests, []);
-  assert.deepEqual(second.unchangedManifests, [f.manifestPath], "second reconciliation must be idempotent");
+  assert.deepEqual(second.unchangedManifests, [f.manifestPath], "equivalent later receipt must be idempotent");
+  assert.deepEqual(JSON.parse(fs.readFileSync(canonicalReceiptPath, "utf8")), makeReceipt(), "equivalent later deploy must not rewrite the first canonical proof");
   fs.rmSync(f.root, { recursive: true, force: true });
 }
 
