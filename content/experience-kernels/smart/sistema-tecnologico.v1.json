@@ -1,0 +1,57 @@
+{
+  "schema": "atlas.challenge-kernel/v1",
+  "kernelId": "smart-kernel:sistema-tecnologico:v1",
+  "title": "Analizzare un sistema tecnologico",
+  "situation": "Un sistema tecnologico soddisfa un bisogno attraverso componenti, trasformazioni, energia e risorse.",
+  "generativeQuestion": "Come funziona il sistema e dove possiamo intervenire per ridurne gli impatti?",
+  "competenceTargets": [
+    {
+      "id": "analyse-technological-system"
+    }
+  ],
+  "evidenceModel": {
+    "availableEvidence": [
+      {
+        "id": "function"
+      },
+      {
+        "id": "inputs-transformations-outputs"
+      },
+      {
+        "id": "energy"
+      },
+      {
+        "id": "resources"
+      },
+      {
+        "id": "life-cycle"
+      }
+    ],
+    "misconceptions": [
+      {
+        "id": "object-only",
+        "description": "Descrivere l'oggetto senza collegare componenti e funzione."
+      }
+    ]
+  },
+  "decisionModel": {
+    "decisions": [
+      {
+        "id": "improvement",
+        "description": "Scegliere un punto di intervento per migliorare la sostenibilità."
+      }
+    ],
+    "consequencePolicy": "CONSTRUCTIVE",
+    "revisionAllowed": true
+  },
+  "transferPrinciple": "Una modifica sostenibile va motivata collegando funzionamento, energia, risorse e ciclo di vita.",
+  "completionEvidence": [
+    {
+      "id": "reasoned-improvement"
+    }
+  ],
+  "provenanceRefs": [
+    "ATLAS-SMART-ACTIVITY-01",
+    "SP-01"
+  ]
+}

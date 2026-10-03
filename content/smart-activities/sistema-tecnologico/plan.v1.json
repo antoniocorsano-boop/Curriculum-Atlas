@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "atlas.smart.plan/v1",
+  "planId": "smart-plan:sistema-tecnologico:v1",
+  "intentRef": "smart-intent:sistema-tecnologico:v1",
+  "activityId": "sistema-tecnologico",
+  "objective": "Guidare lo studente ad analizzare un sistema tecnologico collegando funzione, trasformazioni, energia, risorse, ciclo di vita e sostenibilità.",
+  "delivery": {
+    "audience": "STUDENT",
+    "mode": [
+      "INDIVIDUAL",
+      "LIM"
+    ],
+    "estimatedMinutes": 15
+  },
+  "materialNeeds": [
+    {
+      "kind": "INFOGRAPHIC",
+      "required": true,
+      "roles": [
+        "VISUAL_AID"
+      ]
+    },
+    {
+      "kind": "PRESENTATION",
+      "required": true,
+      "roles": [
+        "MINI_DECK",
+        "LIM_VIEW"
+      ]
+    }
+  ]
+}

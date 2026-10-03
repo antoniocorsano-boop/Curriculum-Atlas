@@ -1,0 +1,167 @@
+{
+  "schema": "atlas.experience/v1",
+  "experienceId": "sistema-tecnologico",
+  "kernelRef": "smart-kernel:sistema-tecnologico:v1",
+  "mode": "SMART",
+  "sceneGraph": {
+    "entrySceneId": "scelta",
+    "scenes": [
+      {
+        "id": "scelta",
+        "primitive": "EXPLORE",
+        "title": "Scegli il sistema",
+        "body": [
+          "Scegli uno degli esempi oppure indica un sistema diverso."
+        ],
+        "interaction": {
+          "kind": "text",
+          "prompt": "Quale sistema tecnologico vuoi analizzare?",
+          "placeholder": "Per esempio: smartphone, automobile, frigorifero…"
+        },
+        "transitions": [
+          {
+            "id": "continue",
+            "targetSceneId": "funzione"
+          }
+        ]
+      },
+      {
+        "id": "funzione",
+        "primitive": "CONNECT",
+        "title": "Perché esiste?",
+        "body": [
+          "Non descrivere soltanto l'oggetto: spiega come le parti collaborano per raggiungere uno scopo."
+        ],
+        "interaction": {
+          "kind": "text",
+          "prompt": "Quale bisogno soddisfa, quale risultato deve ottenere e quali componenti sono indispensabili?"
+        },
+        "transitions": [
+          {
+            "id": "continue",
+            "targetSceneId": "funzionamento"
+          }
+        ]
+      },
+      {
+        "id": "funzionamento",
+        "primitive": "CONNECT",
+        "title": "Entrate → trasformazioni → uscite",
+        "body": [
+          "Considera materiali, informazioni ed energia; poi azioni e processi; infine prodotto, servizio, scarti o altri effetti."
+        ],
+        "interaction": {
+          "kind": "text",
+          "prompt": "Che cosa entra nel sistema? Che cosa viene trasformato? Che cosa otteniamo in uscita?"
+        },
+        "transitions": [
+          {
+            "id": "continue",
+            "targetSceneId": "energia"
+          }
+        ]
+      },
+      {
+        "id": "energia",
+        "primitive": "INVESTIGATE",
+        "title": "Segui l'energia",
+        "body": [
+          "Cerca anche calore, attriti, rumore o altre dispersioni."
+        ],
+        "interaction": {
+          "kind": "text",
+          "prompt": "Da dove proviene, in quale forma entra, come cambia e quale parte diventa utile o viene dissipata?"
+        },
+        "transitions": [
+          {
+            "id": "continue",
+            "targetSceneId": "risorse"
+          }
+        ]
+      },
+      {
+        "id": "risorse",
+        "primitive": "EXPLORE",
+        "title": "Di che cosa ha bisogno?",
+        "body": [
+          "Considera anche le risorse necessarie alla produzione, al trasporto e all'uso."
+        ],
+        "interaction": {
+          "kind": "text",
+          "prompt": "Quali materiali e risorse richiede il sistema? Quale ti sembra più importante o critica?"
+        },
+        "transitions": [
+          {
+            "id": "continue",
+            "targetSceneId": "ciclo"
+          }
+        ]
+      },
+      {
+        "id": "ciclo",
+        "primitive": "CONNECT",
+        "title": "Guarda oltre la fase d'uso",
+        "body": [
+          "Osserva energia, risorse, emissioni e rifiuti e i possibili effetti su aria, acqua, suolo, paesaggio e biodiversità."
+        ],
+        "interaction": {
+          "kind": "text",
+          "prompt": "Che cosa accade da materie prime → produzione → trasporto → uso → fine vita? Quali impatti riconosci?"
+        },
+        "transitions": [
+          {
+            "id": "continue",
+            "targetSceneId": "miglioramento"
+          }
+        ]
+      },
+      {
+        "id": "miglioramento",
+        "primitive": "BUILD",
+        "title": "Proponi un miglioramento",
+        "body": [
+          "Ragiona su efficienza, durata e riparabilità, riuso e riciclo, fonti energetiche e processi."
+        ],
+        "interaction": {
+          "kind": "text",
+          "prompt": "In quale punto interverresti per rendere il sistema più sostenibile e perché la proposta dovrebbe ridurre l'impatto?"
+        },
+        "transitions": [
+          {
+            "id": "finish",
+            "targetSceneId": "summary"
+          }
+        ]
+      },
+      {
+        "id": "summary",
+        "primitive": "REFRAME",
+        "title": "Riepilogo",
+        "body": [
+          "Rileggi il percorso: la qualità dell'analisi dipende dai collegamenti costruiti, non dalla quantità di informazioni.",
+          "Conclusione da discutere: quale relazione tra funzionamento, energia, risorse e ambiente ti sembra più importante?"
+        ],
+        "interaction": {
+          "kind": "terminal",
+          "summaryFromSceneIds": [
+            "scelta",
+            "funzione",
+            "funzionamento",
+            "energia",
+            "risorse",
+            "ciclo",
+            "miglioramento"
+          ]
+        },
+        "transitions": [],
+        "terminal": true
+      }
+    ]
+  },
+  "presentationGrammarRef": "sequential-visual-narrative",
+  "materialSetRef": "sistema-tecnologico-analisi",
+  "qualificationProfileRef": "SMART_FAST_V1",
+  "runtimeStatePolicy": "LOCAL_DEVICE",
+  "learnerIdentityRequired": false,
+  "telemetryAllowed": false
+}
