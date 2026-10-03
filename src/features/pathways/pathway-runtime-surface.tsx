@@ -15,11 +15,13 @@ export function PathwayRuntimeSurface({
   title,
   description,
   growthAchievements = [],
+  reviewNotice,
 }: {
   definition: DefinitionWithPresentations;
   title: string;
   description: string;
   growthAchievements?: LocalGrowthAchievement[];
+  reviewNotice?: string;
 }) {
   const availablePresentations = useMemo(
     () => definition.presentationGrammarIds.filter((id) => Boolean(definition.presentationData?.[id])),
@@ -42,7 +44,7 @@ export function PathwayRuntimeSurface({
           <p>{description}</p>
         </div>
         <div className="pathwayPrototype__status">
-          <strong>Sessione locale</strong>
+          {reviewNotice ? <strong>{reviewNotice}</strong> : <strong>Sessione locale</strong>}
           <span>Nessun account, punteggio, profilo o telemetria dello studente.</span>
         </div>
       </header>
