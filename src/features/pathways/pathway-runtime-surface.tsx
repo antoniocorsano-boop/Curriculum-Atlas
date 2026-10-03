@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { ExperienceRuntime } from "@/features/experiences/experience-runtime";
 import type { ExperienceDefinition, ExperiencePresentation } from "@/features/experiences/model";
+import { LocalGrowthPanel, useLocalPathwayGrowth, type LocalGrowthAchievement } from "./local-growth-panel";
 import "./pw-missing-information-01/pathway.css";
 
 type DefinitionWithPresentations = ExperienceDefinition & {
@@ -13,10 +14,12 @@ export function PathwayRuntimeSurface({
   definition,
   title,
   description,
+  growthAchievements = [],
 }: {
   definition: DefinitionWithPresentations;
   title: string;
   description: string;
+  growthAchievements?: LocalGrowthAchievement[];
 }) {
   const availablePresentations = useMemo(
     () => definition.presentationGrammarIds.filter((id) => Boolean(definition.presentationData?.[id])),
@@ -24,6 +27,11 @@ export function PathwayRuntimeSurface({
   );
   const [presentationId, setPresentationId] = useState(availablePresentations[0] ?? "");
   const presentation = presentationId ? definition.presentationData?.[presentationId] : undefined;
+  const growth = useLocalPathwayGrowth({
+    pathwayId: definition.experienceId,
+    pathwayVersion: definition.version,
+    achievements: growthAchievements,
+  });
 
   return (
     <main className="pathwayPrototype">
@@ -56,11 +64,22 @@ export function PathwayRuntimeSurface({
         </fieldset>
       )}
 
-      <ExperienceRuntime definition={definition} presentation={presentation} />
+      {growth.ready && growthAchievements.length > 0 && (
+        <LocalGrowthPanel
+          enabled={growth.enabled}
+          earned={growth.earnedHere}
+          totalEarned={growth.totalEarned}
+          onEnable={growth.enable}
+          onReset={growth.reset}
+          onExport={growth.exportRecord}
+        />
+      )}
+
+      <ExperienceRuntime definition={definition} presentation={presentation} onNodeVisit={growth.noteNode} />
 
       <details className="pathwayPrototype__privacy">
         <summary><strong>Privacy del percorso</strong></summary>
-        <p>Le scelte restano nella memoria volatile della sessione. Il percorso non invia risposte, non crea profili e non conserva una cronologia dello studente.</p>
+        <p>Le scelte del percorso restano nella memoria volatile della sessione e non vengono inviate ad Atlas. Solo se lo scegli, i traguardi didattici possono essere conservati localmente sul dispositivo; puoi esportarli o cancellarli in qualsiasi momento.</p>
       </details>
     </main>
   );
