@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "atlas.smart.asset-receipt/v1",
+  "assetId": "sistema-tecnologico-infografica-metodo",
+  "version": 2,
+  "sha256": "sha256:fe7cecfe99097e0141974c17997cd99bb250a4548ae73fd93ed5e8a2cad7aa07",
+  "byteSize": 1764,
+  "audience": "STUDENT",
+  "provenanceRef": "smart-remediation:PR55:reconstructed-from-governed-SP01-content",
+  "publicRef": "https://antoniocorsano-boop.github.io/Curriculum-Atlas/materials/smart/sistema-tecnologico/v2/analizzare-un-sistema-tecnologico.svg",
+  "anonymousReachabilityVerified": true,
+  "verifiedAt": "2026-10-03T20:51:17.734Z",
+  "materialSetId": "sistema-tecnologico-analisi",
+  "releaseSha": "b7b95e81e896a027335b3398d222660aa81f928a"
+}
