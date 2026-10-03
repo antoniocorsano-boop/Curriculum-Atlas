@@ -42,7 +42,7 @@ export function validateExperienceGraph(graph,{mode}={}){
  walk(graph.entrySceneId);if(seen.size!==graph.scenes.length)e.push("sceneGraph.unreachable");
  return result(e);
 }
-export function validateExperienceDefinition(value){
+export function validateExperienceDefinition(value,{registries}={}){
  const e=[];
  if(value?.schema!=="atlas.experience/v1") e.push("schema");
  if(!nonEmpty(value?.experienceId)) e.push("experienceId");
@@ -50,6 +50,11 @@ export function validateExperienceDefinition(value){
  if(!MODES.has(value?.mode)) e.push("mode");
  if(!nonEmpty(value?.presentationGrammarRef)) e.push("presentationGrammarRef");
  if(!nonEmpty(value?.qualificationProfileRef)) e.push("qualificationProfileRef");
+ if(registries){
+  if(!registries.presentationGrammarIds?.has(value?.presentationGrammarRef)) e.push("presentationGrammarRef.unregistered");
+  if(!registries.qualificationProfileIds?.has(value?.qualificationProfileRef)) e.push("qualificationProfileRef.unregistered");
+  for(const scene of value?.sceneGraph?.scenes||[]) if(!registries.experienceGrammarIds?.has(scene?.primitive)) e.push(`scene.${scene?.id||"?"}.primitive.unregistered`);
+ }
  if(!STATE_POLICIES.has(value?.runtimeStatePolicy)) e.push("runtimeStatePolicy");
  if(value?.learnerIdentityRequired!==false) e.push("learnerIdentityRequired");
  if(value?.telemetryAllowed!==false) e.push("telemetryAllowed");

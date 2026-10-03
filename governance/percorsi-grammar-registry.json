@@ -1,6 +1,6 @@
 {
-  "schemaVersion": "atlas.percorsi.grammar-registry/v1",
-  "status": "RESEARCH_REGISTRY",
+  "schemaVersion": "atlas.percorsi.presentation-grammar-registry/v1",
+  "status": "PRESENTATION_GRAMMAR_REGISTRY",
   "grammars": [
     {
       "id": "sequential-visual-narrative",
