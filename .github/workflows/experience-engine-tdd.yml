@@ -30,6 +30,8 @@ jobs:
         run: node scripts/test-experience-factory.mjs
       - name: Smart generality
         run: node scripts/test-experience-generality.mjs
+      - name: Smart receipt reconciliation
+        run: node scripts/test-smart-publication-reconciliation.mjs
       - name: Typecheck
         run: pnpm typecheck
       - name: Install Chromium
