@@ -124,6 +124,11 @@ test.describe("PW-MISSING product recovery on shared engine", () => {
     await page.getByRole("radio", { name: "Tengo la scelta" }).check();
     await page.getByRole("button", { name: "Continua" }).click();
 
+    // Merely arriving at the prompt is not evidence.
+    await expect(page.getByText("Riconosco la strategia: cerco il dato pertinente che manca")).toHaveCount(0);
+    await page.getByRole("radio", { name: "Individuare il dato mancante e controllarlo prima di decidere" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+
     await expect(page.getByText("Riconosco la strategia: cerco il dato pertinente che manca")).toBeVisible();
     await expect(page.locator(".pathwayGrowth__status")).toContainText("Nuovo traguardo conservato");
     const stored = await page.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"));
@@ -133,6 +138,90 @@ test.describe("PW-MISSING product recovery on shared engine", () => {
     await page.getByRole("button", { name: "Cancella i progressi locali" }).click();
     await expect(page.locator(".pathwayGrowth__status")).toContainText("sono stati cancellati");
     expect(await page.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"))).toBeNull();
+  });
+
+  test("does not award growth for prompt arrival or non-qualifying choices", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-missing-information-01");
+    await page.getByRole("button", { name: "Conserva i miei traguardi su questo dispositivo" }).click();
+
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Quali risorse sono disponibili" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Controllare prima le risorse disponibili" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Tengo la scelta" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    await expect(page.getByRole("heading", { name: "Diamo un nome alla strategia" })).toBeFocused();
+    expect(await page.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"))).not.toContain("recognise-missing-information-strategy");
+
+    await page.getByRole("radio", { name: "Indovinare il dato mancante" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    expect(await page.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"))).not.toContain("recognise-missing-information-strategy");
+
+    await page.getByRole("radio", { name: "No: scelgo senza controllare" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    expect(await page.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"))).not.toContain("choose-strategy-in-changed-context");
+
+    await page.getByRole("radio", { name: "Quale pagina ha l’aspetto più gradevole" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    const stored = await page.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"));
+    expect(stored).not.toContain("transfer-to-source-evaluation");
+  });
+
+  test("reconciles growth across tabs and a reset cannot be recreated by a stale tab", async ({ page }) => {
+    const second = await page.context().newPage();
+    await Promise.all([
+      page.goto("/percorsi/lab/pw-missing-information-01"),
+      second.goto("/percorsi/lab/pw-missing-information-01"),
+    ]);
+
+    await page.getByRole("button", { name: "Conserva i miei traguardi su questo dispositivo" }).click();
+    await expect(second.getByRole("button", { name: "Cancella i progressi locali" })).toBeVisible();
+
+    // First tab earns the first qualifying achievement.
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Quali risorse sono disponibili" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Controllare prima le risorse disponibili" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Tengo la scelta" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Individuare il dato mancante e controllarlo prima di decidere" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await expect(second.getByText("Riconosco la strategia: cerco il dato pertinente che manca")).toBeVisible();
+
+    // Second tab re-reads and merges instead of replacing the shared record.
+    await second.getByRole("button", { name: "Continua" }).click();
+    await second.getByRole("radio", { name: "Quali risorse sono disponibili" }).check();
+    await second.getByRole("button", { name: "Continua" }).click();
+    await second.getByRole("radio", { name: "Controllare prima le risorse disponibili" }).check();
+    await second.getByRole("button", { name: "Continua" }).click();
+    await second.getByRole("button", { name: "Continua" }).click();
+    await second.getByRole("radio", { name: "Tengo la scelta" }).check();
+    await second.getByRole("button", { name: "Continua" }).click();
+    await second.getByRole("radio", { name: "Individuare il dato mancante e controllarlo prima di decidere" }).check();
+    await second.getByRole("button", { name: "Continua" }).click();
+    await second.getByRole("radio", { name: "Sì: prima controllo ciò che è disponibile" }).check();
+    await second.getByRole("button", { name: "Continua" }).click();
+
+    const merged = await second.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"));
+    expect(merged).toContain("recognise-missing-information-strategy");
+    expect(merged).toContain("choose-strategy-in-changed-context");
+
+    // Reset in tab one disables storage everywhere.
+    await page.getByRole("button", { name: "Cancella i progressi locali" }).click();
+    await expect(second.getByRole("button", { name: "Conserva i miei traguardi su questo dispositivo" })).toBeVisible();
+    expect(await second.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"))).toBeNull();
+
+    // Even if the second tab continues from an already advanced session, it must not recreate the deleted record.
+    await second.getByRole("radio", { name: "Quali prove e fonti sostengono le informazioni" }).check();
+    await second.getByRole("button", { name: "Continua" }).click();
+    expect(await second.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"))).toBeNull();
+
+    await second.close();
   });
 });
 
