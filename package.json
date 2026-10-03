@@ -27,7 +27,8 @@
     "test:experience:contracts": "node scripts/test-experience-contracts.mjs",
     "test:experience:grammar": "node scripts/test-experience-grammar-registry.mjs",
     "test:experience:factory": "node scripts/test-experience-factory.mjs",
-    "test:experience:browser": "playwright test tests/experience-runtime.spec.ts --project=chromium"
+    "test:experience:browser": "playwright test tests/experience-runtime.spec.ts --project=chromium",
+    "test:smart:flow": "node scripts/test-smart-flow.mjs --flow-package content/smart-activities/sistema-tecnologico/flow-package.v1.json"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
