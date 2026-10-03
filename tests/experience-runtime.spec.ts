@@ -122,3 +122,24 @@ test.describe("Smart generality browser proof", () => {
     expect(writes).toEqual([]);
   });
 });
+
+
+test.describe("Public Percorsi catalog", () => {
+  test("fails closed when no pathway has explicit runtime authorization", async ({ page }) => {
+    await page.goto("/percorsi");
+    await expect(page.getByRole("heading", { name: "Percorsi" })).toBeVisible();
+    await expect(page.getByText("Nessun percorso è ancora autorizzato per l’uso pubblico")).toBeVisible();
+    await expect(page.locator('a[href*="/percorsi/lab/"]')).toHaveCount(0);
+  });
+
+  test("renders authorized and withdrawn fixture states without leaking lab routes", async ({ page }) => {
+    await page.goto("/experience-lab/pathway-catalog");
+    await expect(page.getByRole("link", { name: "Percorso autorizzato" })).toHaveAttribute("href", "/percorsi/demo-authorized");
+    await expect(page.getByText("v1.2.0 · TRAMA-TEST-AUTH")).toBeVisible();
+    await expect(page.getByText("Percorso ritirato")).toBeVisible();
+    await expect(page.getByText("Non disponibile")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Percorso ritirato" })).toHaveCount(0);
+    await expect(page.getByText("Senza provenienza")).toHaveCount(0);
+    await expect(page.locator('a[href*="/percorsi/lab/"]')).toHaveCount(0);
+  });
+});
