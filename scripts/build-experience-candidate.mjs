@@ -20,6 +20,7 @@ export function buildExperienceCandidate(seed) {
       telemetryAllowed: false,
     },
     presentationGrammarIds: [...seed.presentationGrammarIds],
+    ...(seed.presentationData ? { presentationData: structuredClone(seed.presentationData) } : {}),
     graph: {
       entryNodeId: seed.entryNodeId,
       nodes: seed.scenes.map((scene) => ({
@@ -28,6 +29,8 @@ export function buildExperienceCandidate(seed) {
         interaction: scene.interaction,
         feedbackCategory: scene.feedbackCategory,
         ...(scene.contentRef ? { contentRef: structuredClone(scene.contentRef) } : {}),
+        ...(scene.title ? { title: scene.title } : {}),
+        ...(Array.isArray(scene.facts) ? { facts: structuredClone(scene.facts) } : {}),
         ...(scene.prompt ? { prompt: scene.prompt } : {}),
         ...(scene.terminal === true ? { terminal: true } : {}),
         transitions: (scene.transitions ?? []).map((transition) => ({ ...transition })),
