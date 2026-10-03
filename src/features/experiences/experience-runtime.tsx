@@ -58,7 +58,7 @@ export function ExperienceRuntime({
   function selectTransition(transition: ResolvedTransition) {
     setPendingTransition(transition);
     setChoiceFeedback(
-      transition.feedback ?? node.feedbackCategory.replaceAll("_", " ").toLowerCase(),
+      transition.feedback ?? node!.feedbackCategory.replaceAll("_", " ").toLowerCase(),
     );
   }
 
