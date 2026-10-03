@@ -3,11 +3,14 @@ import crypto from 'node:crypto';
 export const CONTRACT_VERSION='percorsi-g2-evidence-producer/v1';
 export const POLICY_VERSION='v1';
 export const PROBE_RECEIPT_VERSION='percorsi-g2-sealed-preauth-probe-receipt/v1';
-const gates={Q5:'publication-provenance',Q6:'editorial-admission',Q1:'public-surface-reachability'};
+const gates={Q1:'public-surface-reachability',Q2:'network-learner-write',Q3:'local-state-offline-withdrawal',Q5:'publication-provenance',Q6:'editorial-admission',Q7:'privacy-security'};
 const accepted={
   Q1:{gateId:'Q1',producerId:'percorsi-g2-public-surface-reachability',producerVersion:'v1'},
+  Q2:{gateId:'Q2',producerId:'percorsi-g2-network-learner-write',producerVersion:'v1'},
+  Q3:{gateId:'Q3',producerId:'percorsi-g2-local-state-offline-withdrawal',producerVersion:'v1'},
   Q5:{gateId:'Q5',producerId:'percorsi-g2-publication-provenance',producerVersion:'v1'},
-  Q6:{gateId:'Q6',producerId:'percorsi-g2-editorial-admission',producerVersion:'v1'}
+  Q6:{gateId:'Q6',producerId:'percorsi-g2-editorial-admission',producerVersion:'v1'},
+  Q7:{gateId:'Q7',producerId:'percorsi-g2-privacy-security',producerVersion:'v1'}
 };
 const allowedEdges=new Set(['LAB>QUALIFIED','QUALIFIED>PUBLISHED','PUBLISHED>WITHDRAWN']);
 const iso=()=>new Date().toISOString();
@@ -50,6 +53,63 @@ export function mapEvidenceProducerResultToGateReceipt(expectedGate,binding,prod
 export function executeProducerSafely(gate,binding,input,producer){
   try{return producer();}
   catch(error){return result(gate,binding,input,[obs(`${gate.toLowerCase()}.execution`,'BLOCKED',null,`PRODUCER_ERROR:${error?.name||'Error'}`)]);}
+}
+
+
+export function produceQ2(binding,networkObservation){
+  const requests=Array.isArray(networkObservation?.requests)?networkObservation.requests:null;
+  const complete=typeof networkObservation?.sessionId==='string'&&networkObservation.sessionId&&typeof networkObservation?.origin==='string'&&networkObservation.origin&&requests;
+  const observations=[obs('q2.session.observed',complete?'PASS':'BLOCKED',complete?ev('network-session',networkObservation.sessionId):null,complete?null:'NETWORK_SESSION_EVIDENCE_INCOMPLETE')];
+  if(complete){
+    const allowedMethods=new Set(['GET','HEAD','OPTIONS']);
+    const methodsSafe=requests.every(r=>r&&typeof r.method==='string'&&allowedMethods.has(r.method));
+    const destinationsSafe=requests.every(r=>r&&typeof r.origin==='string'&&r.origin===networkObservation.origin);
+    const learnerWrites=Number(networkObservation.learnerWriteCount??0);
+    const telemetry=Number(networkObservation.telemetryCount??0);
+    observations.push(obs('q2.network.read-only',methodsSafe?'PASS':'FAIL',ev('network-session',networkObservation.sessionId)));
+    observations.push(obs('q2.network.same-origin',destinationsSafe?'PASS':'FAIL',ev('network-session',networkObservation.sessionId)));
+    observations.push(obs('q2.learner-write.zero',learnerWrites===0?'PASS':'FAIL',ev('network-session',networkObservation.sessionId)));
+    observations.push(obs('q2.telemetry.zero',telemetry===0?'PASS':'FAIL',ev('network-session',networkObservation.sessionId)));
+  }
+  return result('Q2',binding,networkObservation,observations);
+}
+
+export function produceQ3(binding,stateObservation){
+  const complete=typeof stateObservation?.sessionId==='string'&&stateObservation.sessionId;
+  const observations=[obs('q3.session.observed',complete?'PASS':'BLOCKED',complete?ev('state-session',stateObservation.sessionId):null,complete?null:'STATE_SESSION_EVIDENCE_INCOMPLETE')];
+  if(complete){
+    const checks=[
+      ['q3.state.policy-volatile',stateObservation.statePolicy==='VOLATILE_MEMORY'],
+      ['q3.storage.local-empty',stateObservation.localStorageEmpty===true],
+      ['q3.storage.session-empty',stateObservation.sessionStorageEmpty===true],
+      ['q3.storage.indexeddb-empty',stateObservation.indexedDbEmpty===true],
+      ['q3.storage.cache-empty',stateObservation.cacheStorageEmpty===true],
+      ['q3.storage.service-worker-none',stateObservation.serviceWorkerRegistrationCount===0],
+      ['q3.reload.reset',stateObservation.reloadReset===true],
+      ['q3.offline.fresh-start-blocked',stateObservation.offlineFreshStartBlocked===true],
+      ['q3.withdrawn.entrypoint-unavailable',stateObservation.withdrawnEntrypointUnavailable===true],
+      ['q3.withdrawn.no-lab-fallback',stateObservation.labFallbackObserved===false],
+    ];
+    for(const [id,ok] of checks) observations.push(obs(id,ok?'PASS':'FAIL',ev('state-session',stateObservation.sessionId)));
+  }
+  return result('Q3',binding,stateObservation,observations);
+}
+
+export function produceQ7(binding,securityContract,q2,q3){
+  const d2=validateConsumableEvidence('Q2',binding,q2);
+  const d3=validateConsumableEvidence('Q3',binding,q3);
+  const observations=[];
+  observations.push(obs('q7.q2.consumable',d2.ok?'PASS':'BLOCKED',d2.ok?`producer-run:${q2.runId}`:null,d2.ok?null:d2.reason));
+  observations.push(obs('q7.q3.consumable',d3.ok?'PASS':'BLOCKED',d3.ok?`producer-run:${q3.runId}`:null,d3.ok?null:d3.reason));
+  if(d2.ok&&d3.ok){
+    const contractOk=securityContract?.learnerIdentityRequired===false&&securityContract?.telemetryAllowed===false&&securityContract?.statePolicy==='VOLATILE_MEMORY';
+    const accountOk=securityContract?.accountSurfaceObserved===false;
+    const persistentIdOk=securityContract?.persistentIdentifierObserved===false;
+    observations.push(obs('q7.runtime.contract',contractOk?'PASS':'FAIL',ev('runtime-contract',binding.pathwayId)));
+    observations.push(obs('q7.account.none',accountOk?'PASS':'FAIL',ev('runtime-contract',binding.pathwayId)));
+    observations.push(obs('q7.persistent-identifier.none',persistentIdOk?'PASS':'FAIL',ev('runtime-contract',binding.pathwayId)));
+  }
+  return result('Q7',binding,securityContract,observations,[...lineage(q2),...lineage(q3)]);
 }
 
 export function produceQ5(binding,transition){
