@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "atlas.experience.qualification-profiles/v1",
+  "status": "IMPLEMENTATION_CANDIDATE",
+  "profiles": [
+    {
+      "id": "SMART_FAST_V1",
+      "requirements": [
+        "ANONYMOUS_LOAD",
+        "NO_LEARNER_WRITE",
+        "MOBILE_DESKTOP",
+        "KEYBOARD",
+        "MATERIAL_VERIFICATION"
+      ]
+    },
+    {
+      "id": "PATHWAY_G2_PLUS_V1",
+      "requirements": [
+        "MEANINGFUL_BRANCHING",
+        "TRANSFER",
+        "PROVENANCE",
+        "ACCESSIBILITY_EVIDENCE",
+        "EXPLICIT_RUNTIME_AUTHORIZATION"
+      ]
+    }
+  ]
+}
