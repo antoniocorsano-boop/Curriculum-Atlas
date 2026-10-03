@@ -1,6 +1,6 @@
 {
   "schemaVersion": "atlas.percorsi.grammar-registry/v1",
-  "status": "RESEARCH_REGISTRY",
+  "status": "PRESENTATION_STRATEGY_REGISTRY",
   "grammars": [
     {
       "id": "sequential-visual-narrative",
@@ -46,5 +46,6 @@
       "id": "environmental-narrative",
       "label": "Narrazione ambientale"
     }
-  ]
+  ],
+  "kind": "PRESENTATION_GRAMMAR_REGISTRY"
 }
