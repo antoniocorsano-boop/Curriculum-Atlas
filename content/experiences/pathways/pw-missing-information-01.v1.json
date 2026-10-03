@@ -229,29 +229,16 @@
       {
         "id": "S9_TRACE_CONTROL",
         "primitive": "REFRAME",
-        "interaction": "choice",
+        "interaction": "summary",
         "title": "La strategia resta tua",
         "facts": [
           "Le risposte del percorso restano nella sessione e non vengono inviate ad Atlas.",
-          "Puoi scegliere separatamente se conservare i traguardi didattici sul tuo dispositivo."
+          "Se hai attivato la crescita locale, i traguardi didattici restano soltanto su questo dispositivo e puoi esportarli o cancellarli."
         ],
-        "prompt": "Vuoi conservare localmente i traguardi di questo percorso?",
+        "prompt": "Hai completato il percorso: ora puoi uscire, ricominciare oppure gestire i tuoi traguardi locali dal pannello dedicato.",
         "feedbackCategory": "EVIDENCE_SUPPORTED",
         "terminal": true,
-        "transitions": [
-          {
-            "id": "keep-local",
-            "targetNodeId": "S9_TRACE_CONTROL",
-            "label": "Conserva i miei traguardi sul dispositivo",
-            "feedback": "I traguardi restano solo su questo dispositivo e possono essere esportati o cancellati."
-          },
-          {
-            "id": "discard",
-            "targetNodeId": "S9_TRACE_CONTROL",
-            "label": "Non conservare",
-            "feedback": "Il percorso può terminare senza conservare traguardi locali."
-          }
-        ]
+        "transitions": []
       }
     ]
   },
