@@ -34,3 +34,39 @@ test.describe("Experience Engine conformance", () => {
     expect(width).toBeLessThanOrEqual(390);
   });
 });
+
+
+test.describe("PW-MISSING shared-engine conformance", () => {
+  test("branches, revises, transfers and completes through ExperienceRuntime", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-missing-information-01");
+    await expect(page.locator(".experience-runtime")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Quale informazione manca?" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Fare una stima usando ciò che sappiamo" }).click();
+    await expect(page.getByRole("heading", { name: "Hai lavorato con una stima" })).toBeFocused();
+
+    await page.getByRole("button", { name: "Riconsiderare la scelta precedente" }).click();
+    await expect(page.getByRole("heading", { name: "Quale informazione manca?" })).toBeFocused();
+
+    await page.getByRole("button", { name: "Cercare il dato sulla durata" }).click();
+    await expect(page.getByRole("heading", { name: "Hai cercato il dato mancante" })).toBeFocused();
+
+    await page.getByRole("button", { name: "Posso confrontare le alternative con informazioni pertinenti" }).click();
+    await expect(page.getByRole("heading", { name: "Stessa strategia, nuovo contesto" })).toBeFocused();
+
+    await page.getByRole("button", { name: "Il tempo di percorrenza" }).click();
+    await expect(page.getByRole("heading", { name: "Hai completato il percorso" })).toBeFocused();
+  });
+
+  test("remains volatile and emits no learner network writes", async ({ page }) => {
+    const writes: string[] = [];
+    page.on("request", (request) => {
+      if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method())) writes.push(request.method());
+    });
+    await page.goto("/percorsi/lab/pw-missing-information-01");
+    await page.getByRole("button", { name: "Cercare il dato sulla durata" }).click();
+    expect(writes).toEqual([]);
+    const localKeys = await page.evaluate(() => Object.keys(localStorage).filter((key) => key.includes("pw-missing-information-01")));
+    expect(localKeys).toEqual([]);
+  });
+});
