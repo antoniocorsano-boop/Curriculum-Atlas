@@ -180,3 +180,8 @@ for (const forbidden of [
 const canonicalDeploy = fs.readFileSync(".github/workflows/s1-preview-launcher.yml", "utf8");
 assert.equal(canonicalDeploy.includes("smart-publication-receipts-${{ github.sha }}"), true, "canonical deploy must emit SHA-bound Smart receipt artifact");
 console.log("SMART RECEIPT WORKFLOW: PASS — draft-only, least-privilege, no auto-merge.");
+
+
+assert.equal(workflow.includes("RECEIPT_DIR: .smart-receipts/"), true, "workflow must download receipts to scratch, not a tracked parallel evidence root");
+assert.equal(workflow.includes('git add content/smart-activities "$RECEIPT_DIR"'), false, "workflow must commit canonical per-activity receipt copies only");
+assert.equal(workflow.includes("`$DEPLOYED_SHA`"), false, "workflow PR body must not use shell command-substitution backticks");
