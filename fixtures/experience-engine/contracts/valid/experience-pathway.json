@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "atlas.experience/v1",
+  "experienceId": "fixture-pathway",
+  "version": "1.0.0",
+  "mode": "PATHWAY",
+  "kernelRef": "fixture-kernel",
+  "qualificationProfileId": "PATHWAY_G2_PLUS_V1",
+  "runtime": {
+    "statePolicy": "VOLATILE_MEMORY",
+    "learnerIdentityRequired": false,
+    "telemetryAllowed": false
+  },
+  "presentationGrammarIds": [
+    "branching-consequences"
+  ],
+  "graph": {
+    "entryNodeId": "p1",
+    "nodes": [
+      {
+        "id": "p1",
+        "primitive": "CHOOSE",
+        "interaction": "choice",
+        "feedbackCategory": "DECISION_PREMATURE",
+        "transitions": [
+          {
+            "targetNodeId": "p2"
+          },
+          {
+            "targetNodeId": "p3"
+          }
+        ]
+      },
+      {
+        "id": "p2",
+        "primitive": "TRANSFER",
+        "interaction": "choice",
+        "feedbackCategory": "TRANSFER_SUCCESSFUL",
+        "transitions": [
+          {
+            "targetNodeId": "p3"
+          }
+        ]
+      },
+      {
+        "id": "p3",
+        "primitive": "REFRAME",
+        "interaction": "summary",
+        "feedbackCategory": "MODEL_NEEDS_REVISION",
+        "terminal": true,
+        "transitions": []
+      }
+    ]
+  }
+}
