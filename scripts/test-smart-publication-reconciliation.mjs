@@ -178,7 +178,8 @@ for (const forbidden of [
 }
 
 const canonicalDeploy = fs.readFileSync(".github/workflows/s1-preview-launcher.yml", "utf8");
-assert.equal(canonicalDeploy.includes("smart-publication-receipts-${{ github.sha }}"), true, "canonical deploy must emit SHA-bound Smart receipt artifact");\nassert.equal(canonicalDeploy.includes("atlas.smart.publication-receipt-bundle/v1"), true, "canonical deploy must always emit bundle metadata so the receipt artifact exists even when no candidate receipt is produced");
+assert.equal(canonicalDeploy.includes("smart-publication-receipts-${{ github.sha }}"), true, "canonical deploy must emit SHA-bound Smart receipt artifact");
+assert.equal(canonicalDeploy.includes("atlas.smart.publication-receipt-bundle/v1"), true, "canonical deploy must always emit bundle metadata so the receipt artifact exists even when no candidate receipt is produced");
 console.log("SMART RECEIPT WORKFLOW: PASS — draft-only, least-privilege, no auto-merge.");
 
 
