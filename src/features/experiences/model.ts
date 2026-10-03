@@ -22,6 +22,8 @@ export interface ExperienceNode {
   id: string;
   primitive: ExperiencePrimitive;
   interaction: string;
+  title?: string;
+  prompt?: string;
   feedbackCategory: FeedbackCategory;
   transitions: ExperienceTransition[];
   terminal?: boolean;
