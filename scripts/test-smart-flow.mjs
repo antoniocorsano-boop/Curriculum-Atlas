@@ -1,0 +1,20 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import {validateSmartFlowPackage} from "./build-smart-flow-package.mjs";
+
+const flowPath=process.argv[process.argv.indexOf("--flow-package")+1];
+assert.ok(flowPath,"--flow-package required");
+const flow=JSON.parse(fs.readFileSync(flowPath,"utf8"));
+const result=validateSmartFlowPackage(flow,{root:process.cwd()});
+assert.equal(result.valid,true,result.errors.join("\n"));
+assert.deepEqual(Object.keys(flow.stages),["F0","F1","F2","F3","F4","F5","F6","F7","F8","F9","F10"]);
+assert.equal(flow.stages.F0.state,"PASS");
+assert.equal(flow.stages.F1.state,"PASS");
+assert.equal(flow.stages.F5.state,"PENDING");
+assert.equal(flow.stages.F8.state,"DEFERRED_NOT_AUTHORIZED");
+assert.equal(flow.stages.F10.teacherStatus,"Da completare");
+assert.notEqual(flow.stages.F10.teacherStatus,"Pronto");
+const material=JSON.parse(fs.readFileSync(flow.materialSetRef,"utf8"));
+assert.equal(material.readiness.packageReady,false);
+assert.equal(flow.experienceRef.includes("sistema-tecnologico"),true);
+console.log("SMART FLOW: PASS",flow.activityId,flow.stages.F10.teacherStatus);
