@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "atlas.challenge-kernel/v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "kernelId",
+    "title",
+    "situation",
+    "generativeQuestion",
+    "competenceTargets",
+    "evidenceModel",
+    "decisionModel",
+    "transferPrinciple",
+    "completionEvidence",
+    "provenanceRefs"
+  ],
+  "properties": {
+    "schema": {
+      "const": "atlas.challenge-kernel/v1"
+    },
+    "kernelId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "situation": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generativeQuestion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "competenceTargets": {
+      "type": "array",
+      "minItems": 1
+    },
+    "evidenceModel": {
+      "type": "object",
+      "required": [
+        "availableEvidence"
+      ]
+    },
+    "decisionModel": {
+      "type": "object",
+      "required": [
+        "decisions",
+        "consequencePolicy",
+        "revisionAllowed"
+      ]
+    },
+    "transferPrinciple": {
+      "type": "string",
+      "minLength": 1
+    },
+    "completionEvidence": {
+      "type": "array",
+      "minItems": 1
+    },
+    "provenanceRefs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "additionalProperties": true
+}

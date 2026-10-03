@@ -1,0 +1,7 @@
+export type ExperienceMode = "SMART" | "PATHWAY";
+export type ExperiencePrimitive = "EXPLORE" | "CHOOSE" | "CONNECT" | "BUILD" | "INVESTIGATE" | "REFRAME" | "TRANSFER";
+export type RuntimeStatePolicy = "VOLATILE_MEMORY" | "LOCAL_DEVICE";
+export type FeedbackCategory = "EVIDENCE_SUPPORTED" | "EVIDENCE_INCOMPLETE" | "DECISION_PREMATURE" | "ALTERNATIVE_PLAUSIBLE" | "MODEL_NEEDS_REVISION" | "TRANSFER_SUCCESSFUL";
+export type ChallengeKernel = {schema:"atlas.challenge-kernel/v1";kernelId:string;title:string;situation:string;generativeQuestion:string;competenceTargets:Array<Record<string,unknown>>;evidenceModel:{availableEvidence:Array<Record<string,unknown>>;intentionallyMissingEvidence?:Array<Record<string,unknown>>;misconceptions?:Array<Record<string,unknown>>};decisionModel:{decisions:Array<Record<string,unknown>>;consequencePolicy:"EXPLANATORY"|"BRANCHING"|"CONSTRUCTIVE";revisionAllowed:boolean};transferPrinciple:string;completionEvidence:Array<Record<string,unknown>>;provenanceRefs:string[]};
+export type ExperienceScene = {id:string;primitive:ExperiencePrimitive;interaction:{kind:string};transitions:Array<{id:string;targetSceneId:string}>;feedback?:{category:FeedbackCategory};terminal?:boolean};
+export type ExperienceDefinition = {schema:"atlas.experience/v1";experienceId:string;kernelRef:string;mode:ExperienceMode;sceneGraph:{entrySceneId:string;scenes:ExperienceScene[]};presentationGrammarRef:string;materialSetRef?:string;qualificationProfileRef:string;runtimeStatePolicy:RuntimeStatePolicy;learnerIdentityRequired:false;telemetryAllowed:false};

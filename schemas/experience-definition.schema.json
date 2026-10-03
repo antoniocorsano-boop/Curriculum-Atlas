@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "atlas.experience/v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "experienceId",
+    "kernelRef",
+    "mode",
+    "sceneGraph",
+    "presentationGrammarRef",
+    "qualificationProfileRef",
+    "runtimeStatePolicy",
+    "learnerIdentityRequired",
+    "telemetryAllowed"
+  ],
+  "properties": {
+    "schema": {
+      "const": "atlas.experience/v1"
+    },
+    "mode": {
+      "enum": [
+        "SMART",
+        "PATHWAY"
+      ]
+    },
+    "runtimeStatePolicy": {
+      "enum": [
+        "VOLATILE_MEMORY",
+        "LOCAL_DEVICE"
+      ]
+    },
+    "learnerIdentityRequired": {
+      "const": false
+    },
+    "telemetryAllowed": {
+      "const": false
+    }
+  },
+  "additionalProperties": true
+}
