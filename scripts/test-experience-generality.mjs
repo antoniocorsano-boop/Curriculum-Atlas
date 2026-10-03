@@ -175,6 +175,40 @@ assert.deepEqual(
   "second Percorso must be reproducible from the shared generic Experience builder",
 );
 
+const malformedPresentationNodes = structuredClone(secondSeed.experienceSeed);
+malformedPresentationNodes.presentationData.L.nodes = null;
+assert.throws(
+  () => buildExperienceCandidate(malformedPresentationNodes),
+  /presentationNodes:L/,
+  "Experience builder must reject a presentation with a non-object node map",
+);
+
+const mismatchedPresentationId = structuredClone(secondSeed.experienceSeed);
+mismatchedPresentationId.presentationData.L.id = "N";
+assert.throws(
+  () => buildExperienceCandidate(mismatchedPresentationId),
+  /presentationId:L/,
+  "Experience builder must reject a presentation whose id does not match its grammar key",
+);
+
+const unknownPresentationNode = structuredClone(secondSeed.experienceSeed);
+unknownPresentationNode.presentationData.N.nodes.UNKNOWN_NODE = { title: "Non valido" };
+assert.throws(
+  () => buildExperienceCandidate(unknownPresentationNode),
+  /presentationNode:N:UNKNOWN_NODE/,
+  "Experience builder must reject presentation overlays for nodes absent from the graph",
+);
+
+const unknownPresentationTransition = structuredClone(secondSeed.experienceSeed);
+unknownPresentationTransition.presentationData.N.nodes.C2_COMPARE.transitions = {
+  "unknown-transition": { label: "Non valida" },
+};
+assert.throws(
+  () => buildExperienceCandidate(unknownPresentationTransition),
+  /presentationTransition:N:C2_COMPARE:unknown-transition/,
+  "Experience builder must reject presentation transition overlays absent from the base graph",
+);
+
 const nodesById = Object.fromEntries(persistedSecondExperience.graph.nodes.map((node) => [node.id, node]));
 for (const branch of [
   ["C1_BRIEF", "C2_COMPARE", "C3A_TRADEOFF", "C4A_BUILD", "C5A_REFRAME", "C6_METHOD", "C7_TRANSFER"],
