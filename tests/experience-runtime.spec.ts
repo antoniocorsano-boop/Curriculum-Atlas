@@ -32,3 +32,17 @@ test("reduced motion and 200 percent zoom preserve the task", async ({ page }) =
   await expect(page.getByRole("radio",{name:"Inspect the evidence"})).toBeVisible();
   await expect(page.getByRole("button",{name:"Continue"})).toBeVisible();
 });
+
+
+test("text interaction persists locally without network writes", async ({ page }) => {
+  const writes:string[]=[];
+  page.on("request", req => { if (["POST","PUT","PATCH","DELETE"].includes(req.method())) writes.push(req.method()+" "+req.url()); });
+  await page.goto("/experience-lab/text-conformance");
+  const field=page.getByLabel("Your reasoning");
+  await field.fill("I need one more piece of evidence.");
+  await page.reload();
+  await expect(page.getByLabel("Your reasoning")).toHaveValue("I need one more piece of evidence.");
+  await page.getByRole("button",{name:"Continue"}).click();
+  await expect(page.getByRole("heading",{name:"Completed"})).toBeVisible();
+  expect(writes).toEqual([]);
+});
