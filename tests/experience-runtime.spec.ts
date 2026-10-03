@@ -53,3 +53,26 @@ test("SP-01 uses the shared local experience session", async ({ page }) => {
   await page.getByLabel("Oppure scegli un altro sistema").fill("Pompa di calore");
   await expect.poll(async () => page.evaluate(() => localStorage.getItem("atlas:experience:sistema-tecnologico:v1"))).not.toBeNull();
 });
+
+
+test("SP-01 shared runtime preserves the seven-step summary and restart", async ({ page }) => {
+  await page.goto("/attivita/sistema-tecnologico");
+  await page.getByLabel("Oppure scegli un altro sistema").fill("Pompa di calore");
+  await page.getByRole("button",{name:"Continua"}).click();
+  await page.getByLabel("Quale bisogno soddisfa, quale risultato deve ottenere e quali componenti sono indispensabili?").fill("Riscalda gli ambienti trasferendo energia.");
+  await page.getByRole("button",{name:"Continua"}).click();
+  await page.getByLabel("Che cosa entra nel sistema? Che cosa viene trasformato? Che cosa otteniamo in uscita?").fill("Entrano energia elettrica e calore ambientale.");
+  await page.getByRole("button",{name:"Continua"}).click();
+  await page.getByLabel("Da dove proviene, in quale forma entra, come cambia e quale parte diventa utile o viene dissipata?").fill("L'energia elettrica alimenta il ciclo frigorifero.");
+  await page.getByRole("button",{name:"Continua"}).click();
+  await page.getByLabel("Quali materiali e risorse richiede il sistema? Quale ti sembra più importante o critica?").fill("Metalli, refrigerante, energia.");
+  await page.getByRole("button",{name:"Continua"}).click();
+  await page.getByLabel("Che cosa accade da materie prime → produzione → trasporto → uso → fine vita? Quali impatti riconosci?").fill("Produzione, uso e recupero del refrigerante incidono sugli impatti.");
+  await page.getByRole("button",{name:"Continua"}).click();
+  await page.getByLabel("In quale punto interverresti per rendere il sistema più sostenibile e perché la proposta dovrebbe ridurre l'impatto?").fill("Aumenterei efficienza e riparabilità.");
+  await page.getByRole("button",{name:"Continua"}).click();
+  await expect(page.getByRole("heading",{name:"Riepilogo"})).toBeVisible();
+  await expect(page.getByText("Pompa di calore")).toBeVisible();
+  await page.getByRole("button",{name:"Ricomincia"}).click();
+  await expect(page.getByRole("heading",{name:"Scegli il sistema"})).toBeVisible();
+});
