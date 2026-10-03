@@ -68,7 +68,7 @@ export function ExperienceRuntime({
   function proceed() {
     const transition = isChoice ? pendingTransition : firstTransition;
     if (transition) {
-      onTransition?.(node.id, transition.key, transition.targetNodeId);
+      onTransition?.(node!.id, transition.key, transition.targetNodeId);
       session.choose(transition.targetNodeId);
     }
   }
