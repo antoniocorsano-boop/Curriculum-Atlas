@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "atlas.smart.flow-package/v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "activityId",
+    "intentRef",
+    "planRef",
+    "experienceRef",
+    "materialSetRef",
+    "readinessAuthority",
+    "stages"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "atlas.smart.flow-package/v1"
+    },
+    "readinessAuthority": {
+      "const": "MATERIAL_SET"
+    }
+  }
+}
