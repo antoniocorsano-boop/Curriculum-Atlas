@@ -19,6 +19,7 @@ export default function MissingInformationPathwayLabPage() {
       title="Prima di decidere, cosa manca?"
       description="Osserva, scegli, rivedi e prova la stessa strategia in situazioni diverse. Questa è un’anteprima di prodotto, non un quiz."
       growthAchievements={missingInformationGrowthAchievements}
+      reviewNotice="PROTOTIPO · NON AUTORIZZATO AGLI STUDENTI"
     />
   );
 }
