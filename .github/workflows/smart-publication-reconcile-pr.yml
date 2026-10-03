@@ -97,13 +97,10 @@ jobs:
 
           git push origin "HEAD:$branch"
 
-          cat > /tmp/smart-reconcile-pr-body.md <<EOF
-Canonical Atlas Pages verification produced matching Smart publication receipts for deployed SHA $DEPLOYED_SHA.
-
-This draft PR persists the first canonical proof for each resolved required asset and updates the existing MaterialSet readiness state. Equivalent later deploy receipts are intentionally ignored to prevent reconciliation loops.
-
-It creates no second readiness system, does not authorize runtime, and never merges automatically. Human review remains required.
-EOF
+          printf -v body '%s\n\n%s\n\n%s\n' \
+            "Canonical Atlas Pages verification produced matching Smart publication receipts for deployed SHA $DEPLOYED_SHA." \
+            "This draft PR persists the first canonical proof for each resolved required asset and updates the existing MaterialSet readiness state. Equivalent later deploy receipts are intentionally ignored to prevent reconciliation loops." \
+            "It creates no second readiness system, does not authorize runtime, and never merges automatically. Human review remains required."
 
           gh pr create \
             --repo "${{ github.repository }}" \
@@ -111,4 +108,4 @@ EOF
             --head "$branch" \
             --draft \
             --title "Reconcile Smart publication receipts ($DEPLOYED_SHA)" \
-            --body-file /tmp/smart-reconcile-pr-body.md
+            --body "$body"
