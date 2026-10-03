@@ -58,25 +58,26 @@ async function run(viewport,grammar){
  await page.keyboard.press("Tab");
  assert(await continueButton.evaluate(el=>el===document.activeElement),`${grammar} Tab exits radio group to Continue`);
  await continueButton.press("Enter");
- assert(await runtime.getByRole("heading",{name:"Come decidere?"}).evaluate(el=>el===document.activeElement),`${grammar} focus moves to strategy-choice scene`);
+ const title = (literal, narrative) => grammar === "N" ? narrative : literal;
+ assert(await runtime.getByRole("heading",{name:title("Come decidere?","Tre strade possibili")}).evaluate(el=>el===document.activeElement),`${grammar} focus moves to strategy-choice scene`);
 
  await chooseAndContinue(page,"Controllare prima le risorse disponibili");
- assert((await runtime.getByRole("heading",{name:"Osserva la conseguenza"}).count())===1,`${grammar} consequence scene reached`);
+ assert((await runtime.getByRole("heading",{name:title("Osserva la conseguenza","Guarda dove porta la scelta")}).count())===1,`${grammar} consequence scene reached`);
  await runtime.getByRole("button",{name:"Continua"}).click();
 
- assert((await runtime.getByRole("heading",{name:"Puoi rivedere la scelta"}).count())===1,`${grammar} revision scene reached`);
+ assert((await runtime.getByRole("heading",{name:title("Puoi rivedere la scelta","Puoi tornare all’incrocio")}).count())===1,`${grammar} revision scene reached`);
  await chooseAndContinue(page,"Tengo la scelta");
 
- assert((await runtime.getByRole("heading",{name:"Diamo un nome alla strategia"}).count())===1,`${grammar} strategy recognition reached`);
+ assert((await runtime.getByRole("heading",{name:title("Diamo un nome alla strategia","Hai trovato uno strumento")}).count())===1,`${grammar} strategy recognition reached`);
  await chooseAndContinue(page,"Individuare il dato mancante e controllarlo prima di decidere");
 
- assert((await runtime.getByRole("heading",{name:"Una situazione diversa"}).count())===1,`${grammar} changed context reached`);
+ assert((await runtime.getByRole("heading",{name:title("Una situazione diversa","La strada cambia, la strategia resta?")}).count())===1,`${grammar} changed context reached`);
  await chooseAndContinue(page,"Sì: prima controllo ciò che è disponibile");
 
- assert((await runtime.getByRole("heading",{name:"Controllare una fonte"}).count())===1,`${grammar} transfer probe reached`);
+ assert((await runtime.getByRole("heading",{name:title("Controllare una fonte","Un altro tipo di indizio")}).count())===1,`${grammar} transfer probe reached`);
  await chooseAndContinue(page,"Quali prove e fonti sostengono le informazioni");
 
- assert((await runtime.getByRole("heading",{name:"La strategia resta tua"}).count())===1,`${grammar} explicit terminal trace-control scene`);
+ assert((await runtime.getByRole("heading",{name:title("La strategia resta tua","Che cosa vuoi portare con te?")}).count())===1,`${grammar} explicit terminal trace-control scene`);
  assert((await page.getByRole("link",{name:"Esci"}).count())===1&&(await page.getByRole("button",{name:"Nuovo percorso"}).count())===1,`${grammar} exit and new session distinct at terminal`);
 
  await page.getByRole("button",{name:"Nuovo percorso"}).click();
