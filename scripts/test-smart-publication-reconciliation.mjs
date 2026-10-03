@@ -144,3 +144,34 @@ for (const receipt of [
 }
 
 console.log("SMART PUBLICATION RECONCILIATION: PASS");
+
+
+const workflowPath = ".github/workflows/smart-publication-reconcile-pr.yml";
+assert.equal(fs.existsSync(workflowPath), true, "SMART RECEIPT WORKFLOW: missing reconciliation workflow");
+const workflow = fs.readFileSync(workflowPath, "utf8");
+for (const required of [
+  "workflow_run:",
+  "Atlas Canonical Pages Deploy",
+  "actions: read",
+  "contents: write",
+  "pull-requests: write",
+  "github.event.workflow_run.head_sha",
+  "scripts/reconcile-smart-publication-receipts.mjs",
+  "gh pr create",
+  "--draft",
+]) {
+  assert.equal(workflow.includes(required), true, `SMART RECEIPT WORKFLOW: missing ${required}`);
+}
+for (const forbidden of [
+  "pull_request_target",
+  "gh pr merge",
+  "enable_auto_merge",
+  "GitHub App",
+  "--force",
+]) {
+  assert.equal(workflow.includes(forbidden), false, `SMART RECEIPT WORKFLOW: forbidden pattern ${forbidden}`);
+}
+
+const canonicalDeploy = fs.readFileSync(".github/workflows/s1-preview-launcher.yml", "utf8");
+assert.equal(canonicalDeploy.includes("smart-publication-receipts-${{ github.sha }}"), true, "canonical deploy must emit SHA-bound Smart receipt artifact");
+console.log("SMART RECEIPT WORKFLOW: PASS — draft-only, least-privilege, no auto-merge.");
