@@ -16,7 +16,10 @@ jobs:
   g1-nine-scenes:
     # G2 has a distinct graph contract and behavioural gate. Running the legacy
     # nine-scene assertion against the isolated G2 prototype is a category error.
-    if: github.event_name == 'workflow_dispatch' || github.head_ref != 'percorsi-g2-ux-prototype'
+    # Historical G1 nine-scene reproduction only. G2 candidates are qualified by
+    # Percorsi G2 Validator + Percorsi G2 UX Collaudo; successful G2 work must
+    # never be forced back into the superseded fixed-nine-scene model.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout exact PR head
