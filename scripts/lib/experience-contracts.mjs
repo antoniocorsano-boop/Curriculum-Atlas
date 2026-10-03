@@ -48,6 +48,72 @@ export function validateExperienceGraph(graph, { mode } = {}) {
   return result(errors);
 }
 
+function validatePresentationData(value) {
+  const errors = [];
+  if (value?.presentationData == null) return result(errors);
+  if (typeof value.presentationData !== "object" || Array.isArray(value.presentationData)) {
+    errors.push("presentationData");
+    return result(errors);
+  }
+
+  const grammarIds = new Set(Array.isArray(value?.presentationGrammarIds) ? value.presentationGrammarIds : []);
+  const graphNodes = Array.isArray(value?.graph?.nodes) ? value.graph.nodes : [];
+  const graphById = new Map(graphNodes.map((node) => [node?.id, node]));
+
+  for (const [grammarId, presentation] of Object.entries(value.presentationData)) {
+    if (!grammarIds.has(grammarId)) errors.push(`presentationGrammar:${grammarId}`);
+    if (!presentation || typeof presentation !== "object" || Array.isArray(presentation)) {
+      errors.push(`presentation:${grammarId}`);
+      continue;
+    }
+    if (presentation.id !== grammarId) errors.push(`presentationId:${grammarId}`);
+    if (!presentation.nodes || typeof presentation.nodes !== "object" || Array.isArray(presentation.nodes)) {
+      errors.push(`presentationNodes:${grammarId}`);
+      continue;
+    }
+
+    for (const [nodeId, view] of Object.entries(presentation.nodes)) {
+      const graphNode = graphById.get(nodeId);
+      if (!graphNode) {
+        errors.push(`presentationNode:${grammarId}:${nodeId}`);
+        continue;
+      }
+      if (!view || typeof view !== "object" || Array.isArray(view)) {
+        errors.push(`presentationView:${grammarId}:${nodeId}`);
+        continue;
+      }
+      for (const key of ["title", "prompt"]) {
+        if (key in view && typeof view[key] !== "string") errors.push(`presentationField:${grammarId}:${nodeId}:${key}`);
+      }
+      if ("facts" in view && (!Array.isArray(view.facts) || view.facts.some((fact) => typeof fact !== "string"))) {
+        errors.push(`presentationFacts:${grammarId}:${nodeId}`);
+      }
+      if ("transitions" in view) {
+        if (!view.transitions || typeof view.transitions !== "object" || Array.isArray(view.transitions)) {
+          errors.push(`presentationTransitions:${grammarId}:${nodeId}`);
+          continue;
+        }
+        const transitionKeys = new Set(
+          (graphNode.transitions ?? []).map((transition, index) => transition?.id ?? `${nodeId}:${index}`),
+        );
+        for (const [transitionId, copy] of Object.entries(view.transitions)) {
+          if (!transitionKeys.has(transitionId)) errors.push(`presentationTransition:${grammarId}:${nodeId}:${transitionId}`);
+          if (!copy || typeof copy !== "object" || Array.isArray(copy)) {
+            errors.push(`presentationTransitionView:${grammarId}:${nodeId}:${transitionId}`);
+            continue;
+          }
+          for (const key of ["label", "feedback"]) {
+            if (key in copy && typeof copy[key] !== "string") {
+              errors.push(`presentationTransitionField:${grammarId}:${nodeId}:${transitionId}:${key}`);
+            }
+          }
+        }
+      }
+    }
+  }
+  return result(errors);
+}
+
 export function validateExperienceDefinition(value) {
   const errors = [];
   if (value?.schemaVersion !== "atlas.experience/v1") errors.push("schemaVersion");
@@ -62,5 +128,7 @@ export function validateExperienceDefinition(value) {
   if (!Array.isArray(value?.presentationGrammarIds) || value.presentationGrammarIds.length === 0) errors.push("presentationGrammarIds");
   const graph = validateExperienceGraph(value?.graph, { mode: value?.mode });
   errors.push(...graph.errors);
+  const presentations = validatePresentationData(value);
+  errors.push(...presentations.errors);
   return result(errors);
 }
