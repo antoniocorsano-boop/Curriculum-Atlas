@@ -41,6 +41,19 @@
       "testFiles": [
         "tests/experience-runtime.spec.ts"
       ]
+    },
+    {
+      "id": "atlas-percorsi-local-growth",
+      "critical": false,
+      "sourcePatterns": [
+        "src/features/pathways/local-growth-panel.tsx"
+      ],
+      "feedbackFiles": [
+        "src/features/pathways/local-growth-panel.tsx"
+      ],
+      "testFiles": [
+        "tests/experience-runtime.spec.ts"
+      ]
     }
   ]
 }
