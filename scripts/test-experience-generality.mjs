@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { buildPathwayCandidate } from "./build-percorsi-pathway-candidate.mjs";
+import { buildExperienceCandidate } from "./build-experience-candidate.mjs";
 
 const required = [
   "scripts/build-smart-flow-package.mjs",
@@ -50,6 +53,7 @@ const genericFiles = [
   "scripts/test-smart-flow.mjs",
   "scripts/lib/experience-contracts.mjs",
   "scripts/build-experience-candidate.mjs",
+  "scripts/build-percorsi-pathway-candidate.mjs",
   ".github/workflows/experience-engine-tdd.yml",
 ];
 for (const file of genericFiles) {
@@ -69,28 +73,66 @@ assert.notEqual(sourceFlow.stages.F10.teacherStatus, "Pronto");
 console.log("EXPERIENCE GENERALITY SMART: PASS — SP-01 + fonte-digitale use the same deterministic flow/runtime contracts.");
 
 
-const unregisteredSecondPathway = {
-  schemaVersion: "atlas.percorsi.seed/v1",
-  pathwayId: "pw-constraints-tradeoffs-01",
-  title: "Una soluzione, molti vincoli",
-  version: "2.0.0",
-  territoryIds: ["design", "world"],
-  competence: "Progettare una soluzione valutando vincoli e compromessi e rivederla quando cambia un requisito.",
-  coreStrategy: "Rendere espliciti i vincoli, costruire una soluzione, osservare i compromessi e rivederla quando cambia un requisito.",
-  evidenceGoal: "Il percorso mostra una revisione motivata e un trasferimento della strategia a un contesto differente.",
-  initialContext: "Una soluzione deve soddisfare più vincoli che non possono essere massimizzati contemporaneamente.",
-  transferContext: "Un secondo problema cambia dominio e insieme dei vincoli, mantenendo la stessa strategia di progetto.",
-  provenanceRef: "TRAMA-PR-218-PENDING-HUMAN-REVIEW",
-  cognitiveFunctions: {
-    orient: "identify_constraints",
-    practice: "construct_under_constraints",
-    transfer: "transfer_constraint_strategy",
-    reflect: "revise_tradeoffs",
-  },
-};
+const secondSeedPath = "fixtures/percorsi-factory/valid/constraints-tradeoffs.seed.json";
+const secondKernelPath = "content/experience-kernels/pathways/pw-constraints-tradeoffs-01.v1.json";
+const secondExperiencePath = "content/experiences/pathways/pw-constraints-tradeoffs-01.v1.json";
+
+for (const requiredPath of [secondSeedPath, secondKernelPath, secondExperiencePath]) {
+  assert.equal(fs.existsSync(requiredPath), true, `missing second Percorso artifact: ${requiredPath}`);
+}
+
+const secondSeed = JSON.parse(fs.readFileSync(secondSeedPath, "utf8"));
+const portfolio = JSON.parse(fs.readFileSync("governance/percorsi-portfolio.json", "utf8"));
+const registeredSecondPathway = portfolio.pathways.find((entry) => entry.pathwayId === "pw-constraints-tradeoffs-01");
+assert.ok(registeredSecondPathway, "second pathway must be registered after exact-head Human Review");
+assert.equal(registeredSecondPathway.state, "IMPLEMENTATION_CANDIDATE");
+assert.equal(registeredSecondPathway.runtimeAuthorization, "NOT_RUNTIME_AUTHORIZED");
+assert.equal(registeredSecondPathway.authorityRef, "antoniocorsano-boop/trama-ecosistema#217@81534e352396ad858c7cf5ee00c7ec3b0756ae64");
+assert.deepEqual(registeredSecondPathway.territoryIds, ["design", "world"]);
+
+const unregisteredPortfolio = structuredClone(portfolio);
+unregisteredPortfolio.pathways = unregisteredPortfolio.pathways.filter((entry) => entry.pathwayId !== "pw-constraints-tradeoffs-01");
+const authorityGuardDir = fs.mkdtempSync(path.join(os.tmpdir(), "atlas-pathway-authority-"));
+const authorityGuardPortfolio = path.join(authorityGuardDir, "portfolio.json");
+fs.writeFileSync(authorityGuardPortfolio, JSON.stringify(unregisteredPortfolio, null, 2));
 assert.throws(
-  () => buildPathwayCandidate(unregisteredSecondPathway),
+  () => buildPathwayCandidate(secondSeed, { portfolioPath: authorityGuardPortfolio }),
   /not registered in backlog-zero portfolio/,
-  "Atlas must reject PW-CONSTRAINTS-TRADEOFFS-01 until exact-head TRAMA Human Review authorizes portfolio registration",
+  "factory must still fail closed when the governed registration is absent",
 );
-console.log("PERCORSI AUTHORITY GUARD: PASS — second pathway remains unregistered before TRAMA Human Review.");
+
+const secondG2Candidate = buildPathwayCandidate(secondSeed);
+assert.equal(secondG2Candidate.governance.authorizationState, "NOT_RUNTIME_AUTHORIZED");
+assert.equal(secondG2Candidate.governance.learnerNetworkWrite, "forbidden");
+assert.equal(secondG2Candidate.governance.learnerTelemetry, "forbidden");
+
+const persistedSecondExperience = JSON.parse(fs.readFileSync(secondExperiencePath, "utf8"));
+const rebuiltSecondExperience = buildExperienceCandidate(secondSeed.experienceSeed);
+assert.deepEqual(
+  rebuiltSecondExperience,
+  persistedSecondExperience,
+  "second Percorso must be reproducible from the shared generic Experience builder",
+);
+
+const nodesById = Object.fromEntries(persistedSecondExperience.graph.nodes.map((node) => [node.id, node]));
+for (const branch of [
+  ["explore", "connect", "build-durable", "reframe-durable", "transfer"],
+  ["explore", "connect", "build-economical", "reframe-economical", "transfer"],
+]) {
+  assert.deepEqual(
+    branch.map((id) => nodesById[id].primitive),
+    ["EXPLORE", "CONNECT", "BUILD", "REFRAME", "TRANSFER"],
+    "second Percorso must exercise the governed materially different primitive sequence",
+  );
+}
+assert.equal(persistedSecondExperience.runtime.statePolicy, "VOLATILE_MEMORY");
+assert.equal(persistedSecondExperience.runtime.learnerIdentityRequired, false);
+assert.equal(persistedSecondExperience.runtime.telemetryAllowed, false);
+
+for (const [kind, file] of [["kernel", secondKernelPath], ["experience", secondExperiencePath]]) {
+  const run = spawnSync(process.execPath, ["scripts/validate-experience-contracts.mjs", kind, file], { encoding: "utf8" });
+  assert.equal(run.status, 0, `${file} failed shared contract validation:\n${run.stdout}\n${run.stderr}`);
+}
+
+console.log("PERCORSI AUTHORITY GUARD: PASS — registration is exact-head governed and still fails closed when authority is absent.");
+console.log("PERCORSI GENERALITY: PASS — second pathway uses the shared factory/runtime contract with EXPLORE → CONNECT → BUILD → REFRAME → TRANSFER.");

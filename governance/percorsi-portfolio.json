@@ -46,6 +46,22 @@
       "state": "IMPLEMENTED_CANDIDATE",
       "evidenceRef": "docs/PERCORSI-G1-PW-MISSING-INFORMATION-01-IMPLEMENTATION.md",
       "tramaDossierRef": "docs/capabilities/atlas-percorsi/pathways/PW-MISSING-INFORMATION-01/dossier-v1.md"
+    },
+    {
+      "pathwayId": "pw-constraints-tradeoffs-01",
+      "title": "Una soluzione, molti vincoli",
+      "version": "1.0.0",
+      "state": "IMPLEMENTATION_CANDIDATE",
+      "territoryIds": [
+        "design",
+        "world"
+      ],
+      "runtimeAuthorization": "NOT_RUNTIME_AUTHORIZED",
+      "availability": "ACTIVE",
+      "evidenceRef": "content/experiences/pathways/pw-constraints-tradeoffs-01.v1.json",
+      "tramaDossierRef": "docs/capabilities/atlas-percorsi/pathways/PW-CONSTRAINTS-TRADEOFFS-01/dossier-v1.md",
+      "authorityRef": "antoniocorsano-boop/trama-ecosistema#217@81534e352396ad858c7cf5ee00c7ec3b0756ae64",
+      "provenanceRef": "TRAMA PR #217 @ 81534e352396ad858c7cf5ee00c7ec3b0756ae64"
     }
   ],
   "excludedRecoveries": [
