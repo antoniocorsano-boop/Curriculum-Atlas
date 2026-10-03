@@ -79,9 +79,12 @@
         "design",
         "world"
       ],
-      "productState": "SCREENPLAY_REQUIRED",
-      "dossierRef": "TRAMA:docs/capabilities/atlas-percorsi/pathways/PW-CONSTRAINTS-TRADEOFFS-01/dossier-v1.md"
+      "productState": "PRODUCT_AUTHORED_CANDIDATE",
+      "dossierRef": "TRAMA:docs/capabilities/atlas-percorsi/pathways/PW-CONSTRAINTS-TRADEOFFS-01/dossier-v1.md",
+      "version": "1.1.0",
+      "screenplayRef": "TRAMA:docs/capabilities/atlas-percorsi/pathways/PW-CONSTRAINTS-TRADEOFFS-01/product-screenplay-v1.md#223@fe5b5b5ce54bce195ed029940acb2df8190baf1f"
     }
   ],
-  "runtimeAuthorization": "NOT_RUNTIME_AUTHORIZED"
+  "runtimeAuthorization": "NOT_RUNTIME_AUTHORIZED",
+  "territoryGovernance": "CANDIDATE_NOT_APPROVED"
 }
