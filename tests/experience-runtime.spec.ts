@@ -114,7 +114,7 @@ test.describe("PW-MISSING product recovery on shared engine", () => {
     expect(await page.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"))).toBeNull();
 
     await page.getByRole("button", { name: "Conserva i miei traguardi su questo dispositivo" }).click();
-    await expect(page.getByRole("status")).toContainText("Crescita locale attivata");
+    await expect(page.locator(".pathwayGrowth__status")).toContainText("Crescita locale attivata");
     await page.getByRole("button", { name: "Continua" }).click();
     await page.getByRole("radio", { name: "Quali risorse sono disponibili" }).check();
     await page.getByRole("button", { name: "Continua" }).click();
@@ -125,13 +125,13 @@ test.describe("PW-MISSING product recovery on shared engine", () => {
     await page.getByRole("button", { name: "Continua" }).click();
 
     await expect(page.getByText("Riconosco la strategia: cerco il dato pertinente che manca")).toBeVisible();
-    await expect(page.getByRole("status")).toContainText("Nuovo traguardo conservato");
+    await expect(page.locator(".pathwayGrowth__status")).toContainText("Nuovo traguardo conservato");
     const stored = await page.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"));
     expect(stored).toContain("recognise-missing-information-strategy");
     expect(writes).toEqual([]);
 
     await page.getByRole("button", { name: "Cancella i progressi locali" }).click();
-    await expect(page.getByRole("status")).toContainText("sono stati cancellati");
+    await expect(page.locator(".pathwayGrowth__status")).toContainText("sono stati cancellati");
     expect(await page.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"))).toBeNull();
   });
 });
