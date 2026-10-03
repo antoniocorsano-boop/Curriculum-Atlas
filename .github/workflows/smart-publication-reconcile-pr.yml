@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DEPLOYED_SHA: ${{ github.event.workflow_run.head_sha }}
-      RECEIPT_DIR: content/publication-receipts/${{ github.event.workflow_run.head_sha }}
+      RECEIPT_DIR: .smart-receipts/${{ github.event.workflow_run.head_sha }}
     steps:
       - name: Checkout deployed exact main head
         uses: actions/checkout@v4
@@ -55,12 +55,14 @@ jobs:
             --summary .smart-reconcile-summary.json
 
           changed="$(node -e "const s=require('./.smart-reconcile-summary.json'); process.stdout.write(String(s.changedManifests.length))")"
+          rm -f .smart-reconcile-summary.json
+
           if [ "$changed" = "0" ]; then
-            rm -rf "$RECEIPT_DIR" .smart-reconcile-summary.json
+            rm -rf "$RECEIPT_DIR"
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "Canonical Smart publication state is already equivalent; no PR required."
           else
-            rm -f .smart-reconcile-summary.json
+            rm -rf "$RECEIPT_DIR"
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "changed_count=$changed" >> "$GITHUB_OUTPUT"
           fi
@@ -76,13 +78,17 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$branch"
-          git add content/smart-activities "$RECEIPT_DIR"
+          git add content/smart-activities
+          git diff --cached --quiet && {
+            echo "No canonical file changes remain after reconciliation; no PR required."
+            exit 0
+          }
           git commit -m "chore(atlas): reconcile Smart publication receipts"
 
           if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
             existing="$(gh pr list --repo "${{ github.repository }}" --head "$branch" --state open --json number --jq '.[0].number // empty')"
             if [ -n "$existing" ]; then
-              echo "Draft reconciliation PR #$existing already exists; leaving it untouched."
+              echo "Draft reconciliation PR #$existing already exists for this deployed SHA; leaving it unchanged."
               exit 0
             fi
             echo "Receipt branch already exists without an open PR; refusing to overwrite it."
@@ -91,12 +97,18 @@ jobs:
 
           git push origin "HEAD:$branch"
 
+          cat > /tmp/smart-reconcile-pr-body.md <<EOF
+Canonical Atlas Pages verification produced matching Smart publication receipts for deployed SHA $DEPLOYED_SHA.
+
+This draft PR persists the first canonical proof for each resolved required asset and updates the existing MaterialSet readiness state. Equivalent later deploy receipts are intentionally ignored to prevent reconciliation loops.
+
+It creates no second readiness system, does not authorize runtime, and never merges automatically. Human review remains required.
+EOF
+
           gh pr create \
             --repo "${{ github.repository }}" \
             --base main \
             --head "$branch" \
             --draft \
             --title "Reconcile Smart publication receipts ($DEPLOYED_SHA)" \
-            --body "Canonical Atlas Pages verification produced matching Smart publication receipts for deployed SHA `$DEPLOYED_SHA`.
-
-This draft PR persists those receipts and updates the existing MaterialSet readiness state. It creates no second readiness system and does not authorize runtime or merge. Human review remains required."
+            --body-file /tmp/smart-reconcile-pr-body.md
