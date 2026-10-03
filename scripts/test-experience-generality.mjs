@@ -129,6 +129,28 @@ assert.equal(registeredSecondPathway.runtimeAuthorization, "NOT_RUNTIME_AUTHORIZ
 assert.equal(registeredSecondPathway.authorityRef, "antoniocorsano-boop/trama-ecosistema#217@81534e352396ad858c7cf5ee00c7ec3b0756ae64");
 assert.deepEqual(registeredSecondPathway.territoryIds, ["design", "world"]);
 
+const firstRegisteredPathway = portfolio.pathways.find((entry) => entry.pathwayId === "pw-missing-information-01");
+assert.ok(firstRegisteredPathway, "PW-MISSING must remain registered");
+
+assert.equal(firstRegisteredPathway.runtimeAuthorization, "NOT_RUNTIME_AUTHORIZED");
+assert.equal(firstRegisteredPathway.runtimeQualificationTarget?.publicationId, "pw-missing-information-01@1.0.0");
+assert.equal(firstRegisteredPathway.runtimeQualificationTarget?.targetPublicationState, "QUALIFIED");
+assert.equal(firstRegisteredPathway.runtimeQualificationTarget?.qualificationContractVersion, "v1");
+assert.equal(firstRegisteredPathway.runtimeQualificationTarget?.intendedPublicPath, "/percorsi/pw-missing-information-01");
+assert.equal(firstRegisteredPathway.runtimeQualificationTarget?.runtimeExactHead, null);
+assert.equal(firstRegisteredPathway.runtimeQualificationTarget?.surfaceArtifactDigest, null);
+assert.equal(firstRegisteredPathway.runtimeQualificationTarget?.freezeState, "DEFERRED_UNTIL_RRT03_COMPLETE");
+assert.equal(firstRegisteredPathway.authorityRef, "antoniocorsano-boop/trama-ecosistema#96@dfb5b106708bee88016907c13ee0d104c093e7ca");
+
+assert.equal(registeredSecondPathway.runtimeAuthorization, "NOT_RUNTIME_AUTHORIZED");
+assert.equal(registeredSecondPathway.runtimeQualificationTarget?.publicationId, "pw-constraints-tradeoffs-01@1.0.0");
+assert.equal(registeredSecondPathway.runtimeQualificationTarget?.targetPublicationState, "QUALIFIED");
+assert.equal(registeredSecondPathway.runtimeQualificationTarget?.qualificationContractVersion, "v1");
+assert.equal(registeredSecondPathway.runtimeQualificationTarget?.intendedPublicPath, "/percorsi/pw-constraints-tradeoffs-01");
+assert.equal(registeredSecondPathway.runtimeQualificationTarget?.runtimeExactHead, null);
+assert.equal(registeredSecondPathway.runtimeQualificationTarget?.surfaceArtifactDigest, null);
+assert.equal(registeredSecondPathway.runtimeQualificationTarget?.freezeState, "DEFERRED_UNTIL_RRT03_COMPLETE");
+
 const unregisteredPortfolio = structuredClone(portfolio);
 unregisteredPortfolio.pathways = unregisteredPortfolio.pathways.filter((entry) => entry.pathwayId !== "pw-constraints-tradeoffs-01");
 const authorityGuardDir = fs.mkdtempSync(path.join(os.tmpdir(), "atlas-pathway-authority-"));
