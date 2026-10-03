@@ -71,7 +71,7 @@
     {
       "pathwayId": "pw-constraints-tradeoffs-01",
       "title": "Una soluzione, molti vincoli",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "state": "IMPLEMENTATION_CANDIDATE",
       "territoryIds": [
         "design",
@@ -84,15 +84,19 @@
       "authorityRef": "antoniocorsano-boop/trama-ecosistema#217@81534e352396ad858c7cf5ee00c7ec3b0756ae64",
       "provenanceRef": "TRAMA PR #217 @ 81534e352396ad858c7cf5ee00c7ec3b0756ae64",
       "runtimeQualificationTarget": {
-        "contentVersion": "1.0.0",
-        "publicationId": "pw-constraints-tradeoffs-01@1.0.0",
+        "contentVersion": "1.1.0",
+        "publicationId": "pw-constraints-tradeoffs-01@1.1.0",
         "targetPublicationState": "QUALIFIED",
         "qualificationContractVersion": "v1",
         "intendedPublicPath": "/percorsi/pw-constraints-tradeoffs-01",
         "runtimeExactHead": null,
         "surfaceArtifactDigest": null,
         "freezeState": "DEFERRED_UNTIL_RRT03_COMPLETE"
-      }
+      },
+      "productState": "PRODUCT_AUTHORED_CANDIDATE",
+      "productRegistryRef": "governance/percorsi-student-library.json",
+      "productScreenplayRef": "antoniocorsano-boop/trama-ecosistema#223@fe5b5b5ce54bce195ed029940acb2df8190baf1f",
+      "territoryStatus": "CANDIDATE_NOT_APPROVED"
     }
   ],
   "excludedRecoveries": [
