@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "atlas.challenge-kernel/v1",
+  "kernelId": "pw-missing-information-01",
+  "title": "Prima di decidere, cosa manca?",
+  "situation": "Una decisione richiede informazioni pertinenti che possono essere incomplete o sostituite da supposizioni.",
+  "generativeQuestion": "Ho abbastanza informazioni pertinenti per decidere?",
+  "competenceTargets": [
+    "Riconoscere informazioni pertinenti mancanti prima di decidere.",
+    "Distinguere evidenze da supposizioni o dettagli non rilevanti.",
+    "Trasferire la strategia di ricerca dell'informazione mancante a un nuovo contesto."
+  ],
+  "evidenceModel": {
+    "availableEvidence": [
+      "dati noti sul problema"
+    ],
+    "intentionallyMissingEvidence": [
+      "dato pertinente necessario al confronto"
+    ],
+    "misconceptions": [
+      "una stima equivale al dato mancante",
+      "qualsiasi informazione aggiuntiva riduce l'incertezza"
+    ]
+  },
+  "decisionModel": {
+    "decisions": [
+      "cercare il dato mancante",
+      "procedere con una stima"
+    ],
+    "consequencePolicy": "BRANCHING",
+    "revisionAllowed": true
+  },
+  "transferPrinciple": "Prima di una decisione, individuare quale informazione pertinente manca e cercarla prima di procedere.",
+  "completionEvidence": [
+    "riconoscimento del dato mancante",
+    "revisione della strategia",
+    "applicazione in un contesto differente"
+  ],
+  "provenanceRefs": [
+    "governance/percorsi-portfolio.json#pw-missing-information-01",
+    "docs/PERCORSI-G1-PW-MISSING-INFORMATION-01-IMPLEMENTATION.md"
+  ]
+}

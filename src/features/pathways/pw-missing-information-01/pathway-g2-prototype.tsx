@@ -1,44 +1,53 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useState } from "react";
+import { ExperienceRuntime } from "@/features/experiences/experience-runtime";
+import type { ExperienceDefinition, ExperiencePresentation } from "@/features/experiences/model";
+import governedDefinition from "../../../../content/experiences/pathways/pw-missing-information-01.v1.json";
 import "./pathway.css";
 
 type Grammar = "L" | "N";
-type NodeId = "entry" | "inspect" | "infer" | "transfer" | "terminal";
-type Choice = { id: string; label: string; target: NodeId; feedback: string };
-type Node = { title: string; facts: string[]; prompt: string; choices: Choice[] };
-
-const copy: Record<Grammar, Record<Exclude<NodeId,"terminal">, Node>> = {
-  L: {
-    entry:{title:"Quale informazione manca?",facts:["La classe deve scegliere tra due materiali.","Conosciamo il costo, ma non la durata."],prompt:"Prima di decidere, che cosa conviene fare?",choices:[{id:"inspect",label:"Cercare il dato sulla durata",target:"inspect",feedback:"Hai scelto di rendere disponibile l’informazione mancante prima del confronto."},{id:"infer",label:"Fare una stima usando ciò che sappiamo",target:"infer",feedback:"Una stima può orientare, ma lascia ancora incerto proprio il dato necessario al confronto."}]},
-    inspect:{title:"Hai cercato il dato mancante",facts:["Ora conosciamo costo e durata di entrambi i materiali."],prompt:"Che cosa cambia nella decisione?",choices:[{id:"continue",label:"Posso confrontare le alternative con informazioni pertinenti",target:"transfer",feedback:"Il confronto ora usa il dato che prima mancava."},{id:"revise",label:"Voglio riconsiderare la scelta precedente",target:"entry",feedback:"Puoi tornare alla decisione iniziale senza penalizzazioni."}]},
-    infer:{title:"Hai lavorato con una stima",facts:["La durata reale resta sconosciuta.","La stima non sostituisce il dato mancante."],prompt:"Come rendere più solida la decisione?",choices:[{id:"seek",label:"Recuperare la durata reale",target:"transfer",feedback:"Hai distinto una supposizione dall’informazione necessaria."},{id:"revise",label:"Riconsiderare la scelta precedente",target:"entry",feedback:"Puoi cambiare strategia senza penalizzazioni."}]},
-    transfer:{title:"Stessa strategia, nuovo contesto",facts:["Devi scegliere un percorso per raggiungere un museo.","Conosci la distanza, ma non il tempo di percorrenza."],prompt:"Quale informazione cercheresti prima di scegliere?",choices:[{id:"time",label:"Il tempo di percorrenza",target:"terminal",feedback:"Hai trasferito la strategia: riconoscere il dato pertinente che manca prima di decidere."},{id:"colour",label:"Il colore dei mezzi disponibili",target:"terminal",feedback:"Questa informazione non risolve l’incertezza indicata. Il punto è distinguere ciò che è pertinente alla decisione."}]}
-  },
-  N: {
-    entry:{title:"Due materiali sul tavolo",facts:["Il gruppo conosce il prezzo di entrambi.","Sulla scheda manca quanto durano."],prompt:"Il gruppo deve scegliere. Quale mossa apre una decisione più informata?",choices:[{id:"inspect",label:"Cercare quanto dura ciascun materiale",target:"inspect",feedback:"Il gruppo porta alla luce proprio l’informazione che mancava al confronto."},{id:"infer",label:"Provare a immaginare la durata dai dati disponibili",target:"infer",feedback:"L’ipotesi permette di proseguire, ma il punto incerto resta ancora senza un dato."}]},
-    inspect:{title:"La scheda ora è completa",facts:["Costo e durata sono disponibili per entrambe le alternative."],prompt:"Che cosa può fare adesso il gruppo?",choices:[{id:"continue",label:"Confrontare le alternative usando anche la durata",target:"transfer",feedback:"Il nuovo dato rende il confronto pertinente alla domanda iniziale."},{id:"revise",label:"Tornare alla scelta precedente",target:"entry",feedback:"Puoi tornare alla decisione iniziale e rivedere la strategia senza penalizzazioni."}]},
-    infer:{title:"L’ipotesi non chiude il vuoto",facts:["Il gruppo ha una stima.","La durata effettiva resta però sconosciuta."],prompt:"Quale mossa riduce davvero l’incertezza?",choices:[{id:"seek",label:"Cercare la durata effettiva",target:"transfer",feedback:"Il gruppo separa ciò che immagina da ciò che deve ancora sapere."},{id:"revise",label:"Tornare alla scelta precedente",target:"entry",feedback:"Si può rivedere la strategia senza penalizzazioni."}]},
-    transfer:{title:"Una nuova decisione",facts:["Ora il gruppo deve raggiungere un museo.","Conosce le distanze, non i tempi di percorrenza."],prompt:"Quale dato cercherebbe prima di scegliere il percorso?",choices:[{id:"time",label:"Il tempo necessario per ciascun percorso",target:"terminal",feedback:"La strategia funziona anche qui: individuare l’informazione pertinente che manca."},{id:"colour",label:"Il colore dei mezzi che potrebbe usare",target:"terminal",feedback:"È un’informazione possibile, ma non colma l’incertezza che conta per questa decisione."}]}
-  }
+type GovernedDefinition = ExperienceDefinition & {
+  presentationData: Record<Grammar, ExperiencePresentation>;
 };
 
-export function MissingInformationPathwayG2Prototype(){
-  const [grammar,setGrammar]=useState<Grammar>("L"); const [nodeId,setNodeId]=useState<NodeId>("entry"); const [feedback,setFeedback]=useState(""); const [next,setNext]=useState<NodeId|null>(null); const [selectedChoice,setSelectedChoice]=useState<string|null>(null); const [session,setSession]=useState(1);
-  const headingRef=useRef<HTMLHeadingElement>(null); const shouldFocusScene=useRef(false); const groupId=useId(); const feedbackId=useId(); const choiceName=useId(); const terminal=nodeId==="terminal"; const node=terminal?null:copy[grammar][nodeId];
-  useEffect(()=>{if(!shouldFocusScene.current)return;shouldFocusScene.current=false;headingRef.current?.focus({preventScroll:true});headingRef.current?.scrollIntoView({block:"start",behavior:"auto"})},[nodeId,session]);
-  function clearDecision(){setFeedback("");setNext(null);setSelectedChoice(null)}
-  function choose(c:Choice){setSelectedChoice(c.id);setFeedback(c.feedback);setNext(c.target)}
-  function proceed(){if(!next)return;shouldFocusScene.current=true;setNodeId(next);clearDecision()}
-  function fresh(){shouldFocusScene.current=true;setNodeId("entry");clearDecision();setSession(v=>v+1)}
-  function changeGrammar(value:Grammar){setGrammar(value);clearDecision()}
-  return <main className={`pathwayPrototype pathwayPrototype--${grammar.toLowerCase()}`} aria-labelledby="pathway-title" data-session={session}>
-    <header className="pathwayPrototype__header"><div><p className="pathwayPrototype__eyebrow">Percorsi · prototipo G2</p><h1 id="pathway-title">Prima di decidere, cosa manca?</h1><p>Un percorso per allenare una strategia: riconoscere l’informazione pertinente che manca prima di scegliere.</p></div><div className="pathwayPrototype__status"><strong>PROTOTIPO · NON AUTORIZZATO AGLI STUDENTI</strong><span>Nessun punteggio, profilo o analitica.</span></div></header>
-    <fieldset className="pathwayPrototype__condition"><legend>Modo di presentazione</legend><label><input type="radio" name="grammar" checked={grammar==="L"} onChange={()=>changeGrammar("L")}/> Letterale</label><label><input type="radio" name="grammar" checked={grammar==="N"} onChange={()=>changeGrammar("N")}/> Narrativo</label></fieldset>
-    <div className="pathwayPrototype__progress"><strong>{terminal?"Percorso completato":"In percorso"}</strong><span>{nodeId==="transfer"?"Stai provando la strategia in un nuovo contesto.":"La lunghezza dipende dalle scelte: non ci sono tappe da completare in ordine fisso."}</span></div>
-    <article className="pathwayScene">
-      {terminal?<><h2 ref={headingRef} tabIndex={-1}>Hai completato il percorso</h2><p>Hai esercitato una strategia trasferibile: prima di decidere, riconosci quale informazione pertinente manca e distinguila da supposizioni o dettagli non utili.</p><div className="pathwayScene__actions"><a className="pathwayButton pathwayButton--secondary" href="/percorsi">Esci</a><button className="pathwayButton" type="button" onClick={fresh}>Nuovo percorso</button></div></>:<><h2 ref={headingRef} tabIndex={-1}>{node!.title}</h2><div className="pathwayScene__facts"><h3>Quello che sappiamo</h3><ul>{node!.facts.map(x=><li key={x}>{x}</li>)}</ul></div><fieldset className="pathwayScene__choiceGroup" aria-describedby={feedbackId}><legend className="pathwayScene__prompt" id={groupId}>{node!.prompt}</legend><div className="pathwayScene__options">{node!.choices.map(c=><label key={c.id} className={`pathwayChoice${selectedChoice===c.id?" pathwayChoice--selected":""}`}><input type="radio" name={choiceName} value={c.id} checked={selectedChoice===c.id} onChange={()=>choose(c)}/><span>{c.label}</span></label>)}</div></fieldset><div id={feedbackId} className="pathwayScene__feedback" role="status" aria-live="polite" aria-atomic="true">{feedback?<><h3>Che cosa rende visibile questa scelta</h3><p>{feedback}</p><p>Ora puoi continuare oppure scegliere un’altra possibilità.</p></>:<p>Scegli una possibilità. Nel gruppo puoi cambiare alternativa con i tasti freccia; dopo la scelta potrai continuare.</p>}</div><div className="pathwayScene__actions"><button className="pathwayButton" type="button" disabled={!next} onClick={proceed} aria-describedby={feedbackId}>Continua</button></div></>}
-    </article>
-    <details className="pathwayPrototype__privacy"><summary><strong>Privacy del prototipo</strong></summary><p>Le scelte restano nella memoria volatile di questa pagina: questo componente non invia risposte, non crea profili e non conserva una cronologia locale dello studente.</p></details>
-  </main>
+const definition = governedDefinition as unknown as GovernedDefinition;
+
+export function MissingInformationPathwayG2Prototype() {
+  const [grammar, setGrammar] = useState<Grammar>("L");
+
+  return (
+    <main className={`pathwayPrototype pathwayPrototype--${grammar.toLowerCase()}`}>
+      <header className="pathwayPrototype__header">
+        <div>
+          <p className="pathwayPrototype__eyebrow">Percorsi · prototipo G2</p>
+          <h1>Prima di decidere, cosa manca?</h1>
+          <p>Un percorso per allenare una strategia: riconoscere l’informazione pertinente che manca prima di scegliere.</p>
+        </div>
+        <div className="pathwayPrototype__status">
+          <strong>PROTOTIPO · NON AUTORIZZATO AGLI STUDENTI</strong>
+          <span>Nessun punteggio, profilo o analitica.</span>
+        </div>
+      </header>
+
+      <fieldset className="pathwayPrototype__condition">
+        <legend>Modo di presentazione</legend>
+        <label>
+          <input type="radio" name="grammar" checked={grammar === "L"} onChange={() => setGrammar("L")} />
+          {" "}Letterale
+        </label>
+        <label>
+          <input type="radio" name="grammar" checked={grammar === "N"} onChange={() => setGrammar("N")} />
+          {" "}Narrativo
+        </label>
+      </fieldset>
+
+      <ExperienceRuntime definition={definition} presentation={definition.presentationData[grammar]} />
+
+      <details className="pathwayPrototype__privacy">
+        <summary><strong>Privacy del prototipo</strong></summary>
+        <p>Le scelte restano nella memoria volatile di questa pagina: questo componente non invia risposte, non crea profili e non conserva una cronologia locale dello studente.</p>
+      </details>
+    </main>
+  );
 }

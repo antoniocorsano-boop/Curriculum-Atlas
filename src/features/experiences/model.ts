@@ -17,17 +17,42 @@ export interface ChallengeKernel {
   provenanceRefs: string[];
 }
 
-export interface ExperienceTransition { targetNodeId: string; label?: string }
+export interface ExperienceTransition {
+  id?: string;
+  targetNodeId: string;
+  label?: string;
+  feedback?: string;
+}
+
 export interface ExperienceNode {
   id: string;
   primitive: ExperiencePrimitive;
   interaction: string;
   title?: string;
   prompt?: string;
+  facts?: string[];
   feedbackCategory: FeedbackCategory;
   transitions: ExperienceTransition[];
   terminal?: boolean;
 }
+
+export interface ExperiencePresentationTransition {
+  label?: string;
+  feedback?: string;
+}
+
+export interface ExperiencePresentationNode {
+  title?: string;
+  prompt?: string;
+  facts?: string[];
+  transitions?: Record<string, ExperiencePresentationTransition>;
+}
+
+export interface ExperiencePresentation {
+  id: string;
+  nodes: Record<string, ExperiencePresentationNode>;
+}
+
 export interface ExperienceDefinition {
   schemaVersion: "atlas.experience/v1";
   experienceId: string;
@@ -37,5 +62,6 @@ export interface ExperienceDefinition {
   qualificationProfileId: string;
   runtime: { statePolicy: RuntimeStatePolicy; learnerIdentityRequired: false; telemetryAllowed: false };
   presentationGrammarIds: string[];
+  presentationData?: Record<string, ExperiencePresentation>;
   graph: { entryNodeId: string; nodes: ExperienceNode[] };
 }
