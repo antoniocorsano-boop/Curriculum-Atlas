@@ -70,16 +70,57 @@ export function reconcileReceiptDirectory({ manifestPaths, receiptDir }) {
         strictIdentity: true,
       });
 
-      // Equivalent proof on an already-resolved resource is intentionally a no-op.
-      // This prevents a new canonical deploy from creating an endless receipt-PR loop.
-      if (receiptAlreadyApplied(manifest, receipt, {
+      const canonicalReceiptPath = path.join(
+        path.dirname(manifestPath),
+        "publication-receipts",
+        path.basename(file),
+      );
+
+      const alreadyApplied = receiptAlreadyApplied(manifest, receipt, {
         resourceId: receipt.assetId,
         strictIdentity: true,
-      })) continue;
+      });
+      const currentResource = (manifest.resources || []).find(
+        (resource) => resource.resourceId === receipt.assetId,
+      );
+
+      // Equivalent later deploys must not rewrite the first canonical proof:
+      // verifiedAt/releaseSha are deployment metadata, not readiness inputs.
+      if (
+        alreadyApplied &&
+        currentResource?.publicationReceiptRef === canonicalReceiptPath &&
+        fs.existsSync(canonicalReceiptPath)
+      ) {
+        continue;
+      }
+
+      if (fs.existsSync(canonicalReceiptPath)) {
+        const canonicalReceipt = readJson(canonicalReceiptPath);
+        const stableKeys = [
+          "schemaVersion",
+          "materialSetId",
+          "version",
+          "assetId",
+          "sha256",
+          "byteSize",
+          "audience",
+          "provenanceRef",
+          "publicRef",
+          "anonymousReachabilityVerified",
+        ];
+        for (const key of stableKeys) {
+          if (canonicalReceipt[key] !== receipt[key]) {
+            throw new Error(`receipt mismatch: canonical proof ${key} for ${receipt.assetId}`);
+          }
+        }
+      } else {
+        fs.mkdirSync(path.dirname(canonicalReceiptPath), { recursive: true });
+        fs.writeFileSync(canonicalReceiptPath, jsonText(receipt));
+      }
 
       manifest = applyReceiptToManifest(manifest, receipt, {
         resourceId: receipt.assetId,
-        receiptRef: file,
+        receiptRef: canonicalReceiptPath,
         strictIdentity: true,
       });
       applied = true;
