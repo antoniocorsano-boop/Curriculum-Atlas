@@ -122,16 +122,18 @@ jobs:
 
           mapfile -t manifests < <(find content/smart-activities -type f -regextype posix-extended -regex '.*/material-set\.v[1-9][0-9]*\.json' -print | sort)
           if [ "${#manifests[@]}" -eq 0 ]; then
-            echo "No machine-readable Smart material sets on deployed main; nothing to verify."
-            exit 0
+            echo "No machine-readable Smart material sets on deployed main; no asset receipts to verify."
+          else
+            for manifest in "${manifests[@]}"; do
+              node scripts/verify-smart-published-materialset.mjs \
+                --manifest "$manifest" \
+                --base-url "$base" \
+                --out-dir .smart-receipts
+            done
           fi
 
-          for manifest in "${manifests[@]}"; do
-            node scripts/verify-smart-published-materialset.mjs \
-              --manifest "$manifest" \
-              --base-url "$base" \
-              --out-dir .smart-receipts
-          done
+          printf '{"schemaVersion":"atlas.smart.publication-receipt-bundle/v1","releaseSha":"%s"}\n' "$GITHUB_SHA" \
+            > .smart-receipts/bundle.json
 
       - name: Upload Smart publication receipts
         if: always()
@@ -139,5 +141,5 @@ jobs:
         with:
           name: smart-publication-receipts-${{ github.sha }}
           path: .smart-receipts/
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 30
