@@ -145,6 +145,14 @@ test.describe("Public Percorsi catalog", () => {
 });
 
 
+test.describe("PW-CONSTRAINTS lab preview boundary", () => {
+  test("renders the noindex lab route through the shared runtime", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-constraints-tradeoffs-01");
+    await expect(page.locator(".experience-runtime")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Una soluzione, molti vincoli" })).toBeVisible();
+  });
+});
+
 test.describe("PW-CONSTRAINTS shared-engine runtime readiness", () => {
   test("branches, revises, transfers and completes through ExperienceRuntime", async ({ page }) => {
     await page.goto("/percorsi/pw-constraints-tradeoffs-01");
