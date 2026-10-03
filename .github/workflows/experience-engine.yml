@@ -35,6 +35,7 @@ jobs:
       - run: pnpm test:experience:grammar
       - run: pnpm test:experience:factory
       - run: pnpm test:smart:flow
+      - run: pnpm test:smart:sp01
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm build
