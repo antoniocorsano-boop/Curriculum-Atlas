@@ -1,0 +1,38 @@
+name: Experience Engine
+on:
+  pull_request:
+    paths:
+      - 'src/features/experiences/**'
+      - 'src/app/experience-lab/**'
+      - 'content/experience-kernels/**'
+      - 'content/experiences/**'
+      - 'governance/experience-*.json'
+      - 'scripts/*experience*'
+      - 'scripts/lib/experience-contracts.mjs'
+      - 'tests/experience-runtime.spec.ts'
+      - 'playwright.config.ts'
+      - 'package.json'
+      - '.github/workflows/experience-engine.yml'
+jobs:
+  qualification:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:experience:contracts
+      - run: pnpm test:experience:grammar
+      - run: pnpm test:experience:factory
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:experience:browser
