@@ -11,11 +11,12 @@
         "primitive": "EXPLORE",
         "title": "Scegli il sistema",
         "body": [
+          "Quale sistema tecnologico vuoi analizzare?",
           "Scegli uno degli esempi oppure indica un sistema diverso."
         ],
         "interaction": {
           "kind": "text",
-          "prompt": "Quale sistema tecnologico vuoi analizzare?",
+          "prompt": "Oppure scegli un altro sistema",
           "placeholder": "Per esempio: smartphone, automobile, frigorifero…"
         },
         "transitions": [
@@ -163,5 +164,9 @@
   "qualificationProfileRef": "SMART_FAST_V1",
   "runtimeStatePolicy": "LOCAL_DEVICE",
   "learnerIdentityRequired": false,
-  "telemetryAllowed": false
+  "telemetryAllowed": false,
+  "uiText": {
+    "continue": "Continua",
+    "restart": "Ricomincia"
+  }
 }
