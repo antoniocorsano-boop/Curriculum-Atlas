@@ -81,6 +81,12 @@ jobs:
           ATLAS_PREVIEW_ROOT_SCOPED: "true"
         run: pnpm build
 
+      - name: Enforce fail-closed Percorsi publication boundary
+        working-directory: candidate
+        run: |
+          node scripts/test-percorsi-publication-filter.mjs
+          node scripts/filter-unauthorized-pathway-routes.mjs out
+
       - name: Bind artifact to candidate and governed build contract
         shell: bash
         working-directory: candidate

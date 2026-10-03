@@ -1,0 +1,102 @@
+name: Percorsi RRT-03 Sealed Preauthorization
+
+on:
+  pull_request:
+    paths:
+      - 'governance/percorsi-portfolio.json'
+      - 'content/experiences/pathways/**'
+      - 'src/app/percorsi/**'
+      - 'src/features/pathways/**'
+      - 'scripts/filter-unauthorized-pathway-routes.mjs'
+      - 'scripts/test-percorsi-publication-filter.mjs'
+      - 'scripts/verify-public-pathway-boundary.mjs'
+      - 'scripts/lib/percorsi-sealed-preauth-static-adapter.mjs'
+      - 'scripts/test-percorsi-sealed-preauth-static-adapter.mjs'
+      - 'scripts/write-percorsi-sealed-preauth-manifest.mjs'
+      - '.github/workflows/s1-preview-launcher.yml'
+      - '.github/workflows/atlas-pr-preview.yml'
+      - '.github/workflows/percorsi-rrt03-sealed-preauth.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'governance/percorsi-portfolio.json'
+      - 'content/experiences/pathways/**'
+      - 'src/app/percorsi/**'
+      - 'src/features/pathways/**'
+      - 'scripts/filter-unauthorized-pathway-routes.mjs'
+      - 'scripts/test-percorsi-publication-filter.mjs'
+      - 'scripts/verify-public-pathway-boundary.mjs'
+      - 'scripts/lib/percorsi-sealed-preauth-static-adapter.mjs'
+      - 'scripts/test-percorsi-sealed-preauth-static-adapter.mjs'
+      - 'scripts/write-percorsi-sealed-preauth-manifest.mjs'
+      - '.github/workflows/s1-preview-launcher.yml'
+      - '.github/workflows/atlas-pr-preview.yml'
+      - '.github/workflows/percorsi-rrt03-sealed-preauth.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: percorsi-rrt03-sealed-preauth-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sealed-preauth:
+    runs-on: ubuntu-latest
+    env:
+      ATLAS_PREVIEW_ROOT_SCOPED: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Validate publication filter contract
+        run: node scripts/test-percorsi-publication-filter.mjs
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build complete sealed candidate artifact
+        run: pnpm build
+
+      - name: Verify intended candidate routes exist only in full build
+        run: |
+          test -f out/percorsi/pw-missing-information-01/index.html
+          test -f out/percorsi/pw-constraints-tradeoffs-01/index.html
+          node scripts/test-percorsi-sealed-preauth-static-adapter.mjs out
+
+      - name: Record exact-head sealed surface manifest
+        run: node scripts/write-percorsi-sealed-preauth-manifest.mjs out "$GITHUB_SHA" .rrt03/PREAUTH-MANIFEST.json
+
+      - name: Upload sealed preauthorization artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: percorsi-sealed-preauth-${{ github.sha }}
+          path: |
+            out/
+            .rrt03/PREAUTH-MANIFEST.json
+          retention-days: 7
+          if-no-files-found: error
+
+# Safety boundary:
+# - no pages:write, id-token:write, deployment environment or external hosting action;
+# - the complete candidate artifact is retained only as a GitHub Actions artifact;
+# - all public deployment workflows must apply filter-unauthorized-pathway-routes.mjs;
+# - this workflow creates evidence only and never emits RUNTIME_AUTHORIZED or PUBLISHED.
