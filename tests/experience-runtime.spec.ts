@@ -283,55 +283,105 @@ test.describe("Public Percorsi catalog", () => {
 });
 
 
-test.describe("PW-CONSTRAINTS lab preview boundary", () => {
-  test("renders the noindex lab route through the shared runtime", async ({ page }) => {
+test.describe("PW-CONSTRAINTS authored product flow", () => {
+  test("renders the noindex lab product preview with explicit review boundary", async ({ page }) => {
     await page.goto("/percorsi/lab/pw-constraints-tradeoffs-01");
     await expect(page.locator(".experience-runtime")).toBeVisible();
+    await expect(page.getByText("PROTOTIPO · NON AUTORIZZATO AGLI STUDENTI")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Una soluzione, molti vincoli" })).toBeVisible();
-  });
-});
-
-test.describe("PW-CONSTRAINTS shared-engine runtime readiness", () => {
-  test("branches, revises, transfers and completes through ExperienceRuntime", async ({ page }) => {
-    await page.goto("/percorsi/pw-constraints-tradeoffs-01");
-    await expect(page.locator(".experience-runtime")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Una soluzione, molti vincoli" })).toBeVisible();
-
-    await page.getByRole("button", { name: "Continua" }).click();
-    await page.getByRole("radio", { name: /Privilegiare durata e manutenzione ridotta/ }).check();
-    await expect(page.getByRole("status")).toContainText("budget");
-    await page.getByRole("button", { name: "Continua" }).click();
-
-    await page.getByRole("radio", { name: /Mantengo la soluzione robusta/ }).check();
-    await page.getByRole("button", { name: "Continua" }).click();
-    await expect(page.getByText("Il budget disponibile si riduce del 25%")).toBeVisible();
-
-    await page.getByRole("radio", { name: /Riduco elementi non essenziali/ }).check();
-    await page.getByRole("button", { name: "Continua" }).click();
-
-    await page.getByRole("radio", { name: /Esplicito i vincoli, collego scelte e conseguenze/ }).check();
-    await page.getByRole("button", { name: "Continua" }).click();
-    await expect(page.getByText(/Strategia esercitata/)).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Il brief di progetto" })).toBeVisible();
   });
 
-  test("is volatile, emits no learner network writes and reflows on mobile", async ({ page }) => {
+  test("runs the authored design cycle and awards only the three qualifying outcomes", async ({ page }) => {
+    const writes: string[] = [];
+    page.on("request", (request) => {
+      if (["POST","PUT","PATCH","DELETE"].includes(request.method())) writes.push(request.method());
+    });
+
+    await page.goto("/percorsi/lab/pw-constraints-tradeoffs-01");
+    await page.getByRole("button", { name: "Conserva i miei traguardi su questo dispositivo" }).click();
+
+    await expect(page.getByRole("heading", { name: "Il brief di progetto" })).toBeVisible();
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    await page.getByRole("radio", { name: "A · Sviluppo la soluzione robusta e modulare" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    await expect(page.getByRole("heading", { name: "Quale compromesso stai accettando?" })).toBeFocused();
+    await page.getByRole("radio", { name: "Accetto un costo iniziale maggiore per proteggere durata e manutenzione" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await expect(page.getByText("Rendo esplicito un compromesso di progetto")).toBeVisible();
+
+    await page.getByRole("radio", { name: "Mantengo il nucleo robusto, elimino elementi non essenziali e ricontrollo usabilità e risorse" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    await expect(page.getByText("Il budget disponibile si riduce del 25%.")).toBeVisible();
+    await page.getByRole("radio", { name: "Riduco elementi non essenziali e ricontrollo costo, durata e usabilità" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await expect(page.getByText("Rivedo una soluzione quando cambia un requisito")).toBeVisible();
+
+    await page.getByRole("radio", { name: "Rendo espliciti i vincoli, collego scelte e conseguenze, scelgo un compromesso e rivedo la soluzione se cambia un requisito" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    await page.getByRole("radio", { name: "Riparto dai nuovi vincoli, collego alternative e conseguenze e sono pronto a rivedere la soluzione" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    await expect(page.getByText("Trasferisco il metodo di progetto in una nuova situazione")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Il metodo resta disponibile" })).toBeFocused();
+
+    const stored = await page.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"));
+    expect(stored).toContain("explicit-design-tradeoff");
+    expect(stored).toContain("revise-changed-requirement");
+    expect(stored).toContain("transfer-design-method");
+    expect(writes).toEqual([]);
+  });
+
+  test("does not award tradeoff evidence for a single-constraint claim", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-constraints-tradeoffs-01");
+    await page.getByRole("button", { name: "Conserva i miei traguardi su questo dispositivo" }).click();
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    await page.getByRole("radio", { name: "B · Sviluppo la soluzione leggera ed economica" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    await page.getByRole("radio", { name: "È la soluzione migliore perché costa meno" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    const stored = await page.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"));
+    expect(stored).not.toContain("explicit-design-tradeoff");
+    await expect(page.getByText("Rendo esplicito un compromesso di progetto")).toHaveCount(0);
+  });
+
+  test("preserves narrative design-studio presentation without changing the decisions", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-constraints-tradeoffs-01");
+    await page.getByRole("radio", { name: "Narrativo" }).check();
+    await expect(page.getByRole("heading", { name: "Apri il tavolo di progetto" })).toBeVisible();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await expect(page.getByRole("heading", { name: "Due schede sul tavolo" })).toBeFocused();
+    await expect(page.getByRole("radio", { name: "A · Sviluppo la soluzione robusta e modulare" })).toBeVisible();
+    await expect(page.getByRole("radio", { name: "B · Sviluppo la soluzione leggera ed economica" })).toBeVisible();
+  });
+
+  test("remains volatile, emits no learner network writes and reflows on mobile", async ({ page }) => {
     const writes: string[] = [];
     page.on("request", (request) => {
       if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method())) writes.push(request.method());
     });
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/percorsi/pw-constraints-tradeoffs-01");
+
     await page.getByRole("button", { name: "Continua" }).click();
-    await page.getByRole("radio", { name: /Privilegiare costo iniziale/ }).check();
+    await page.getByRole("radio", { name: "B · Sviluppo la soluzione leggera ed economica" }).check();
     await page.getByRole("button", { name: "Continua" }).click();
 
     expect(writes).toEqual([]);
-    const localKeys = await page.evaluate(() => Object.keys(localStorage).filter((key) => key.includes("pw-constraints-tradeoffs-01")));
-    expect(localKeys).toEqual([]);
+    const sessionKey = await page.evaluate(() => localStorage.getItem("atlas:experience:pw-constraints-tradeoffs-01"));
+    expect(sessionKey).toBeNull();
     const width = await page.evaluate(() => document.documentElement.scrollWidth);
     expect(width).toBeLessThanOrEqual(390);
   });
 });
+
 
 test.describe("PW-MISSING public-surface runtime readiness", () => {
   test("uses the governed public route without persistence or learner writes", async ({ page }) => {
