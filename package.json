@@ -26,7 +26,8 @@
     "test:experience:contracts": "node scripts/test-experience-contracts.mjs",
     "validate:experience:contracts": "node scripts/validate-experience-contracts.mjs kernel fixtures/experience-engine/contracts/valid/challenge-kernel.json && node scripts/validate-experience-contracts.mjs experience fixtures/experience-engine/contracts/valid/experience-smart.json && node scripts/validate-experience-contracts.mjs experience fixtures/experience-engine/contracts/valid/experience-pathway.json",
     "test:experience:grammar": "node scripts/test-experience-grammar-registry.mjs",
-    "test:experience:factory": "node scripts/test-experience-factory.mjs"
+    "test:experience:factory": "node scripts/test-experience-factory.mjs",
+    "test:experience:runtime": "playwright test tests/experience-runtime.spec.ts --project=chromium"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
