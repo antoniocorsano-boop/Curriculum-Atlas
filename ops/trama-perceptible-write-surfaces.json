@@ -28,6 +28,19 @@
       "testFiles": [
         "scripts/test-sistema-tecnologico.mjs"
       ]
+    },
+    {
+      "id": "atlas-experience-engine-local-session-state",
+      "critical": false,
+      "sourcePatterns": [
+        "src/features/experiences/use-experience-session.ts"
+      ],
+      "feedbackFiles": [
+        "src/features/experiences/experience-runtime.tsx"
+      ],
+      "testFiles": [
+        "tests/experience-runtime.spec.ts"
+      ]
     }
   ]
 }
