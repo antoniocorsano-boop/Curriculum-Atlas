@@ -1,7 +1,7 @@
 {
   "schemaVersion": "atlas.experience/v1",
   "experienceId": "pw-missing-information-01",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "mode": "PATHWAY",
   "kernelRef": "pw-missing-information-01",
   "qualificationProfileId": "PATHWAY_G2_PLUS_V1",
@@ -15,120 +15,243 @@
     "N"
   ],
   "graph": {
-    "entryNodeId": "entry",
+    "entryNodeId": "S1_ORIENT",
     "nodes": [
       {
-        "id": "entry",
-        "primitive": "CHOOSE",
-        "interaction": "choice",
-        "title": "Quale informazione manca?",
+        "id": "S1_ORIENT",
+        "primitive": "EXPLORE",
+        "interaction": "summary",
+        "title": "Una decisione da prendere",
         "facts": [
-          "La classe deve scegliere tra due materiali.",
-          "Conosciamo il costo, ma non la durata."
+          "Un gruppo deve scegliere come organizzare un’attività.",
+          "Non tutte le informazioni sono ancora disponibili."
         ],
-        "prompt": "Prima di decidere, che cosa conviene fare?",
+        "prompt": "Osserva la situazione. Che cosa sta succedendo?",
         "feedbackCategory": "EVIDENCE_INCOMPLETE",
         "transitions": [
           {
-            "id": "inspect",
-            "targetNodeId": "inspect",
-            "label": "Cercare il dato sulla durata",
-            "feedback": "Hai scelto di rendere disponibile l’informazione mancante prima del confronto."
-          },
-          {
-            "id": "infer",
-            "targetNodeId": "infer",
-            "label": "Fare una stima usando ciò che sappiamo",
-            "feedback": "Una stima può orientare, ma lascia ancora incerto proprio il dato necessario al confronto."
+            "id": "continue",
+            "targetNodeId": "S2_MISSING_INFO",
+            "label": "Osservo i fatti",
+            "feedback": "Partiamo da ciò che sappiamo, senza aggiungere informazioni che non abbiamo."
           }
         ]
       },
       {
-        "id": "inspect",
-        "primitive": "REFRAME",
+        "id": "S2_MISSING_INFO",
+        "primitive": "INVESTIGATE",
         "interaction": "choice",
-        "title": "Hai cercato il dato mancante",
+        "title": "Che cosa manca?",
         "facts": [
-          "Ora conosciamo costo e durata di entrambi i materiali."
+          "Il gruppo conosce l’obiettivo dell’attività.",
+          "Non sa ancora quali risorse siano effettivamente disponibili."
         ],
-        "prompt": "Che cosa cambia nella decisione?",
+        "prompt": "Prima di decidere, quale informazione manca?",
+        "feedbackCategory": "EVIDENCE_INCOMPLETE",
+        "transitions": [
+          {
+            "id": "resources",
+            "targetNodeId": "S3_CHOOSE_PROCESS",
+            "label": "Quali risorse sono disponibili",
+            "feedback": "Questa informazione permette di confrontare le possibilità con un dato che manca."
+          },
+          {
+            "id": "fast",
+            "targetNodeId": "S3_CHOOSE_PROCESS",
+            "label": "Chi decide più velocemente",
+            "feedback": "La velocità della decisione non chiarisce quali risorse siano disponibili."
+          },
+          {
+            "id": "popular",
+            "targetNodeId": "S3_CHOOSE_PROCESS",
+            "label": "Quale scelta sembra più popolare",
+            "feedback": "La popolarità non aggiunge il dato che manca alla situazione."
+          }
+        ]
+      },
+      {
+        "id": "S3_CHOOSE_PROCESS",
+        "primitive": "CHOOSE",
+        "interaction": "choice",
+        "title": "Come decidere?",
+        "facts": [
+          "Possiamo scegliere subito oppure cercare prima il dato mancante."
+        ],
+        "prompt": "Quale modo di decidere vuoi provare?",
+        "feedbackCategory": "ALTERNATIVE_PLAUSIBLE",
+        "transitions": [
+          {
+            "id": "a",
+            "targetNodeId": "S4_CONSEQUENCE",
+            "label": "Scegliere subito con i dati presenti",
+            "feedback": "Il gruppo può decidere subito, ma l’informazione sulle risorse resta sconosciuta."
+          },
+          {
+            "id": "b",
+            "targetNodeId": "S4_CONSEQUENCE",
+            "label": "Controllare prima le risorse disponibili",
+            "feedback": "Il gruppo aggiunge un’informazione pertinente prima di decidere."
+          },
+          {
+            "id": "c",
+            "targetNodeId": "S4_CONSEQUENCE",
+            "label": "Seguire l’idea scelta da più persone",
+            "feedback": "Il gruppo conosce una preferenza, ma non ha ancora verificato le risorse."
+          }
+        ]
+      },
+      {
+        "id": "S4_CONSEQUENCE",
+        "primitive": "CONNECT",
+        "interaction": "summary",
+        "title": "Osserva la conseguenza",
+        "facts": [
+          "Ogni processo rende disponibili informazioni diverse prima della decisione."
+        ],
+        "prompt": "Che cosa cambia dopo questa scelta?",
         "feedbackCategory": "EVIDENCE_SUPPORTED",
         "transitions": [
           {
             "id": "continue",
-            "targetNodeId": "transfer",
-            "label": "Posso confrontare le alternative con informazioni pertinenti",
-            "feedback": "Il confronto ora usa il dato che prima mancava."
-          },
-          {
-            "id": "revise",
-            "targetNodeId": "entry",
-            "label": "Voglio riconsiderare la scelta precedente",
-            "feedback": "Puoi tornare alla decisione iniziale senza penalizzazioni."
+            "targetNodeId": "S5_REVISE",
+            "label": "Confronto ciò che sappiamo prima e dopo",
+            "feedback": "Una conseguenza utile da osservare è se il dato necessario è diventato disponibile oppure no."
           }
         ]
       },
       {
-        "id": "infer",
+        "id": "S5_REVISE",
         "primitive": "REFRAME",
         "interaction": "choice",
-        "title": "Hai lavorato con una stima",
+        "title": "Puoi rivedere la scelta",
         "facts": [
-          "La durata reale resta sconosciuta.",
-          "La stima non sostituisce il dato mancante."
+          "Rivedere una scelta non comporta penalità."
         ],
-        "prompt": "Come rendere più solida la decisione?",
+        "prompt": "Vuoi tenere questa scelta o provarne un’altra?",
         "feedbackCategory": "MODEL_NEEDS_REVISION",
         "transitions": [
           {
-            "id": "seek",
-            "targetNodeId": "transfer",
-            "label": "Recuperare la durata reale",
-            "feedback": "Hai distinto una supposizione dall’informazione necessaria."
+            "id": "keep",
+            "targetNodeId": "S6_NAME_STRATEGY",
+            "label": "Tengo la scelta",
+            "feedback": "Puoi continuare e osservare che cosa permette di sapere questa scelta."
           },
           {
             "id": "revise",
-            "targetNodeId": "entry",
-            "label": "Riconsiderare la scelta precedente",
-            "feedback": "Puoi cambiare strategia senza penalizzazioni."
+            "targetNodeId": "S3_CHOOSE_PROCESS",
+            "label": "Provo un altro modo",
+            "feedback": "Puoi cambiare strategia alla luce di ciò che hai osservato."
           }
         ]
       },
       {
-        "id": "transfer",
+        "id": "S6_NAME_STRATEGY",
+        "primitive": "REFRAME",
+        "interaction": "choice",
+        "title": "Diamo un nome alla strategia",
+        "facts": [
+          "Una strategia può essere descritta senza giudicare la persona che la usa."
+        ],
+        "prompt": "Quale strategia aiuta a controllare ciò che mancava?",
+        "feedbackCategory": "EVIDENCE_SUPPORTED",
+        "transitions": [
+          {
+            "id": "check",
+            "targetNodeId": "S7_CHANGED_CONTEXT",
+            "label": "Individuare il dato mancante e controllarlo prima di decidere",
+            "feedback": "La strategia collega la decisione a un’informazione pertinente da verificare."
+          },
+          {
+            "id": "guess",
+            "targetNodeId": "S7_CHANGED_CONTEXT",
+            "label": "Indovinare il dato mancante",
+            "feedback": "Indovinare non rende disponibile l’informazione mancante."
+          }
+        ]
+      },
+      {
+        "id": "S7_CHANGED_CONTEXT",
         "primitive": "TRANSFER",
         "interaction": "choice",
-        "title": "Stessa strategia, nuovo contesto",
+        "title": "Una situazione diversa",
         "facts": [
-          "Devi scegliere un percorso per raggiungere un museo.",
-          "Conosci la distanza, ma non il tempo di percorrenza."
+          "Una classe deve scegliere un materiale per un laboratorio.",
+          "Non è ancora noto quali materiali siano già disponibili."
         ],
-        "prompt": "Quale informazione cercheresti prima di scegliere?",
+        "prompt": "La stessa strategia può servire anche qui?",
         "feedbackCategory": "TRANSFER_SUCCESSFUL",
         "transitions": [
           {
-            "id": "time",
-            "targetNodeId": "terminal",
-            "label": "Il tempo di percorrenza",
-            "feedback": "Hai trasferito la strategia: riconoscere il dato pertinente che manca prima di decidere."
+            "id": "yes",
+            "targetNodeId": "S8_TRANSFER_PROBE",
+            "label": "Sì: prima controllo ciò che è disponibile",
+            "feedback": "La superficie della situazione cambia, ma anche qui manca un’informazione pertinente."
           },
           {
-            "id": "colour",
-            "targetNodeId": "terminal",
-            "label": "Il colore dei mezzi disponibili",
-            "feedback": "Questa informazione non risolve l’incertezza indicata. Il punto è distinguere ciò che è pertinente alla decisione."
+            "id": "no",
+            "targetNodeId": "S8_TRANSFER_PROBE",
+            "label": "No: scelgo senza controllare",
+            "feedback": "Scegliere senza controllare lascia ancora sconosciuto un dato utile alla decisione."
           }
         ]
       },
       {
-        "id": "terminal",
-        "primitive": "REFRAME",
-        "interaction": "summary",
-        "title": "Hai completato il percorso",
-        "prompt": "Hai esercitato una strategia trasferibile: prima di decidere, riconosci quale informazione pertinente manca e distinguila da supposizioni o dettagli non utili.",
+        "id": "S8_TRANSFER_PROBE",
+        "primitive": "INVESTIGATE",
+        "interaction": "choice",
+        "title": "Controllare una fonte",
+        "facts": [
+          "Due fonti riportano informazioni diverse sullo stesso argomento."
+        ],
+        "prompt": "Prima di decidere, che cosa conviene controllare?",
         "feedbackCategory": "TRANSFER_SUCCESSFUL",
+        "transitions": [
+          {
+            "id": "evidence",
+            "targetNodeId": "S9_TRACE_CONTROL",
+            "label": "Quali prove e fonti sostengono le informazioni",
+            "feedback": "Controllare prove e provenienza aggiunge informazioni pertinenti per valutare le fonti."
+          },
+          {
+            "id": "layout",
+            "targetNodeId": "S9_TRACE_CONTROL",
+            "label": "Quale pagina ha l’aspetto più gradevole",
+            "feedback": "L’aspetto della pagina non risolve la differenza tra le informazioni."
+          },
+          {
+            "id": "first",
+            "targetNodeId": "S9_TRACE_CONTROL",
+            "label": "Quale informazione ho letto per prima",
+            "feedback": "L’ordine di lettura non verifica quale informazione sia sostenuta meglio."
+          }
+        ]
+      },
+      {
+        "id": "S9_TRACE_CONTROL",
+        "primitive": "REFRAME",
+        "interaction": "choice",
+        "title": "La strategia resta tua",
+        "facts": [
+          "Le risposte del percorso restano nella sessione e non vengono inviate ad Atlas.",
+          "Puoi scegliere separatamente se conservare i traguardi didattici sul tuo dispositivo."
+        ],
+        "prompt": "Vuoi conservare localmente i traguardi di questo percorso?",
+        "feedbackCategory": "EVIDENCE_SUPPORTED",
         "terminal": true,
-        "transitions": []
+        "transitions": [
+          {
+            "id": "keep-local",
+            "targetNodeId": "S9_TRACE_CONTROL",
+            "label": "Conserva i miei traguardi sul dispositivo",
+            "feedback": "I traguardi restano solo su questo dispositivo e possono essere esportati o cancellati."
+          },
+          {
+            "id": "discard",
+            "targetNodeId": "S9_TRACE_CONTROL",
+            "label": "Non conservare",
+            "feedback": "Il percorso può terminare senza conservare traguardi locali."
+          }
+        ]
       }
     ]
   },
@@ -140,76 +263,35 @@
     "N": {
       "id": "N",
       "nodes": {
-        "entry": {
-          "title": "Due materiali sul tavolo",
-          "facts": [
-            "Il gruppo conosce il prezzo di entrambi.",
-            "Sulla scheda manca quanto durano."
-          ],
-          "prompt": "Il gruppo deve scegliere. Quale mossa apre una decisione più informata?",
-          "transitions": {
-            "inspect": {
-              "label": "Cercare quanto dura ciascun materiale",
-              "feedback": "Il gruppo porta alla luce proprio l’informazione che mancava al confronto."
-            },
-            "infer": {
-              "label": "Provare a immaginare la durata dai dati disponibili",
-              "feedback": "L’ipotesi permette di proseguire, ma il punto incerto resta ancora senza un dato."
-            }
-          }
+        "S1_ORIENT": {
+          "title": "Il punto di partenza",
+          "prompt": "Prima di muoverti, guarda ciò che il gruppo sa davvero."
         },
-        "inspect": {
-          "title": "La scheda ora è completa",
-          "facts": [
-            "Costo e durata sono disponibili per entrambe le alternative."
-          ],
-          "prompt": "Che cosa può fare adesso il gruppo?",
-          "transitions": {
-            "continue": {
-              "label": "Confrontare le alternative usando anche la durata",
-              "feedback": "Il nuovo dato rende il confronto pertinente alla domanda iniziale."
-            },
-            "revise": {
-              "label": "Tornare alla scelta precedente",
-              "feedback": "Puoi tornare alla decisione iniziale e rivedere la strategia senza penalizzazioni."
-            }
-          }
+        "S2_MISSING_INFO": {
+          "title": "Un vuoto nella mappa",
+          "prompt": "Quale informazione manca prima di scegliere una direzione?"
         },
-        "infer": {
-          "title": "L’ipotesi non chiude il vuoto",
-          "facts": [
-            "Il gruppo ha una stima.",
-            "La durata effettiva resta però sconosciuta."
-          ],
-          "prompt": "Quale mossa riduce davvero l’incertezza?",
-          "transitions": {
-            "seek": {
-              "label": "Cercare la durata effettiva",
-              "feedback": "Il gruppo separa ciò che immagina da ciò che deve ancora sapere."
-            },
-            "revise": {
-              "label": "Tornare alla scelta precedente",
-              "feedback": "Si può rivedere la strategia senza penalizzazioni."
-            }
-          }
+        "S3_CHOOSE_PROCESS": {
+          "title": "Tre strade possibili",
+          "prompt": "Quale modo di decidere vuoi esplorare?"
         },
-        "transfer": {
-          "title": "Una nuova decisione",
-          "facts": [
-            "Ora il gruppo deve raggiungere un museo.",
-            "Conosce le distanze, non i tempi di percorrenza."
-          ],
-          "prompt": "Quale dato cercherebbe prima di scegliere il percorso?",
-          "transitions": {
-            "time": {
-              "label": "Il tempo necessario per ciascun percorso",
-              "feedback": "La strategia funziona anche qui: individuare l’informazione pertinente che manca."
-            },
-            "colour": {
-              "label": "Il colore dei mezzi che potrebbe usare",
-              "feedback": "È un’informazione possibile, ma non colma l’incertezza che conta per questa decisione."
-            }
-          }
+        "S4_CONSEQUENCE": {
+          "title": "Guarda dove porta la scelta"
+        },
+        "S5_REVISE": {
+          "title": "Puoi tornare all’incrocio"
+        },
+        "S6_NAME_STRATEGY": {
+          "title": "Hai trovato uno strumento"
+        },
+        "S7_CHANGED_CONTEXT": {
+          "title": "La strada cambia, la strategia resta?"
+        },
+        "S8_TRANSFER_PROBE": {
+          "title": "Un altro tipo di indizio"
+        },
+        "S9_TRACE_CONTROL": {
+          "title": "Che cosa vuoi portare con te?"
         }
       }
     }
