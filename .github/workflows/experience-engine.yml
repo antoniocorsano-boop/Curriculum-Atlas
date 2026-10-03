@@ -37,6 +37,8 @@ jobs:
         run: pnpm test:experience:factory
       - name: Percorsi portfolio factory
         run: pnpm test:percorsi:factory
+      - name: Percorsi student product contract
+        run: pnpm test:percorsi:product
       - name: Percorsi publication filter contract
         run: node scripts/test-percorsi-publication-filter.mjs
       - name: Smart material contracts
