@@ -9,9 +9,11 @@ type ResolvedTransition = ExperienceTransition & { key: string };
 export function ExperienceRuntime({
   definition,
   presentation,
+  onTransition,
 }: {
   definition: ExperienceDefinition;
   presentation?: ExperiencePresentation;
+  onTransition?: (nodeId: string, transitionId: string, targetNodeId: string) => void;
 }) {
   const session = useExperienceSession({
     experienceId: definition.experienceId,
@@ -65,7 +67,10 @@ export function ExperienceRuntime({
 
   function proceed() {
     const transition = isChoice ? pendingTransition : firstTransition;
-    if (transition) session.choose(transition.targetNodeId);
+    if (transition) {
+      onTransition?.(node!.id, transition.key, transition.targetNodeId);
+      session.choose(transition.targetNodeId);
+    }
   }
 
   return (

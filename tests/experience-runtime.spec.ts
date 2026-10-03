@@ -36,54 +36,192 @@ test.describe("Experience Engine conformance", () => {
 });
 
 
-test.describe("PW-MISSING shared-engine conformance", () => {
-  test("branches, revises, transfers and completes through ExperienceRuntime", async ({ page }) => {
+test.describe("PW-MISSING product recovery on shared engine", () => {
+  test("restores the nine-stage authored flow with revision and transfer", async ({ page }) => {
     await page.goto("/percorsi/lab/pw-missing-information-01");
     await expect(page.locator(".experience-runtime")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Quale informazione manca?" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Una decisione da prendere" })).toBeVisible();
 
-    await page.getByRole("radio", { name: "Fare una stima usando ciò che sappiamo" }).check();
-    await expect(page.getByRole("status")).toContainText("Una stima può orientare");
     await page.getByRole("button", { name: "Continua" }).click();
-    await expect(page.getByRole("heading", { name: "Hai lavorato con una stima" })).toBeFocused();
+    await expect(page.getByRole("heading", { name: "Che cosa manca?" })).toBeFocused();
+    await page.getByRole("radio", { name: "Quali risorse sono disponibili" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
 
-    await page.getByRole("radio", { name: "Riconsiderare la scelta precedente" }).check();
+    await expect(page.getByRole("heading", { name: "Come decidere?" })).toBeFocused();
+    await page.getByRole("radio", { name: "Scegliere subito con i dati presenti" }).check();
     await page.getByRole("button", { name: "Continua" }).click();
-    await expect(page.getByRole("heading", { name: "Quale informazione manca?" })).toBeFocused();
 
-    await page.getByRole("radio", { name: "Cercare il dato sulla durata" }).check();
+    await expect(page.getByRole("heading", { name: "Osserva la conseguenza" })).toBeFocused();
     await page.getByRole("button", { name: "Continua" }).click();
-    await expect(page.getByRole("heading", { name: "Hai cercato il dato mancante" })).toBeFocused();
 
-    await page.getByRole("radio", { name: "Posso confrontare le alternative con informazioni pertinenti" }).check();
+    await expect(page.getByRole("heading", { name: "Puoi rivedere la scelta" })).toBeFocused();
+    await page.getByRole("radio", { name: "Provo un altro modo" }).check();
     await page.getByRole("button", { name: "Continua" }).click();
-    await expect(page.getByRole("heading", { name: "Stessa strategia, nuovo contesto" })).toBeFocused();
+    await expect(page.getByRole("heading", { name: "Come decidere?" })).toBeFocused();
 
-    await page.getByRole("radio", { name: "Il tempo di percorrenza" }).check();
+    await page.getByRole("radio", { name: "Controllare prima le risorse disponibili" }).check();
     await page.getByRole("button", { name: "Continua" }).click();
-    await expect(page.getByRole("heading", { name: "Hai completato il percorso" })).toBeFocused();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Tengo la scelta" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    await expect(page.getByRole("heading", { name: "Diamo un nome alla strategia" })).toBeFocused();
+    await page.getByRole("radio", { name: "Individuare il dato mancante e controllarlo prima di decidere" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    await expect(page.getByRole("heading", { name: "Una situazione diversa" })).toBeFocused();
+    await page.getByRole("radio", { name: "Sì: prima controllo ciò che è disponibile" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    await expect(page.getByRole("heading", { name: "Controllare una fonte" })).toBeFocused();
+    await page.getByRole("radio", { name: "Quali prove e fonti sostengono le informazioni" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    await expect(page.getByRole("heading", { name: "La strategia resta tua" })).toBeFocused();
+    await expect(page.getByText(/Hai completato il percorso/)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Nuovo percorso" })).toBeVisible();
   });
 
-  test("preserves L and N presentation grammars on the shared runtime", async ({ page }) => {
+  test("preserves literal and narrative presentation without changing the task", async ({ page }) => {
     await page.goto("/percorsi/lab/pw-missing-information-01");
-    await expect(page.locator(".experience-runtime")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Quale informazione manca?" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Una decisione da prendere" })).toBeVisible();
     await page.getByRole("radio", { name: "Narrativo" }).check();
-    await expect(page.getByRole("heading", { name: "Due materiali sul tavolo" })).toBeVisible();
-    await expect(page.getByRole("radio", { name: "Cercare quanto dura ciascun materiale" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Il punto di partenza" })).toBeVisible();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await expect(page.getByRole("radio", { name: "Quali risorse sono disponibili" })).toBeVisible();
   });
 
-  test("remains volatile and emits no learner network writes", async ({ page }) => {
+  test("keeps pathway choices volatile and emits no learner network writes", async ({ page }) => {
     const writes: string[] = [];
     page.on("request", (request) => {
       if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method())) writes.push(request.method());
     });
     await page.goto("/percorsi/lab/pw-missing-information-01");
-    await page.getByRole("radio", { name: "Cercare il dato sulla durata" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Quali risorse sono disponibili" }).check();
     await page.getByRole("button", { name: "Continua" }).click();
     expect(writes).toEqual([]);
-    const localKeys = await page.evaluate(() => Object.keys(localStorage).filter((key) => key.includes("pw-missing-information-01")));
-    expect(localKeys).toEqual([]);
+    const sessionKey = await page.evaluate(() => localStorage.getItem("atlas:experience:pw-missing-information-01"));
+    expect(sessionKey).toBeNull();
+  });
+
+  test("stores growth evidence locally only after explicit opt-in and can reset it", async ({ page }) => {
+    const writes: string[] = [];
+    page.on("request", (request) => {
+      if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method())) writes.push(request.method());
+    });
+    await page.goto("/percorsi/lab/pw-missing-information-01");
+    expect(await page.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"))).toBeNull();
+
+    await page.getByRole("button", { name: "Conserva i miei traguardi su questo dispositivo" }).click();
+    await expect(page.locator(".pathwayGrowth__status")).toContainText("Crescita locale attivata");
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Quali risorse sono disponibili" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Controllare prima le risorse disponibili" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Tengo la scelta" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    // Merely arriving at the prompt is not evidence.
+    await expect(page.getByText("Riconosco la strategia: cerco il dato pertinente che manca")).toHaveCount(0);
+    await page.getByRole("radio", { name: "Individuare il dato mancante e controllarlo prima di decidere" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    await expect(page.getByText("Riconosco la strategia: cerco il dato pertinente che manca")).toBeVisible();
+    await expect(page.locator(".pathwayGrowth__status")).toContainText("Nuovo traguardo conservato");
+    const stored = await page.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"));
+    expect(stored).toContain("recognise-missing-information-strategy");
+    expect(writes).toEqual([]);
+
+    await page.getByRole("button", { name: "Cancella i progressi locali" }).click();
+    await expect(page.locator(".pathwayGrowth__status")).toContainText("sono stati cancellati");
+    expect(await page.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"))).toBeNull();
+  });
+
+  test("does not award growth for prompt arrival or non-qualifying choices", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-missing-information-01");
+    await page.getByRole("button", { name: "Conserva i miei traguardi su questo dispositivo" }).click();
+
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Quali risorse sono disponibili" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Controllare prima le risorse disponibili" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Tengo la scelta" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    await expect(page.getByRole("heading", { name: "Diamo un nome alla strategia" })).toBeFocused();
+    expect(await page.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"))).not.toContain("recognise-missing-information-strategy");
+
+    await page.getByRole("radio", { name: "Indovinare il dato mancante" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    expect(await page.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"))).not.toContain("recognise-missing-information-strategy");
+
+    await page.getByRole("radio", { name: "No: scelgo senza controllare" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    expect(await page.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"))).not.toContain("choose-strategy-in-changed-context");
+
+    await page.getByRole("radio", { name: "Quale pagina ha l’aspetto più gradevole" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    const stored = await page.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"));
+    expect(stored).not.toContain("transfer-to-source-evaluation");
+  });
+
+  test("reconciles growth across tabs and a reset cannot be recreated by a stale tab", async ({ page }) => {
+    const second = await page.context().newPage();
+    await Promise.all([
+      page.goto("/percorsi/lab/pw-missing-information-01"),
+      second.goto("/percorsi/lab/pw-missing-information-01"),
+    ]);
+
+    await page.getByRole("button", { name: "Conserva i miei traguardi su questo dispositivo" }).click();
+    await expect(second.getByRole("button", { name: "Cancella i progressi locali" })).toBeVisible();
+
+    // First tab earns the first qualifying achievement.
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Quali risorse sono disponibili" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Controllare prima le risorse disponibili" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Tengo la scelta" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Individuare il dato mancante e controllarlo prima di decidere" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await expect(second.getByText("Riconosco la strategia: cerco il dato pertinente che manca")).toBeVisible();
+
+    // Second tab re-reads and merges instead of replacing the shared record.
+    await second.getByRole("button", { name: "Continua" }).click();
+    await second.getByRole("radio", { name: "Quali risorse sono disponibili" }).check();
+    await second.getByRole("button", { name: "Continua" }).click();
+    await second.getByRole("radio", { name: "Controllare prima le risorse disponibili" }).check();
+    await second.getByRole("button", { name: "Continua" }).click();
+    await second.getByRole("button", { name: "Continua" }).click();
+    await second.getByRole("radio", { name: "Tengo la scelta" }).check();
+    await second.getByRole("button", { name: "Continua" }).click();
+    await second.getByRole("radio", { name: "Individuare il dato mancante e controllarlo prima di decidere" }).check();
+    await second.getByRole("button", { name: "Continua" }).click();
+    await second.getByRole("radio", { name: "Sì: prima controllo ciò che è disponibile" }).check();
+    await second.getByRole("button", { name: "Continua" }).click();
+
+    const merged = await second.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"));
+    expect(merged).toContain("recognise-missing-information-strategy");
+    expect(merged).toContain("choose-strategy-in-changed-context");
+
+    // Reset in tab one disables storage everywhere.
+    await page.getByRole("button", { name: "Cancella i progressi locali" }).click();
+    await expect(second.getByRole("button", { name: "Conserva i miei traguardi su questo dispositivo" })).toBeVisible();
+    expect(await second.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"))).toBeNull();
+
+    // Even if the second tab continues from an already advanced session, it must not recreate the deleted record.
+    await second.getByRole("radio", { name: "Quali prove e fonti sostengono le informazioni" }).check();
+    await second.getByRole("button", { name: "Continua" }).click();
+    expect(await second.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"))).toBeNull();
+
+    await second.close();
   });
 });
 
@@ -204,7 +342,8 @@ test.describe("PW-MISSING public-surface runtime readiness", () => {
     await page.goto("/percorsi/pw-missing-information-01");
     await expect(page.locator(".experience-runtime")).toBeVisible();
     await expect(page.getByText("Nessun account, punteggio, profilo o telemetria dello studente.")).toBeVisible();
-    await page.getByRole("radio", { name: "Cercare il dato sulla durata" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Quali risorse sono disponibili" }).check();
     await page.getByRole("button", { name: "Continua" }).click();
 
     expect(writes).toEqual([]);

@@ -32,7 +32,8 @@
     "test:smart:all": "pnpm test:smart:sp01 && node scripts/test-smart-flow.mjs --flow-package content/smart-activities/fonte-digitale/flow-package.v1.json",
     "test:percorsi:factory": "node scripts/test-percorsi-pathway-factory.mjs",
     "test:experience:generality": "node scripts/test-experience-generality.mjs",
-    "test:smart:publication": "node scripts/test-smart-publication-reconciliation.mjs"
+    "test:smart:publication": "node scripts/test-smart-publication-reconciliation.mjs",
+    "test:percorsi:product": "node scripts/test-percorsi-student-product.mjs"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",

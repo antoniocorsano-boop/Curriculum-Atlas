@@ -1,0 +1,87 @@
+{
+  "schemaVersion": "atlas.percorsi.student-library/v1",
+  "status": "PRODUCT_RECOVERY_CANDIDATE",
+  "authority": {
+    "tramaRecoveredPackage": "ATLAS-PERCORSI-G1-PR96",
+    "tramaExactHead": "dfb5b106708bee88016907c13ee0d104c093e7ca",
+    "productContract": "docs/capabilities/atlas-percorsi/product/STUDENT-LIBRARY-PRODUCT-CONTRACT-v1.md"
+  },
+  "territories": [
+    {
+      "id": "self",
+      "label": "Conosci te stesso",
+      "purpose": "Riconoscere strategie, interessi e difficoltà senza trasformarli in etichette personali."
+    },
+    {
+      "id": "learning",
+      "label": "Impara a imparare",
+      "purpose": "Scegliere, osservare e rivedere strategie di apprendimento."
+    },
+    {
+      "id": "others",
+      "label": "Incontra gli altri",
+      "purpose": "Ascoltare, comunicare, collaborare e considerare prospettive diverse."
+    },
+    {
+      "id": "problems",
+      "label": "Affronta problemi",
+      "purpose": "Ragionare nell'incertezza, decidere, verificare e risolvere problemi."
+    },
+    {
+      "id": "world",
+      "label": "Agisci nel mondo",
+      "purpose": "Agire con responsabilità tra informazioni, cittadinanza, sostenibilità e ambienti digitali."
+    },
+    {
+      "id": "design",
+      "label": "Progetta",
+      "purpose": "Trasformare intenzioni in piani, soluzioni e revisioni motivate."
+    }
+  ],
+  "growthStages": [
+    {
+      "id": "BEGINNING_TO_RECOGNISE",
+      "label": "Inizia a riconoscere"
+    },
+    {
+      "id": "USES_WITH_SUPPORT",
+      "label": "Usa con supporto"
+    },
+    {
+      "id": "USES_INDEPENDENTLY",
+      "label": "Usa in autonomia"
+    },
+    {
+      "id": "CHOOSES_WHEN_TO_USE",
+      "label": "Sceglie quando usarla"
+    },
+    {
+      "id": "TRANSFERS_TO_NEW_SITUATION",
+      "label": "Trasferisce in una nuova situazione"
+    }
+  ],
+  "pathways": [
+    {
+      "pathwayId": "pw-missing-information-01",
+      "title": "Prima di decidere, cosa manca?",
+      "candidateTerritories": [
+        "problems",
+        "world"
+      ],
+      "productState": "PRODUCT_RECOVERY_REFERENCE",
+      "dossierRef": "TRAMA:docs/capabilities/atlas-percorsi/pathways/PW-MISSING-INFORMATION-01/dossier-v1.md",
+      "implementationSpecRef": "TRAMA:docs/capabilities/atlas-percorsi/pathways/PW-MISSING-INFORMATION-01/implementation-spec-v1.md"
+    },
+    {
+      "pathwayId": "pw-constraints-tradeoffs-01",
+      "title": "Una soluzione, molti vincoli",
+      "candidateTerritories": [
+        "design",
+        "world"
+      ],
+      "productState": "SCREENPLAY_REQUIRED",
+      "dossierRef": "TRAMA:docs/capabilities/atlas-percorsi/pathways/PW-CONSTRAINTS-TRADEOFFS-01/dossier-v1.md"
+    }
+  ],
+  "runtimeAuthorization": "NOT_RUNTIME_AUTHORIZED"
+}

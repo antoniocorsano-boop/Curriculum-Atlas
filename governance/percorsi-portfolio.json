@@ -46,21 +46,27 @@
       "state": "IMPLEMENTED_CANDIDATE",
       "evidenceRef": "docs/PERCORSI-G1-PW-MISSING-INFORMATION-01-IMPLEMENTATION.md",
       "tramaDossierRef": "docs/capabilities/atlas-percorsi/pathways/PW-MISSING-INFORMATION-01/dossier-v1.md",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "runtimeAuthorization": "NOT_RUNTIME_AUTHORIZED",
       "availability": "ACTIVE",
       "provenanceRef": "TRAMA recovered G1 package #96 @ dfb5b106708bee88016907c13ee0d104c093e7ca",
       "authorityRef": "antoniocorsano-boop/trama-ecosistema#96@dfb5b106708bee88016907c13ee0d104c093e7ca",
       "runtimeQualificationTarget": {
-        "contentVersion": "1.0.0",
-        "publicationId": "pw-missing-information-01@1.0.0",
+        "contentVersion": "1.1.0",
+        "publicationId": "pw-missing-information-01@1.1.0",
         "targetPublicationState": "QUALIFIED",
         "qualificationContractVersion": "v1",
         "intendedPublicPath": "/percorsi/pw-missing-information-01",
         "runtimeExactHead": null,
         "surfaceArtifactDigest": null,
         "freezeState": "DEFERRED_UNTIL_RRT03_COMPLETE"
-      }
+      },
+      "territoryIds": [
+        "problems",
+        "world"
+      ],
+      "productState": "PRODUCT_RECOVERY_CANDIDATE",
+      "productRegistryRef": "governance/percorsi-student-library.json"
     },
     {
       "pathwayId": "pw-constraints-tradeoffs-01",
