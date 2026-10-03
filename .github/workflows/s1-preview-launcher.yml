@@ -149,5 +149,6 @@ jobs:
         with:
           name: smart-publication-receipts-${{ github.sha }}
           path: .smart-receipts/
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 30
