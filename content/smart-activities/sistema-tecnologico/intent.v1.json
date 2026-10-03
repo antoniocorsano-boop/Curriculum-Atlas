@@ -1,0 +1,6 @@
+{
+  "schemaVersion": "atlas.smart.intent/v1",
+  "activityId": "sistema-tecnologico",
+  "requestType": "NEW_ACTIVITY",
+  "teacherRequest": "Predisporre un'attività guidata per analizzare un sistema tecnologico collegando energia, ambiente e sostenibilità."
+}
