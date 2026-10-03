@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { spawnSync } from "node:child_process";
+import { buildPathwayCandidate } from "./build-percorsi-pathway-candidate.mjs";
 
 const required = [
   "scripts/build-smart-flow-package.mjs",
@@ -66,3 +67,30 @@ assert.notEqual(sourceFlow.stages.F5.state, "COMPLETE");
 assert.notEqual(sourceFlow.stages.F10.teacherStatus, "Pronto");
 
 console.log("EXPERIENCE GENERALITY SMART: PASS — SP-01 + fonte-digitale use the same deterministic flow/runtime contracts.");
+
+
+const unregisteredSecondPathway = {
+  schemaVersion: "atlas.percorsi.seed/v1",
+  pathwayId: "pw-constraints-tradeoffs-01",
+  title: "Una soluzione, molti vincoli",
+  version: "2.0.0",
+  territoryIds: ["design", "world"],
+  competence: "Progettare una soluzione valutando vincoli e compromessi e rivederla quando cambia un requisito.",
+  coreStrategy: "Rendere espliciti i vincoli, costruire una soluzione, osservare i compromessi e rivederla quando cambia un requisito.",
+  evidenceGoal: "Il percorso mostra una revisione motivata e un trasferimento della strategia a un contesto differente.",
+  initialContext: "Una soluzione deve soddisfare più vincoli che non possono essere massimizzati contemporaneamente.",
+  transferContext: "Un secondo problema cambia dominio e insieme dei vincoli, mantenendo la stessa strategia di progetto.",
+  provenanceRef: "TRAMA-PR-217-PENDING-HUMAN-REVIEW",
+  cognitiveFunctions: {
+    orient: "identify_constraints",
+    practice: "construct_under_constraints",
+    transfer: "transfer_constraint_strategy",
+    reflect: "revise_tradeoffs",
+  },
+};
+assert.throws(
+  () => buildPathwayCandidate(unregisteredSecondPathway),
+  /not registered in backlog-zero portfolio/,
+  "Atlas must reject PW-CONSTRAINTS-TRADEOFFS-01 until exact-head TRAMA Human Review authorizes portfolio registration",
+);
+console.log("PERCORSI AUTHORITY GUARD: PASS — second pathway remains unregistered before TRAMA Human Review.");
