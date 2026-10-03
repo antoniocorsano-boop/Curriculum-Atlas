@@ -7,6 +7,7 @@ export type LocalGrowthAchievement = {
   label: string;
   stage: "BEGINNING_TO_RECOGNISE" | "USES_WITH_SUPPORT" | "USES_INDEPENDENTLY" | "CHOOSES_WHEN_TO_USE" | "TRANSFERS_TO_NEW_SITUATION";
   triggerNodeId: string;
+  triggerTransitionId: string;
 };
 
 type EarnedAchievement = {
@@ -32,7 +33,11 @@ function readRecord(): LocalGrowthRecord {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return EMPTY;
     const parsed = JSON.parse(raw) as LocalGrowthRecord;
-    if (parsed.schemaVersion !== "atlas.local-growth/v1" || !Array.isArray(parsed.earned)) return EMPTY;
+    if (
+      parsed.schemaVersion !== "atlas.local-growth/v1" ||
+      typeof parsed.enabled !== "boolean" ||
+      !Array.isArray(parsed.earned)
+    ) return EMPTY;
     return parsed;
   } catch {
     return EMPTY;
@@ -64,21 +69,32 @@ export function useLocalPathwayGrowth({
   useEffect(() => {
     setRecord(readRecord());
     setReady(true);
-  }, []);
 
-  const save = useCallback((next: LocalGrowthRecord, successMessage: string) => {
-    if (!writeRecord(next)) {
-      setNotice("Non è stato possibile salvare i traguardi su questo dispositivo. Puoi continuare il percorso senza conservarli.");
-      return false;
+    function syncFromOtherTab(event: StorageEvent) {
+      if (event.key !== STORAGE_KEY) return;
+      const latest = readRecord();
+      setRecord(latest);
+      setNotice(
+        event.newValue === null
+          ? "I progressi locali sono stati cancellati in un’altra scheda."
+          : "I traguardi locali sono stati aggiornati da un’altra scheda.",
+      );
     }
-    setRecord(next);
-    setNotice(successMessage);
-    return true;
+
+    window.addEventListener("storage", syncFromOtherTab);
+    return () => window.removeEventListener("storage", syncFromOtherTab);
   }, []);
 
   const enable = useCallback(() => {
-    save({ ...record, enabled: true }, "Crescita locale attivata. I traguardi resteranno soltanto su questo dispositivo.");
-  }, [record, save]);
+    const latest = readRecord();
+    const next: LocalGrowthRecord = { ...latest, enabled: true };
+    if (!writeRecord(next)) {
+      setNotice("Non è stato possibile attivare la crescita locale su questo dispositivo. Puoi continuare senza conservarla.");
+      return;
+    }
+    setRecord(next);
+    setNotice("Crescita locale attivata. I traguardi resteranno soltanto su questo dispositivo.");
+  }, []);
 
   const reset = useCallback(() => {
     try {
@@ -90,12 +106,23 @@ export function useLocalPathwayGrowth({
     }
   }, []);
 
-  const noteNode = useCallback((nodeId: string) => {
-    if (!ready || !record.enabled) return;
-    const matching = achievements.filter((item) => item.triggerNodeId === nodeId);
+  const noteOutcome = useCallback((nodeId: string, transitionId: string) => {
+    if (!ready) return;
+
+    const matching = achievements.filter(
+      (item) => item.triggerNodeId === nodeId && item.triggerTransitionId === transitionId,
+    );
     if (!matching.length) return;
 
-    const existing = new Set(record.earned.map((item) => item.key));
+    // Re-read before every cross-tab write. An absent/disabled record after reset
+    // is authoritative and a stale tab must not recreate it.
+    const latest = readRecord();
+    if (!latest.enabled) {
+      setRecord(latest);
+      return;
+    }
+
+    const existing = new Set(latest.earned.map((item) => item.key));
     const additions = matching
       .map((item): EarnedAchievement => ({
         key: `${pathwayId}@${pathwayVersion}:${item.id}`,
@@ -107,11 +134,27 @@ export function useLocalPathwayGrowth({
       }))
       .filter((item) => !existing.has(item.key));
 
-    if (additions.length) save(
-      { ...record, earned: [...record.earned, ...additions] },
-      additions.length === 1 ? "Nuovo traguardo conservato sul dispositivo." : "Nuovi traguardi conservati sul dispositivo.",
+    if (!additions.length) {
+      setRecord(latest);
+      return;
+    }
+
+    const next: LocalGrowthRecord = {
+      ...latest,
+      earned: [...latest.earned, ...additions],
+    };
+    if (!writeRecord(next)) {
+      setNotice("Non è stato possibile salvare il nuovo traguardo. Puoi continuare il percorso senza conservarlo.");
+      return;
+    }
+
+    setRecord(next);
+    setNotice(
+      additions.length === 1
+        ? "Nuovo traguardo conservato sul dispositivo."
+        : "Nuovi traguardi conservati sul dispositivo.",
     );
-  }, [achievements, pathwayId, pathwayVersion, ready, record, save]);
+  }, [achievements, pathwayId, pathwayVersion, ready]);
 
   const earnedHere = useMemo(
     () => record.earned.filter((item) => item.pathwayId === pathwayId && item.pathwayVersion === pathwayVersion),
@@ -119,16 +162,28 @@ export function useLocalPathwayGrowth({
   );
 
   const exportRecord = useCallback(() => {
-    const blob = new Blob([JSON.stringify(record, null, 2)], { type: "application/json" });
+    const latest = readRecord();
+    setRecord(latest);
+    const blob = new Blob([JSON.stringify(latest, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
     anchor.download = "atlas-i-miei-traguardi.json";
     anchor.click();
     URL.revokeObjectURL(url);
-  }, [record]);
+  }, []);
 
-  return { ready, enabled: record.enabled, earnedHere, totalEarned: record.earned.length, notice, enable, reset, noteNode, exportRecord };
+  return {
+    ready,
+    enabled: record.enabled,
+    earnedHere,
+    totalEarned: record.earned.length,
+    notice,
+    enable,
+    reset,
+    noteOutcome,
+    exportRecord,
+  };
 }
 
 const stageLabel: Record<LocalGrowthAchievement["stage"], string> = {
@@ -185,7 +240,7 @@ export function LocalGrowthPanel({
               ))}
             </ul>
           ) : (
-            <p>I traguardi compariranno qui mentre eserciti e trasferisci la strategia.</p>
+            <p>I traguardi compariranno qui dopo una scelta che dimostra la strategia, non per il solo avanzamento nel percorso.</p>
           )}
           <div className="pathwayGrowth__actions">
             <button type="button" className="pathwayButton pathwayButton--secondary" onClick={onExport}>Esporta</button>
