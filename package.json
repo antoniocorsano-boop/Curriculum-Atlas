@@ -25,7 +25,8 @@
     "normalize:image:selftest": "node scripts/normalize-image.mjs --self-test",
     "validate:experience:contracts": "node scripts/validate-experience-contracts.mjs experience fixtures/experience-engine/contracts/valid/experience-smart.json",
     "test:experience:contracts": "node scripts/test-experience-contracts.mjs",
-    "test:experience:grammar": "node scripts/test-experience-grammar-registry.mjs"
+    "test:experience:grammar": "node scripts/test-experience-grammar-registry.mjs",
+    "test:experience:factory": "node scripts/test-experience-factory.mjs"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
