@@ -86,3 +86,39 @@ test.describe("PW-MISSING shared-engine conformance", () => {
     expect(localKeys).toEqual([]);
   });
 });
+
+
+test.describe("Smart generality browser proof", () => {
+  test("runs fonte-digitale through the shared runtime without learner network writes", async ({ page }) => {
+    const writes: string[] = [];
+    page.on("request", (request) => {
+      if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method())) writes.push(request.method());
+    });
+
+    await page.goto("/attivita/fonte-digitale");
+    await expect(page.locator(".experience-runtime")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Una pagina sembra convincente" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Continua" }).click();
+    await expect(page.getByRole("heading", { name: "Da dove inizi?" })).toBeFocused();
+
+    await page.getByRole("radio", { name: "Controllo chi pubblica e se è responsabile del contenuto" }).check();
+    await expect(page.getByRole("status")).toContainText("autore ed ente");
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    await page.getByRole("radio", { name: "Cerco dati, fonti citate, data e metodo" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await expect(page.getByRole("heading", { name: "Confronta fuori dalla pagina" })).toBeFocused();
+
+    await page.getByRole("button", { name: "Continua" }).click();
+    await expect(page.getByRole("heading", { name: "Stesso metodo, nuova fonte" })).toBeFocused();
+
+    await page.getByRole("radio", { name: "Controllo autore, prove, data, scopo e confronto indipendente" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await expect(page.getByRole("heading", { name: "Affidabilità come giudizio motivato" })).toBeFocused();
+
+    const localState = await page.evaluate(() => localStorage.getItem("atlas:experience:fonte-digitale"));
+    expect(localState).not.toBeNull();
+    expect(writes).toEqual([]);
+  });
+});
