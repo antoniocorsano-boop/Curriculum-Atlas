@@ -133,7 +133,7 @@ const firstRegisteredPathway = portfolio.pathways.find((entry) => entry.pathwayI
 assert.ok(firstRegisteredPathway, "PW-MISSING must remain registered");
 
 assert.equal(firstRegisteredPathway.runtimeAuthorization, "NOT_RUNTIME_AUTHORIZED");
-assert.equal(firstRegisteredPathway.runtimeQualificationTarget?.publicationId, "pw-missing-information-01@1.0.0");
+assert.equal(firstRegisteredPathway.runtimeQualificationTarget?.publicationId, "pw-missing-information-01@1.1.0");
 assert.equal(firstRegisteredPathway.runtimeQualificationTarget?.targetPublicationState, "QUALIFIED");
 assert.equal(firstRegisteredPathway.runtimeQualificationTarget?.qualificationContractVersion, "v1");
 assert.equal(firstRegisteredPathway.runtimeQualificationTarget?.intendedPublicPath, "/percorsi/pw-missing-information-01");
