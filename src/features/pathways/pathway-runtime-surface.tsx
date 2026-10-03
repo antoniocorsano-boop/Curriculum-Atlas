@@ -78,7 +78,7 @@ export function PathwayRuntimeSurface({
         />
       )}
 
-      <ExperienceRuntime definition={definition} presentation={presentation} onNodeVisit={growth.noteNode} />
+      <ExperienceRuntime definition={definition} presentation={presentation} onTransition={(nodeId, transitionId) => growth.noteOutcome(nodeId, transitionId)} />
 
       <details className="pathwayPrototype__privacy">
         <summary><strong>Privacy del percorso</strong></summary>
