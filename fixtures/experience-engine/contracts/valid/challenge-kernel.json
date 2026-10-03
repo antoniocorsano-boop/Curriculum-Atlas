@@ -1,0 +1,37 @@
+{
+  "schema": "atlas.challenge-kernel/v1",
+  "kernelId": "fixture-kernel",
+  "title": "Fixture",
+  "situation": "A situation",
+  "generativeQuestion": "What should happen?",
+  "competenceTargets": [
+    {
+      "id": "fixture-competence"
+    }
+  ],
+  "evidenceModel": {
+    "availableEvidence": [
+      {
+        "id": "e1"
+      }
+    ]
+  },
+  "decisionModel": {
+    "decisions": [
+      {
+        "id": "d1"
+      }
+    ],
+    "consequencePolicy": "EXPLANATORY",
+    "revisionAllowed": true
+  },
+  "transferPrinciple": "Apply the same principle elsewhere.",
+  "completionEvidence": [
+    {
+      "id": "done"
+    }
+  ],
+  "provenanceRefs": [
+    "fixture:challenge-kernel"
+  ]
+}

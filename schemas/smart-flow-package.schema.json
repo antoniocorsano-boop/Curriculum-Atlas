@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "atlas.smart.flow-package/v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "activityId",
+    "intentRef",
+    "planRef",
+    "experienceRef",
+    "materialSetRef",
+    "qualificationProfileRef",
+    "stages"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "atlas.smart.flow-package/v1"
+    },
+    "activityId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "intentRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "planRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "experienceRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "materialSetRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "qualificationProfileRef": {
+      "const": "SMART_FAST_V1"
+    },
+    "stages": {
+      "type": "object"
+    }
+  }
+}

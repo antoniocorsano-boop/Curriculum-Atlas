@@ -1,0 +1,38 @@
+{
+  "schema": "atlas.experience/v1",
+  "experienceId": "fixture-smart",
+  "kernelRef": "fixture-kernel",
+  "mode": "SMART",
+  "sceneGraph": {
+    "entrySceneId": "start",
+    "scenes": [
+      {
+        "id": "start",
+        "primitive": "EXPLORE",
+        "interaction": {
+          "kind": "choice"
+        },
+        "transitions": [
+          {
+            "id": "continue",
+            "targetSceneId": "done"
+          }
+        ]
+      },
+      {
+        "id": "done",
+        "primitive": "CHOOSE",
+        "interaction": {
+          "kind": "terminal"
+        },
+        "transitions": [],
+        "terminal": true
+      }
+    ]
+  },
+  "presentationGrammarRef": "sequential-visual-narrative",
+  "qualificationProfileRef": "SMART_FAST_V1",
+  "runtimeStatePolicy": "LOCAL_DEVICE",
+  "learnerIdentityRequired": false,
+  "telemetryAllowed": false
+}

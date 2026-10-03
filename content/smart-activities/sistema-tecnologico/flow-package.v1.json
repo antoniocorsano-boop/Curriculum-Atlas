@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "atlas.smart.flow-package/v1",
+  "activityId": "sistema-tecnologico",
+  "intentRef": "content/smart-activities/sistema-tecnologico/intent.v1.json",
+  "planRef": "content/smart-activities/sistema-tecnologico/plan.v1.json",
+  "experienceRef": "content/experiences/smart/sistema-tecnologico.v1.json",
+  "materialSetRef": "content/smart-activities/sistema-tecnologico/material-set.v2.json",
+  "qualificationProfileRef": "SMART_FAST_V1",
+  "stages": {
+    "F0": {
+      "state": "PASS",
+      "output": "SmartActivityIntent"
+    },
+    "F1": {
+      "state": "PASS",
+      "output": "SmartActivityPlan"
+    },
+    "F2": {
+      "state": "PASS",
+      "output": "AssetCandidate[]"
+    },
+    "F3": {
+      "state": "PASS",
+      "output": "MaterialSet draft"
+    },
+    "F4": {
+      "state": "PASS",
+      "output": "AssetRecord[]"
+    },
+    "F5": {
+      "state": "PENDING",
+      "output": "AssetPublicationReceipt[]"
+    },
+    "F6": {
+      "state": "BLOCKED",
+      "output": "MaterialSet readiness"
+    },
+    "F7": {
+      "state": "PASS",
+      "output": "SmartActivity binding"
+    },
+    "F8": {
+      "state": "DEFERRED_NOT_AUTHORIZED",
+      "output": "LessonPreparation projection"
+    },
+    "F9": {
+      "state": "PENDING",
+      "output": "SMART_FAST_V1 evidence"
+    },
+    "F10": {
+      "state": "ACTION_REQUIRED",
+      "teacherStatus": "Da completare"
+    }
+  }
+}

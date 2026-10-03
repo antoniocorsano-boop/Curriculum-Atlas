@@ -1,0 +1,29 @@
+{
+  "schema": "atlas.experience/v1",
+  "experienceId": "bad-target",
+  "kernelRef": "fixture-kernel",
+  "mode": "SMART",
+  "sceneGraph": {
+    "entrySceneId": "start",
+    "scenes": [
+      {
+        "id": "start",
+        "primitive": "EXPLORE",
+        "interaction": {
+          "kind": "choice"
+        },
+        "transitions": [
+          {
+            "id": "bad",
+            "targetSceneId": "missing"
+          }
+        ]
+      }
+    ]
+  },
+  "presentationGrammarRef": "sequential-visual-narrative",
+  "qualificationProfileRef": "SMART_FAST_V1",
+  "runtimeStatePolicy": "VOLATILE_MEMORY",
+  "learnerIdentityRequired": false,
+  "telemetryAllowed": false
+}

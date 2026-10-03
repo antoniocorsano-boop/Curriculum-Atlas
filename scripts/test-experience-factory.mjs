@@ -1,0 +1,11 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import {buildExperienceCandidate} from "./build-experience-candidate.mjs";
+const seedA={schemaVersion:"atlas.experience.seed/v1",experienceId:"synthetic-a",kernelRef:"kernel-a",mode:"SMART",presentationGrammarRef:"sequential-visual-narrative",qualificationProfileRef:"SMART_FAST_V1",runtimeStatePolicy:"VOLATILE_MEMORY",scenes:[{id:"start",primitive:"EXPLORE",interaction:{kind:"choice"},transitions:[{id:"go",targetSceneId:"done"}]},{id:"done",primitive:"CHOOSE",interaction:{kind:"terminal"},transitions:[],terminal:true}]};
+const seedB={schemaVersion:"atlas.experience.seed/v1",experienceId:"synthetic-b",kernelRef:"kernel-b",mode:"PATHWAY",presentationGrammarRef:"branching-consequences",qualificationProfileRef:"PATHWAY_G2_PLUS_V1",runtimeStatePolicy:"VOLATILE_MEMORY",scenes:[{id:"entry",primitive:"EXPLORE",interaction:{kind:"choice"},transitions:[{id:"a",targetSceneId:"build"},{id:"b",targetSceneId:"reframe"}]},{id:"build",primitive:"BUILD",interaction:{kind:"choice"},transitions:[{id:"x",targetSceneId:"transfer"}]},{id:"reframe",primitive:"REFRAME",interaction:{kind:"choice"},transitions:[{id:"y",targetSceneId:"transfer"}]},{id:"transfer",primitive:"TRANSFER",interaction:{kind:"choice"},transitions:[{id:"z",targetSceneId:"end"}]},{id:"end",primitive:"CONNECT",interaction:{kind:"terminal"},transitions:[],terminal:true}]};
+assert.deepEqual(buildExperienceCandidate(seedA),buildExperienceCandidate(structuredClone(seedA)));
+assert.deepEqual(buildExperienceCandidate(seedB),buildExperienceCandidate(structuredClone(seedB)));
+assert.deepEqual(buildExperienceCandidate(seedA).sceneGraph.scenes.map(x=>x.id),["start","done"]);
+assert.deepEqual(buildExperienceCandidate(seedB).sceneGraph.scenes.map(x=>x.id),["entry","build","reframe","transfer","end"]);
+for(const file of ["scripts/build-experience-candidate.mjs","scripts/lib/experience-contracts.mjs"]){const src=fs.readFileSync(file,"utf8");for(const id of ["sistema-tecnologico","pw-missing-information-01","fonte-digitale","pw-constraints-tradeoffs-01"])assert.equal(src.includes(id),false,`${file} contains special case ${id}`);}
+console.log("EXPERIENCE FACTORY: PASS");

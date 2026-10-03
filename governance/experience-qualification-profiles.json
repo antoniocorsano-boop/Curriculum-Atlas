@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "atlas.experience.qualification-profiles/v1",
+  "status": "CANONICAL_V1",
+  "profiles": [
+    {
+      "id": "SMART_FAST_V1",
+      "requirements": [
+        "ANONYMOUS_LOAD",
+        "NO_LOGIN",
+        "NO_LEARNER_RESPONSE_TRANSMISSION",
+        "LOCAL_OR_VOLATILE_STATE",
+        "COMPLETION_AND_RESTART",
+        "MOBILE_AND_DESKTOP",
+        "KEYBOARD_AND_FOCUS",
+        "REQUIRED_MATERIAL_PUBLIC_VERIFICATION",
+        "NO_PERCORSI_AUTHORITY_COLLISION"
+      ]
+    },
+    {
+      "id": "PATHWAY_G2_PLUS_V1",
+      "requirements": [
+        "MEANINGFUL_BRANCHING",
+        "TRANSFER",
+        "PRESENTATION_EQUIVALENCE",
+        "COMPLETE_DOSSIER",
+        "PROVENANCE",
+        "CHILD_SAFETY_PRIVACY_ACCESSIBILITY_EVIDENCE",
+        "WITHDRAWAL_AND_ROLLBACK",
+        "EXACT_HEAD_VALIDATION",
+        "EXPLICIT_RUNTIME_AUTHORIZATION_BEFORE_STUDENT_RELEASE"
+      ]
+    }
+  ]
+}

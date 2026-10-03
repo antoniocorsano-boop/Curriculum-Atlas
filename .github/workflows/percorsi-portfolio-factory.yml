@@ -9,6 +9,11 @@ on:
       - 'schemas/percorsi-pathway-seed.schema.json'
       - 'fixtures/percorsi-factory/**'
       - 'scripts/build-percorsi-pathway-candidate.mjs'
+      - 'scripts/build-experience-candidate.mjs'
+      - 'scripts/test-experience-factory.mjs'
+      - 'scripts/lib/experience-contracts.mjs'
+      - 'governance/experience-grammar-registry.json'
+      - 'governance/experience-qualification-profiles.json'
       - 'scripts/test-percorsi-pathway-factory.mjs'
       - 'scripts/validate-percorsi-pathway-seed-schema.mjs'
       - '.github/workflows/percorsi-portfolio-factory.yml'
@@ -22,6 +27,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Generic experience factory
+        run: node scripts/test-experience-factory.mjs
       - name: Factory deterministic and G2 validation
         run: node scripts/test-percorsi-pathway-factory.mjs
       - name: Create isolated seed-schema validator

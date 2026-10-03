@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "atlas.smart.intent/v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "intentId",
+    "activityId",
+    "requestType",
+    "topic",
+    "audience",
+    "useModes",
+    "sourceRef"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "atlas.smart.intent/v1"
+    },
+    "intentId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "activityId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "requestType": {
+      "enum": [
+        "NEW_ACTIVITY",
+        "ADD_MATERIAL",
+        "REPLACE_MATERIAL",
+        "MATERIAL_ONLY"
+      ]
+    },
+    "topic": {
+      "type": "string",
+      "minLength": 1
+    },
+    "audience": {
+      "type": "array",
+      "minItems": 1
+    },
+    "useModes": {
+      "type": "array",
+      "minItems": 1
+    },
+    "sourceRef": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

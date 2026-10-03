@@ -1,0 +1,25 @@
+{
+  "schema": "atlas.experience/v1",
+  "experienceId": "bad-telemetry",
+  "kernelRef": "fixture-kernel",
+  "mode": "SMART",
+  "sceneGraph": {
+    "entrySceneId": "done",
+    "scenes": [
+      {
+        "id": "done",
+        "primitive": "EXPLORE",
+        "interaction": {
+          "kind": "terminal"
+        },
+        "transitions": [],
+        "terminal": true
+      }
+    ]
+  },
+  "presentationGrammarRef": "sequential-visual-narrative",
+  "qualificationProfileRef": "SMART_FAST_V1",
+  "runtimeStatePolicy": "LOCAL_DEVICE",
+  "learnerIdentityRequired": false,
+  "telemetryAllowed": true
+}

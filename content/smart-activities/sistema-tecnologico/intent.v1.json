@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "atlas.smart.intent/v1",
+  "intentId": "smart-intent:sistema-tecnologico:v1",
+  "activityId": "sistema-tecnologico",
+  "requestType": "NEW_ACTIVITY",
+  "topic": "Analizzare un sistema tecnologico — Energia, Ambiente, Sostenibilità",
+  "audience": [
+    "STUDENT"
+  ],
+  "useModes": [
+    "INDIVIDUAL",
+    "LIM"
+  ],
+  "sourceRef": "ATLAS-SMART-ACTIVITY-01"
+}

@@ -1,0 +1,51 @@
+{
+  "schema": "atlas.experience/v1",
+  "experienceId": "fixture-pathway",
+  "kernelRef": "fixture-kernel",
+  "mode": "PATHWAY",
+  "sceneGraph": {
+    "entrySceneId": "start",
+    "scenes": [
+      {
+        "id": "start",
+        "primitive": "EXPLORE",
+        "interaction": {
+          "kind": "choice"
+        },
+        "transitions": [
+          {
+            "id": "continue",
+            "targetSceneId": "transfer"
+          }
+        ]
+      },
+      {
+        "id": "transfer",
+        "primitive": "TRANSFER",
+        "interaction": {
+          "kind": "choice"
+        },
+        "transitions": [
+          {
+            "id": "finish",
+            "targetSceneId": "done"
+          }
+        ]
+      },
+      {
+        "id": "done",
+        "primitive": "REFRAME",
+        "interaction": {
+          "kind": "terminal"
+        },
+        "transitions": [],
+        "terminal": true
+      }
+    ]
+  },
+  "presentationGrammarRef": "branching-consequences",
+  "qualificationProfileRef": "PATHWAY_G2_PLUS_V1",
+  "runtimeStatePolicy": "VOLATILE_MEMORY",
+  "learnerIdentityRequired": false,
+  "telemetryAllowed": false
+}

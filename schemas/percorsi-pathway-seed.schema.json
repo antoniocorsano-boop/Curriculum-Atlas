@@ -14,8 +14,7 @@
     "evidenceGoal",
     "initialContext",
     "transferContext",
-    "provenanceRef",
-    "cognitiveFunctions"
+    "provenanceRef"
   ],
   "properties": {
     "schemaVersion": {
@@ -99,6 +98,31 @@
           "minLength": 1
         }
       }
+    },
+    "experienceSeed": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "experienceId",
+        "kernelRef",
+        "mode",
+        "presentationGrammarRef",
+        "qualificationProfileRef",
+        "runtimeStatePolicy",
+        "scenes"
+      ]
     }
-  }
+  },
+  "oneOf": [
+    {
+      "required": [
+        "cognitiveFunctions"
+      ]
+    },
+    {
+      "required": [
+        "experienceSeed"
+      ]
+    }
+  ]
 }
