@@ -78,8 +78,8 @@ test.describe("PW-MISSING product recovery on shared engine", () => {
     await page.getByRole("button", { name: "Continua" }).click();
 
     await expect(page.getByRole("heading", { name: "La strategia resta tua" })).toBeFocused();
-    await page.getByRole("radio", { name: "Conserva i miei traguardi sul dispositivo" }).check();
-    await expect(page.getByRole("status")).toContainText("restano solo su questo dispositivo");
+    await expect(page.getByText(/Hai completato il percorso/)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Nuovo percorso" })).toBeVisible();
   });
 
   test("preserves literal and narrative presentation without changing the task", async ({ page }) => {
@@ -114,6 +114,7 @@ test.describe("PW-MISSING product recovery on shared engine", () => {
     expect(await page.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"))).toBeNull();
 
     await page.getByRole("button", { name: "Conserva i miei traguardi su questo dispositivo" }).click();
+    await expect(page.getByRole("status")).toContainText("Crescita locale attivata");
     await page.getByRole("button", { name: "Continua" }).click();
     await page.getByRole("radio", { name: "Quali risorse sono disponibili" }).check();
     await page.getByRole("button", { name: "Continua" }).click();
@@ -124,11 +125,13 @@ test.describe("PW-MISSING product recovery on shared engine", () => {
     await page.getByRole("button", { name: "Continua" }).click();
 
     await expect(page.getByText("Riconosco la strategia: cerco il dato pertinente che manca")).toBeVisible();
+    await expect(page.getByRole("status")).toContainText("Nuovo traguardo conservato");
     const stored = await page.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"));
     expect(stored).toContain("recognise-missing-information-strategy");
     expect(writes).toEqual([]);
 
     await page.getByRole("button", { name: "Cancella i progressi locali" }).click();
+    await expect(page.getByRole("status")).toContainText("sono stati cancellati");
     expect(await page.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"))).toBeNull();
   });
 });
