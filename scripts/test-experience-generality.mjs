@@ -80,7 +80,7 @@ const unregisteredSecondPathway = {
   evidenceGoal: "Il percorso mostra una revisione motivata e un trasferimento della strategia a un contesto differente.",
   initialContext: "Una soluzione deve soddisfare più vincoli che non possono essere massimizzati contemporaneamente.",
   transferContext: "Un secondo problema cambia dominio e insieme dei vincoli, mantenendo la stessa strategia di progetto.",
-  provenanceRef: "TRAMA-PR-217-PENDING-HUMAN-REVIEW",
+  provenanceRef: "TRAMA-PR-218-PENDING-HUMAN-REVIEW",
   cognitiveFunctions: {
     orient: "identify_constraints",
     practice: "construct_under_constraints",
