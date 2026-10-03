@@ -18,12 +18,30 @@ const required = [
 const missing = required.filter((file) => !fs.existsSync(file));
 assert.deepEqual(missing, [], `missing Smart generality artifacts: ${missing.join(", ")}`);
 
+const { buildSmartFlowPackage } = await import("./build-smart-flow-package.mjs");
+
 for (const flowPackage of [
   "content/smart-activities/sistema-tecnologico/flow-package.v1.json",
   "content/smart-activities/fonte-digitale/flow-package.v1.json",
 ]) {
   const run = spawnSync(process.execPath, ["scripts/test-smart-flow.mjs", "--flow-package", flowPackage], { encoding: "utf8" });
   assert.equal(run.status, 0, `${flowPackage} failed generic Smart qualification:\n${run.stdout}\n${run.stderr}`);
+
+  const persisted = JSON.parse(fs.readFileSync(flowPackage, "utf8"));
+  const readJson = (ref) => JSON.parse(fs.readFileSync(ref, "utf8"));
+  const rebuilt = buildSmartFlowPackage({
+    intent: readJson(persisted.intentRef),
+    plan: readJson(persisted.planRef),
+    experience: readJson(persisted.experienceRef),
+    materialSet: readJson(persisted.materialSetRef),
+    intentRef: persisted.intentRef,
+    planRef: persisted.planRef,
+    experienceRef: persisted.experienceRef,
+    materialSetRef: persisted.materialSetRef,
+    qualificationProfileId: persisted.qualificationProfileId,
+    qualifiedImplementation: persisted.stages.F9.state === "QUALIFIED_IMPLEMENTATION",
+  });
+  assert.deepEqual(rebuilt, persisted, `${flowPackage} must be reproducible from the shared deterministic builder`);
 }
 
 const genericFiles = [
