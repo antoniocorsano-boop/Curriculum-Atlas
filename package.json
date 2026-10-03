@@ -22,7 +22,17 @@
     "validate:percorsi:g2:invalid": "node scripts/validate-g2-pathway.mjs fixtures/percorsi-g2/invalid/broken-contract.json --expect-invalid",
     "validate:percorsi:g2": "npm run validate:percorsi:g2:valid && npm run validate:percorsi:g2:invalid",
     "normalize:image": "node scripts/normalize-image.mjs",
-    "normalize:image:selftest": "node scripts/normalize-image.mjs --self-test"
+    "normalize:image:selftest": "node scripts/normalize-image.mjs --self-test",
+    "test:experience:contracts": "node scripts/test-experience-contracts.mjs",
+    "validate:experience:contracts": "node scripts/validate-experience-contracts.mjs kernel fixtures/experience-engine/contracts/valid/challenge-kernel.json && node scripts/validate-experience-contracts.mjs experience fixtures/experience-engine/contracts/valid/experience-smart.json && node scripts/validate-experience-contracts.mjs experience fixtures/experience-engine/contracts/valid/experience-pathway.json",
+    "test:experience:grammar": "node scripts/test-experience-grammar-registry.mjs",
+    "test:experience:factory": "node scripts/test-experience-factory.mjs",
+    "test:experience:runtime": "playwright test tests/experience-runtime.spec.ts --project=chromium",
+    "smart:publication:reconcile": "node scripts/reconcile-smart-publication-receipts.mjs",
+    "test:smart:all": "pnpm test:smart:sp01 && node scripts/test-smart-flow.mjs --flow-package content/smart-activities/fonte-digitale/flow-package.v1.json",
+    "test:percorsi:factory": "node scripts/test-percorsi-pathway-factory.mjs",
+    "test:experience:generality": "node scripts/test-experience-generality.mjs",
+    "test:smart:publication": "node scripts/test-smart-publication-reconciliation.mjs"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
@@ -46,7 +56,8 @@
     "tailwindcss": "^4.1.13",
     "typescript": "^5.9.2",
     "@eslint/eslintrc": "^3.3.1",
-    "playwright": "^1.55.0"
+    "playwright": "^1.55.0",
+    "@playwright/test": "^1.55.0"
   },
   "packageManager": "pnpm@10.17.1"
 }

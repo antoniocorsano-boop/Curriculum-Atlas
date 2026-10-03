@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "atlas.smart.plan/v1",
+  "activityId": "fonte-digitale",
+  "objective": "Valutare l'affidabilità di una fonte digitale usando autore, prove, data, scopo e confronto con fonti indipendenti.",
+  "instruction": "Osserva gli indizi, scegli quali controlli fare, rivedi il giudizio quando emergono nuove informazioni e applica il metodo a una seconda fonte.",
+  "audience": [
+    "STUDENT"
+  ],
+  "useModes": [
+    "INDIVIDUAL",
+    "CLASS",
+    "LIM",
+    "DEVICE"
+  ]
+}

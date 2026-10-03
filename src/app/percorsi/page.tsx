@@ -1,19 +1,20 @@
 import { AppShell } from "@/components/atlas/app-shell";
+import { PathwayCatalog } from "@/features/pathways/pathway-catalog";
+import { loadPublicPathways, type PublicPathwaySource } from "@/features/pathways/load-public-pathways";
+import portfolio from "../../../governance/percorsi-portfolio.json";
 
 export default function PathwaysPage() {
+  const pathways = loadPublicPathways(portfolio.pathways as PublicPathwaySource[]);
   return (
     <AppShell>
       <header className="atlas-page-heading">
         <div>
-          <span className="atlas-eyebrow">S3-V2 · Foundation</span>
+          <span className="atlas-eyebrow">Atlas · Percorsi</span>
           <h1>Percorsi</h1>
-          <p>Le sequenze didattiche collegheranno tappe, obiettivi e risorse senza creare un secondo curricolo.</p>
+          <p>Esperienze trasversali pubblicate solo dopo qualificazione e autorizzazione runtime esplicita.</p>
         </div>
       </header>
-      <section className="atlas-panel">
-        <h3>Percorsi collegati</h3>
-        <p style={{ color: "var(--text-secondary)" }}>Timeline e relazioni saranno implementate dopo la foundation.</p>
-      </section>
+      <PathwayCatalog pathways={pathways} />
     </AppShell>
   );
 }

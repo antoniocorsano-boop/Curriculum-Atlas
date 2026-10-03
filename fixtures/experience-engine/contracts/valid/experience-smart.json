@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "atlas.experience/v1",
+  "experienceId": "fixture-smart",
+  "version": "1.0.0",
+  "mode": "SMART",
+  "kernelRef": "fixture-kernel",
+  "qualificationProfileId": "SMART_FAST_V1",
+  "runtime": {
+    "statePolicy": "LOCAL_DEVICE",
+    "learnerIdentityRequired": false,
+    "telemetryAllowed": false
+  },
+  "presentationGrammarIds": [
+    "sequential-visual-narrative"
+  ],
+  "graph": {
+    "entryNodeId": "s1",
+    "nodes": [
+      {
+        "id": "s1",
+        "primitive": "EXPLORE",
+        "interaction": "text",
+        "feedbackCategory": "EVIDENCE_INCOMPLETE",
+        "transitions": [
+          {
+            "targetNodeId": "s2"
+          }
+        ]
+      },
+      {
+        "id": "s2",
+        "primitive": "CONNECT",
+        "interaction": "summary",
+        "feedbackCategory": "EVIDENCE_SUPPORTED",
+        "terminal": true,
+        "transitions": []
+      }
+    ]
+  }
+}

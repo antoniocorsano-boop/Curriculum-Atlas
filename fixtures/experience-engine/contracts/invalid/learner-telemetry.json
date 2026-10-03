@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "atlas.experience/v1",
+  "experienceId": "bad-telemetry",
+  "version": "1.0.0",
+  "mode": "SMART",
+  "kernelRef": "fixture-kernel",
+  "qualificationProfileId": "SMART_FAST_V1",
+  "runtime": {
+    "statePolicy": "LOCAL_DEVICE",
+    "learnerIdentityRequired": false,
+    "telemetryAllowed": true
+  },
+  "presentationGrammarIds": [
+    "sequential-visual-narrative"
+  ],
+  "graph": {
+    "entryNodeId": "x",
+    "nodes": [
+      {
+        "id": "x",
+        "primitive": "EXPLORE",
+        "interaction": "summary",
+        "feedbackCategory": "EVIDENCE_SUPPORTED",
+        "terminal": true,
+        "transitions": []
+      }
+    ]
+  }
+}

@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { buildExperienceCandidate } from "./build-experience-candidate.mjs";
 
 const fail=(m)=>{throw new Error(m);};
 const ref=(ids,key)=>({semanticUnitIds:ids,resourceKey:key,locale:"it-IT"});
@@ -26,6 +27,26 @@ function validateSeed(seed,{portfolioPath="governance/percorsi-portfolio.json"}=
 export function buildPathwayCandidate(seed,options={}){
  validateSeed(seed,options);
  const cf=seed.cognitiveFunctions;
+ // Compatibility adapter: legacy Percorsi seeds are translated into the shared
+ // ExperienceDefinition contract before the existing G2 representation is emitted.
+ // The generic composer owns validation; this adapter preserves the qualified G2 wire shape.
+ buildExperienceCandidate({
+  schemaVersion:"atlas.experience.seed/v1",
+  experienceId:seed.pathwayId,
+  version:seed.version,
+  mode:"PATHWAY",
+  kernelRef:seed.provenanceRef,
+  qualificationProfileId:"PATHWAY_G2_PLUS_V1",
+  statePolicy:"VOLATILE_MEMORY",
+  presentationGrammarIds:["L","N"],
+  entryNodeId:"orient",
+  scenes:[
+   {id:"orient",primitive:"EXPLORE",interaction:"choice",feedbackCategory:"EVIDENCE_INCOMPLETE",transitions:[{targetNodeId:"practice"}]},
+   {id:"practice",primitive:"CHOOSE",interaction:"choice",feedbackCategory:"ALTERNATIVE_PLAUSIBLE",transitions:[{targetNodeId:"transfer"}]},
+   {id:"transfer",primitive:"TRANSFER",interaction:"choice",feedbackCategory:"TRANSFER_SUCCESSFUL",transitions:[{targetNodeId:"reflect"}]},
+   {id:"reflect",primitive:"REFRAME",interaction:"summary",feedbackCategory:"MODEL_NEEDS_REVISION",terminal:true,transitions:[]}
+  ]
+ });
 
  const semanticUnits=[
   {id:"u-orient",kind:"question",canonicalMeaning:seed.initialContext,provenanceRef:seed.provenanceRef},

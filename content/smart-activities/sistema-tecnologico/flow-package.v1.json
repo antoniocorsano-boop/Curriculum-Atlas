@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "atlas.smart.flow-package/v1",
+  "activityId": "sistema-tecnologico",
+  "intentRef": "content/smart-activities/sistema-tecnologico/intent.v1.json",
+  "planRef": "content/smart-activities/sistema-tecnologico/plan.v1.json",
+  "experienceRef": "content/experiences/smart/sistema-tecnologico.v1.json",
+  "materialSetRef": "content/smart-activities/sistema-tecnologico/material-set.v2.json",
+  "qualificationProfileId": "SMART_FAST_V1",
+  "readinessAuthority": "MATERIAL_SET",
+  "runtime": {
+    "learnerIdentityRequired": false,
+    "telemetryAllowed": false
+  },
+  "stages": {
+    "F0": {
+      "state": "COMPLETE"
+    },
+    "F1": {
+      "state": "COMPLETE"
+    },
+    "F2": {
+      "state": "COMPLETE"
+    },
+    "F3": {
+      "state": "COMPLETE"
+    },
+    "F4": {
+      "state": "COMPLETE"
+    },
+    "F5": {
+      "state": "PENDING_CANONICAL_PUBLICATION"
+    },
+    "F6": {
+      "state": "BLOCKED_BY_F5"
+    },
+    "F7": {
+      "state": "COMPLETE"
+    },
+    "F8": {
+      "state": "DEFERRED_NOT_AUTHORIZED"
+    },
+    "F9": {
+      "state": "QUALIFIED_IMPLEMENTATION"
+    },
+    "F10": {
+      "state": "COMPLETE",
+      "teacherStatus": "Da completare"
+    }
+  }
+}

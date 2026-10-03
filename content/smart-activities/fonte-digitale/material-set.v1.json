@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "atlas.smart.materialset/v1",
+  "materialSetId": "fonte-digitale-affidabilita",
+  "version": 1,
+  "activityId": "fonte-digitale",
+  "status": "DRAFT",
+  "resources": [
+    {
+      "resourceId": "fonte-digitale-segnali-affidabilita",
+      "kind": "INFOGRAPHIC",
+      "title": "Segnali per valutare una fonte digitale",
+      "audience": "STUDENT",
+      "required": true,
+      "materialSlotRoles": [
+        "VISUAL_AID",
+        "LIM_VIEW"
+      ],
+      "publicationPath": "/materials/smart/fonte-digitale/v1/segnali-affidabilita.svg",
+      "publicRef": null,
+      "provenanceRef": "experience-engine-generality:PR69:fonte-digitale-v1",
+      "digest": "sha256:3b22713aeb01c64c0862714a61d6a7e735edb3de02bb3817b98062c110bd8ed4",
+      "byteSize": 2092,
+      "verificationState": "BYTES_VERIFIED_PUBLICATION_PENDING"
+    }
+  ],
+  "readiness": {
+    "derivedFromCanonicalLessonPreparation": true,
+    "localOverrideForbidden": true,
+    "packageReady": false,
+    "blockingReasons": [
+      "REQUIRED_PUBLIC_REFS_UNRESOLVED",
+      "REQUIRED_BINARY_PUBLICATION_PENDING"
+    ]
+  },
+  "crossSystem": {
+    "materialTransport": "LessonPreparationManifest.materialSlots",
+    "parallelMaterialChannelForbidden": true,
+    "runtimeAdapterAuthorized": false
+  },
+  "publication": {
+    "stage": "DRAFT",
+    "eligibility": "PUBLICATION_CANDIDATE",
+    "humanDecisionRequired": true,
+    "failClosedWhenRequiredResourceUnresolved": true
+  }
+}

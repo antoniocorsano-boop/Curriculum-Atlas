@@ -1,0 +1,109 @@
+{
+  "schemaVersion": "atlas.experience/v1",
+  "experienceId": "sistema-tecnologico",
+  "version": "1.0.0",
+  "mode": "SMART",
+  "kernelRef": "smart-sistema-tecnologico-v1",
+  "qualificationProfileId": "SMART_FAST_V1",
+  "runtime": {
+    "statePolicy": "LOCAL_DEVICE",
+    "learnerIdentityRequired": false,
+    "telemetryAllowed": false
+  },
+  "presentationGrammarIds": [
+    "sequential-visual-narrative"
+  ],
+  "graph": {
+    "entryNodeId": "scelta",
+    "nodes": [
+      {
+        "id": "scelta",
+        "primitive": "EXPLORE",
+        "interaction": "text",
+        "title": "Scegli il sistema",
+        "prompt": "Quale sistema tecnologico vuoi analizzare?",
+        "feedbackCategory": "EVIDENCE_INCOMPLETE",
+        "transitions": [
+          {
+            "targetNodeId": "funzione"
+          }
+        ]
+      },
+      {
+        "id": "funzione",
+        "primitive": "CONNECT",
+        "interaction": "text",
+        "title": "Perché esiste?",
+        "prompt": "Quale bisogno soddisfa e quale risultato deve ottenere?",
+        "feedbackCategory": "EVIDENCE_SUPPORTED",
+        "transitions": [
+          {
+            "targetNodeId": "funzionamento"
+          }
+        ]
+      },
+      {
+        "id": "funzionamento",
+        "primitive": "CONNECT",
+        "interaction": "text",
+        "title": "Entrate → trasformazioni → uscite",
+        "prompt": "Che cosa entra, che cosa viene trasformato e che cosa otteniamo?",
+        "feedbackCategory": "EVIDENCE_SUPPORTED",
+        "transitions": [
+          {
+            "targetNodeId": "energia"
+          }
+        ]
+      },
+      {
+        "id": "energia",
+        "primitive": "INVESTIGATE",
+        "interaction": "text",
+        "title": "Segui l'energia",
+        "prompt": "Da dove proviene, come cambia e quale parte viene dissipata?",
+        "feedbackCategory": "EVIDENCE_INCOMPLETE",
+        "transitions": [
+          {
+            "targetNodeId": "risorse"
+          }
+        ]
+      },
+      {
+        "id": "risorse",
+        "primitive": "INVESTIGATE",
+        "interaction": "text",
+        "title": "Di che cosa ha bisogno?",
+        "prompt": "Quali materiali e risorse richiede il sistema?",
+        "feedbackCategory": "EVIDENCE_INCOMPLETE",
+        "transitions": [
+          {
+            "targetNodeId": "ciclo"
+          }
+        ]
+      },
+      {
+        "id": "ciclo",
+        "primitive": "REFRAME",
+        "interaction": "text",
+        "title": "Guarda oltre la fase d'uso",
+        "prompt": "Che cosa accade lungo l'intero ciclo di vita?",
+        "feedbackCategory": "MODEL_NEEDS_REVISION",
+        "transitions": [
+          {
+            "targetNodeId": "miglioramento"
+          }
+        ]
+      },
+      {
+        "id": "miglioramento",
+        "primitive": "TRANSFER",
+        "interaction": "text",
+        "title": "Proponi un miglioramento",
+        "prompt": "Dove interverresti per rendere il sistema più sostenibile e perché?",
+        "feedbackCategory": "TRANSFER_SUCCESSFUL",
+        "terminal": true,
+        "transitions": []
+      }
+    ]
+  }
+}

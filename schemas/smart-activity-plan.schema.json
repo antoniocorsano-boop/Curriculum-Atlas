@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "atlas.smart.plan/v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "activityId",
+    "objective",
+    "instruction",
+    "audience",
+    "useModes"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "atlas.smart.plan/v1"
+    },
+    "activityId": {
+      "type": "string"
+    },
+    "objective": {
+      "type": "string"
+    },
+    "instruction": {
+      "type": "string"
+    },
+    "audience": {
+      "type": "array",
+      "minItems": 1
+    },
+    "useModes": {
+      "type": "array",
+      "minItems": 1
+    }
+  }
+}

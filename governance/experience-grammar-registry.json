@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "atlas.experience.grammar-registry/v1",
+  "status": "IMPLEMENTATION_CANDIDATE",
+  "primitives": [
+    {
+      "id": "EXPLORE",
+      "label": "Esplora"
+    },
+    {
+      "id": "CHOOSE",
+      "label": "Scegli"
+    },
+    {
+      "id": "CONNECT",
+      "label": "Collega"
+    },
+    {
+      "id": "BUILD",
+      "label": "Costruisci"
+    },
+    {
+      "id": "INVESTIGATE",
+      "label": "Indaga"
+    },
+    {
+      "id": "REFRAME",
+      "label": "Riformula"
+    },
+    {
+      "id": "TRANSFER",
+      "label": "Trasferisci"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "atlas.challenge-kernel/v1",
+  "kernelId": "smart-fonte-digitale-v1",
+  "title": "Una fonte digitale è affidabile?",
+  "situation": "Online una pagina può apparire credibile anche quando autore, prove, data o scopo non sono chiari.",
+  "generativeQuestion": "Quali indizi servono prima di considerare affidabile una fonte digitale?",
+  "competenceTargets": [
+    "valutazione-fonti",
+    "ragionamento-con-evidenze",
+    "cittadinanza-digitale"
+  ],
+  "evidenceModel": {
+    "required": [
+      "autore-responsabile",
+      "prove-verificabili",
+      "data-contesto",
+      "scopo",
+      "conferma-indipendente"
+    ],
+    "intentionallyMissingEvidence": [
+      "affidabilita-da-aspetto-grafico"
+    ]
+  },
+  "decisionModel": {
+    "strategy": "raccogliere indizi pertinenti, distinguere apparenza e prova, confrontare almeno una fonte indipendente",
+    "revisionAllowed": true
+  },
+  "transferPrinciple": "Applicare lo stesso controllo a fonti digitali con forma, tema e scopo differenti.",
+  "completionEvidence": [
+    "controlli-pertinenti",
+    "giudizio-motivato",
+    "trasferimento-a-seconda-fonte"
+  ],
+  "provenanceRefs": [
+    "TRAMA-PR-216",
+    "ATLAS-SMART-FLOW-01"
+  ]
+}

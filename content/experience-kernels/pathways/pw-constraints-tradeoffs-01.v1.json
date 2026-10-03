@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "atlas.challenge-kernel/v1",
+  "kernelId": "pw-constraints-tradeoffs-01",
+  "title": "Una soluzione, molti vincoli",
+  "situation": "Progettare una soluzione condivisa in cui costo, durata, uso di risorse e usabilità entrano in tensione e richiedono compromessi espliciti.",
+  "generativeQuestion": "Quale soluzione soddisfa meglio i vincoli espliciti, e come va rivista se un requisito cambia?",
+  "competenceTargets": [
+    "Individuare più vincoli rilevanti nella situazione proposta.",
+    "Collegare una scelta progettuale a conseguenze su più vincoli.",
+    "Rivedere una soluzione quando cambia un requisito e trasferire la strategia a un nuovo contesto."
+  ],
+  "evidenceModel": {
+    "availableEvidence": [
+      "vincoli espliciti della situazione",
+      "conseguenze dichiarate delle alternative",
+      "nuovo requisito introdotto durante il percorso"
+    ],
+    "intentionallyMissingEvidence": [],
+    "misconceptions": [
+      "massimizzare un solo vincolo equivale a trovare la soluzione migliore",
+      "una scelta iniziale corretta non richiede revisione quando cambia un requisito"
+    ]
+  },
+  "decisionModel": {
+    "decisions": [
+      "esplicitare i vincoli",
+      "confrontare compromessi",
+      "costruire una soluzione candidata",
+      "rivedere la soluzione dopo un cambiamento"
+    ],
+    "consequencePolicy": "BRANCHING",
+    "revisionAllowed": true
+  },
+  "transferPrinciple": "Una soluzione va progettata rendendo espliciti i vincoli e i compromessi, quindi rivista quando cambia un requisito.",
+  "completionEvidence": [
+    "identificazione dei vincoli",
+    "collegamento tra scelta e conseguenze",
+    "revisione motivata dopo il cambiamento di requisito",
+    "applicazione della stessa strategia in un contesto differente"
+  ],
+  "provenanceRefs": [
+    "antoniocorsano-boop/trama-ecosistema#217@81534e352396ad858c7cf5ee00c7ec3b0756ae64",
+    "governance/percorsi-portfolio.json#pw-constraints-tradeoffs-01"
+  ]
+}

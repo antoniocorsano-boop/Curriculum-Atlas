@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">Segnali per valutare una fonte digitale</title>
+  <desc id="desc">Cinque domande: chi pubblica, quali prove, quando, perché, e cosa conferma altrove.</desc>
+  <rect width="1200" height="675" rx="36" fill="#f7f7f5"/>
+  <text x="72" y="104" font-family="system-ui, sans-serif" font-size="44" font-weight="700" fill="#171717">Una fonte digitale è affidabile?</text>
+  <text x="72" y="154" font-family="system-ui, sans-serif" font-size="24" fill="#444">Non cercare un bollino: raccogli indizi e confrontali.</text>
+  <g font-family="system-ui, sans-serif" fill="#171717">
+    <rect x="72" y="210" width="480" height="110" rx="22" fill="#ffffff" stroke="#d8d8d3"/>
+    <text x="102" y="258" font-size="25" font-weight="650">1 · Chi pubblica?</text>
+    <text x="102" y="294" font-size="20">Autore, ente, competenza, responsabilità.</text>
+    <rect x="648" y="210" width="480" height="110" rx="22" fill="#ffffff" stroke="#d8d8d3"/>
+    <text x="678" y="258" font-size="25" font-weight="650">2 · Quali prove?</text>
+    <text x="678" y="294" font-size="20">Dati, fonti citate, metodo, verificabilità.</text>
+    <rect x="72" y="350" width="480" height="110" rx="22" fill="#ffffff" stroke="#d8d8d3"/>
+    <text x="102" y="398" font-size="25" font-weight="650">3 · Quando?</text>
+    <text x="102" y="434" font-size="20">Data, aggiornamento, contesto temporale.</text>
+    <rect x="648" y="350" width="480" height="110" rx="22" fill="#ffffff" stroke="#d8d8d3"/>
+    <text x="678" y="398" font-size="25" font-weight="650">4 · Perché?</text>
+    <text x="678" y="434" font-size="20">Informare, vendere, convincere, intrattenere?</text>
+    <rect x="72" y="490" width="1056" height="110" rx="22" fill="#ffffff" stroke="#d8d8d3"/>
+    <text x="102" y="538" font-size="25" font-weight="650">5 · Cosa conferma altrove?</text>
+    <text x="102" y="574" font-size="20">Confronta con almeno una fonte indipendente e pertinente.</text>
+  </g>
+</svg>

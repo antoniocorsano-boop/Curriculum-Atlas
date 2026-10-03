@@ -1,0 +1,161 @@
+{
+  "schemaVersion": "atlas.percorsi.seed/v1",
+  "pathwayId": "pw-constraints-tradeoffs-01",
+  "title": "Una soluzione, molti vincoli",
+  "version": "2.0.0",
+  "territoryIds": [
+    "design",
+    "world"
+  ],
+  "competence": "Progettare una soluzione valutando vincoli e compromessi e rivederla quando cambia un requisito.",
+  "coreStrategy": "Rendere espliciti i vincoli, collegare ogni scelta alle sue conseguenze, costruire una soluzione e rivederla quando un requisito cambia.",
+  "evidenceGoal": "Il percorso mostra una revisione motivata della soluzione e il trasferimento della strategia a un contesto differente.",
+  "initialContext": "Una soluzione condivisa deve bilanciare costo, durata, uso di risorse e usabilità senza poter massimizzare tutti i vincoli contemporaneamente.",
+  "transferContext": "Un secondo problema cambia dominio e insieme dei vincoli, mantenendo la necessità di esplicitare compromessi e rivedere la soluzione.",
+  "provenanceRef": "TRAMA-PR-217@81534e352396ad858c7cf5ee00c7ec3b0756ae64",
+  "cognitiveFunctions": {
+    "orient": "identify_constraints",
+    "practice": "connect_tradeoffs",
+    "transfer": "transfer_constraint_strategy",
+    "reflect": "revise_after_requirement_change"
+  },
+  "experienceSeed": {
+    "schemaVersion": "atlas.experience.seed/v1",
+    "experienceId": "pw-constraints-tradeoffs-01",
+    "version": "1.0.0",
+    "mode": "PATHWAY",
+    "kernelRef": "pw-constraints-tradeoffs-01",
+    "qualificationProfileId": "PATHWAY_G2_PLUS_V1",
+    "statePolicy": "VOLATILE_MEMORY",
+    "presentationGrammarIds": [
+      "L",
+      "N"
+    ],
+    "entryNodeId": "explore",
+    "scenes": [
+      {
+        "id": "explore",
+        "primitive": "EXPLORE",
+        "interaction": "summary",
+        "feedbackCategory": "EVIDENCE_INCOMPLETE",
+        "prompt": "Individua i vincoli espliciti della situazione prima di proporre una soluzione.",
+        "transitions": [
+          {
+            "targetNodeId": "connect"
+          }
+        ]
+      },
+      {
+        "id": "connect",
+        "primitive": "CONNECT",
+        "interaction": "choice",
+        "feedbackCategory": "ALTERNATIVE_PLAUSIBLE",
+        "prompt": "Collega due possibili scelte alle conseguenze che producono sui diversi vincoli.",
+        "transitions": [
+          {
+            "id": "durable",
+            "label": "Privilegiare durata e manutenzione ridotta, accettando un costo iniziale maggiore",
+            "feedback": "La scelta protegge durata e manutenzione, ma consuma più del budget disponibile.",
+            "targetNodeId": "build-durable"
+          },
+          {
+            "id": "economical",
+            "label": "Privilegiare costo iniziale e facilità di reperimento, accettando più manutenzione",
+            "feedback": "La scelta protegge il budget iniziale, ma aumenta il peso della manutenzione nel tempo.",
+            "targetNodeId": "build-economical"
+          }
+        ]
+      },
+      {
+        "id": "build-durable",
+        "primitive": "BUILD",
+        "interaction": "choice",
+        "feedbackCategory": "EVIDENCE_SUPPORTED",
+        "prompt": "Costruisci una soluzione coerente con la scelta fatta, mantenendo visibili i compromessi.",
+        "transitions": [
+          {
+            "id": "commit-durable",
+            "label": "Mantengo la soluzione robusta e registro il compromesso sul costo",
+            "feedback": "La soluzione è coerente con i vincoli scelti, ma resta sensibile a un eventuale taglio di budget.",
+            "targetNodeId": "reframe-durable"
+          }
+        ]
+      },
+      {
+        "id": "build-economical",
+        "primitive": "BUILD",
+        "interaction": "choice",
+        "feedbackCategory": "EVIDENCE_SUPPORTED",
+        "prompt": "Costruisci una soluzione coerente con la scelta fatta, mantenendo visibili i compromessi.",
+        "transitions": [
+          {
+            "id": "commit-economical",
+            "label": "Mantengo la soluzione economica e registro il compromesso sulla manutenzione",
+            "feedback": "La soluzione è coerente con il budget iniziale, ma dipende da interventi di manutenzione più frequenti.",
+            "targetNodeId": "reframe-economical"
+          }
+        ]
+      },
+      {
+        "id": "reframe-durable",
+        "primitive": "REFRAME",
+        "interaction": "choice",
+        "feedbackCategory": "MODEL_NEEDS_REVISION",
+        "prompt": "Il budget disponibile si riduce del 25%. Quale revisione conserva meglio la funzione senza ignorare il nuovo vincolo?",
+        "transitions": [
+          {
+            "id": "revise-durable",
+            "label": "Riduco elementi non essenziali e ricontrollo durata, costo e usabilità",
+            "feedback": "Hai rivisto la soluzione a partire dal requisito cambiato invece di difendere automaticamente la scelta iniziale.",
+            "targetNodeId": "transfer"
+          }
+        ]
+      },
+      {
+        "id": "reframe-economical",
+        "primitive": "REFRAME",
+        "interaction": "choice",
+        "feedbackCategory": "MODEL_NEEDS_REVISION",
+        "prompt": "La manutenzione può avvenire solo una volta l’anno. Quale revisione conserva meglio la funzione senza ignorare il nuovo vincolo?",
+        "transitions": [
+          {
+            "id": "revise-economical",
+            "label": "Sostituisco le parti più fragili e ricontrollo costo, durata e manutenzione",
+            "feedback": "Hai rivisto la soluzione a partire dal requisito cambiato invece di mantenere automaticamente il costo minimo.",
+            "targetNodeId": "transfer"
+          }
+        ]
+      },
+      {
+        "id": "transfer",
+        "primitive": "TRANSFER",
+        "interaction": "choice",
+        "feedbackCategory": "TRANSFER_SUCCESSFUL",
+        "prompt": "In un nuovo contesto cambiano oggetto e vincoli. Quale strategia trasferisci?",
+        "transitions": [
+          {
+            "id": "method",
+            "label": "Esplicito i vincoli, collego scelte e conseguenze, costruisco una soluzione e la rivedo se un requisito cambia",
+            "feedback": "Hai trasferito il metodo di progetto, non una soluzione già pronta.",
+            "targetNodeId": "reflection"
+          },
+          {
+            "id": "copy",
+            "label": "Riutilizzo la soluzione precedente senza ricontrollare i nuovi vincoli",
+            "feedback": "Una soluzione precedente non è automaticamente adatta: il trasferimento riguarda il metodo di confronto e revisione.",
+            "targetNodeId": "reflection"
+          }
+        ]
+      },
+      {
+        "id": "reflection",
+        "primitive": "REFRAME",
+        "interaction": "summary",
+        "feedbackCategory": "EVIDENCE_SUPPORTED",
+        "prompt": "Strategia esercitata: rendere espliciti i vincoli, motivare i compromessi e rivedere la soluzione quando cambia un requisito.",
+        "terminal": true,
+        "transitions": []
+      }
+    ]
+  }
+}

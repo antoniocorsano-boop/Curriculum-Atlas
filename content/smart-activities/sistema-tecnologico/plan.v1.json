@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "atlas.smart.plan/v1",
+  "activityId": "sistema-tecnologico",
+  "objective": "Analizzare un sistema tecnologico collegando funzione, energia, risorse, ciclo di vita e sostenibilità.",
+  "instruction": "Scegli un sistema, costruisci l'analisi per passaggi e proponi un miglioramento motivato.",
+  "audience": [
+    "STUDENT"
+  ],
+  "useModes": [
+    "INDIVIDUAL",
+    "CLASS",
+    "LIM",
+    "DEVICE"
+  ]
+}
