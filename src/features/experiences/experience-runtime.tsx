@@ -9,11 +9,11 @@ type ResolvedTransition = ExperienceTransition & { key: string };
 export function ExperienceRuntime({
   definition,
   presentation,
-  onNodeVisit,
+  onTransition,
 }: {
   definition: ExperienceDefinition;
   presentation?: ExperiencePresentation;
-  onNodeVisit?: (nodeId: string) => void;
+  onTransition?: (nodeId: string, transitionId: string, targetNodeId: string) => void;
 }) {
   const session = useExperienceSession({
     experienceId: definition.experienceId,
@@ -46,11 +46,8 @@ export function ExperienceRuntime({
   useEffect(() => {
     setPendingTransition(null);
     setChoiceFeedback("");
-    if (session.ready) {
-      headingRef.current?.focus();
-      onNodeVisit?.(session.currentNodeId);
-    }
-  }, [session.currentNodeId, session.ready, presentation?.id, onNodeVisit]);
+    if (session.ready) headingRef.current?.focus();
+  }, [session.currentNodeId, session.ready, presentation?.id]);
 
   if (!session.ready || !node) return <p>Preparazione esperienza…</p>;
 
@@ -70,7 +67,10 @@ export function ExperienceRuntime({
 
   function proceed() {
     const transition = isChoice ? pendingTransition : firstTransition;
-    if (transition) session.choose(transition.targetNodeId);
+    if (transition) {
+      onTransition?.(node.id, transition.key, transition.targetNodeId);
+      session.choose(transition.targetNodeId);
+    }
   }
 
   return (
