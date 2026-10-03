@@ -15,6 +15,7 @@ const pathwayHref: Record<string, string> = {
 const stateLabel: Record<string, string> = {
   PRODUCT_RECOVERY_REFERENCE: "Ricostruzione di prodotto",
   SCREENPLAY_REQUIRED: "Sceneggiatura da completare",
+  PRODUCT_AUTHORED_CANDIDATE: "Sceneggiatura implementata · in revisione",
 };
 
 export default function PercorsiLabLibraryPage() {
@@ -32,7 +33,9 @@ export default function PercorsiLabLibraryPage() {
         </p>
       </header>
 
-      <nav className="pathwayLibrary__territories" aria-label="Territori di crescita">
+      <p className="pathwayLibrary__privacy"><strong>Territori candidati.</strong> I sei raggruppamenti sono una mappa provvisoria di navigazione e progettazione, non una tassonomia approvata dello studente.</p>
+
+      <nav className="pathwayLibrary__territories" aria-label="Territori candidati di progettazione">
         {library.territories.map((territory, index) => {
           const pathways = library.pathways.filter((item) => item.candidateTerritories.includes(territory.id));
           return (

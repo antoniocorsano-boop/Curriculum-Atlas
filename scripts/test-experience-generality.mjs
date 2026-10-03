@@ -143,7 +143,7 @@ assert.equal(firstRegisteredPathway.runtimeQualificationTarget?.freezeState, "DE
 assert.equal(firstRegisteredPathway.authorityRef, "antoniocorsano-boop/trama-ecosistema#96@dfb5b106708bee88016907c13ee0d104c093e7ca");
 
 assert.equal(registeredSecondPathway.runtimeAuthorization, "NOT_RUNTIME_AUTHORIZED");
-assert.equal(registeredSecondPathway.runtimeQualificationTarget?.publicationId, "pw-constraints-tradeoffs-01@1.0.0");
+assert.equal(registeredSecondPathway.runtimeQualificationTarget?.publicationId, "pw-constraints-tradeoffs-01@1.1.0");
 assert.equal(registeredSecondPathway.runtimeQualificationTarget?.targetPublicationState, "QUALIFIED");
 assert.equal(registeredSecondPathway.runtimeQualificationTarget?.qualificationContractVersion, "v1");
 assert.equal(registeredSecondPathway.runtimeQualificationTarget?.intendedPublicPath, "/percorsi/pw-constraints-tradeoffs-01");
@@ -175,15 +175,49 @@ assert.deepEqual(
   "second Percorso must be reproducible from the shared generic Experience builder",
 );
 
+const malformedPresentationNodes = structuredClone(secondSeed.experienceSeed);
+malformedPresentationNodes.presentationData.L.nodes = null;
+assert.throws(
+  () => buildExperienceCandidate(malformedPresentationNodes),
+  /presentationNodes:L/,
+  "Experience builder must reject a presentation with a non-object node map",
+);
+
+const mismatchedPresentationId = structuredClone(secondSeed.experienceSeed);
+mismatchedPresentationId.presentationData.L.id = "N";
+assert.throws(
+  () => buildExperienceCandidate(mismatchedPresentationId),
+  /presentationId:L/,
+  "Experience builder must reject a presentation whose id does not match its grammar key",
+);
+
+const unknownPresentationNode = structuredClone(secondSeed.experienceSeed);
+unknownPresentationNode.presentationData.N.nodes.UNKNOWN_NODE = { title: "Non valido" };
+assert.throws(
+  () => buildExperienceCandidate(unknownPresentationNode),
+  /presentationNode:N:UNKNOWN_NODE/,
+  "Experience builder must reject presentation overlays for nodes absent from the graph",
+);
+
+const unknownPresentationTransition = structuredClone(secondSeed.experienceSeed);
+unknownPresentationTransition.presentationData.N.nodes.C2_COMPARE.transitions = {
+  "unknown-transition": { label: "Non valida" },
+};
+assert.throws(
+  () => buildExperienceCandidate(unknownPresentationTransition),
+  /presentationTransition:N:C2_COMPARE:unknown-transition/,
+  "Experience builder must reject presentation transition overlays absent from the base graph",
+);
+
 const nodesById = Object.fromEntries(persistedSecondExperience.graph.nodes.map((node) => [node.id, node]));
 for (const branch of [
-  ["explore", "connect", "build-durable", "reframe-durable", "transfer"],
-  ["explore", "connect", "build-economical", "reframe-economical", "transfer"],
+  ["C1_BRIEF", "C2_COMPARE", "C3A_TRADEOFF", "C4A_BUILD", "C5A_REFRAME", "C6_METHOD", "C7_TRANSFER"],
+  ["C1_BRIEF", "C2_COMPARE", "C3B_TRADEOFF", "C4B_BUILD", "C5B_REFRAME", "C6_METHOD", "C7_TRANSFER"],
 ]) {
   assert.deepEqual(
     branch.map((id) => nodesById[id].primitive),
-    ["EXPLORE", "CONNECT", "BUILD", "REFRAME", "TRANSFER"],
-    "second Percorso must exercise the governed materially different primitive sequence",
+    ["EXPLORE", "CONNECT", "CONNECT", "BUILD", "REFRAME", "REFRAME", "TRANSFER"],
+    "second Percorso must exercise the governed authored design sequence",
   );
 }
 assert.equal(persistedSecondExperience.runtime.statePolicy, "VOLATILE_MEMORY");
