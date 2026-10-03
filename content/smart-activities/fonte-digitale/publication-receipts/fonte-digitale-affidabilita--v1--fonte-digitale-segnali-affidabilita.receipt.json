@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "atlas.smart.asset-receipt/v1",
+  "assetId": "fonte-digitale-segnali-affidabilita",
+  "version": 1,
+  "sha256": "sha256:3b22713aeb01c64c0862714a61d6a7e735edb3de02bb3817b98062c110bd8ed4",
+  "byteSize": 2092,
+  "audience": "STUDENT",
+  "provenanceRef": "experience-engine-generality:PR69:fonte-digitale-v1",
+  "publicRef": "https://antoniocorsano-boop.github.io/Curriculum-Atlas/materials/smart/fonte-digitale/v1/segnali-affidabilita.svg",
+  "anonymousReachabilityVerified": true,
+  "verifiedAt": "2026-10-03T19:15:42.225Z",
+  "materialSetId": "fonte-digitale-affidabilita",
+  "releaseSha": "87512daaa3e09d8c48fda7de2c869e0a6d2e43e8"
+}

@@ -16,21 +16,20 @@
         "LIM_VIEW"
       ],
       "publicationPath": "/materials/smart/fonte-digitale/v1/segnali-affidabilita.svg",
-      "publicRef": null,
+      "publicRef": "https://antoniocorsano-boop.github.io/Curriculum-Atlas/materials/smart/fonte-digitale/v1/segnali-affidabilita.svg",
       "provenanceRef": "experience-engine-generality:PR69:fonte-digitale-v1",
       "digest": "sha256:3b22713aeb01c64c0862714a61d6a7e735edb3de02bb3817b98062c110bd8ed4",
       "byteSize": 2092,
-      "verificationState": "BYTES_VERIFIED_PUBLICATION_PENDING"
+      "verificationState": "PUBLISHED_VERIFIED",
+      "publicationReceiptRef": "content/smart-activities/fonte-digitale/publication-receipts/fonte-digitale-affidabilita--v1--fonte-digitale-segnali-affidabilita.receipt.json",
+      "anonymousReachabilityVerified": true
     }
   ],
   "readiness": {
     "derivedFromCanonicalLessonPreparation": true,
     "localOverrideForbidden": true,
-    "packageReady": false,
-    "blockingReasons": [
-      "REQUIRED_PUBLIC_REFS_UNRESOLVED",
-      "REQUIRED_BINARY_PUBLICATION_PENDING"
-    ]
+    "packageReady": true,
+    "blockingReasons": []
   },
   "crossSystem": {
     "materialTransport": "LessonPreparationManifest.materialSlots",
@@ -38,7 +37,7 @@
     "runtimeAdapterAuthorized": false
   },
   "publication": {
-    "stage": "DRAFT",
+    "stage": "PUBLISHED",
     "eligibility": "PUBLICATION_CANDIDATE",
     "humanDecisionRequired": true,
     "failClosedWhenRequiredResourceUnresolved": true
