@@ -323,7 +323,7 @@ test.describe("PW-CONSTRAINTS authored product flow", () => {
     await page.getByRole("radio", { name: "Rendo espliciti i vincoli, collego scelte e conseguenze, scelgo un compromesso e rivedo la soluzione se cambia un requisito" }).check();
     await page.getByRole("button", { name: "Continua" }).click();
 
-    await page.getByRole("radio", { name: "Riparto dai nuovi vincoli, collego alternative e conseguenze e sono pronto a rivedere la soluzione" }).check();
+    await page.getByRole("radio", { name: "Uso pannelli modulari più piccoli e riutilizzabili: accetto meno superficie espositiva per facilitare trasporto e montaggio" }).check();
     await page.getByRole("button", { name: "Continua" }).click();
 
     await expect(page.getByText("Trasferisco il metodo di progetto in una nuova situazione")).toBeVisible();
@@ -334,6 +334,31 @@ test.describe("PW-CONSTRAINTS authored product flow", () => {
     expect(stored).toContain("revise-changed-requirement");
     expect(stored).toContain("transfer-design-method");
     expect(writes).toEqual([]);
+  });
+
+  test("does not award transfer evidence when the learner copies the previous solution", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-constraints-tradeoffs-01");
+    await page.getByRole("button", { name: "Conserva i miei traguardi su questo dispositivo" }).click();
+
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "A · Sviluppo la soluzione robusta e modulare" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Accetto un costo iniziale maggiore per proteggere durata e manutenzione" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Mantengo il nucleo robusto, elimino elementi non essenziali e ricontrollo usabilità e risorse" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Riduco elementi non essenziali e ricontrollo costo, durata e usabilità" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("radio", { name: "Rendo espliciti i vincoli, collego scelte e conseguenze, scelgo un compromesso e rivedo la soluzione se cambia un requisito" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    await expect(page.getByText("Deve passare attraverso un accesso stretto ed essere montata rapidamente.")).toBeVisible();
+    await page.getByRole("radio", { name: "Copio la soluzione del cortile perché ha già funzionato" }).check();
+    await page.getByRole("button", { name: "Continua" }).click();
+
+    const stored = await page.evaluate(() => localStorage.getItem("atlas:percorsi:local-growth:v1"));
+    expect(stored).not.toContain("transfer-design-method");
+    await expect(page.getByText("Trasferisco il metodo di progetto in una nuova situazione")).toHaveCount(0);
   });
 
   test("does not award tradeoff evidence for a single-constraint claim", async ({ page }) => {
