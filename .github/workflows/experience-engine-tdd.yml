@@ -28,6 +28,8 @@ jobs:
         run: node scripts/test-experience-grammar-registry.mjs
       - name: Experience factory
         run: node scripts/test-experience-factory.mjs
+      - name: Smart generality
+        run: node scripts/test-experience-generality.mjs
       - name: Typecheck
         run: pnpm typecheck
       - name: Install Chromium
