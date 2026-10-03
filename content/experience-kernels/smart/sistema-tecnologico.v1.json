@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "atlas.challenge-kernel/v1",
+  "kernelId": "smart-sistema-tecnologico-v1",
+  "title": "Analizzare un sistema tecnologico",
+  "situation": "Un sistema tecnologico soddisfa bisogni trasformando materiali, informazioni ed energia e produce effetti lungo il proprio ciclo di vita.",
+  "generativeQuestion": "Come funziona il sistema e dove possiamo intervenire per ridurne l'impatto?",
+  "competenceTargets": [
+    "analisi-sistemica",
+    "energia-risorse-ambiente",
+    "progettazione-sostenibile"
+  ],
+  "evidenceModel": {
+    "required": [
+      "funzione",
+      "funzionamento",
+      "energia",
+      "risorse",
+      "ciclo-vita",
+      "miglioramento"
+    ]
+  },
+  "decisionModel": {
+    "strategy": "collegare funzionamento e impatti prima di proporre un miglioramento"
+  },
+  "transferPrinciple": "Applicare lo stesso schema di analisi a sistemi tecnologici diversi.",
+  "completionEvidence": [
+    "analisi-completa",
+    "miglioramento-motivato"
+  ],
+  "provenanceRefs": [
+    "ATLAS-SMART-ACTIVITY-01",
+    "SP-01"
+  ]
+}
