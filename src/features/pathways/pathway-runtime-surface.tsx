@@ -72,6 +72,7 @@ export function PathwayRuntimeSurface({
           onEnable={growth.enable}
           onReset={growth.reset}
           onExport={growth.exportRecord}
+          notice={growth.notice}
         />
       )}
 
