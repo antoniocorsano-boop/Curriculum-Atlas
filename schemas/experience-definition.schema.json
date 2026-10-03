@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "atlas.experience/v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "experienceId",
+    "version",
+    "mode",
+    "kernelRef",
+    "qualificationProfileId",
+    "runtime",
+    "presentationGrammarIds",
+    "graph"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "atlas.experience/v1"
+    },
+    "experienceId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mode": {
+      "enum": [
+        "SMART",
+        "PATHWAY"
+      ]
+    },
+    "kernelRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "qualificationProfileId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "statePolicy",
+        "learnerIdentityRequired",
+        "telemetryAllowed"
+      ],
+      "properties": {
+        "statePolicy": {
+          "enum": [
+            "VOLATILE_MEMORY",
+            "LOCAL_DEVICE"
+          ]
+        },
+        "learnerIdentityRequired": {
+          "const": false
+        },
+        "telemetryAllowed": {
+          "const": false
+        }
+      }
+    },
+    "presentationGrammarIds": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "graph": {
+      "type": "object",
+      "required": [
+        "entryNodeId",
+        "nodes"
+      ]
+    }
+  },
+  "additionalProperties": true
+}
