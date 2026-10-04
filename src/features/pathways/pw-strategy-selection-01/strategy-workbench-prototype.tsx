@@ -222,6 +222,12 @@ export function StrategyWorkbenchPrototype() {
     setPhase("transfer-build");
   }
 
+  function updateComparison(patch: Partial<typeof table>) {
+    setFeedback("");
+    setEarned((current) => current.map((value, index) => (index === 2 ? false : value)));
+    setTable((current) => ({ ...current, ...patch }));
+  }
+
   function checkTransfer() {
     const correct =
       transferTool === "compare" &&
@@ -524,24 +530,24 @@ export function StrategyWorkbenchPrototype() {
                   options={tableOptions.durata}
                   blue={table.bluDurata}
                   green={table.verdeDurata}
-                  onBlue={(value) => setTable((current) => ({ ...current, bluDurata: value }))}
-                  onGreen={(value) => setTable((current) => ({ ...current, verdeDurata: value }))}
+                  onBlue={(value) => updateComparison({ bluDurata: value })}
+                  onGreen={(value) => updateComparison({ verdeDurata: value })}
                 />
                 <ComparisonRow
                   label="Accesso"
                   options={tableOptions.accesso}
                   blue={table.bluAccesso}
                   green={table.verdeAccesso}
-                  onBlue={(value) => setTable((current) => ({ ...current, bluAccesso: value }))}
-                  onGreen={(value) => setTable((current) => ({ ...current, verdeAccesso: value }))}
+                  onBlue={(value) => updateComparison({ bluAccesso: value })}
+                  onGreen={(value) => updateComparison({ verdeAccesso: value })}
                 />
                 <ComparisonRow
                   label="Attività pratiche"
                   options={tableOptions.pratica}
                   blue={table.bluPratica}
                   green={table.verdePratica}
-                  onBlue={(value) => setTable((current) => ({ ...current, bluPratica: value }))}
-                  onGreen={(value) => setTable((current) => ({ ...current, verdePratica: value }))}
+                  onBlue={(value) => updateComparison({ bluPratica: value })}
+                  onGreen={(value) => updateComparison({ verdePratica: value })}
                 />
               </div>
               <button type="button" className="strategyWorkbench__primary" onClick={checkTransfer}>Controlla il confronto</button>
