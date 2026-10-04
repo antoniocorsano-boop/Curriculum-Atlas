@@ -18,13 +18,15 @@ type Phase =
   | "transfer-build"
   | "complete";
 
-const expeditionFacts = [
-  "Il gruppo parte dalla stazione sul campo.",
-  "Attraversa un ponte pedonale.",
-  "La pioggia intensa rende inutilizzabile il sentiero basso.",
-  "Il gruppo passa sul percorso di cresta, che richiede più tempo.",
-  "Raggiunge il punto di osservazione più tardi del previsto.",
+const expeditionRoute = [
+  { label: "Stazione", fact: "Il gruppo parte dalla stazione sul campo." },
+  { label: "Ponte", fact: "Attraversa un ponte pedonale." },
+  { label: "Pioggia", fact: "La pioggia intensa rende inutilizzabile il sentiero basso." },
+  { label: "Cresta", fact: "Il gruppo passa sul percorso di cresta, che richiede più tempo." },
+  { label: "Osservazione", fact: "Raggiunge il punto di osservazione più tardi del previsto." },
 ];
+
+const expeditionFacts = expeditionRoute.map((item) => item.fact);
 
 const orderTokens = ["stazione", "ponte", "pioggia", "cresta", "osservazione"];
 const orderPool = ["pioggia", "stazione", "osservazione", "ponte", "cresta"];
@@ -322,11 +324,7 @@ export function StrategyWorkbenchPrototype() {
                 Leggi cosa è successo. Tra poco queste frasi verranno coperte e dovrai rimettere gli eventi
                 nell’ordine corretto.
               </p>
-              <div className="strategyWorkbench__source">
-                {expeditionFacts.map((fact, index) => (
-                  <p key={fact}><span>{String(index + 1).padStart(2, "0")}</span>{fact}</p>
-                ))}
-              </div>
+              <RouteStrip />
               <button type="button" className="strategyWorkbench__primary" onClick={() => setPhase("choose-order-tool")}>
                 Ho letto · continua
               </button>
@@ -337,9 +335,7 @@ export function StrategyWorkbenchPrototype() {
             <div className="strategyWorkbench__scene">
               <p className="strategyWorkbench__sceneKicker">Prima della prova</p>
               <h2>Prima della prova, cosa vuoi fare?</h2>
-              <div className="strategyWorkbench__source strategyWorkbench__source--compact">
-                {expeditionFacts.map((fact) => <p key={fact}>{fact}</p>)}
-              </div>
+              <RouteStrip compact />
               <ToolBench onChoose={chooseOrderTool} />
             </div>
           )}
@@ -394,11 +390,7 @@ export function StrategyWorkbenchPrototype() {
             <div className="strategyWorkbench__scene">
               <p className="strategyWorkbench__sceneKicker">Hai scelto: rileggere</p>
               <h2>Rileggi le cinque frasi. Poi prova a ricordare l’ordine senza guardare.</h2>
-              <div className="strategyWorkbench__source">
-                {expeditionFacts.map((fact, index) => (
-                  <p key={fact}><span>{String(index + 1).padStart(2, "0")}</span>{fact}</p>
-                ))}
-              </div>
+              <RouteStrip />
               <button type="button" className="strategyWorkbench__primary" onClick={beginRetrieval}>
                 Ho riletto · inizia la prova
               </button>
@@ -448,9 +440,7 @@ export function StrategyWorkbenchPrototype() {
             <div className="strategyWorkbench__scene strategyWorkbench__scene--shift">
               <p className="strategyWorkbench__sceneKicker">Nuova domanda</p>
               <h2>Ora non ti serve ricordare l’ordine. Devi capire perché il gruppo ha cambiato sentiero e perché è arrivato più tardi.</h2>
-              <div className="strategyWorkbench__source strategyWorkbench__source--compact">
-                {expeditionFacts.map((fact) => <p key={fact}>{fact}</p>)}
-              </div>
+              <RouteStrip compact highlightCause />
               <div className="strategyWorkbench__shiftCallout">
                 <strong>Prima:</strong> “Che cosa è successo prima e dopo?”
                 <span aria-hidden="true">→</span>
@@ -668,6 +658,25 @@ function ToolBench({
         <small>Rileggo le cinque frasi così come sono.</small>
       </button>
     </div>
+  );
+}
+
+function RouteStrip({ compact = false, highlightCause = false }: { compact?: boolean; highlightCause?: boolean }) {
+  return (
+    <ol
+      className={`strategyWorkbench__route${compact ? " strategyWorkbench__route--compact" : ""}${highlightCause ? " strategyWorkbench__route--cause" : ""}`}
+      aria-label="Percorso dell’escursione"
+    >
+      {expeditionRoute.map((item, index) => (
+        <li key={item.label} data-causal={highlightCause && index >= 2}>
+          <span className="strategyWorkbench__routeMarker" aria-hidden="true">{index + 1}</span>
+          <div>
+            <strong>{item.label}</strong>
+            <small>{item.fact}</small>
+          </div>
+        </li>
+      ))}
+    </ol>
   );
 }
 
