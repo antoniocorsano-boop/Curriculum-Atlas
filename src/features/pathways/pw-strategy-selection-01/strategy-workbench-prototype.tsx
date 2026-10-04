@@ -62,9 +62,9 @@ const tableOptions = {
 };
 
 const traceLabels = [
-  "Strategia ↔ scopo",
-  "Cambio strategia",
-  "Trasferimento",
+  "Ho scelto come prepararmi",
+  "Ho cambiato modo",
+  "L’ho usato in un caso nuovo",
 ];
 
 function sameOrder(actual: string[], expected: string[]) {
@@ -153,20 +153,20 @@ export function StrategyWorkbenchPrototype() {
       setFeedback(
         tool === "sequence"
           ? "L’ordine non coincide ancora con la fonte. Puoi riprovare senza trasformare l’errore in un punteggio."
-          : "La prova non coincide ancora con la fonte. Puoi cambiare strumento e provare un metodo più direttamente legato all’ordine.",
+          : "La prova non coincide ancora con la fonte. Puoi provare un altro modo per prepararti all’ordine.",
       );
       return;
     }
 
     if (tool !== "sequence") {
       setFeedback(
-        "La prova è riuscita. Ora confronta questa esperienza con uno strumento pensato direttamente per recuperare una sequenza.",
+        "La prova è riuscita. Ora prova anche un modo pensato proprio per ricordare una sequenza.",
       );
       return;
     }
 
     award(0);
-    setFeedback("Hai scelto e applicato uno strumento coerente con lo scopo del compito.");
+    setFeedback("Hai scelto un modo per prepararti e lo hai usato nella prova.");
   }
 
   function startSequenceComparison() {
@@ -212,8 +212,8 @@ export function StrategyWorkbenchPrototype() {
     if (nextTool !== "cause") {
       setFeedback(
         nextTool === "sequence"
-          ? "La sequenza mantiene l’ordine, ma non rende esplicito che cosa provoca che cosa. Scegli uno strumento che mostri le relazioni causali."
-          : "La rilettura mantiene disponibili i fatti, ma non organizza la relazione richiesta. Scegli uno strumento che mostri le cause e gli effetti.",
+          ? "Mettere in ordine aiuta a vedere prima e dopo, ma qui devi mostrare che cosa ha causato il cambiamento. Prova un altro modo."
+          : "Rileggere ti fa rivedere i fatti, ma qui devi mostrare che cosa ha causato il cambiamento. Prova un altro modo.",
       );
       return;
     }
@@ -227,7 +227,7 @@ export function StrategyWorkbenchPrototype() {
       return;
     }
     award(1);
-    setFeedback("Hai cambiato strategia quando è cambiato lo scopo e l’hai applicata al materiale.");
+    setFeedback("La domanda è cambiata e tu hai cambiato modo di lavorare.");
   }
 
   function chooseTransferTool(nextTool: Tool) {
@@ -265,7 +265,7 @@ export function StrategyWorkbenchPrototype() {
     }
 
     award(2);
-    setFeedback("Hai scelto e applicato una strategia adatta in un compito diverso.");
+    setFeedback("In una situazione nuova hai trovato un modo chiaro per confrontare i dati.");
   }
 
   function resetPrototype() {
@@ -594,7 +594,7 @@ export function StrategyWorkbenchPrototype() {
               <h2>Hai cambiato modo di lavorare quando è cambiata la domanda.</h2>
               <p>
                 Hai usato ordine, causa-effetto e confronto in tre momenti diversi. Non perché uno sia
-                “il tuo metodo”, ma perché ogni domanda chiedeva qualcosa di diverso.
+                “il tuo modo”, ma perché ogni domanda chiedeva qualcosa di diverso.
               </p>
               <div className="strategyWorkbench__finalTools" aria-label="Strumenti usati">
                 <span><b>01</b> Sequenza</span>
@@ -616,7 +616,7 @@ export function StrategyWorkbenchPrototype() {
 
         <aside className="strategyWorkbench__rail" aria-label="Tracce della sessione">
           <div>
-            <span className="strategyWorkbench__railLabel">Strumenti</span>
+            <span className="strategyWorkbench__railLabel">Sto usando</span>
             <strong>{tool ? toolLabel(tool) : "Nessuno scelto"}</strong>
           </div>
           <ol>
