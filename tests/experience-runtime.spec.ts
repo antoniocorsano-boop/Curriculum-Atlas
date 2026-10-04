@@ -433,7 +433,7 @@ test.describe("PW-STRATEGY-SELECTION experience-quality lab prototype", () => {
     await page.goto("/percorsi/lab/pw-strategy-selection-01");
     await expect(page.getByText("PROTOTIPO · NON AUTORIZZATO AGLI STUDENTI")).toBeVisible();
 
-    await page.getByRole("button", { name: "Ho capito · come mi preparo?" }).click();
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
     await page.getByRole("button", { name: /Sequenza \+ recupero/ }).click();
     await page.getByRole("button", { name: "Inizia la prova" }).click();
 
@@ -452,7 +452,7 @@ test.describe("PW-STRATEGY-SELECTION experience-quality lab prototype", () => {
   test("gates revision and transfer evidence on strategy choice plus applied construction", async ({ page }) => {
     await page.goto("/percorsi/lab/pw-strategy-selection-01");
 
-    await page.getByRole("button", { name: "Ho capito · come mi preparo?" }).click();
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
     await page.getByRole("button", { name: /Sequenza \+ recupero/ }).click();
     await page.getByRole("button", { name: "Inizia la prova" }).click();
     for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
@@ -493,7 +493,7 @@ test.describe("PW-STRATEGY-SELECTION experience-quality lab prototype", () => {
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/percorsi/lab/pw-strategy-selection-01");
-    await page.getByRole("button", { name: "Ho capito · come mi preparo?" }).click();
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
     await page.getByRole("button", { name: /Rileggo tutto/ }).click();
     await page.getByRole("button", { name: "Ho riletto · inizia la prova" }).click();
 
@@ -510,8 +510,8 @@ test.describe("PW-STRATEGY-SELECTION interaction regression guards", () => {
     await page.goto("/percorsi/lab/pw-strategy-selection-01");
 
     await expect(page.getByRole("heading", { name: "Guarda il materiale prima di scegliere come lavorarci." })).toBeFocused();
-    await page.getByRole("button", { name: "Ho capito · come mi preparo?" }).click();
-    await expect(page.getByRole("heading", { name: "Come vuoi prepararti a ricordare l’ordine?" })).toBeFocused();
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
+    await expect(page.getByRole("heading", { name: "Prima della prova, cosa vuoi fare?" })).toBeFocused();
 
     await page.getByRole("button", { name: /Sequenza \+ recupero/ }).click();
     await expect(page.getByRole("heading", { name: "Metti a fuoco l’ordine. Poi prova senza guardare." })).toBeFocused();
@@ -522,7 +522,7 @@ test.describe("PW-STRATEGY-SELECTION interaction regression guards", () => {
 
   test("requires a fresh validation after editing a failed order construction", async ({ page }) => {
     await page.goto("/percorsi/lab/pw-strategy-selection-01");
-    await page.getByRole("button", { name: "Ho capito · come mi preparo?" }).click();
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
     await page.getByRole("button", { name: /Sequenza \+ recupero/ }).click();
     await page.getByRole("button", { name: "Inizia la prova" }).click();
 
@@ -545,7 +545,7 @@ test.describe("PW-STRATEGY-SELECTION interaction regression guards", () => {
 
   test("requires a fresh validation after editing a failed cause construction", async ({ page }) => {
     await page.goto("/percorsi/lab/pw-strategy-selection-01");
-    await page.getByRole("button", { name: "Ho capito · come mi preparo?" }).click();
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
     await page.getByRole("button", { name: /Sequenza \+ recupero/ }).click();
     await page.getByRole("button", { name: "Inizia la prova" }).click();
     for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
@@ -578,7 +578,7 @@ test.describe("PW-STRATEGY-SELECTION interaction regression guards", () => {
 test.describe("PW-STRATEGY-SELECTION transfer validation invalidation", () => {
   test("revokes transfer evidence when a validated comparison is edited", async ({ page }) => {
     await page.goto("/percorsi/lab/pw-strategy-selection-01");
-    await page.getByRole("button", { name: "Ho capito · come mi preparo?" }).click();
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
     await page.getByRole("button", { name: /Sequenza \+ recupero/ }).click();
     await page.getByRole("button", { name: "Inizia la prova" }).click();
 
@@ -624,7 +624,7 @@ test.describe("PW-STRATEGY-SELECTION transfer validation invalidation", () => {
 test.describe("PW-STRATEGY-SELECTION construction invalidation completeness", () => {
   test("Svuota revokes a previously validated construction and its trace", async ({ page }) => {
     await page.goto("/percorsi/lab/pw-strategy-selection-01");
-    await page.getByRole("button", { name: "Ho capito · come mi preparo?" }).click();
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
     await page.getByRole("button", { name: /Sequenza \+ recupero/ }).click();
     await page.getByRole("button", { name: "Inizia la prova" }).click();
 
@@ -650,7 +650,7 @@ test.describe("PW-STRATEGY-SELECTION mobile experience remediation", () => {
     await page.goto("/percorsi/lab/pw-strategy-selection-01");
 
     await expect(page.locator(".strategyWorkbench__top")).toBeVisible();
-    await page.getByRole("button", { name: "Ho capito · come mi preparo?" }).click();
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
 
     await expect(page.locator(".strategyWorkbench__top")).toBeHidden();
 
@@ -669,7 +669,7 @@ test.describe("PW-STRATEGY-SELECTION mobile experience remediation", () => {
     expect(railHeight).toBeLessThan(72);
 
     const focusedHeading = page.getByRole("heading", {
-      name: "Come vuoi prepararti a ricordare l’ordine?",
+      name: "Prima della prova, cosa vuoi fare?",
     });
     await expect(focusedHeading).toBeFocused();
     expect(await focusedHeading.evaluate((element) => getComputedStyle(element).outlineStyle)).toBe("none");
@@ -678,7 +678,7 @@ test.describe("PW-STRATEGY-SELECTION mobile experience remediation", () => {
   test("presents tools as compact workbench instruments on mobile", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/percorsi/lab/pw-strategy-selection-01");
-    await page.getByRole("button", { name: "Ho capito · come mi preparo?" }).click();
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
 
     await expect(page.locator(".strategyWorkbench__toolGlyph")).toHaveCount(3);
     const toolButtons = page.locator(".strategyWorkbench__tools > button");
