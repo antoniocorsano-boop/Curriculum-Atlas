@@ -91,13 +91,13 @@ export function StrategyWorkbenchPrototype() {
 
   const mission = useMemo(() => {
     if (["orient", "choose-order-tool", "try-order-tool", "order-retrieval"].includes(phase)) {
-      return "Ricostruire l’ordine del percorso senza guardare la scheda.";
+      return "Tra poco le frasi spariranno: dovrai rimettere gli eventi nell’ordine giusto.";
     }
     if (["goal-shift", "choose-cause-tool", "cause-build", "principle"].includes(phase)) {
-      return "Spiegare perché il gruppo ha cambiato percorso.";
+      return "Adesso devi spiegare perché il gruppo ha dovuto cambiare sentiero.";
     }
     if (["transfer-choice", "transfer-build", "complete"].includes(phase)) {
-      return "Confrontare due percorsi di visita per durata, accesso e attività pratiche.";
+      return "Scegli il modo più chiaro per confrontare due percorsi di visita.";
     }
     return "";
   }, [phase]);
@@ -291,9 +291,9 @@ export function StrategyWorkbenchPrototype() {
       <header className="strategyWorkbench__top">
         <div>
           <p className="strategyWorkbench__eyebrow">Atlas · Percorsi · laboratorio esperienza</p>
-          <h1>Stesso obiettivo, strategia diversa</h1>
+          <h1>Missione: ricostruisci il percorso</h1>
           <p className="strategyWorkbench__lede">
-            Scegli uno strumento, provalo sul materiale e cambialo quando cambia il compito.
+            Prima capisci che cosa è successo. Poi scegli come prepararti alla prova.
           </p>
         </div>
         <div className="strategyWorkbench__review">
@@ -316,11 +316,11 @@ export function StrategyWorkbenchPrototype() {
         <section ref={surfaceRef} className="strategyWorkbench__surface" aria-label="Piano di lavoro">
           {phase === "orient" && (
             <div className="strategyWorkbench__scene strategyWorkbench__scene--intro">
-              <p className="strategyWorkbench__sceneKicker">Prima missione</p>
-              <h2>Guarda il materiale prima di scegliere come lavorarci.</h2>
+              <p className="strategyWorkbench__sceneKicker">Situazione</p>
+              <h2>Un gruppo deve raggiungere un punto di osservazione. Durante il tragitto succedono cinque cose.</h2>
               <p>
-                Tra poco la fonte verrà coperta. Non devi imparare “il metodo giusto”: devi capire quale
-                strumento serve allo scopo.
+                Leggi cosa è successo. Tra poco queste frasi verranno coperte e dovrai rimettere gli eventi
+                nell’ordine corretto.
               </p>
               <div className="strategyWorkbench__source">
                 {expeditionFacts.map((fact, index) => (
@@ -328,15 +328,15 @@ export function StrategyWorkbenchPrototype() {
                 ))}
               </div>
               <button type="button" className="strategyWorkbench__primary" onClick={() => setPhase("choose-order-tool")}>
-                Apri il banco degli strumenti
+                Ho capito · come mi preparo?
               </button>
             </div>
           )}
 
           {phase === "choose-order-tool" && (
             <div className="strategyWorkbench__scene">
-              <p className="strategyWorkbench__sceneKicker">Scegli in base alla missione</p>
-              <h2>Quale strumento useresti per prepararti a ricostruire l’ordine?</h2>
+              <p className="strategyWorkbench__sceneKicker">Prima della prova</p>
+              <h2>Come vuoi prepararti a ricordare l’ordine?</h2>
               <div className="strategyWorkbench__source strategyWorkbench__source--compact">
                 {expeditionFacts.map((fact) => <p key={fact}>{fact}</p>)}
               </div>
@@ -346,26 +346,26 @@ export function StrategyWorkbenchPrototype() {
 
           {phase === "try-order-tool" && tool === "sequence" && (
             <div className="strategyWorkbench__scene">
-              <p className="strategyWorkbench__sceneKicker">Strumento scelto · sequenza + recupero</p>
-              <h2>Prima organizza. Poi copri la fonte e prova davvero.</h2>
+              <p className="strategyWorkbench__sceneKicker">Preparazione</p>
+              <h2>Metti a fuoco l’ordine. Poi prova senza guardare.</h2>
               <div className="strategyWorkbench__sequencePreview">
                 {orderTokens.map((token, index) => (
                   <span key={token}><b>{index + 1}</b>{token}</span>
                 ))}
               </div>
               <p className="strategyWorkbench__hint">
-                Nella prova successiva resteranno solo parole neutre: la frase sorgente non sarà leggibile.
+                Quando inizi la prova, le frasi complete spariscono. Restano solo cinque parole-promemoria.
               </p>
               <button type="button" className="strategyWorkbench__primary" onClick={beginRetrieval}>
-                Copri la scheda e prova
+                Inizia la prova
               </button>
             </div>
           )}
 
           {phase === "try-order-tool" && tool === "cause" && (
             <div className="strategyWorkbench__scene">
-              <p className="strategyWorkbench__sceneKicker">Strumento scelto · causa-effetto</p>
-              <h2>Provalo davvero: costruisci la relazione che vedi nei fatti.</h2>
+              <p className="strategyWorkbench__sceneKicker">Hai scelto: cause e conseguenze</p>
+              <h2>Prova a collegare ciò che ha provocato il cambiamento del percorso.</h2>
               <TokenBuilder
                 pool={causePool}
                 selected={causeAttempt}
@@ -392,23 +392,23 @@ export function StrategyWorkbenchPrototype() {
 
           {phase === "try-order-tool" && tool === "reread" && (
             <div className="strategyWorkbench__scene">
-              <p className="strategyWorkbench__sceneKicker">Strumento scelto · rilettura</p>
-              <h2>Rileggi il materiale. Poi la fonte verrà coperta.</h2>
+              <p className="strategyWorkbench__sceneKicker">Hai scelto: rileggere</p>
+              <h2>Rileggi le cinque frasi. Poi prova a ricordare l’ordine senza guardare.</h2>
               <div className="strategyWorkbench__source">
                 {expeditionFacts.map((fact, index) => (
                   <p key={fact}><span>{String(index + 1).padStart(2, "0")}</span>{fact}</p>
                 ))}
               </div>
               <button type="button" className="strategyWorkbench__primary" onClick={beginRetrieval}>
-                Ho riletto · prova l’ordine
+                Ho riletto · inizia la prova
               </button>
             </div>
           )}
 
           {phase === "order-retrieval" && (
             <div className="strategyWorkbench__scene strategyWorkbench__scene--retrieval">
-              <p className="strategyWorkbench__sceneKicker">Modalità recupero</p>
-              <h2>La fonte è coperta. Ricostruisci l’ordine usando solo ciò che ricordi.</h2>
+              <p className="strategyWorkbench__sceneKicker">Prova</p>
+              <h2>Le frasi sono coperte. Rimetti questi cinque elementi nell’ordine in cui sono accaduti.</h2>
               <div className="strategyWorkbench__covered" aria-hidden="true">
                 <span>Fonte coperta</span>
               </div>
@@ -446,29 +446,29 @@ export function StrategyWorkbenchPrototype() {
 
           {phase === "goal-shift" && (
             <div className="strategyWorkbench__scene strategyWorkbench__scene--shift">
-              <p className="strategyWorkbench__sceneKicker">Cambio di missione</p>
-              <h2>Le informazioni sono le stesse. È cambiato ciò che devi riuscire a fare.</h2>
+              <p className="strategyWorkbench__sceneKicker">Nuova domanda</p>
+              <h2>Ora non ti serve ricordare l’ordine. Devi capire perché il gruppo ha cambiato sentiero.</h2>
               <div className="strategyWorkbench__source strategyWorkbench__source--compact">
                 {expeditionFacts.map((fact) => <p key={fact}>{fact}</p>)}
               </div>
               <div className="strategyWorkbench__shiftCallout">
-                <strong>Prima:</strong> ricostruire l’ordine.
+                <strong>Prima:</strong> “Che cosa è successo prima e dopo?”
                 <span aria-hidden="true">→</span>
-                <strong>Adesso:</strong> spiegare perché il gruppo ha cambiato percorso.
+                <strong>Adesso:</strong> “Che cosa ha fatto cambiare percorso al gruppo?”
               </div>
               <button type="button" className="strategyWorkbench__primary" onClick={() => {
                 setFeedback("");
                 setPhase("choose-cause-tool");
               }}>
-                Torna al banco degli strumenti
+                Scegli come affrontare la nuova domanda
               </button>
             </div>
           )}
 
           {phase === "choose-cause-tool" && (
             <div className="strategyWorkbench__scene">
-              <p className="strategyWorkbench__sceneKicker">Nuovo scopo</p>
-              <h2>Quale strumento rende visibile che cosa provoca che cosa?</h2>
+              <p className="strategyWorkbench__sceneKicker">Nuova domanda</p>
+              <h2>Come puoi rendere chiaro che cosa ha causato il cambio di percorso?</h2>
               <ToolBench onChoose={chooseCauseTool} compact />
               {feedback && <div className="strategyWorkbench__feedback" role="status"><p>{feedback}</p></div>}
             </div>
@@ -476,8 +476,8 @@ export function StrategyWorkbenchPrototype() {
 
           {phase === "cause-build" && (
             <div className="strategyWorkbench__scene">
-              <p className="strategyWorkbench__sceneKicker">Applica la nuova strategia</p>
-              <h2>Costruisci la catena causa-effetto usando i frammenti disponibili.</h2>
+              <p className="strategyWorkbench__sceneKicker">Costruisci la spiegazione</p>
+              <h2>Metti in fila le cause e le conseguenze fino all’arrivo in ritardo.</h2>
               <TokenBuilder
                 pool={causePool}
                 selected={causeAttempt}
@@ -507,11 +507,10 @@ export function StrategyWorkbenchPrototype() {
 
           {phase === "principle" && (
             <div className="strategyWorkbench__scene strategyWorkbench__scene--principle">
-              <p className="strategyWorkbench__sceneKicker">Quello che è emerso dal lavoro</p>
-              <h2>Le strategie sono strumenti, non etichette personali.</h2>
+              <p className="strategyWorkbench__sceneKicker">Che cosa hai scoperto</p>
+              <h2>Lo stesso materiale può richiedere modi diversi di lavorare.</h2>
               <blockquote>
-                Prima chiarisco il compito. Poi scelgo una strategia, controllo che cosa rende possibile
-                e la cambio se lo scopo o l’evidenza cambiano.
+                Prima capisco che cosa devo fare. Poi scelgo un modo per lavorare e lo cambio se la domanda cambia.
               </blockquote>
               <button type="button" className="strategyWorkbench__primary" onClick={() => {
                 setFeedback("");
@@ -525,16 +524,16 @@ export function StrategyWorkbenchPrototype() {
           {phase === "transfer-choice" && (
             <div className="strategyWorkbench__scene strategyWorkbench__scene--museum">
               <p className="strategyWorkbench__sceneKicker">Nuova situazione · museo</p>
-              <h2>Due percorsi, tre criteri. Come renderesti il confronto controllabile?</h2>
+              <h2>Devi scegliere tra due percorsi. Come puoi confrontarli senza confondere i dati?</h2>
               <MuseumEvidence />
               <div className="strategyWorkbench__transferTools">
                 <button type="button" onClick={() => chooseTransferTool("compare")}>
-                  <strong>Griglia di confronto</strong>
-                  <span>Organizzo i dati per criterio e percorso.</span>
+                  <strong>Tabella di confronto</strong>
+                  <span>Metto durata, accesso e attività uno accanto all’altro.</span>
                 </button>
                 <button type="button" onClick={() => chooseTransferTool("sequence")}>
-                  <strong>Memorizzo un percorso</strong>
-                  <span>Ricordo l’ordine delle informazioni del percorso Blu.</span>
+                  <strong>Cerco di ricordare un percorso</strong>
+                  <span>Provo a ricordare i dati del percorso Blu.</span>
                 </button>
               </div>
               {feedback && <div className="strategyWorkbench__feedback" role="status"><p>{feedback}</p></div>}
@@ -543,8 +542,8 @@ export function StrategyWorkbenchPrototype() {
 
           {phase === "transfer-build" && (
             <div className="strategyWorkbench__scene strategyWorkbench__scene--museum">
-              <p className="strategyWorkbench__sceneKicker">Applica il confronto</p>
-              <h2>Completa la griglia usando soltanto i dati disponibili.</h2>
+              <p className="strategyWorkbench__sceneKicker">Confronta</p>
+              <h2>Completa la tabella: ogni riga deve confrontare lo stesso criterio.</h2>
               <MuseumEvidence />
               <div className="strategyWorkbench__comparison" aria-label="Griglia di confronto">
                 <span className="strategyWorkbench__comparisonHead">Criterio</span>
@@ -591,11 +590,11 @@ export function StrategyWorkbenchPrototype() {
 
           {phase === "complete" && (
             <div className="strategyWorkbench__scene strategyWorkbench__scene--complete">
-              <p className="strategyWorkbench__sceneKicker">Traccia finale</p>
-              <h2>Non hai trovato “il tuo metodo”. Hai imparato a scegliere uno strumento in base al compito.</h2>
+              <p className="strategyWorkbench__sceneKicker">Hai finito</p>
+              <h2>Hai cambiato modo di lavorare quando è cambiata la domanda.</h2>
               <p>
-                Tre compiti diversi, tre modi diversi di organizzare le informazioni. La traccia descrive
-                soltanto ciò che hai fatto qui.
+                Hai usato ordine, causa-effetto e confronto in tre momenti diversi. Non perché uno sia
+                “il tuo metodo”, ma perché ogni domanda chiedeva qualcosa di diverso.
               </p>
               <div className="strategyWorkbench__finalTools" aria-label="Strumenti usati">
                 <span><b>01</b> Sequenza</span>
@@ -653,20 +652,20 @@ function ToolBench({
       <button type="button" onClick={() => onChoose("sequence")}>
         <ToolGlyph type="sequence" />
         <span className="strategyWorkbench__toolMark">01</span>
-        <strong>Sequenza + recupero</strong>
-        <small>Metto in ordine e poi provo senza fonte.</small>
+        <strong>Metto gli eventi in ordine</strong>
+        <small>Li dispongo in sequenza e poi provo a ricordarli.</small>
       </button>
       <button type="button" onClick={() => onChoose("cause")}>
         <ToolGlyph type="cause" />
         <span className="strategyWorkbench__toolMark">02</span>
-        <strong>Mappa causa-effetto</strong>
-        <small>Collego ciò che provoca e ciò che accade.</small>
+        <strong>Cerco cause e conseguenze</strong>
+        <small>Collego ciò che fa succedere qualcos’altro.</small>
       </button>
       <button type="button" onClick={() => onChoose("reread")}>
         <ToolGlyph type="reread" />
         <span className="strategyWorkbench__toolMark">03</span>
-        <strong>Rilettura</strong>
-        <small>Ripercorro tutto senza cambiare la struttura.</small>
+        <strong>Rileggo tutto</strong>
+        <small>Rileggo le cinque frasi così come sono.</small>
       </button>
     </div>
   );
@@ -780,5 +779,5 @@ function toolLabel(tool: Tool) {
   if (tool === "sequence") return "Sequenza + recupero";
   if (tool === "cause") return "Mappa causa-effetto";
   if (tool === "reread") return "Rilettura";
-  return "Griglia di confronto";
+  return "Tabella di confronto";
 }
