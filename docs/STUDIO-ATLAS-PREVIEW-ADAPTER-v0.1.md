@@ -28,6 +28,8 @@ Required safeguards:
 - explicit scenes;
 - every authored choice carries an explicit `targetSceneId`;
 - choice targets resolve to existing scenes and diverge across at least two outcomes;
+- optional structured `world` state is validated before mount;
+- optional per-choice `worldAfter` effects are validated and passed to the same Experience Runtime;
 - at least one explicit `TRANSFER` scene.
 
 The adapter fails closed when these invariants are absent.
@@ -37,6 +39,18 @@ The adapter fails closed when these invariants are absent.
 For a `CHOICE` scene, Atlas uses the exact `targetSceneId` authored in Studio Atlas.
 
 The adapter MUST NOT collapse all choices onto the next sequential scene. Missing, dangling or non-divergent choice targets fail closed.
+
+## Visible world consequences
+
+A Studio scene may carry a compact, structured world state:
+
+- place;
+- current status;
+- observable signals and their state.
+
+A choice may carry a `worldAfter` state. When selected, the existing Experience Runtime renders that consequence immediately, before the learner continues to the target scene.
+
+This is presentation/state data, not telemetry or learner profiling. It is part of the immutable preview snapshot and is never persisted by Atlas.
 
 ## Transfer is not inferred
 
