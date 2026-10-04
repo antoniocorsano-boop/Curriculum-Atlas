@@ -45,6 +45,8 @@ jobs:
           grep -q 'message.channel === channel'             src/features/pathways/studio-atlas-preview-bridge.tsx
           grep -q 'targetNodeId: choice.targetSceneId'       src/features/pathways/studio-atlas-preview-adapter.ts
           grep -q 'choiceTargetsNotDivergent'                scripts/validate-studio-atlas-preview-snapshot.mjs
+          grep -q 'worldAfter: choice.worldAfter'             src/features/pathways/studio-atlas-preview-adapter.ts
+          grep -q 'experience-world__signals'                 src/features/experiences/experience-runtime.tsx
 
       - name: Typecheck
         run: pnpm typecheck
