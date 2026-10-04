@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import "./strategy-workbench.css";
 
@@ -607,7 +608,7 @@ export function StrategyWorkbenchPrototype() {
                 ))}
               </div>
               <div className="strategyWorkbench__actions">
-                <a href="/percorsi/lab">Torna alla libreria lab</a>
+                <Link href="/percorsi/lab">Torna alla libreria lab</Link>
                 <button type="button" className="strategyWorkbench__primary" onClick={resetPrototype}>Ricomincia</button>
               </div>
             </div>
