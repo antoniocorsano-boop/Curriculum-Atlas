@@ -619,3 +619,26 @@ test.describe("PW-STRATEGY-SELECTION transfer validation invalidation", () => {
     await expect(page.getByText(/Il confronto non è ancora completo o coerente/)).toBeVisible();
   });
 });
+
+
+test.describe("PW-STRATEGY-SELECTION construction invalidation completeness", () => {
+  test("Svuota revokes a previously validated construction and its trace", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-strategy-selection-01");
+    await page.getByRole("button", { name: "Apri il banco degli strumenti" }).click();
+    await page.getByRole("button", { name: /Sequenza \+ recupero/ }).click();
+    await page.getByRole("button", { name: "Copri la scheda e prova" }).click();
+
+    for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await expect(page.getByText("Hai scelto e applicato uno strumento coerente con lo scopo del compito.")).toBeVisible();
+    await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(1);
+
+    await page.getByRole("button", { name: "Svuota" }).click();
+
+    await expect(page.getByText("Hai scelto e applicato uno strumento coerente con lo scopo del compito.")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Continua", exact: true })).toHaveCount(0);
+    await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(0);
+  });
+});
