@@ -573,3 +573,49 @@ test.describe("PW-STRATEGY-SELECTION interaction regression guards", () => {
     await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(2);
   });
 });
+
+
+test.describe("PW-STRATEGY-SELECTION transfer validation invalidation", () => {
+  test("revokes transfer evidence when a validated comparison is edited", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-strategy-selection-01");
+    await page.getByRole("button", { name: "Apri il banco degli strumenti" }).click();
+    await page.getByRole("button", { name: /Sequenza \+ recupero/ }).click();
+    await page.getByRole("button", { name: "Copri la scheda e prova" }).click();
+
+    for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await page.getByRole("button", { name: "Continua", exact: true }).click();
+    await page.getByRole("button", { name: "Torna al banco degli strumenti" }).click();
+    await page.getByRole("button", { name: /Mappa causa-effetto/ }).click();
+
+    for (const token of ["pioggia intensa", "sentiero basso inutilizzabile", "percorso di cresta", "arrivo più tardi"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await page.getByRole("button", { name: "Continua", exact: true }).click();
+    await page.getByRole("button", { name: "Prova in una situazione nuova" }).click();
+    await page.getByRole("button", { name: /Griglia di confronto/ }).click();
+
+    await page.getByLabel("Durata, percorso Blu").selectOption({ label: "45 min" });
+    await page.getByLabel("Durata, percorso Verde").selectOption({ label: "30 min" });
+    await page.getByLabel("Accesso, percorso Blu").selectOption({ label: "ascensore" });
+    await page.getByLabel("Accesso, percorso Verde").selectOption({ label: "solo scale" });
+    await page.getByLabel("Attività pratiche, percorso Blu").selectOption({ label: "1 attività pratica" });
+    await page.getByLabel("Attività pratiche, percorso Verde").selectOption({ label: "2 attività pratiche" });
+    await page.getByRole("button", { name: "Controlla il confronto" }).click();
+
+    await expect(page.getByRole("button", { name: "Concludi" })).toBeVisible();
+    await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(3);
+
+    await page.getByLabel("Durata, percorso Verde").selectOption({ label: "45 min" });
+
+    await expect(page.getByRole("button", { name: "Concludi" })).toHaveCount(0);
+    await expect(page.getByText("Hai scelto e applicato una strategia adatta in un compito diverso.")).toHaveCount(0);
+    await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(2);
+
+    await page.getByRole("button", { name: "Controlla il confronto" }).click();
+    await expect(page.getByText(/Il confronto non è ancora completo o coerente/)).toBeVisible();
+  });
+});
