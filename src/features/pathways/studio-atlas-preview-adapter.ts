@@ -1,12 +1,29 @@
-import type { ExperienceDefinition } from "@/features/experiences/model";
+import type {
+  ExperienceDefinition,
+  ExperienceWorldSignalState,
+} from "@/features/experiences/model";
 
 export type StudioAtlasPreviewSceneKind = "SCENE" | "TRANSFER";
+
+export interface StudioAtlasPreviewWorldSignal {
+  id: string;
+  label: string;
+  state: ExperienceWorldSignalState;
+  detail?: string;
+}
+
+export interface StudioAtlasPreviewWorldState {
+  place: string;
+  status: string;
+  signals: StudioAtlasPreviewWorldSignal[];
+}
 
 export interface StudioAtlasPreviewSceneChoice {
   choiceId: string;
   label: string;
   feedback: string;
   targetSceneId: string;
+  worldAfter?: StudioAtlasPreviewWorldState;
 }
 
 export interface StudioAtlasPreviewScene {
@@ -18,6 +35,7 @@ export interface StudioAtlasPreviewScene {
   learnerAction: string;
   consequence: string;
   reveal?: string;
+  world?: StudioAtlasPreviewWorldState;
   choices?: StudioAtlasPreviewSceneChoice[];
 }
 
@@ -32,6 +50,36 @@ export interface StudioAtlasPreviewSnapshot {
   runtimeAuthorized: false;
   studentAuthorized: false;
   scenes: StudioAtlasPreviewScene[];
+}
+
+const WORLD_SIGNAL_STATES = new Set<ExperienceWorldSignalState>([
+  "OFF",
+  "READY",
+  "ACTIVE",
+  "DELAYED",
+  "MISMATCH",
+  "STABLE",
+  "MANUAL",
+]);
+
+function validateWorldState(
+  world: StudioAtlasPreviewWorldState | undefined,
+  prefix: string,
+  errors: string[],
+) {
+  if (!world) return;
+  if (!world.place?.trim()) errors.push(`${prefix}:place`);
+  if (!world.status?.trim()) errors.push(`${prefix}:status`);
+  const signals = Array.isArray(world.signals) ? world.signals : [];
+  if (signals.length === 0) errors.push(`${prefix}:signals`);
+  const ids = new Set<string>();
+  for (const signal of signals) {
+    if (!signal?.id?.trim()) errors.push(`${prefix}:signalId`);
+    else if (ids.has(signal.id)) errors.push(`${prefix}:duplicateSignal:${signal.id}`);
+    else ids.add(signal.id);
+    if (!signal?.label?.trim()) errors.push(`${prefix}:signalLabel`);
+    if (!WORLD_SIGNAL_STATES.has(signal?.state)) errors.push(`${prefix}:signalState`);
+  }
 }
 
 export function validateStudioAtlasPreviewSnapshot(
@@ -71,6 +119,7 @@ export function validateStudioAtlasPreviewSnapshot(
     if (!scene?.visibleSituation?.trim()) errors.push(`visibleSituation:${scene?.sceneId ?? "unknown"}`);
     if (!scene?.learnerAction?.trim()) errors.push(`learnerAction:${scene?.sceneId ?? "unknown"}`);
     if (!scene?.consequence?.trim()) errors.push(`consequence:${scene?.sceneId ?? "unknown"}`);
+    validateWorldState(scene?.world, `world:${scene?.sceneId ?? "unknown"}`, errors);
 
     const interaction = scene?.interaction ?? "SUMMARY";
     if (interaction !== "SUMMARY" && interaction !== "CHOICE") {
@@ -87,6 +136,11 @@ export function validateStudioAtlasPreviewSnapshot(
         else choiceIds.add(choice.choiceId);
         if (!choice?.label?.trim()) errors.push(`choiceLabel:${scene?.sceneId ?? "unknown"}`);
         if (!choice?.feedback?.trim()) errors.push(`choiceFeedback:${scene?.sceneId ?? "unknown"}`);
+        validateWorldState(
+          choice?.worldAfter,
+          `choiceWorld:${scene?.sceneId ?? "unknown"}:${choice?.choiceId ?? "unknown"}`,
+          errors,
+        );
         if (!choice?.targetSceneId?.trim()) {
           errors.push(`choiceTarget:${scene?.sceneId ?? "unknown"}`);
         } else if (!allSceneIds.has(choice.targetSceneId)) {
@@ -135,6 +189,7 @@ export function studioAtlasSnapshotToExperience(
             targetNodeId: choice.targetSceneId,
             label: choice.label,
             feedback: choice.feedback,
+            worldAfter: choice.worldAfter,
           }))
         : [{
             id: "continue",
@@ -153,6 +208,7 @@ export function studioAtlasSnapshotToExperience(
         scene.visibleSituation,
         ...(scene.reveal?.trim() ? [scene.reveal.trim()] : []),
       ],
+      world: scene.world,
       feedbackCategory:
         scene.kind === "TRANSFER" ? "TRANSFER_SUCCESSFUL" :
         interaction === "choice" ? "ALTERNATIVE_PLAUSIBLE" :
