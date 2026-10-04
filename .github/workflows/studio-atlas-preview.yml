@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "src/features/pathways/studio-atlas-preview-adapter.ts"
+      - "src/features/pathways/studio-atlas-preview-bridge.tsx"
       - "src/app/percorsi/lab/studio-atlas-preview/**"
       - "fixtures/studio-atlas-preview/**"
       - "scripts/validate-studio-atlas-preview-snapshot.mjs"
@@ -35,6 +36,12 @@ jobs:
         run: |
           node scripts/validate-studio-atlas-preview-snapshot.mjs fixtures/studio-atlas-preview/valid/minimal.json valid
           node scripts/validate-studio-atlas-preview-snapshot.mjs fixtures/studio-atlas-preview/invalid/no-transfer.json invalid
+
+      - name: Enforce origin-bound bridge
+        run: |
+          ! grep -R 'postMessage([^,]*,[[:space:]]*"\*"'             src/features/pathways/studio-atlas-preview-bridge.tsx
+          grep -q 'event.origin !== studioOrigin'             src/features/pathways/studio-atlas-preview-bridge.tsx
+          grep -q 'event.source !== opener'             src/features/pathways/studio-atlas-preview-bridge.tsx
 
       - name: Typecheck
         run: pnpm typecheck
