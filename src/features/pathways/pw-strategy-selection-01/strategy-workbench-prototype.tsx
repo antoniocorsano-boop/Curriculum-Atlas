@@ -436,7 +436,7 @@ export function StrategyWorkbenchPrototype() {
                   )}
                   {tool !== "sequence" && (
                     <button type="button" className="strategyWorkbench__primary" onClick={startSequenceComparison}>
-                      Prova sequenza + recupero
+                      Prova anche a mettere gli eventi in ordine
                     </button>
                   )}
                 </div>
