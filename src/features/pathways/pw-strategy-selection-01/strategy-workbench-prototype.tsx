@@ -126,14 +126,24 @@ export function StrategyWorkbenchPrototype() {
     setPhase("order-retrieval");
   }
 
-  function addOrderToken(token: string) {
+  function invalidateOrderValidation() {
     setFeedback("");
+    setEarned((current) => current.map((value, index) => (index === 0 ? false : value)));
+  }
+
+  function addOrderToken(token: string) {
+    invalidateOrderValidation();
     if (!orderAttempt.includes(token)) setOrderAttempt((current) => [...current, token]);
   }
 
   function removeOrderToken(token: string) {
-    setFeedback("");
+    invalidateOrderValidation();
     setOrderAttempt((current) => current.filter((item) => item !== token));
+  }
+
+  function clearOrderAttempt() {
+    invalidateOrderValidation();
+    setOrderAttempt([]);
   }
 
   function checkOrder() {
@@ -165,14 +175,24 @@ export function StrategyWorkbenchPrototype() {
     setPhase("try-order-tool");
   }
 
-  function addCauseToken(token: string) {
+  function invalidateCauseValidation() {
     setFeedback("");
+    setEarned((current) => current.map((value, index) => (index === 1 ? false : value)));
+  }
+
+  function addCauseToken(token: string) {
+    invalidateCauseValidation();
     if (!causeAttempt.includes(token)) setCauseAttempt((current) => [...current, token]);
   }
 
   function removeCauseToken(token: string) {
-    setFeedback("");
+    invalidateCauseValidation();
     setCauseAttempt((current) => current.filter((item) => item !== token));
+  }
+
+  function clearCauseAttempt() {
+    invalidateCauseValidation();
+    setCauseAttempt([]);
   }
 
   function checkInitialCauseTool() {
@@ -349,7 +369,7 @@ export function StrategyWorkbenchPrototype() {
                 connector="→"
               />
               <div className="strategyWorkbench__actions">
-                <button type="button" onClick={() => setCauseAttempt([])}>Svuota</button>
+                <button type="button" onClick={clearCauseAttempt}>Svuota</button>
                 <button type="button" className="strategyWorkbench__primary" onClick={checkInitialCauseTool}>Controlla la relazione</button>
               </div>
               {feedback && (
@@ -395,7 +415,7 @@ export function StrategyWorkbenchPrototype() {
                 connector="→"
               />
               <div className="strategyWorkbench__actions">
-                <button type="button" onClick={() => setOrderAttempt([])}>Svuota</button>
+                <button type="button" onClick={clearOrderAttempt}>Svuota</button>
                 <button type="button" className="strategyWorkbench__primary" onClick={checkOrder}>Controlla</button>
               </div>
               {feedback && (
@@ -461,7 +481,7 @@ export function StrategyWorkbenchPrototype() {
                 connector="→"
               />
               <div className="strategyWorkbench__actions">
-                <button type="button" onClick={() => setCauseAttempt([])}>Svuota</button>
+                <button type="button" onClick={clearCauseAttempt}>Svuota</button>
                 <button type="button" className="strategyWorkbench__primary" onClick={checkCauseBuild}>Controlla</button>
               </div>
               {feedback && (
