@@ -131,7 +131,7 @@ try {
     await page.getByRole("button", { name: "Ho letto · continua" }).click();
     await capture("02-before-test");
 
-    await page.getByRole("button", { name: /Metto gli eventi in ordine/ }).click();
+    await page.getByRole("button", { name: /Creo una sequenza di parole chiave/ }).click();
     await capture("03-order-preparation");
 
     await page.getByRole("button", { name: "Inizia la prova" }).click();
