@@ -1,0 +1,139 @@
+name: Percorsi RRT-04 Exact Identity Qualification
+
+on:
+  pull_request:
+    paths:
+      - 'evidence/percorsi-runtime/rrt04-inputs-2026-10-03.json'
+      - 'scripts/percorsi-g2-evidence-producers.mjs'
+      - 'scripts/test-percorsi-g2-q2-q3-q7-producers.mjs'
+      - 'scripts/run-percorsi-rrt04-qualification.mjs'
+      - 'scripts/lib/percorsi-sealed-preauth-static-adapter.mjs'
+      - '.github/workflows/percorsi-g2-evidence-producers.yml'
+      - '.github/workflows/percorsi-rrt04-exact-identity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: percorsi-rrt04-exact-identity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout qualification logic
+        uses: actions/checkout@v4
+
+      - name: Checkout exact runtime candidate source
+        uses: actions/checkout@v4
+        with:
+          ref: 87512daaa3e09d8c48fda7de2c869e0a6d2e43e8
+          path: .rrt04/candidate-source
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Validate producer contracts
+        run: |
+          node scripts/test-percorsi-g2-evidence-producers.mjs
+          node scripts/test-percorsi-g2-q2-q3-q7-producers.mjs
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Download exact sealed preauthorization artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: percorsi-sealed-preauth-87512daaa3e09d8c48fda7de2c869e0a6d2e43e8
+          path: .rrt04/sealed
+          run-id: 37147171500
+          github-token: ${{ github.token }}
+
+      - name: Verify sealed artifact binding
+        run: |
+          test -f .rrt04/sealed/.rrt03/PREAUTH-MANIFEST.json
+          test -f .rrt04/sealed/out/percorsi/pw-missing-information-01/index.html
+          test -f .rrt04/sealed/out/percorsi/pw-constraints-tradeoffs-01/index.html
+          node - <<'NODE'
+          const fs = require('fs');
+          const input = JSON.parse(fs.readFileSync('evidence/percorsi-runtime/rrt04-inputs-2026-10-03.json','utf8'));
+          const manifest = JSON.parse(fs.readFileSync('.rrt04/sealed/.rrt03/PREAUTH-MANIFEST.json','utf8'));
+          if (manifest.exactHead !== input.runtimeExactHead) throw new Error('SEALED_HEAD_MISMATCH');
+          if (manifest.studentAuthorized !== false || manifest.publicExposure !== false) throw new Error('SEALED_BOUNDARY_MISMATCH');
+          for (const c of input.candidates) {
+            const m = manifest.candidates.find(x => x.pathwayId === c.candidateBinding.pathwayId);
+            if (!m || m.surfaceArtifactDigest !== c.surfaceArtifactDigest) throw new Error('SEALED_DIGEST_MISMATCH:'+c.candidateBinding.pathwayId);
+          }
+          NODE
+
+      - name: Start exact sealed static surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/rrt04
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory .rrt04/sealed/out > artifacts/rrt04/sealed-server.log 2>&1 &
+          echo $! > artifacts/rrt04/sealed-server.pid
+          for i in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:4173/percorsi/pw-missing-information-01/ > /dev/null &&
+               curl --fail --silent http://127.0.0.1:4173/percorsi/pw-constraints-tradeoffs-01/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat artifacts/rrt04/sealed-server.log
+          exit 1
+
+      - name: Run exact-identity qualification
+        run: |
+          node scripts/run-percorsi-rrt04-qualification.mjs             evidence/percorsi-runtime/rrt04-inputs-2026-10-03.json             .rrt04/sealed             .rrt04/candidate-source             http://127.0.0.1:4173             artifacts/rrt04/results
+
+      - name: Enforce RRT-04 boundary
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const b = JSON.parse(fs.readFileSync('artifacts/rrt04/results/rrt04-result-bundle.json','utf8'));
+          if (b.runtimeAuthorization !== 'NOT_RUNTIME_AUTHORIZED') throw new Error('RUNTIME_BOUNDARY_CHANGED');
+          for (const c of b.candidates) {
+            for (const gate of ['Q1','Q2','Q3','Q5','Q6','Q7']) {
+              if (c.gateStatus[gate] !== 'PASS') throw new Error(c.candidateBinding.pathwayId+':'+gate);
+            }
+            if (c.gateStatus.Q4 !== 'NOT_RUN_HUMAN_REQUIRED') throw new Error('Q4_BOUNDARY');
+            if (c.gateStatus.Q8 !== 'NOT_RUN_POLICY_REQUIRED') throw new Error('Q8_BOUNDARY');
+            if (c.gateStatus.Q9 !== 'NOT_ELIGIBLE') throw new Error('Q9_BOUNDARY');
+          }
+          NODE
+
+      - name: Stop sealed static surface
+        if: always()
+        shell: bash
+        run: |
+          if test -f artifacts/rrt04/sealed-server.pid; then
+            kill "$(cat artifacts/rrt04/sealed-server.pid)" 2>/dev/null || true
+          fi
+
+      - name: Upload RRT-04 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: percorsi-rrt04-evidence-${{ github.sha }}
+          path: artifacts/rrt04/
+          retention-days: 30
+          if-no-files-found: warn
+
+# Evidence only. No deployment, no PUBLISHED transition and no runtime authorization.
+# Q4 remains human/assistive-technology gated; Q8 remains kill-switch-policy gated.
+# Q9 is therefore NOT_ELIGIBLE after this workflow even when all automated gates here PASS.
