@@ -463,7 +463,7 @@ test.describe("PW-STRATEGY-SELECTION experience-quality lab prototype", () => {
     await page.getByRole("button", { name: "Scegli come affrontare la nuova domanda" }).click();
 
     await page.getByRole("button", { name: /Cerco cause e conseguenze/ }).click();
-    for (const token of ["pioggia intensa", "sentiero basso inutilizzabile", "percorso di cresta", "arrivo più tardi"]) {
+    for (const token of ["pioggia intensa", "sentiero basso inutilizzabile", "percorso di cresta più lungo", "arrivo più tardi"]) {
       await page.getByRole("button", { name: token, exact: true }).click();
     }
     await page.getByRole("button", { name: "Controlla", exact: true }).click();
@@ -556,14 +556,14 @@ test.describe("PW-STRATEGY-SELECTION interaction regression guards", () => {
     await page.getByRole("button", { name: "Scegli come affrontare la nuova domanda" }).click();
     await page.getByRole("button", { name: /Cerco cause e conseguenze/ }).click();
 
-    for (const token of ["arrivo più tardi", "pioggia intensa", "sentiero basso inutilizzabile", "percorso di cresta"]) {
+    for (const token of ["arrivo più tardi", "pioggia intensa", "sentiero basso inutilizzabile", "percorso di cresta più lungo"]) {
       await page.getByRole("button", { name: token, exact: true }).click();
     }
     await page.getByRole("button", { name: "Controlla", exact: true }).click();
     await expect(page.getByText(/La catena non rende ancora corretta/)).toBeVisible();
 
     await page.getByRole("button", { name: "Svuota" }).click();
-    for (const token of ["pioggia intensa", "sentiero basso inutilizzabile", "percorso di cresta", "arrivo più tardi"]) {
+    for (const token of ["pioggia intensa", "sentiero basso inutilizzabile", "percorso di cresta più lungo", "arrivo più tardi"]) {
       await page.getByRole("button", { name: token, exact: true }).click();
     }
 
@@ -590,7 +590,7 @@ test.describe("PW-STRATEGY-SELECTION transfer validation invalidation", () => {
     await page.getByRole("button", { name: "Scegli come affrontare la nuova domanda" }).click();
     await page.getByRole("button", { name: /Cerco cause e conseguenze/ }).click();
 
-    for (const token of ["pioggia intensa", "sentiero basso inutilizzabile", "percorso di cresta", "arrivo più tardi"]) {
+    for (const token of ["pioggia intensa", "sentiero basso inutilizzabile", "percorso di cresta più lungo", "arrivo più tardi"]) {
       await page.getByRole("button", { name: token, exact: true }).click();
     }
     await page.getByRole("button", { name: "Controlla", exact: true }).click();
@@ -692,5 +692,46 @@ test.describe("PW-STRATEGY-SELECTION mobile experience remediation", () => {
 
     const width = await page.evaluate(() => document.documentElement.scrollWidth);
     expect(width).toBeLessThanOrEqual(390);
+  });
+});
+
+
+test.describe("PW-STRATEGY-SELECTION real method-change evidence", () => {
+  test("cannot earn 'Ho cambiato modo' unless the method actually changes after the first mission", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-strategy-selection-01");
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
+
+    // Start with cause/effect for the order mission.
+    await page.getByRole("button", { name: /Cerco cause e conseguenze/ }).click();
+    for (const token of ["pioggia intensa", "sentiero basso inutilizzabile", "percorso di cresta più lungo", "arrivo più tardi"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla la relazione" }).click();
+    await page.getByRole("button", { name: "Ora controlla l’ordine" }).click();
+
+    for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+
+    // The pathway must require a real switch to the order method before goal shift.
+    await page.getByRole("button", { name: "Prova anche a mettere gli eventi in ordine" }).click();
+    await page.getByRole("button", { name: "Inizia la prova" }).click();
+    for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await expect(page.locator(".strategyWorkbench__rail strong")).toHaveText("Metto gli eventi in ordine");
+    await page.getByRole("button", { name: "Continua", exact: true }).click();
+
+    await page.getByRole("button", { name: "Scegli come affrontare la nuova domanda" }).click();
+    await page.getByRole("button", { name: /Cerco cause e conseguenze/ }).click();
+    for (const token of ["pioggia intensa", "sentiero basso inutilizzabile", "percorso di cresta più lungo", "arrivo più tardi"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+
+    await expect(page.getByText("La domanda è cambiata e tu hai cambiato modo di lavorare.")).toBeVisible();
+    await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(2);
   });
 });
