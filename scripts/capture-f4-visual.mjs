@@ -94,6 +94,74 @@ try {
 
     await context.close();
   }
+
+  // PW-STRATEGY-SELECTION-01 — exact learner-surface evidence for Human Experience Review.
+  // This is lab-only evidence: it does not alter publication or runtime authorization.
+  {
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      deviceScaleFactor: 1
+    });
+    const page = await context.newPage();
+    const route = "/percorsi/lab/pw-strategy-selection-01";
+
+    const assertNoOverflow = async (label) => {
+      const metrics = await page.evaluate(() => ({
+        scrollWidth: document.documentElement.scrollWidth,
+        clientWidth: document.documentElement.clientWidth
+      }));
+      if (metrics.scrollWidth > metrics.clientWidth) {
+        throw new Error(`Horizontal overflow detected on ${route} / ${label}: ${metrics.scrollWidth} > ${metrics.clientWidth}`);
+      }
+    };
+
+    const capture = async (name) => {
+      await assertNoOverflow(name);
+      await page.screenshot({
+        path: `artifacts/f4-visual/strategy-${name}-mobile-390.png`,
+        fullPage: true
+      });
+    };
+
+    await page.goto(base + route, { waitUntil: "networkidle" });
+    await capture("01-entry");
+
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
+    await capture("02-before-test");
+
+    await page.getByRole("button", { name: /Metto gli eventi in ordine/ }).click();
+    await capture("03-order-preparation");
+
+    await page.getByRole("button", { name: "Inizia la prova" }).click();
+    await capture("04-source-hidden-retrieval");
+
+    for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await page.getByRole("button", { name: "Continua", exact: true }).click();
+    await capture("05-goal-shift");
+
+    await page.getByRole("button", { name: "Scegli come affrontare la nuova domanda" }).click();
+    await capture("06-new-question-choice");
+
+    await page.getByRole("button", { name: /Cerco cause e conseguenze/ }).click();
+    await capture("07-cause-workspace");
+
+    for (const token of ["pioggia intensa", "sentiero basso inutilizzabile", "percorso di cresta più lungo", "arrivo più tardi"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await page.getByRole("button", { name: "Continua", exact: true }).click();
+    await page.getByRole("button", { name: "Prova in una situazione nuova" }).click();
+    await capture("08-transfer-choice");
+
+    await page.getByRole("button", { name: /Tabella di confronto/ }).click();
+    await capture("09-transfer-workspace");
+
+    await context.close();
+  }
+
 } finally {
   await browser.close();
 }
