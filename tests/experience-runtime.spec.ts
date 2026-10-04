@@ -429,7 +429,7 @@ test.describe("PW-MISSING public-surface runtime readiness", () => {
 
 
 test.describe("MUSEO ZERO Phaser technology spike", () => {
-  test("replays the same room with a different trigger mapping on mobile", async ({ page }) => {
+  test("keeps the causal interaction inside the room and replays the same trial on mobile", async ({ page }) => {
     const writes: string[] = [];
     page.on("request", (request) => {
       if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method())) writes.push(request.method());
@@ -439,19 +439,26 @@ test.describe("MUSEO ZERO Phaser technology spike", () => {
     await page.goto("/percorsi/lab/museo-zero-phaser");
 
     await expect(page.getByRole("heading", { name: "Museo Zero · la sala che non torna" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Collega ad A · vecchio ingresso" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Collega a B · nuovo ingresso" })).toBeVisible();
+    await expect(page.locator('[data-world-first="true"]')).toBeVisible();
+    await expect(page.getByText("Cabina regia · collegamento del trigger")).toHaveCount(0);
 
-    await page.getByRole("button", { name: "Collega a B · nuovo ingresso" }).click();
+    const sensorA = page.getByRole("button", { name: "Collega ad A · vecchio ingresso" });
+    const sensorB = page.getByRole("button", { name: "Collega a B · nuovo ingresso" });
+    const replay = page.getByRole("button", { name: "Rifai la prova" });
+
+    await expect(page.getByRole("status")).toContainText("fuori sincrono", { timeout: 10_000 });
+    await expect(sensorA).toBeEnabled();
+    await expect(sensorB).toBeEnabled();
+    await expect(replay).toBeEnabled();
+
+    await sensorB.click();
+    await expect(sensorB).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByRole("status")).toContainText("sensore B");
 
-    const replay = page.getByRole("button", { name: "Rifai la prova" });
-    await expect(replay).toBeEnabled({ timeout: 15_000 });
     await replay.click();
-
     await expect(page.getByRole("status")).toContainText("sincronizzati", { timeout: 10_000 });
-    expect(writes).toEqual([]);
 
+    expect(writes).toEqual([]);
     const width = await page.evaluate(() => document.documentElement.scrollWidth);
     expect(width).toBeLessThanOrEqual(390);
   });

@@ -78,3 +78,22 @@ A PASS does not authorize:
 - Q9.
 
 Human Product Review remains the authority.
+
+## Iteration 2 — world-first
+
+The first browser-qualified spike proved the causal simulation but still placed the learner's
+decision in a conventional HTML control panel below the canvas. That is insufficient for the
+core product question.
+
+The second iteration therefore applies a stricter boundary:
+
+- sensor A and sensor B are perceived and operated **inside the room**;
+- the active cable is visible from the selected physical sensor to the control booth;
+- replay is a control inside the world, not a form action below it;
+- dialogue, state and causal feedback remain inside the scene;
+- HTML remains only as an aligned semantic/accessibility layer over the same world objects;
+- no second visible control panel is permitted.
+
+This iteration should be judged more harshly than the first one: if the room still reads as a
+web page surrounding a canvas, Phaser has not demonstrated enough experiential gain to justify
+continued exploration.
