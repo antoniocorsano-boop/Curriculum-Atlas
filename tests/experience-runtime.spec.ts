@@ -426,3 +426,79 @@ test.describe("PW-MISSING public-surface runtime readiness", () => {
     expect(localKeys).toEqual([]);
   });
 });
+
+
+test.describe("PW-STRATEGY-SELECTION experience-quality lab prototype", () => {
+  test("uses genuine source-hidden retrieval and awards strategy-goal fit only after applied recall", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-strategy-selection-01");
+    await expect(page.getByText("PROTOTIPO · NON AUTORIZZATO AGLI STUDENTI")).toBeVisible();
+
+    await page.getByRole("button", { name: "Apri il banco degli strumenti" }).click();
+    await page.getByRole("button", { name: /Sequenza \+ recupero/ }).click();
+    await page.getByRole("button", { name: "Copri la scheda e prova" }).click();
+
+    await expect(page.getByText("Fonte coperta")).toBeVisible();
+    await expect(page.getByText("Il gruppo parte dalla stazione sul campo.")).toHaveCount(0);
+
+    for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+
+    await expect(page.getByText("Hai scelto e applicato uno strumento coerente con lo scopo del compito.")).toBeVisible();
+    await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(1);
+  });
+
+  test("gates revision and transfer evidence on strategy choice plus applied construction", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-strategy-selection-01");
+
+    await page.getByRole("button", { name: "Apri il banco degli strumenti" }).click();
+    await page.getByRole("button", { name: /Sequenza \+ recupero/ }).click();
+    await page.getByRole("button", { name: "Copri la scheda e prova" }).click();
+    for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await page.getByRole("button", { name: "Continua", exact: true }).click();
+    await page.getByRole("button", { name: "Torna al banco degli strumenti" }).click();
+
+    await page.getByRole("button", { name: /Mappa causa-effetto/ }).click();
+    for (const token of ["pioggia intensa", "sentiero basso inutilizzabile", "percorso di cresta", "arrivo più tardi"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(2);
+    await page.getByRole("button", { name: "Continua", exact: true }).click();
+    await page.getByRole("button", { name: "Prova in una situazione nuova" }).click();
+
+    await page.getByRole("button", { name: /Griglia di confronto/ }).click();
+    await page.getByLabel("Durata, percorso Blu").selectOption({ label: "45 min" });
+    await page.getByLabel("Durata, percorso Verde").selectOption({ label: "30 min" });
+    await page.getByLabel("Accesso, percorso Blu").selectOption({ label: "ascensore" });
+    await page.getByLabel("Accesso, percorso Verde").selectOption({ label: "solo scale" });
+    await page.getByLabel("Attività pratiche, percorso Blu").selectOption({ label: "1 attività pratica" });
+    await page.getByLabel("Attività pratiche, percorso Verde").selectOption({ label: "2 attività pratiche" });
+    await page.getByRole("button", { name: "Controlla il confronto" }).click();
+
+    await expect(page.getByText("Hai scelto e applicato una strategia adatta in un compito diverso.")).toBeVisible();
+    await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(3);
+  });
+
+  test("remains volatile, emits no learner writes and reflows on mobile", async ({ page }) => {
+    const writes: string[] = [];
+    page.on("request", (request) => {
+      if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method())) writes.push(request.method());
+    });
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/percorsi/lab/pw-strategy-selection-01");
+    await page.getByRole("button", { name: "Apri il banco degli strumenti" }).click();
+    await page.getByRole("button", { name: /Rilettura/ }).click();
+    await page.getByRole("button", { name: "Ho riletto · prova l’ordine" }).click();
+
+    expect(writes).toEqual([]);
+    expect(await page.evaluate(() => Object.keys(localStorage).filter((key) => key.includes("strategy-selection")))).toEqual([]);
+    const width = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(width).toBeLessThanOrEqual(390);
+  });
+});
