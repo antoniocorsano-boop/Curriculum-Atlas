@@ -2,14 +2,22 @@ import type { ExperienceDefinition } from "@/features/experiences/model";
 
 export type StudioAtlasPreviewSceneKind = "SCENE" | "TRANSFER";
 
+export interface StudioAtlasPreviewSceneChoice {
+  choiceId: string;
+  label: string;
+  feedback: string;
+}
+
 export interface StudioAtlasPreviewScene {
   sceneId: string;
   kind: StudioAtlasPreviewSceneKind;
+  interaction?: "SUMMARY" | "CHOICE";
   title: string;
   visibleSituation: string;
   learnerAction: string;
   consequence: string;
   reveal?: string;
+  choices?: StudioAtlasPreviewSceneChoice[];
 }
 
 export interface StudioAtlasPreviewSnapshot {
@@ -46,7 +54,7 @@ export function validateStudioAtlasPreviewSnapshot(
 
   const ids = new Set<string>();
   let transferCount = 0;
-  for (const scene of scenes) {
+  for (const [sceneIndex, scene] of scenes.entries()) {
     if (!scene?.sceneId?.trim()) errors.push("sceneId");
     else if (ids.has(scene.sceneId)) errors.push(`duplicateScene:${scene.sceneId}`);
     else ids.add(scene.sceneId);
@@ -57,6 +65,27 @@ export function validateStudioAtlasPreviewSnapshot(
     if (!scene?.visibleSituation?.trim()) errors.push(`visibleSituation:${scene?.sceneId ?? "unknown"}`);
     if (!scene?.learnerAction?.trim()) errors.push(`learnerAction:${scene?.sceneId ?? "unknown"}`);
     if (!scene?.consequence?.trim()) errors.push(`consequence:${scene?.sceneId ?? "unknown"}`);
+
+    const interaction = scene?.interaction ?? "SUMMARY";
+    if (interaction !== "SUMMARY" && interaction !== "CHOICE") {
+      errors.push(`interaction:${scene?.sceneId ?? "unknown"}`);
+    }
+
+    if (interaction === "CHOICE") {
+      const choices = Array.isArray(scene?.choices) ? scene.choices : [];
+      if (choices.length < 2) errors.push(`choices:${scene?.sceneId ?? "unknown"}`);
+      const choiceIds = new Set<string>();
+      for (const choice of choices) {
+        if (!choice?.choiceId?.trim()) errors.push(`choiceId:${scene?.sceneId ?? "unknown"}`);
+        else if (choiceIds.has(choice.choiceId)) errors.push(`duplicateChoice:${scene?.sceneId ?? "unknown"}`);
+        else choiceIds.add(choice.choiceId);
+        if (!choice?.label?.trim()) errors.push(`choiceLabel:${scene?.sceneId ?? "unknown"}`);
+        if (!choice?.feedback?.trim()) errors.push(`choiceFeedback:${scene?.sceneId ?? "unknown"}`);
+      }
+      if (sceneIndex === scenes.length - 1) {
+        errors.push(`terminalChoice:${scene?.sceneId ?? "unknown"}`);
+      }
+    }
   }
 
   if (transferCount === 0) errors.push("transferRequired");
@@ -75,15 +104,33 @@ export function studioAtlasSnapshotToExperience(
   const nodes = snapshot.scenes.map((scene, index) => {
     const next = snapshot.scenes[index + 1];
     const isTerminal = index === snapshot.scenes.length - 1;
+    const interaction = scene.interaction === "CHOICE" ? "choice" : "summary";
     const primitive =
       scene.kind === "TRANSFER" ? "TRANSFER" :
+      interaction === "choice" ? "CHOOSE" :
       index === 0 ? "EXPLORE" :
       "INVESTIGATE";
+
+    const transitions = isTerminal
+      ? []
+      : interaction === "choice"
+        ? (scene.choices ?? []).map((choice) => ({
+            id: choice.choiceId,
+            targetNodeId: next.sceneId,
+            label: choice.label,
+            feedback: choice.feedback,
+          }))
+        : [{
+            id: "continue",
+            targetNodeId: next.sceneId,
+            label: "Continua",
+            feedback: scene.consequence,
+          }];
 
     return {
       id: scene.sceneId,
       primitive,
-      interaction: "summary",
+      interaction,
       title: scene.title,
       prompt: scene.learnerAction,
       facts: [
@@ -92,17 +139,11 @@ export function studioAtlasSnapshotToExperience(
       ],
       feedbackCategory:
         scene.kind === "TRANSFER" ? "TRANSFER_SUCCESSFUL" :
+        interaction === "choice" ? "ALTERNATIVE_PLAUSIBLE" :
         index === 0 ? "EVIDENCE_INCOMPLETE" :
         "EVIDENCE_SUPPORTED",
       terminal: isTerminal || undefined,
-      transitions: isTerminal
-        ? []
-        : [{
-            id: "continue",
-            targetNodeId: next.sceneId,
-            label: "Continua",
-            feedback: scene.consequence,
-          }],
+      transitions,
     } satisfies ExperienceDefinition["graph"]["nodes"][number];
   });
 
