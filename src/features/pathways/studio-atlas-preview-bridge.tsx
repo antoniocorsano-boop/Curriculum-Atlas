@@ -62,7 +62,6 @@ export function StudioAtlasPreviewBridge() {
 
     function onMessage(event: MessageEvent) {
       if (event.origin !== studioOrigin) return;
-      if (event.source !== opener) return;
       if (!isSnapshotMessage(event.data, channel!)) return;
 
       try {
@@ -90,6 +89,9 @@ export function StudioAtlasPreviewBridge() {
 
     window.addEventListener("message", onMessage);
 
+    // Cross-origin WindowProxy identity is not used as an authority signal.
+    // The preview is already bound by: non-null opener, exact configured
+    // Studio origin, a 192-bit random channel, and snapshot validation.
     // READY is intentionally retried for a bounded window. Cross-origin
     // navigation and hydration may reorder a single message even when both
     // applications are healthy.
