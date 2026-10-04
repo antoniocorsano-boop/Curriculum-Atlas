@@ -1,0 +1,103 @@
+{
+  "schemaVersion": "studio-atlas.preview-snapshot/v0.1",
+  "snapshotId": "fixture-studio-preview-01",
+  "packageDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "pathwayId": "fixture-studio-pathway-01",
+  "version": "0.1.0-preview.1",
+  "title": "La scelta che cambia il sistema",
+  "description": "Fixture tecnica: una sequenza breve per verificare l’handoff Studio Atlas → runtime Atlas.",
+  "runtimeAuthorized": false,
+  "studentAuthorized": false,
+  "scenes": [
+    {
+      "sceneId": "S1",
+      "kind": "SCENE",
+      "title": "Qualcosa non torna",
+      "visibleSituation": "Un sistema continua a reagire a un segnale che non corrisponde più alla situazione reale.",
+      "learnerAction": "Osserva ciò che succede e individua quale relazione sembra fuori posto.",
+      "consequence": "Hai isolato il punto in cui il comportamento del sistema non coincide con ciò che osservi.",
+      "reveal": "Non tutto ciò che è collegato continua a essere collegato nel modo giusto."
+    },
+    {
+      "sceneId": "S2",
+      "kind": "SCENE",
+      "title": "Prova una modifica",
+      "visibleSituation": "Puoi cambiare una sola relazione e osservare di nuovo il comportamento.",
+      "learnerAction": "Scegli quale relazione modificare e confronta il risultato con la situazione precedente.",
+      "consequence": "La nuova prova rende visibile se la relazione scelta era davvero rilevante.",
+      "reveal": "Cambiare una relazione produce una conseguenza osservabile.",
+      "interaction": "CHOICE",
+      "choices": [
+        {
+          "choiceId": "retry",
+          "label": "Riprovo senza cambiare relazione",
+          "feedback": "Il comportamento resta incoerente: serve rivedere il collegamento.",
+          "targetSceneId": "S2"
+        },
+        {
+          "choiceId": "transfer",
+          "label": "Cambio la relazione e verifico l’esito",
+          "feedback": "La conseguenza osservata sostiene la nuova relazione.",
+          "targetSceneId": "S3_TRANSFER",
+          "worldAfter": {
+            "place": "Sala di prova",
+            "status": "La relazione aggiornata produce una risposta coerente",
+            "signals": [
+              {
+                "id": "input-new",
+                "label": "Nuovo ingresso",
+                "state": "ACTIVE",
+                "detail": "Il nuovo segnale viene rilevato."
+              },
+              {
+                "id": "mapping-new",
+                "label": "Mappatura",
+                "state": "ACTIVE",
+                "detail": "La regia ascolta il nuovo segnale."
+              },
+              {
+                "id": "output",
+                "label": "Risposta",
+                "state": "STABLE",
+                "detail": "L'uscita reagisce nel momento previsto."
+              }
+            ]
+          }
+        }
+      ],
+      "world": {
+        "place": "Sala di prova",
+        "status": "Il sistema ascolta ancora il segnale precedente",
+        "signals": [
+          {
+            "id": "input-new",
+            "label": "Nuovo ingresso",
+            "state": "ACTIVE",
+            "detail": "Il visitatore entra dal nuovo punto."
+          },
+          {
+            "id": "mapping-old",
+            "label": "Mappatura",
+            "state": "MISMATCH",
+            "detail": "La regia è ancora legata al segnale precedente."
+          },
+          {
+            "id": "output",
+            "label": "Risposta",
+            "state": "DELAYED",
+            "detail": "L'uscita reagisce in ritardo."
+          }
+        ]
+      }
+    },
+    {
+      "sceneId": "S3_TRANSFER",
+      "kind": "TRANSFER",
+      "title": "Un sistema diverso",
+      "visibleSituation": "In un’altra situazione, un dispositivo reagisce ancora a un’informazione non più aggiornata.",
+      "learnerAction": "Quale strategia useresti per capire dove intervenire prima di cambiare il sistema?",
+      "consequence": "La stessa strategia può essere riutilizzata: osservare, individuare la relazione e verificare la conseguenza.",
+      "reveal": "La strategia resta utile anche quando cambia il contesto."
+    }
+  ]
+}

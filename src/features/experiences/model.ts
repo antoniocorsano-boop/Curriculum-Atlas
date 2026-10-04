@@ -17,11 +17,34 @@ export interface ChallengeKernel {
   provenanceRefs: string[];
 }
 
+export type ExperienceWorldSignalState =
+  | "OFF"
+  | "READY"
+  | "ACTIVE"
+  | "DELAYED"
+  | "MISMATCH"
+  | "STABLE"
+  | "MANUAL";
+
+export interface ExperienceWorldSignal {
+  id: string;
+  label: string;
+  state: ExperienceWorldSignalState;
+  detail?: string;
+}
+
+export interface ExperienceWorldState {
+  place: string;
+  status: string;
+  signals: ExperienceWorldSignal[];
+}
+
 export interface ExperienceTransition {
   id?: string;
   targetNodeId: string;
   label?: string;
   feedback?: string;
+  worldAfter?: ExperienceWorldState;
 }
 
 export interface ExperienceNode {
@@ -31,6 +54,7 @@ export interface ExperienceNode {
   title?: string;
   prompt?: string;
   facts?: string[];
+  world?: ExperienceWorldState;
   feedbackCategory: FeedbackCategory;
   transitions: ExperienceTransition[];
   terminal?: boolean;
