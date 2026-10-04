@@ -1,0 +1,46 @@
+name: Studio Atlas → Atlas Preview v0.1
+
+on:
+  pull_request:
+    paths:
+      - "src/features/pathways/studio-atlas-preview-adapter.ts"
+      - "src/app/percorsi/lab/studio-atlas-preview/**"
+      - "fixtures/studio-atlas-preview/**"
+      - "scripts/validate-studio-atlas-preview-snapshot.mjs"
+      - "docs/STUDIO-ATLAS-PREVIEW-ADAPTER-v0.1.md"
+      - ".github/workflows/studio-atlas-preview.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Validate Studio Atlas preview snapshots
+        run: |
+          node scripts/validate-studio-atlas-preview-snapshot.mjs fixtures/studio-atlas-preview/valid/minimal.json valid
+          node scripts/validate-studio-atlas-preview-snapshot.mjs fixtures/studio-atlas-preview/invalid/no-transfer.json invalid
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build
+        run: pnpm build
+
+      - name: Experience contract regression
+        run: pnpm test:experience:contracts
