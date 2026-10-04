@@ -286,14 +286,13 @@ export function StrategyWorkbenchPrototype() {
   }
 
   return (
-    <main className="strategyWorkbench">
+    <main className="strategyWorkbench" data-phase={phase}>
       <header className="strategyWorkbench__top">
         <div>
           <p className="strategyWorkbench__eyebrow">Atlas · Percorsi · laboratorio esperienza</p>
           <h1>Stesso obiettivo, strategia diversa</h1>
           <p className="strategyWorkbench__lede">
-            Un prototipo per capire se la scelta di una strategia può diventare un’esperienza da vivere,
-            non una sequenza di schede.
+            Scegli uno strumento, provalo sul materiale e cambialo quando cambia il compito.
           </p>
         </div>
         <div className="strategyWorkbench__review">
@@ -303,8 +302,13 @@ export function StrategyWorkbenchPrototype() {
       </header>
 
       <section className="strategyWorkbench__mission" aria-labelledby="mission-title">
-        <span>Missione attuale</span>
+        <span>Missione</span>
         <h2 id="mission-title">{mission}</h2>
+        <div className="strategyWorkbench__missionProgress" aria-label="Avanzamento del percorso">
+          {traceLabels.map((label, index) => (
+            <span key={label} title={label} data-earned={earned[index]} aria-label={`${label}: ${earned[index] ? "raggiunto" : "da raggiungere"}`} />
+          ))}
+        </div>
       </section>
 
       <div className="strategyWorkbench__layout">
@@ -589,9 +593,14 @@ export function StrategyWorkbenchPrototype() {
               <p className="strategyWorkbench__sceneKicker">Traccia finale</p>
               <h2>Non hai trovato “il tuo metodo”. Hai imparato a scegliere uno strumento in base al compito.</h2>
               <p>
-                In questa sessione hai lavorato con ordine, causa-effetto e confronto. I traguardi qui sotto
-                descrivono soltanto ciò che hai fatto in questo prototipo.
+                Tre compiti diversi, tre modi diversi di organizzare le informazioni. La traccia descrive
+                soltanto ciò che hai fatto qui.
               </p>
+              <div className="strategyWorkbench__finalTools" aria-label="Strumenti usati">
+                <span><b>01</b> Sequenza</span>
+                <span><b>02</b> Causa-effetto</span>
+                <span><b>03</b> Confronto</span>
+              </div>
               <div className="strategyWorkbench__completeTrace">
                 {traceLabels.map((label, index) => (
                   <span key={label} data-earned={earned[index]}>{earned[index] ? "✓" : "○"} {label}</span>
@@ -641,21 +650,46 @@ function ToolBench({
   return (
     <div className={compact ? "strategyWorkbench__tools strategyWorkbench__tools--compact" : "strategyWorkbench__tools"}>
       <button type="button" onClick={() => onChoose("sequence")}>
+        <ToolGlyph type="sequence" />
         <span className="strategyWorkbench__toolMark">01</span>
         <strong>Sequenza + recupero</strong>
-        <small>Organizzo l’ordine e poi provo senza fonte.</small>
+        <small>Metto in ordine e poi provo senza fonte.</small>
       </button>
       <button type="button" onClick={() => onChoose("cause")}>
+        <ToolGlyph type="cause" />
         <span className="strategyWorkbench__toolMark">02</span>
         <strong>Mappa causa-effetto</strong>
-        <small>Rendo visibile che cosa provoca che cosa.</small>
+        <small>Collego ciò che provoca e ciò che accade.</small>
       </button>
       <button type="button" onClick={() => onChoose("reread")}>
+        <ToolGlyph type="reread" />
         <span className="strategyWorkbench__toolMark">03</span>
         <strong>Rilettura</strong>
-        <small>Ripercorro tutte le informazioni senza riorganizzarle.</small>
+        <small>Ripercorro tutto senza cambiare la struttura.</small>
       </button>
     </div>
+  );
+}
+
+function ToolGlyph({ type }: { type: Exclude<Tool, "compare"> }) {
+  if (type === "sequence") {
+    return (
+      <span className="strategyWorkbench__toolGlyph" aria-hidden="true">
+        <i /><i /><i /><em>→</em>
+      </span>
+    );
+  }
+  if (type === "cause") {
+    return (
+      <span className="strategyWorkbench__toolGlyph strategyWorkbench__toolGlyph--cause" aria-hidden="true">
+        <i /><em>→</em><i /><em>→</em><i />
+      </span>
+    );
+  }
+  return (
+    <span className="strategyWorkbench__toolGlyph strategyWorkbench__toolGlyph--reread" aria-hidden="true">
+      <i /><i /><i />
+    </span>
   );
 }
 
