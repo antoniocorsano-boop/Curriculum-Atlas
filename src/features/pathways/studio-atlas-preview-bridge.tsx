@@ -9,7 +9,9 @@ import {
 
 const READY_TYPE = "STUDIO_ATLAS_PREVIEW_READY";
 const SNAPSHOT_TYPE = "STUDIO_ATLAS_PREVIEW_SNAPSHOT";
-const ACCEPTED_TYPE = "STUDIO_ATLAS_PREVIEW_ACCEPTED";
+const ACK_TYPE = "STUDIO_ATLAS_PREVIEW_ACK";
+const READY_RETRY_MS = 300;
+const READY_RETRY_LIMIT = 30;
 
 type PreviewState =
   | { status: "WAITING" }
@@ -43,6 +45,21 @@ export function StudioAtlasPreviewBridge() {
       return;
     }
 
+    let accepted = false;
+    let readyAttempts = 0;
+
+    function sendReady() {
+      if (accepted || readyAttempts >= READY_RETRY_LIMIT) return;
+      readyAttempts += 1;
+      opener.postMessage(
+        {
+          type: READY_TYPE,
+          channel,
+        },
+        studioOrigin,
+      );
+    }
+
     function onMessage(event: MessageEvent) {
       if (event.origin !== studioOrigin) return;
       if (event.source !== opener) return;
@@ -51,14 +68,17 @@ export function StudioAtlasPreviewBridge() {
       try {
         // Validation happens before any learner runtime is mounted.
         studioAtlasSnapshotToExperience(event.data.snapshot);
+        accepted = true;
+        window.clearInterval(readyInterval);
         setState({ status: "READY", snapshot: event.data.snapshot });
-        opener!.postMessage(
+
+        opener.postMessage(
           {
-            type: ACCEPTED_TYPE,
+            type: ACK_TYPE,
             channel,
             snapshotId: event.data.snapshot.snapshotId,
           },
-          studioOrigin!,
+          studioOrigin,
         );
       } catch {
         setState({
@@ -70,15 +90,16 @@ export function StudioAtlasPreviewBridge() {
 
     window.addEventListener("message", onMessage);
 
-    opener.postMessage(
-      {
-        type: READY_TYPE,
-        channel,
-      },
-      studioOrigin,
-    );
+    // READY is intentionally retried for a bounded window. Cross-origin
+    // navigation and hydration may reorder a single message even when both
+    // applications are healthy.
+    sendReady();
+    const readyInterval = window.setInterval(sendReady, READY_RETRY_MS);
 
-    return () => window.removeEventListener("message", onMessage);
+    return () => {
+      window.clearInterval(readyInterval);
+      window.removeEventListener("message", onMessage);
+    };
   }, []);
 
   if (state.status === "ERROR") {
