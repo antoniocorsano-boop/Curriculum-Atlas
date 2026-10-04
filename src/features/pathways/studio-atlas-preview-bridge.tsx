@@ -9,6 +9,7 @@ import {
 
 const READY_TYPE = "STUDIO_ATLAS_PREVIEW_READY";
 const SNAPSHOT_TYPE = "STUDIO_ATLAS_PREVIEW_SNAPSHOT";
+const ACCEPTED_TYPE = "STUDIO_ATLAS_PREVIEW_ACCEPTED";
 
 type PreviewState =
   | { status: "WAITING" }
@@ -51,6 +52,14 @@ export function StudioAtlasPreviewBridge() {
         // Validation happens before any learner runtime is mounted.
         studioAtlasSnapshotToExperience(event.data.snapshot);
         setState({ status: "READY", snapshot: event.data.snapshot });
+        opener!.postMessage(
+          {
+            type: ACCEPTED_TYPE,
+            channel,
+            snapshotId: event.data.snapshot.snapshotId,
+          },
+          studioOrigin!,
+        );
       } catch {
         setState({
           status: "ERROR",
