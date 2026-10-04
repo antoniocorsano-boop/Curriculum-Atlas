@@ -776,8 +776,8 @@ function ComparisonRow({
 }
 
 function toolLabel(tool: Tool) {
-  if (tool === "sequence") return "Sequenza + recupero";
-  if (tool === "cause") return "Mappa causa-effetto";
-  if (tool === "reread") return "Rilettura";
+  if (tool === "sequence") return "Metto gli eventi in ordine";
+  if (tool === "cause") return "Cerco cause e conseguenze";
+  if (tool === "reread") return "Rileggo tutto";
   return "Tabella di confronto";
 }
