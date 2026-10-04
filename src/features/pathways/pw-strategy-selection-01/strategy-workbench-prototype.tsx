@@ -291,7 +291,7 @@ export function StrategyWorkbenchPrototype() {
       <header className="strategyWorkbench__top">
         <div>
           <p className="strategyWorkbench__eyebrow">Atlas · Percorsi · laboratorio esperienza</p>
-          <h1>Missione: ricostruisci il percorso</h1>
+          <h1>Missione: rimetti in ordine gli eventi</h1>
           <p className="strategyWorkbench__lede">
             Prima capisci che cosa è successo. Poi scegli come prepararti alla prova.
           </p>
@@ -317,7 +317,7 @@ export function StrategyWorkbenchPrototype() {
           {phase === "orient" && (
             <div className="strategyWorkbench__scene strategyWorkbench__scene--intro">
               <p className="strategyWorkbench__sceneKicker">Situazione</p>
-              <h2>Un gruppo deve raggiungere un punto di osservazione. Durante il tragitto succedono cinque cose.</h2>
+              <h2>Che cosa è successo durante il percorso?</h2>
               <p>
                 Leggi cosa è successo. Tra poco queste frasi verranno coperte e dovrai rimettere gli eventi
                 nell’ordine corretto.
@@ -328,7 +328,7 @@ export function StrategyWorkbenchPrototype() {
                 ))}
               </div>
               <button type="button" className="strategyWorkbench__primary" onClick={() => setPhase("choose-order-tool")}>
-                Ho capito · come mi preparo?
+                Ho letto · continua
               </button>
             </div>
           )}
@@ -336,7 +336,7 @@ export function StrategyWorkbenchPrototype() {
           {phase === "choose-order-tool" && (
             <div className="strategyWorkbench__scene">
               <p className="strategyWorkbench__sceneKicker">Prima della prova</p>
-              <h2>Come vuoi prepararti a ricordare l’ordine?</h2>
+              <h2>Prima della prova, cosa vuoi fare?</h2>
               <div className="strategyWorkbench__source strategyWorkbench__source--compact">
                 {expeditionFacts.map((fact) => <p key={fact}>{fact}</p>)}
               </div>
