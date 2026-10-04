@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "./strategy-workbench.css";
 
 type Tool = "sequence" | "cause" | "reread" | "compare";
@@ -72,6 +72,7 @@ function sameOrder(actual: string[], expected: string[]) {
 
 export function StrategyWorkbenchPrototype() {
   const [phase, setPhase] = useState<Phase>("orient");
+  const surfaceRef = useRef<HTMLElement>(null);
   const [tool, setTool] = useState<Tool | null>(null);
   const [orderAttempt, setOrderAttempt] = useState<string[]>([]);
   const [causeAttempt, setCauseAttempt] = useState<string[]>([]);
@@ -100,6 +101,13 @@ export function StrategyWorkbenchPrototype() {
     return "";
   }, [phase]);
 
+  useEffect(() => {
+    const heading = surfaceRef.current?.querySelector<HTMLHeadingElement>(".strategyWorkbench__scene h2");
+    if (!heading) return;
+    heading.tabIndex = -1;
+    heading.focus();
+  }, [phase]);
+
   function award(index: number) {
     setEarned((current) => current.map((value, itemIndex) => (itemIndex === index ? true : value)));
   }
@@ -119,10 +127,12 @@ export function StrategyWorkbenchPrototype() {
   }
 
   function addOrderToken(token: string) {
+    setFeedback("");
     if (!orderAttempt.includes(token)) setOrderAttempt((current) => [...current, token]);
   }
 
   function removeOrderToken(token: string) {
+    setFeedback("");
     setOrderAttempt((current) => current.filter((item) => item !== token));
   }
 
@@ -156,10 +166,12 @@ export function StrategyWorkbenchPrototype() {
   }
 
   function addCauseToken(token: string) {
+    setFeedback("");
     if (!causeAttempt.includes(token)) setCauseAttempt((current) => [...current, token]);
   }
 
   function removeCauseToken(token: string) {
+    setFeedback("");
     setCauseAttempt((current) => current.filter((item) => item !== token));
   }
 
@@ -270,7 +282,7 @@ export function StrategyWorkbenchPrototype() {
       </section>
 
       <div className="strategyWorkbench__layout">
-        <section className="strategyWorkbench__surface" aria-label="Piano di lavoro">
+        <section ref={surfaceRef} className="strategyWorkbench__surface" aria-label="Piano di lavoro">
           {phase === "orient" && (
             <div className="strategyWorkbench__scene strategyWorkbench__scene--intro">
               <p className="strategyWorkbench__sceneKicker">Prima missione</p>
