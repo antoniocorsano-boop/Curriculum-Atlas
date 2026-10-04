@@ -343,7 +343,7 @@ export function StrategyWorkbenchPrototype() {
           {phase === "try-order-tool" && tool === "sequence" && (
             <div className="strategyWorkbench__scene">
               <p className="strategyWorkbench__sceneKicker">Preparazione</p>
-              <h2>Metti a fuoco l’ordine. Poi prova senza guardare.</h2>
+              <h2>Crea una traccia di cinque parole. Poi prova senza guardare.</h2>
               <div className="strategyWorkbench__sequencePreview">
                 {orderTokens.map((token, index) => (
                   <span key={token}><b>{index + 1}</b>{token}</span>
@@ -428,7 +428,7 @@ export function StrategyWorkbenchPrototype() {
                   )}
                   {tool !== "sequence" && (
                     <button type="button" className="strategyWorkbench__primary" onClick={startSequenceComparison}>
-                      Prova anche a mettere gli eventi in ordine
+                      Prova con cinque parole in sequenza
                     </button>
                   )}
                 </div>
@@ -642,8 +642,8 @@ function ToolBench({
       <button type="button" onClick={() => onChoose("sequence")}>
         <ToolGlyph type="sequence" />
         <span className="strategyWorkbench__toolMark">01</span>
-        <strong>Metto gli eventi in ordine</strong>
-        <small>Li dispongo in sequenza e poi provo a ricordarli.</small>
+        <strong>Creo una sequenza di parole chiave</strong>
+        <small>Riduco ogni evento a una parola e provo a ricordare l’ordine.</small>
       </button>
       <button type="button" onClick={() => onChoose("cause")}>
         <ToolGlyph type="cause" />
@@ -785,7 +785,7 @@ function ComparisonRow({
 }
 
 function toolLabel(tool: Tool) {
-  if (tool === "sequence") return "Metto gli eventi in ordine";
+  if (tool === "sequence") return "Creo una sequenza di parole chiave";
   if (tool === "cause") return "Cerco cause e conseguenze";
   if (tool === "reread") return "Rileggo tutto";
   return "Tabella di confronto";
