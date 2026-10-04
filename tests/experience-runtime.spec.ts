@@ -642,3 +642,55 @@ test.describe("PW-STRATEGY-SELECTION construction invalidation completeness", ()
     await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(0);
   });
 });
+
+
+test.describe("PW-STRATEGY-SELECTION mobile experience remediation", () => {
+  test("keeps mission and growth chrome compact without overlaying the workbench", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/percorsi/lab/pw-strategy-selection-01");
+
+    await expect(page.locator(".strategyWorkbench__top")).toBeVisible();
+    await page.getByRole("button", { name: "Apri il banco degli strumenti" }).click();
+
+    await expect(page.locator(".strategyWorkbench__top")).toBeHidden();
+
+    const mission = page.locator(".strategyWorkbench__mission");
+    const missionStyle = await mission.evaluate((element) => {
+      const style = getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      return { position: style.position, height: rect.height };
+    });
+    expect(["fixed", "sticky"]).not.toContain(missionStyle.position);
+    expect(missionStyle.height).toBeLessThan(72);
+
+    const railHeight = await page.locator(".strategyWorkbench__rail").evaluate(
+      (element) => element.getBoundingClientRect().height,
+    );
+    expect(railHeight).toBeLessThan(72);
+
+    const focusedHeading = page.getByRole("heading", {
+      name: "Quale strumento useresti per prepararti a ricostruire l’ordine?",
+    });
+    await expect(focusedHeading).toBeFocused();
+    expect(await focusedHeading.evaluate((element) => getComputedStyle(element).outlineStyle)).toBe("none");
+  });
+
+  test("presents tools as compact workbench instruments on mobile", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/percorsi/lab/pw-strategy-selection-01");
+    await page.getByRole("button", { name: "Apri il banco degli strumenti" }).click();
+
+    await expect(page.locator(".strategyWorkbench__toolGlyph")).toHaveCount(3);
+    const toolButtons = page.locator(".strategyWorkbench__tools > button");
+    await expect(toolButtons).toHaveCount(3);
+
+    for (let index = 0; index < 3; index += 1) {
+      const box = await toolButtons.nth(index).boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.height).toBeLessThan(100);
+    }
+
+    const width = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(width).toBeLessThanOrEqual(390);
+  });
+});
