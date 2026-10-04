@@ -6,6 +6,7 @@ export interface StudioAtlasPreviewSceneChoice {
   choiceId: string;
   label: string;
   feedback: string;
+  targetSceneId: string;
 }
 
 export interface StudioAtlasPreviewScene {
@@ -53,6 +54,11 @@ export function validateStudioAtlasPreviewSnapshot(
   if (scenes.length === 0) errors.push("scenes");
 
   const ids = new Set<string>();
+  const allSceneIds = new Set(
+    scenes
+      .map((scene) => scene?.sceneId?.trim())
+      .filter((sceneId): sceneId is string => Boolean(sceneId)),
+  );
   let transferCount = 0;
   for (const [sceneIndex, scene] of scenes.entries()) {
     if (!scene?.sceneId?.trim()) errors.push("sceneId");
@@ -81,6 +87,16 @@ export function validateStudioAtlasPreviewSnapshot(
         else choiceIds.add(choice.choiceId);
         if (!choice?.label?.trim()) errors.push(`choiceLabel:${scene?.sceneId ?? "unknown"}`);
         if (!choice?.feedback?.trim()) errors.push(`choiceFeedback:${scene?.sceneId ?? "unknown"}`);
+        if (!choice?.targetSceneId?.trim()) {
+          errors.push(`choiceTarget:${scene?.sceneId ?? "unknown"}`);
+        } else if (!allSceneIds.has(choice.targetSceneId)) {
+          errors.push(`choiceTargetMissing:${scene?.sceneId ?? "unknown"}`);
+        }
+      }
+      if (
+        new Set(choices.map((choice) => choice?.targetSceneId?.trim()).filter(Boolean)).size < 2
+      ) {
+        errors.push(`choiceTargetsNotDivergent:${scene?.sceneId ?? "unknown"}`);
       }
       if (sceneIndex === scenes.length - 1) {
         errors.push(`terminalChoice:${scene?.sceneId ?? "unknown"}`);
@@ -116,7 +132,7 @@ export function studioAtlasSnapshotToExperience(
       : interaction === "choice"
         ? (scene.choices ?? []).map((choice) => ({
             id: choice.choiceId,
-            targetNodeId: next.sceneId,
+            targetNodeId: choice.targetSceneId,
             label: choice.label,
             feedback: choice.feedback,
           }))
