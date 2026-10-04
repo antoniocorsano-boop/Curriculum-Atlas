@@ -7,6 +7,26 @@ if (!file) {
   process.exit(2);
 }
 
+const WORLD_SIGNAL_STATES = new Set([
+  "OFF", "READY", "ACTIVE", "DELAYED", "MISMATCH", "STABLE", "MANUAL",
+]);
+
+function validateWorld(world, prefix, errors) {
+  if (!world) return;
+  if (!world?.place?.trim()) errors.push(`${prefix}:place`);
+  if (!world?.status?.trim()) errors.push(`${prefix}:status`);
+  const signals = Array.isArray(world?.signals) ? world.signals : [];
+  if (signals.length === 0) errors.push(`${prefix}:signals`);
+  const ids = new Set();
+  for (const signal of signals) {
+    if (!signal?.id?.trim()) errors.push(`${prefix}:signalId`);
+    else if (ids.has(signal.id)) errors.push(`${prefix}:duplicateSignal:${signal.id}`);
+    else ids.add(signal.id);
+    if (!signal?.label?.trim()) errors.push(`${prefix}:signalLabel`);
+    if (!WORLD_SIGNAL_STATES.has(signal?.state)) errors.push(`${prefix}:signalState`);
+  }
+}
+
 function validate(snapshot) {
   const errors = [];
   if (snapshot?.schemaVersion !== "studio-atlas.preview-snapshot/v0.1") errors.push("schemaVersion");
@@ -36,6 +56,7 @@ function validate(snapshot) {
     for (const key of ["title", "visibleSituation", "learnerAction", "consequence"]) {
       if (!scene?.[key]?.trim()) errors.push(`${key}:${scene?.sceneId ?? "unknown"}`);
     }
+    validateWorld(scene?.world, `world:${scene?.sceneId ?? "unknown"}`, errors);
 
     const interaction = scene?.interaction ?? "SUMMARY";
     if (!["SUMMARY", "CHOICE"].includes(interaction)) errors.push(`interaction:${scene?.sceneId ?? "unknown"}`);
@@ -46,6 +67,11 @@ function validate(snapshot) {
         if (!choice?.choiceId?.trim()) errors.push(`choiceId:${scene?.sceneId ?? "unknown"}`);
         if (!choice?.label?.trim()) errors.push(`choiceLabel:${scene?.sceneId ?? "unknown"}`);
         if (!choice?.feedback?.trim()) errors.push(`choiceFeedback:${scene?.sceneId ?? "unknown"}`);
+        validateWorld(
+          choice?.worldAfter,
+          `choiceWorld:${scene?.sceneId ?? "unknown"}:${choice?.choiceId ?? "unknown"}`,
+          errors,
+        );
         if (!choice?.targetSceneId?.trim()) errors.push(`choiceTarget:${scene?.sceneId ?? "unknown"}`);
         else if (!allSceneIds.has(choice.targetSceneId)) errors.push(`choiceTargetMissing:${scene?.sceneId ?? "unknown"}`);
       }
