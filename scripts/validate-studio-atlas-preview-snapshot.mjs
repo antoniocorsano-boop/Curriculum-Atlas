@@ -24,7 +24,7 @@ function validate(snapshot) {
 
   const ids = new Set();
   let transfers = 0;
-  for (const scene of scenes) {
+  for (const [sceneIndex, scene] of scenes.entries()) {
     if (!scene?.sceneId?.trim()) errors.push("sceneId");
     else if (ids.has(scene.sceneId)) errors.push("duplicateScene");
     else ids.add(scene.sceneId);
@@ -32,6 +32,19 @@ function validate(snapshot) {
     if (scene?.kind === "TRANSFER") transfers += 1;
     for (const key of ["title", "visibleSituation", "learnerAction", "consequence"]) {
       if (!scene?.[key]?.trim()) errors.push(`${key}:${scene?.sceneId ?? "unknown"}`);
+    }
+
+    const interaction = scene?.interaction ?? "SUMMARY";
+    if (!["SUMMARY", "CHOICE"].includes(interaction)) errors.push(`interaction:${scene?.sceneId ?? "unknown"}`);
+    if (interaction === "CHOICE") {
+      const choices = Array.isArray(scene?.choices) ? scene.choices : [];
+      if (choices.length < 2) errors.push(`choices:${scene?.sceneId ?? "unknown"}`);
+      for (const choice of choices) {
+        if (!choice?.choiceId?.trim()) errors.push(`choiceId:${scene?.sceneId ?? "unknown"}`);
+        if (!choice?.label?.trim()) errors.push(`choiceLabel:${scene?.sceneId ?? "unknown"}`);
+        if (!choice?.feedback?.trim()) errors.push(`choiceFeedback:${scene?.sceneId ?? "unknown"}`);
+      }
+      if (sceneIndex === scenes.length - 1) errors.push(`terminalChoice:${scene?.sceneId ?? "unknown"}`);
     }
   }
   if (transfers === 0) errors.push("transferRequired");
