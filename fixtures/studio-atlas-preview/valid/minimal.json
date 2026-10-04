@@ -25,7 +25,22 @@
       "visibleSituation": "Puoi cambiare una sola relazione e osservare di nuovo il comportamento.",
       "learnerAction": "Scegli quale relazione modificare e confronta il risultato con la situazione precedente.",
       "consequence": "La nuova prova rende visibile se la relazione scelta era davvero rilevante.",
-      "reveal": "Cambiare una relazione produce una conseguenza osservabile."
+      "reveal": "Cambiare una relazione produce una conseguenza osservabile.",
+      "interaction": "CHOICE",
+      "choices": [
+        {
+          "choiceId": "retry",
+          "label": "Riprovo senza cambiare relazione",
+          "feedback": "Il comportamento resta incoerente: serve rivedere il collegamento.",
+          "targetSceneId": "S2"
+        },
+        {
+          "choiceId": "transfer",
+          "label": "Cambio la relazione e verifico l’esito",
+          "feedback": "La conseguenza osservata sostiene la nuova relazione.",
+          "targetSceneId": "S3_TRANSFER"
+        }
+      ]
     },
     {
       "sceneId": "S3_TRANSFER",
