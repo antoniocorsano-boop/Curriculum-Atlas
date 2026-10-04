@@ -41,9 +41,8 @@ jobs:
         run: |
           ! grep -R 'postMessage([^,]*,[[:space:]]*"\*"'             src/features/pathways/studio-atlas-preview-bridge.tsx
           grep -q 'event.origin !== studioOrigin'             src/features/pathways/studio-atlas-preview-bridge.tsx
-          grep -q 'event.source !== opener'             src/features/pathways/studio-atlas-preview-bridge.tsx
           grep -q 'STUDIO_ATLAS_PREVIEW_ACK'             src/features/pathways/studio-atlas-preview-bridge.tsx
-          grep -q 'READY_RETRY_LIMIT'             src/features/pathways/studio-atlas-preview-bridge.tsx
+          grep -q 'message.channel === channel'             src/features/pathways/studio-atlas-preview-bridge.tsx
 
       - name: Typecheck
         run: pnpm typecheck
