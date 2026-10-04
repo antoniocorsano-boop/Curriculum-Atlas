@@ -1,5 +1,9 @@
 import type {
   ExperienceDefinition,
+  ExperienceStage,
+  ExperienceStageEvidenceKind,
+  ExperienceStageLocationPosition,
+  ExperienceWorkbenchMode,
   ExperienceWorldSignalState,
 } from "@/features/experiences/model";
 
@@ -26,6 +30,36 @@ export interface StudioAtlasPreviewSceneChoice {
   worldAfter?: StudioAtlasPreviewWorldState;
 }
 
+export interface StudioAtlasPreviewStage {
+  visualMode: "CINEMATIC_EDITORIAL";
+  focusLocationId?: string;
+  locations?: Array<{
+    id: string;
+    label: string;
+    detail: string;
+    position: ExperienceStageLocationPosition;
+  }>;
+  evidence?: Array<{
+    id: string;
+    label: string;
+    detail: string;
+    locationId: string;
+    kind: ExperienceStageEvidenceKind;
+    character?: string;
+  }>;
+  characterBeat?: {
+    name: string;
+    role: string;
+    line: string;
+  };
+  workbench?: {
+    modes: ExperienceWorkbenchMode[];
+    prompt: string;
+    minEvidence: number;
+    transitionMap?: Partial<Record<ExperienceWorkbenchMode, string>>;
+  };
+}
+
 export interface StudioAtlasPreviewScene {
   sceneId: string;
   kind: StudioAtlasPreviewSceneKind;
@@ -36,6 +70,7 @@ export interface StudioAtlasPreviewScene {
   consequence: string;
   reveal?: string;
   world?: StudioAtlasPreviewWorldState;
+  stage?: StudioAtlasPreviewStage;
   choices?: StudioAtlasPreviewSceneChoice[];
 }
 
@@ -82,6 +117,48 @@ function validateWorldState(
   }
 }
 
+function validateStage(
+  stage: StudioAtlasPreviewStage | undefined,
+  prefix: string,
+  errors: string[],
+) {
+  if (!stage) return;
+  if (stage.visualMode !== "CINEMATIC_EDITORIAL") errors.push(`${prefix}:visualMode`);
+  const locations = Array.isArray(stage.locations) ? stage.locations : [];
+  const locationIds = new Set<string>();
+  for (const location of locations) {
+    if (!location?.id?.trim()) errors.push(`${prefix}:locationId`);
+    else if (locationIds.has(location.id)) errors.push(`${prefix}:duplicateLocation:${location.id}`);
+    else locationIds.add(location.id);
+    if (!location?.label?.trim()) errors.push(`${prefix}:locationLabel`);
+    if (!location?.detail?.trim()) errors.push(`${prefix}:locationDetail`);
+    if (!["ENTRY", "ROOM", "CONTROL", "LAB"].includes(location?.position)) {
+      errors.push(`${prefix}:locationPosition`);
+    }
+  }
+  if (stage.focusLocationId && locations.length > 0 && !locationIds.has(stage.focusLocationId)) {
+    errors.push(`${prefix}:focusLocation`);
+  }
+  const evidence = Array.isArray(stage.evidence) ? stage.evidence : [];
+  const evidenceIds = new Set<string>();
+  for (const item of evidence) {
+    if (!item?.id?.trim()) errors.push(`${prefix}:evidenceId`);
+    else if (evidenceIds.has(item.id)) errors.push(`${prefix}:duplicateEvidence:${item.id}`);
+    else evidenceIds.add(item.id);
+    if (!item?.label?.trim()) errors.push(`${prefix}:evidenceLabel`);
+    if (!item?.detail?.trim()) errors.push(`${prefix}:evidenceDetail`);
+    if (locations.length > 0 && !locationIds.has(item?.locationId)) errors.push(`${prefix}:evidenceLocation`);
+    if (!["TRACE", "OBJECT", "PERSON", "SYSTEM"].includes(item?.kind)) errors.push(`${prefix}:evidenceKind`);
+  }
+  if (stage.workbench) {
+    if (!stage.workbench.prompt?.trim()) errors.push(`${prefix}:workbenchPrompt`);
+    if (!Number.isInteger(stage.workbench.minEvidence) || stage.workbench.minEvidence < 0) errors.push(`${prefix}:workbenchMinEvidence`);
+    for (const mode of stage.workbench.modes ?? []) {
+      if (!["TIMELINE", "CONNECTIONS", "COMPARE"].includes(mode)) errors.push(`${prefix}:workbenchMode`);
+    }
+  }
+}
+
 export function validateStudioAtlasPreviewSnapshot(
   value: unknown,
 ): asserts value is StudioAtlasPreviewSnapshot {
@@ -120,6 +197,7 @@ export function validateStudioAtlasPreviewSnapshot(
     if (!scene?.learnerAction?.trim()) errors.push(`learnerAction:${scene?.sceneId ?? "unknown"}`);
     if (!scene?.consequence?.trim()) errors.push(`consequence:${scene?.sceneId ?? "unknown"}`);
     validateWorldState(scene?.world, `world:${scene?.sceneId ?? "unknown"}`, errors);
+    validateStage(scene?.stage, `stage:${scene?.sceneId ?? "unknown"}`, errors);
 
     const interaction = scene?.interaction ?? "SUMMARY";
     if (interaction !== "SUMMARY" && interaction !== "CHOICE") {
@@ -209,6 +287,7 @@ export function studioAtlasSnapshotToExperience(
         ...(scene.reveal?.trim() ? [scene.reveal.trim()] : []),
       ],
       world: scene.world,
+      stage: scene.stage as ExperienceStage | undefined,
       feedbackCategory:
         scene.kind === "TRANSFER" ? "TRANSFER_SUCCESSFUL" :
         interaction === "choice" ? "ALTERNATIVE_PLAUSIBLE" :
