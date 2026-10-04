@@ -434,7 +434,7 @@ test.describe("PW-STRATEGY-SELECTION experience-quality lab prototype", () => {
     await expect(page.getByText("PROTOTIPO · NON AUTORIZZATO AGLI STUDENTI")).toBeVisible();
 
     await page.getByRole("button", { name: "Ho letto · continua" }).click();
-    await page.getByRole("button", { name: /Sequenza \+ recupero/ }).click();
+    await page.getByRole("button", { name: /Metto gli eventi in ordine/ }).click();
     await page.getByRole("button", { name: "Inizia la prova" }).click();
 
     await expect(page.getByText("Fonte coperta")).toBeVisible();
@@ -445,7 +445,7 @@ test.describe("PW-STRATEGY-SELECTION experience-quality lab prototype", () => {
     }
     await page.getByRole("button", { name: "Controlla", exact: true }).click();
 
-    await expect(page.getByText("Hai scelto e applicato uno strumento coerente con lo scopo del compito.")).toBeVisible();
+    await expect(page.getByText("Hai scelto un modo per prepararti e lo hai usato nella prova.")).toBeVisible();
     await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(1);
   });
 
@@ -453,7 +453,7 @@ test.describe("PW-STRATEGY-SELECTION experience-quality lab prototype", () => {
     await page.goto("/percorsi/lab/pw-strategy-selection-01");
 
     await page.getByRole("button", { name: "Ho letto · continua" }).click();
-    await page.getByRole("button", { name: /Sequenza \+ recupero/ }).click();
+    await page.getByRole("button", { name: /Metto gli eventi in ordine/ }).click();
     await page.getByRole("button", { name: "Inizia la prova" }).click();
     for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
       await page.getByRole("button", { name: token, exact: true }).click();
@@ -481,7 +481,7 @@ test.describe("PW-STRATEGY-SELECTION experience-quality lab prototype", () => {
     await page.getByLabel("Attività pratiche, percorso Verde").selectOption({ label: "2 attività pratiche" });
     await page.getByRole("button", { name: "Controlla il confronto" }).click();
 
-    await expect(page.getByText("Hai scelto e applicato una strategia adatta in un compito diverso.")).toBeVisible();
+    await expect(page.getByText("In una situazione nuova hai trovato un modo chiaro per confrontare i dati.")).toBeVisible();
     await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(3);
   });
 
@@ -509,11 +509,11 @@ test.describe("PW-STRATEGY-SELECTION interaction regression guards", () => {
   test("moves focus to the heading of each newly rendered scene", async ({ page }) => {
     await page.goto("/percorsi/lab/pw-strategy-selection-01");
 
-    await expect(page.getByRole("heading", { name: "Guarda il materiale prima di scegliere come lavorarci." })).toBeFocused();
+    await expect(page.getByRole("heading", { name: "Che cosa è successo durante il percorso?" })).toBeFocused();
     await page.getByRole("button", { name: "Ho letto · continua" }).click();
     await expect(page.getByRole("heading", { name: "Prima della prova, cosa vuoi fare?" })).toBeFocused();
 
-    await page.getByRole("button", { name: /Sequenza \+ recupero/ }).click();
+    await page.getByRole("button", { name: /Metto gli eventi in ordine/ }).click();
     await expect(page.getByRole("heading", { name: "Metti a fuoco l’ordine. Poi prova senza guardare." })).toBeFocused();
 
     await page.getByRole("button", { name: "Inizia la prova" }).click();
@@ -523,7 +523,7 @@ test.describe("PW-STRATEGY-SELECTION interaction regression guards", () => {
   test("requires a fresh validation after editing a failed order construction", async ({ page }) => {
     await page.goto("/percorsi/lab/pw-strategy-selection-01");
     await page.getByRole("button", { name: "Ho letto · continua" }).click();
-    await page.getByRole("button", { name: /Sequenza \+ recupero/ }).click();
+    await page.getByRole("button", { name: /Metto gli eventi in ordine/ }).click();
     await page.getByRole("button", { name: "Inizia la prova" }).click();
 
     for (const token of ["ponte", "stazione", "pioggia", "cresta", "osservazione"]) {
@@ -546,7 +546,7 @@ test.describe("PW-STRATEGY-SELECTION interaction regression guards", () => {
   test("requires a fresh validation after editing a failed cause construction", async ({ page }) => {
     await page.goto("/percorsi/lab/pw-strategy-selection-01");
     await page.getByRole("button", { name: "Ho letto · continua" }).click();
-    await page.getByRole("button", { name: /Sequenza \+ recupero/ }).click();
+    await page.getByRole("button", { name: /Metto gli eventi in ordine/ }).click();
     await page.getByRole("button", { name: "Inizia la prova" }).click();
     for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
       await page.getByRole("button", { name: token, exact: true }).click();
@@ -579,7 +579,7 @@ test.describe("PW-STRATEGY-SELECTION transfer validation invalidation", () => {
   test("revokes transfer evidence when a validated comparison is edited", async ({ page }) => {
     await page.goto("/percorsi/lab/pw-strategy-selection-01");
     await page.getByRole("button", { name: "Ho letto · continua" }).click();
-    await page.getByRole("button", { name: /Sequenza \+ recupero/ }).click();
+    await page.getByRole("button", { name: /Metto gli eventi in ordine/ }).click();
     await page.getByRole("button", { name: "Inizia la prova" }).click();
 
     for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
@@ -612,7 +612,7 @@ test.describe("PW-STRATEGY-SELECTION transfer validation invalidation", () => {
     await page.getByLabel("Durata, percorso Verde").selectOption({ label: "45 min" });
 
     await expect(page.getByRole("button", { name: "Concludi" })).toHaveCount(0);
-    await expect(page.getByText("Hai scelto e applicato una strategia adatta in un compito diverso.")).toHaveCount(0);
+    await expect(page.getByText("In una situazione nuova hai trovato un modo chiaro per confrontare i dati.")).toHaveCount(0);
     await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(2);
 
     await page.getByRole("button", { name: "Controlla il confronto" }).click();
@@ -625,19 +625,19 @@ test.describe("PW-STRATEGY-SELECTION construction invalidation completeness", ()
   test("Svuota revokes a previously validated construction and its trace", async ({ page }) => {
     await page.goto("/percorsi/lab/pw-strategy-selection-01");
     await page.getByRole("button", { name: "Ho letto · continua" }).click();
-    await page.getByRole("button", { name: /Sequenza \+ recupero/ }).click();
+    await page.getByRole("button", { name: /Metto gli eventi in ordine/ }).click();
     await page.getByRole("button", { name: "Inizia la prova" }).click();
 
     for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
       await page.getByRole("button", { name: token, exact: true }).click();
     }
     await page.getByRole("button", { name: "Controlla", exact: true }).click();
-    await expect(page.getByText("Hai scelto e applicato uno strumento coerente con lo scopo del compito.")).toBeVisible();
+    await expect(page.getByText("Hai scelto un modo per prepararti e lo hai usato nella prova.")).toBeVisible();
     await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(1);
 
     await page.getByRole("button", { name: "Svuota" }).click();
 
-    await expect(page.getByText("Hai scelto e applicato uno strumento coerente con lo scopo del compito.")).toHaveCount(0);
+    await expect(page.getByText("Hai scelto un modo per prepararti e lo hai usato nella prova.")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Continua", exact: true })).toHaveCount(0);
     await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(0);
   });
