@@ -43,6 +43,8 @@ jobs:
           grep -q 'event.origin !== studioOrigin'             src/features/pathways/studio-atlas-preview-bridge.tsx
           grep -q 'STUDIO_ATLAS_PREVIEW_ACK'             src/features/pathways/studio-atlas-preview-bridge.tsx
           grep -q 'message.channel === channel'             src/features/pathways/studio-atlas-preview-bridge.tsx
+          grep -q 'targetNodeId: choice.targetSceneId'       src/features/pathways/studio-atlas-preview-adapter.ts
+          grep -q 'choiceTargetsNotDivergent'                scripts/validate-studio-atlas-preview-snapshot.mjs
 
       - name: Typecheck
         run: pnpm typecheck
