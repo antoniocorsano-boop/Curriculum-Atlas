@@ -7,11 +7,8 @@ import {
   type StudioAtlasPreviewSnapshot,
 } from "@/features/pathways/studio-atlas-preview-adapter";
 
-const READY_TYPE = "STUDIO_ATLAS_PREVIEW_READY";
 const SNAPSHOT_TYPE = "STUDIO_ATLAS_PREVIEW_SNAPSHOT";
 const ACK_TYPE = "STUDIO_ATLAS_PREVIEW_ACK";
-const READY_RETRY_MS = 300;
-const READY_RETRY_LIMIT = 30;
 
 type PreviewState =
   | { status: "WAITING" }
@@ -46,19 +43,6 @@ export function StudioAtlasPreviewBridge() {
     }
 
     let accepted = false;
-    let readyAttempts = 0;
-
-    function sendReady() {
-      if (accepted || readyAttempts >= READY_RETRY_LIMIT) return;
-      readyAttempts += 1;
-      opener.postMessage(
-        {
-          type: READY_TYPE,
-          channel,
-        },
-        studioOrigin,
-      );
-    }
 
     function onMessage(event: MessageEvent) {
       if (event.origin !== studioOrigin) return;
@@ -68,7 +52,6 @@ export function StudioAtlasPreviewBridge() {
         // Validation happens before any learner runtime is mounted.
         studioAtlasSnapshotToExperience(event.data.snapshot);
         accepted = true;
-        window.clearInterval(readyInterval);
         setState({ status: "READY", snapshot: event.data.snapshot });
 
         opener.postMessage(
@@ -90,16 +73,14 @@ export function StudioAtlasPreviewBridge() {
     window.addEventListener("message", onMessage);
 
     // Cross-origin WindowProxy identity is not used as an authority signal.
-    // The preview is already bound by: non-null opener, exact configured
-    // Studio origin, a 192-bit random channel, and snapshot validation.
-    // READY is intentionally retried for a bounded window. Cross-origin
-    // navigation and hydration may reorder a single message even when both
-    // applications are healthy.
-    sendReady();
-    const readyInterval = window.setInterval(sendReady, READY_RETRY_MS);
-
+    // The preview is bound by: non-null opener, exact configured Studio
+    // origin, a 192-bit random channel, and snapshot validation.
+    //
+    // Atlas does not send a separate READY message. Studio Atlas retries the
+    // exact immutable snapshot for a bounded window until this bridge validates
+    // it and returns ACK. This removes a redundant handshake leg and avoids
+    // navigation/hydration races.
     return () => {
-      window.clearInterval(readyInterval);
       window.removeEventListener("message", onMessage);
     };
   }, []);
