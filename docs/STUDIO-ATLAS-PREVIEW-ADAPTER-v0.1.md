@@ -62,12 +62,42 @@ The route:
 - is not added to the public Percorsi catalogue;
 - carries explicit non-student-authorized copy.
 
+## Ephemeral preview bridge
+
+The real creator preview does not serialize authoring content into the URL and does not require a preview database.
+
+Studio Atlas:
+
+1. creates an exact preview snapshot;
+2. opens the Atlas lab route with a random `channel` nonce only;
+3. waits for an origin-bound READY message from Atlas;
+4. sends the snapshot directly to that exact Atlas window using `postMessage` and an exact target origin.
+
+Atlas:
+
+1. requires `window.opener`;
+2. requires the configured Studio Atlas origin;
+3. checks `event.origin`;
+4. checks `event.source === window.opener`;
+5. checks the random channel;
+6. validates the snapshot before mounting the learner runtime.
+
+Wildcard target origins are prohibited.
+
+The snapshot is not persisted by Atlas.
+
+## Static-export compatibility
+
+The bridge is deliberately browser-to-browser so the preview route remains compatible with Atlas static export.
+
+No server route or learner account is required for direct creator preview.
+
 ## Fixture
 
-The first route uses a technical fixture only to prove the adapter boundary.
+The technical fixture remains only for contract validation in CI.
 
-It is not a publishable Percorso and is not MUSEO ZERO canonical content.
+It is not the runtime source for a real creator preview, is not a publishable Percorso and is not MUSEO ZERO canonical content.
 
-## Next handoff
+## Future shared preview
 
-Replace the fixture source with an exact immutable Studio Atlas preview snapshot/receipt after the cross-product transport contract is implemented.
+A persistent opaque-ref broker may be added later for asynchronous/shared review links. It is not required for the direct **Vedi come studente** journey.
