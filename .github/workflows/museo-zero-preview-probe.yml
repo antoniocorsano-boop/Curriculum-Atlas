@@ -1,0 +1,98 @@
+name: MUSEO ZERO Preview Probe
+
+on:
+  push:
+    branches:
+      - "preview/museo-zero-e171c077"
+
+permissions:
+  actions: read
+  contents: read
+
+env:
+  ARTIFACT_RUN_ID: "37187784354"
+  EXPECTED_EXACT_HEAD: "e171c077206997cc3763eeb8a4e90e9dc3a380c7"
+  CLOUDFLARE_PROJECT_NAME: "atlas-pr-preview"
+  SMOKE_PATH: "/percorsi/lab/museo-zero-phaser/"
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download qualified artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: atlas-pr-preview-e171c077206997cc3763eeb8a4e90e9dc3a380c7
+          path: preview
+          run-id: 37187784354
+          github-token: ${{ github.token }}
+
+      - name: Verify artifact identity and boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(tr -d '\r\n' < preview/EXACT_HEAD.txt)" = "$EXPECTED_EXACT_HEAD"
+          test -f "preview/percorsi/lab/museo-zero-phaser/index.html"
+          node - <<'NODE'
+          const fs = require('fs');
+          const m = JSON.parse(fs.readFileSync('preview/PREVIEW-MANIFEST.json', 'utf8'));
+          if (
+            m.exactHead !== process.env.EXPECTED_EXACT_HEAD ||
+            m.channel !== 'artifact-only' ||
+            m.studentAuthorized !== false
+          ) {
+            throw new Error('Preview manifest boundary check failed');
+          }
+          NODE
+
+      - name: Validate Cloudflare credentials
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "CLOUDFLARE_API_TOKEN missing" >&2; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "CLOUDFLARE_ACCOUNT_ID missing" >&2; exit 1; }
+
+      - name: Deploy qualified artifact
+        id: deploy
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          LOG="$RUNNER_TEMP/wrangler.log"
+          npx --yes wrangler@latest pages deploy preview             --project-name="$CLOUDFLARE_PROJECT_NAME"             --branch="museo-zero-e171c077"             --commit-hash="$EXPECTED_EXACT_HEAD"             --commit-message="MUSEO ZERO exact-head $EXPECTED_EXACT_HEAD — NOT_RUNTIME_AUTHORIZED" | tee "$LOG"
+          URL="$(grep -Eo 'https://[^[:space:]]+\.pages\.dev' "$LOG" | tail -1)"
+          test -n "$URL"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Verify live exact head and route
+        shell: bash
+        env:
+          URL: ${{ steps.deploy.outputs.url }}
+        run: |
+          set -euo pipefail
+          for i in {1..12}; do
+            if curl --fail --silent --show-error "$URL/EXACT_HEAD.txt" -o "$RUNNER_TEMP/head.txt" &&                curl --fail --silent --show-error "$URL$SMOKE_PATH" -o "$RUNNER_TEMP/museo-zero.html"; then
+              break
+            fi
+            test "$i" -lt 12 || exit 1
+            sleep 5
+          done
+          test "$(tr -d '\r\n' < "$RUNNER_TEMP/head.txt")" = "$EXPECTED_EXACT_HEAD"
+          test -s "$RUNNER_TEMP/museo-zero.html"
+
+      - name: Record preview URL
+        shell: bash
+        env:
+          URL: ${{ steps.deploy.outputs.url }}
+        run: |
+          {
+            echo "### MUSEO ZERO preview"
+            echo "Exact head: `$EXPECTED_EXACT_HEAD`"
+            echo "Student authorized: **false**"
+            echo "Route: $URL$SMOKE_PATH"
+          } >> "$GITHUB_STEP_SUMMARY"
