@@ -434,7 +434,7 @@ test.describe("PW-STRATEGY-SELECTION experience-quality lab prototype", () => {
     await expect(page.getByText("PROTOTIPO · NON AUTORIZZATO AGLI STUDENTI")).toBeVisible();
 
     await page.getByRole("button", { name: "Ho letto · continua" }).click();
-    await page.getByRole("button", { name: /Metto gli eventi in ordine/ }).click();
+    await page.getByRole("button", { name: /Creo una sequenza di parole chiave/ }).click();
     await page.getByRole("button", { name: "Inizia la prova" }).click();
 
     await expect(page.getByText("Fonte coperta")).toBeVisible();
@@ -453,7 +453,7 @@ test.describe("PW-STRATEGY-SELECTION experience-quality lab prototype", () => {
     await page.goto("/percorsi/lab/pw-strategy-selection-01");
 
     await page.getByRole("button", { name: "Ho letto · continua" }).click();
-    await page.getByRole("button", { name: /Metto gli eventi in ordine/ }).click();
+    await page.getByRole("button", { name: /Creo una sequenza di parole chiave/ }).click();
     await page.getByRole("button", { name: "Inizia la prova" }).click();
     for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
       await page.getByRole("button", { name: token, exact: true }).click();
@@ -513,8 +513,8 @@ test.describe("PW-STRATEGY-SELECTION interaction regression guards", () => {
     await page.getByRole("button", { name: "Ho letto · continua" }).click();
     await expect(page.getByRole("heading", { name: "Prima della prova, cosa vuoi fare?" })).toBeFocused();
 
-    await page.getByRole("button", { name: /Metto gli eventi in ordine/ }).click();
-    await expect(page.getByRole("heading", { name: "Metti a fuoco l’ordine. Poi prova senza guardare." })).toBeFocused();
+    await page.getByRole("button", { name: /Creo una sequenza di parole chiave/ }).click();
+    await expect(page.getByRole("heading", { name: "Crea una traccia di cinque parole. Poi prova senza guardare." })).toBeFocused();
 
     await page.getByRole("button", { name: "Inizia la prova" }).click();
     await expect(page.getByRole("heading", { name: "Le frasi sono coperte. Rimetti questi cinque elementi nell’ordine in cui sono accaduti." })).toBeFocused();
@@ -523,7 +523,7 @@ test.describe("PW-STRATEGY-SELECTION interaction regression guards", () => {
   test("requires a fresh validation after editing a failed order construction", async ({ page }) => {
     await page.goto("/percorsi/lab/pw-strategy-selection-01");
     await page.getByRole("button", { name: "Ho letto · continua" }).click();
-    await page.getByRole("button", { name: /Metto gli eventi in ordine/ }).click();
+    await page.getByRole("button", { name: /Creo una sequenza di parole chiave/ }).click();
     await page.getByRole("button", { name: "Inizia la prova" }).click();
 
     for (const token of ["ponte", "stazione", "pioggia", "cresta", "osservazione"]) {
@@ -546,7 +546,7 @@ test.describe("PW-STRATEGY-SELECTION interaction regression guards", () => {
   test("requires a fresh validation after editing a failed cause construction", async ({ page }) => {
     await page.goto("/percorsi/lab/pw-strategy-selection-01");
     await page.getByRole("button", { name: "Ho letto · continua" }).click();
-    await page.getByRole("button", { name: /Metto gli eventi in ordine/ }).click();
+    await page.getByRole("button", { name: /Creo una sequenza di parole chiave/ }).click();
     await page.getByRole("button", { name: "Inizia la prova" }).click();
     for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
       await page.getByRole("button", { name: token, exact: true }).click();
@@ -579,7 +579,7 @@ test.describe("PW-STRATEGY-SELECTION transfer validation invalidation", () => {
   test("revokes transfer evidence when a validated comparison is edited", async ({ page }) => {
     await page.goto("/percorsi/lab/pw-strategy-selection-01");
     await page.getByRole("button", { name: "Ho letto · continua" }).click();
-    await page.getByRole("button", { name: /Metto gli eventi in ordine/ }).click();
+    await page.getByRole("button", { name: /Creo una sequenza di parole chiave/ }).click();
     await page.getByRole("button", { name: "Inizia la prova" }).click();
 
     for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
@@ -625,7 +625,7 @@ test.describe("PW-STRATEGY-SELECTION construction invalidation completeness", ()
   test("Svuota revokes a previously validated construction and its trace", async ({ page }) => {
     await page.goto("/percorsi/lab/pw-strategy-selection-01");
     await page.getByRole("button", { name: "Ho letto · continua" }).click();
-    await page.getByRole("button", { name: /Metto gli eventi in ordine/ }).click();
+    await page.getByRole("button", { name: /Creo una sequenza di parole chiave/ }).click();
     await page.getByRole("button", { name: "Inizia la prova" }).click();
 
     for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
@@ -715,13 +715,13 @@ test.describe("PW-STRATEGY-SELECTION real method-change evidence", () => {
     await page.getByRole("button", { name: "Controlla", exact: true }).click();
 
     // The pathway must require a real switch to the order method before goal shift.
-    await page.getByRole("button", { name: "Prova anche a mettere gli eventi in ordine" }).click();
+    await page.getByRole("button", { name: "Prova con cinque parole in sequenza" }).click();
     await page.getByRole("button", { name: "Inizia la prova" }).click();
     for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
       await page.getByRole("button", { name: token, exact: true }).click();
     }
     await page.getByRole("button", { name: "Controlla", exact: true }).click();
-    await expect(page.locator(".strategyWorkbench__rail strong")).toHaveText("Metto gli eventi in ordine");
+    await expect(page.locator(".strategyWorkbench__rail strong")).toHaveText("Creo una sequenza di parole chiave");
     await page.getByRole("button", { name: "Continua", exact: true }).click();
 
     await page.getByRole("button", { name: "Scegli come affrontare la nuova domanda" }).click();
