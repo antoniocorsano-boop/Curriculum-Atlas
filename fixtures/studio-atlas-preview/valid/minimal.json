@@ -38,9 +38,57 @@
           "choiceId": "transfer",
           "label": "Cambio la relazione e verifico l’esito",
           "feedback": "La conseguenza osservata sostiene la nuova relazione.",
-          "targetSceneId": "S3_TRANSFER"
+          "targetSceneId": "S3_TRANSFER",
+          "worldAfter": {
+            "place": "Sala di prova",
+            "status": "La relazione aggiornata produce una risposta coerente",
+            "signals": [
+              {
+                "id": "input-new",
+                "label": "Nuovo ingresso",
+                "state": "ACTIVE",
+                "detail": "Il nuovo segnale viene rilevato."
+              },
+              {
+                "id": "mapping-new",
+                "label": "Mappatura",
+                "state": "ACTIVE",
+                "detail": "La regia ascolta il nuovo segnale."
+              },
+              {
+                "id": "output",
+                "label": "Risposta",
+                "state": "STABLE",
+                "detail": "L'uscita reagisce nel momento previsto."
+              }
+            ]
+          }
         }
-      ]
+      ],
+      "world": {
+        "place": "Sala di prova",
+        "status": "Il sistema ascolta ancora il segnale precedente",
+        "signals": [
+          {
+            "id": "input-new",
+            "label": "Nuovo ingresso",
+            "state": "ACTIVE",
+            "detail": "Il visitatore entra dal nuovo punto."
+          },
+          {
+            "id": "mapping-old",
+            "label": "Mappatura",
+            "state": "MISMATCH",
+            "detail": "La regia è ancora legata al segnale precedente."
+          },
+          {
+            "id": "output",
+            "label": "Risposta",
+            "state": "DELAYED",
+            "detail": "L'uscita reagisce in ritardo."
+          }
+        ]
+      }
     },
     {
       "sceneId": "S3_TRANSFER",
