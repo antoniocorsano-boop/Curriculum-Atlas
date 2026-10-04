@@ -426,3 +426,33 @@ test.describe("PW-MISSING public-surface runtime readiness", () => {
     expect(localKeys).toEqual([]);
   });
 });
+
+
+test.describe("MUSEO ZERO Phaser technology spike", () => {
+  test("replays the same room with a different trigger mapping on mobile", async ({ page }) => {
+    const writes: string[] = [];
+    page.on("request", (request) => {
+      if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method())) writes.push(request.method());
+    });
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/percorsi/lab/museo-zero-phaser");
+
+    await expect(page.getByRole("heading", { name: "Museo Zero · la sala che non torna" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Collega ad A · vecchio ingresso" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Collega a B · nuovo ingresso" })).toBeVisible();
+
+    await page.getByRole("button", { name: "Collega a B · nuovo ingresso" }).click();
+    await expect(page.getByRole("status")).toContainText("sensore B");
+
+    const replay = page.getByRole("button", { name: "Rifai la prova" });
+    await expect(replay).toBeEnabled({ timeout: 15_000 });
+    await replay.click();
+
+    await expect(page.getByRole("status")).toContainText("sincronizzati", { timeout: 10_000 });
+    expect(writes).toEqual([]);
+
+    const width = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(width).toBeLessThanOrEqual(390);
+  });
+});
