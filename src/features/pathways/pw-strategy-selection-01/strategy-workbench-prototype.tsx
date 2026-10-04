@@ -22,7 +22,7 @@ const expeditionFacts = [
   "Il gruppo parte dalla stazione sul campo.",
   "Attraversa un ponte pedonale.",
   "La pioggia intensa rende inutilizzabile il sentiero basso.",
-  "Il gruppo passa sul percorso di cresta.",
+  "Il gruppo passa sul percorso di cresta, che richiede più tempo.",
   "Raggiunge il punto di osservazione più tardi del previsto.",
 ];
 
@@ -32,11 +32,11 @@ const orderPool = ["pioggia", "stazione", "osservazione", "ponte", "cresta"];
 const causeTokens = [
   "pioggia intensa",
   "sentiero basso inutilizzabile",
-  "percorso di cresta",
+  "percorso di cresta più lungo",
   "arrivo più tardi",
 ];
 const causePool = [
-  "percorso di cresta",
+  "percorso di cresta più lungo",
   "arrivo più tardi",
   "pioggia intensa",
   "sentiero basso inutilizzabile",
@@ -94,7 +94,7 @@ export function StrategyWorkbenchPrototype() {
       return "Tra poco le frasi spariranno: dovrai rimettere gli eventi nell’ordine giusto.";
     }
     if (["goal-shift", "choose-cause-tool", "cause-build", "principle"].includes(phase)) {
-      return "Adesso devi spiegare perché il gruppo ha dovuto cambiare sentiero.";
+      return "Adesso devi spiegare perché il gruppo ha cambiato sentiero e perché è arrivato più tardi.";
     }
     if (["transfer-choice", "transfer-build", "complete"].includes(phase)) {
       return "Scegli il modo più chiaro per confrontare due percorsi di visita.";
@@ -447,14 +447,14 @@ export function StrategyWorkbenchPrototype() {
           {phase === "goal-shift" && (
             <div className="strategyWorkbench__scene strategyWorkbench__scene--shift">
               <p className="strategyWorkbench__sceneKicker">Nuova domanda</p>
-              <h2>Ora non ti serve ricordare l’ordine. Devi capire perché il gruppo ha cambiato sentiero.</h2>
+              <h2>Ora non ti serve ricordare l’ordine. Devi capire perché il gruppo ha cambiato sentiero e perché è arrivato più tardi.</h2>
               <div className="strategyWorkbench__source strategyWorkbench__source--compact">
                 {expeditionFacts.map((fact) => <p key={fact}>{fact}</p>)}
               </div>
               <div className="strategyWorkbench__shiftCallout">
                 <strong>Prima:</strong> “Che cosa è successo prima e dopo?”
                 <span aria-hidden="true">→</span>
-                <strong>Adesso:</strong> “Che cosa ha fatto cambiare percorso al gruppo?”
+                <strong>Adesso:</strong> “Che cosa ha fatto cambiare percorso al gruppo e che cosa ha causato il ritardo?”
               </div>
               <button type="button" className="strategyWorkbench__primary" onClick={() => {
                 setFeedback("");
@@ -468,7 +468,7 @@ export function StrategyWorkbenchPrototype() {
           {phase === "choose-cause-tool" && (
             <div className="strategyWorkbench__scene">
               <p className="strategyWorkbench__sceneKicker">Nuova domanda</p>
-              <h2>Come puoi rendere chiaro che cosa ha causato il cambio di percorso?</h2>
+              <h2>Come puoi rendere chiaro che cosa ha causato il cambio di percorso e il ritardo?</h2>
               <ToolBench onChoose={chooseCauseTool} compact />
               {feedback && <div className="strategyWorkbench__feedback" role="status"><p>{feedback}</p></div>}
             </div>
