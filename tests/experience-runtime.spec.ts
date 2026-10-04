@@ -472,6 +472,7 @@ test.describe("PW-STRATEGY-SELECTION experience-quality lab prototype", () => {
     await page.getByRole("button", { name: "Prova in una situazione nuova" }).click();
 
     await page.getByRole("button", { name: /Griglia di confronto/ }).click();
+    await expect(page.locator(".strategyWorkbench__rail strong")).toHaveText("Griglia di confronto");
     await page.getByLabel("Durata, percorso Blu").selectOption({ label: "45 min" });
     await page.getByLabel("Durata, percorso Verde").selectOption({ label: "30 min" });
     await page.getByLabel("Accesso, percorso Blu").selectOption({ label: "ascensore" });
@@ -500,5 +501,75 @@ test.describe("PW-STRATEGY-SELECTION experience-quality lab prototype", () => {
     expect(await page.evaluate(() => Object.keys(localStorage).filter((key) => key.includes("strategy-selection")))).toEqual([]);
     const width = await page.evaluate(() => document.documentElement.scrollWidth);
     expect(width).toBeLessThanOrEqual(390);
+  });
+});
+
+
+test.describe("PW-STRATEGY-SELECTION interaction regression guards", () => {
+  test("moves focus to the heading of each newly rendered scene", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-strategy-selection-01");
+
+    await expect(page.getByRole("heading", { name: "Guarda il materiale prima di scegliere come lavorarci." })).toBeFocused();
+    await page.getByRole("button", { name: "Apri il banco degli strumenti" }).click();
+    await expect(page.getByRole("heading", { name: "Quale strumento useresti per prepararti a ricostruire l’ordine?" })).toBeFocused();
+
+    await page.getByRole("button", { name: /Sequenza \+ recupero/ }).click();
+    await expect(page.getByRole("heading", { name: "Prima organizza. Poi copri la fonte e prova davvero." })).toBeFocused();
+
+    await page.getByRole("button", { name: "Copri la scheda e prova" }).click();
+    await expect(page.getByRole("heading", { name: "La fonte è coperta. Ricostruisci l’ordine usando solo ciò che ricordi." })).toBeFocused();
+  });
+
+  test("requires a fresh validation after editing a failed order construction", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-strategy-selection-01");
+    await page.getByRole("button", { name: "Apri il banco degli strumenti" }).click();
+    await page.getByRole("button", { name: /Sequenza \+ recupero/ }).click();
+    await page.getByRole("button", { name: "Copri la scheda e prova" }).click();
+
+    for (const token of ["ponte", "stazione", "pioggia", "cresta", "osservazione"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await expect(page.getByText(/L’ordine non coincide ancora con la fonte/)).toBeVisible();
+
+    await page.getByRole("button", { name: "Svuota" }).click();
+    for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+
+    await expect(page.getByRole("button", { name: "Continua", exact: true })).toHaveCount(0);
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Continua", exact: true })).toBeVisible();
+    await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(1);
+  });
+
+  test("requires a fresh validation after editing a failed cause construction", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-strategy-selection-01");
+    await page.getByRole("button", { name: "Apri il banco degli strumenti" }).click();
+    await page.getByRole("button", { name: /Sequenza \+ recupero/ }).click();
+    await page.getByRole("button", { name: "Copri la scheda e prova" }).click();
+    for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await page.getByRole("button", { name: "Continua", exact: true }).click();
+    await page.getByRole("button", { name: "Torna al banco degli strumenti" }).click();
+    await page.getByRole("button", { name: /Mappa causa-effetto/ }).click();
+
+    for (const token of ["arrivo più tardi", "pioggia intensa", "sentiero basso inutilizzabile", "percorso di cresta"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await expect(page.getByText(/La catena non rende ancora corretta/)).toBeVisible();
+
+    await page.getByRole("button", { name: "Svuota" }).click();
+    for (const token of ["pioggia intensa", "sentiero basso inutilizzabile", "percorso di cresta", "arrivo più tardi"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+
+    await expect(page.getByRole("button", { name: "Continua", exact: true })).toHaveCount(0);
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Continua", exact: true })).toBeVisible();
+    await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(2);
   });
 });
