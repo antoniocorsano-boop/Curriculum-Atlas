@@ -26,9 +26,17 @@ Required safeguards:
 - no learner identity;
 - no telemetry;
 - explicit scenes;
+- every authored choice carries an explicit `targetSceneId`;
+- choice targets resolve to existing scenes and diverge across at least two outcomes;
 - at least one explicit `TRANSFER` scene.
 
 The adapter fails closed when these invariants are absent.
+
+## Choice routing is not inferred
+
+For a `CHOICE` scene, Atlas uses the exact `targetSceneId` authored in Studio Atlas.
+
+The adapter MUST NOT collapse all choices onto the next sequential scene. Missing, dangling or non-divergent choice targets fail closed.
 
 ## Transfer is not inferred
 
