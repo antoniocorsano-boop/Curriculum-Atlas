@@ -116,6 +116,8 @@ try {
     };
 
     const capture = async (name) => {
+      // Let the short scene-arrival transition settle so evidence represents the stable learner surface.
+      await page.waitForTimeout(250);
       await assertNoOverflow(name);
       await page.screenshot({
         path: `artifacts/f4-visual/strategy-${name}-mobile-390.png`,
