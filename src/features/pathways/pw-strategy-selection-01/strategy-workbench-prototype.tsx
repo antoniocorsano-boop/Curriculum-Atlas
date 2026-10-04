@@ -199,6 +199,7 @@ export function StrategyWorkbenchPrototype() {
 
   function chooseTransferTool(nextTool: Tool) {
     setTransferTool(nextTool);
+    setTool(nextTool);
     if (nextTool !== "compare") {
       setFeedback(
         "Memorizzare un ordine non rende controllabile un confronto per criteri. Puoi tornare al banco degli strumenti e scegliere di nuovo.",
@@ -245,8 +246,6 @@ export function StrategyWorkbenchPrototype() {
       verdePratica: "—",
     });
   }
-
-  const sourceHidden = phase === "order-retrieval";
 
   return (
     <main className="strategyWorkbench">
