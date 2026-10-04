@@ -23,6 +23,9 @@ function validate(snapshot) {
   if (scenes.length === 0) errors.push("scenes");
 
   const ids = new Set();
+  const allSceneIds = new Set(
+    scenes.map((scene) => scene?.sceneId?.trim()).filter(Boolean),
+  );
   let transfers = 0;
   for (const [sceneIndex, scene] of scenes.entries()) {
     if (!scene?.sceneId?.trim()) errors.push("sceneId");
@@ -43,6 +46,11 @@ function validate(snapshot) {
         if (!choice?.choiceId?.trim()) errors.push(`choiceId:${scene?.sceneId ?? "unknown"}`);
         if (!choice?.label?.trim()) errors.push(`choiceLabel:${scene?.sceneId ?? "unknown"}`);
         if (!choice?.feedback?.trim()) errors.push(`choiceFeedback:${scene?.sceneId ?? "unknown"}`);
+        if (!choice?.targetSceneId?.trim()) errors.push(`choiceTarget:${scene?.sceneId ?? "unknown"}`);
+        else if (!allSceneIds.has(choice.targetSceneId)) errors.push(`choiceTargetMissing:${scene?.sceneId ?? "unknown"}`);
+      }
+      if (new Set(choices.map((choice) => choice?.targetSceneId?.trim()).filter(Boolean)).size < 2) {
+        errors.push(`choiceTargetsNotDivergent:${scene?.sceneId ?? "unknown"}`);
       }
       if (sceneIndex === scenes.length - 1) errors.push(`terminalChoice:${scene?.sceneId ?? "unknown"}`);
     }
