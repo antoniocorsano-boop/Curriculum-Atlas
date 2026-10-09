@@ -14,6 +14,17 @@ const assertNonEmptyString = (value, label) => {
   }
 };
 
+const legacyTokensFor = (registry) => {
+  const tokens = Array.isArray(registry.legacyTokens)
+    ? registry.legacyTokens
+    : [registry.legacyToken];
+  if (tokens.length === 0) {
+    throw new Error("Vocabulary registry legacyTokens must contain at least one token.");
+  }
+  tokens.forEach((token, index) => assertNonEmptyString(token, `legacyTokens ${index}`));
+  return [...new Set(tokens.map((token) => token.toLowerCase()))];
+};
+
 export function validateVocabularyRegistry(registry) {
   if (!registry || typeof registry !== "object" || Array.isArray(registry)) {
     throw new Error("Vocabulary registry must be an object.");
@@ -22,6 +33,7 @@ export function validateVocabularyRegistry(registry) {
     throw new Error("Vocabulary registry canonicalTerm must be curricolo.");
   }
   assertNonEmptyString(registry.legacyToken, "legacyToken");
+  legacyTokensFor(registry);
   if (!Array.isArray(registry.exceptions)) {
     throw new Error("Vocabulary registry exceptions must be an array.");
   }
@@ -55,20 +67,22 @@ const removeAllowedFragments = (line, registry, filePath) => {
   return residual;
 };
 
+const lineHasLegacy = (line, registry) => legacyTokensFor(registry)
+  .some((token) => new RegExp(escapeRegExp(token), "i").test(line));
+
 export function validateAddedVocabulary(diffText, registryInput, filePath) {
   const registry = validateVocabularyRegistry(registryInput);
   if (filePath === VOCABULARY_REGISTRY_PATH || filePath === RESIDUAL_INVENTORY_PATH) return [];
 
-  const forbidden = new RegExp(escapeRegExp(registry.legacyToken), "i");
   const violations = [];
 
   diffText.split(/\r?\n/).forEach((line, index) => {
     if (!line.startsWith("+") || line.startsWith("+++")) return;
     const added = line.slice(1);
-    if (!forbidden.test(added)) return;
+    if (!lineHasLegacy(added, registry)) return;
 
     const residual = removeAllowedFragments(added, registry, filePath);
-    if (!forbidden.test(residual)) return;
+    if (!lineHasLegacy(residual, registry)) return;
 
     violations.push({
       path: filePath,
