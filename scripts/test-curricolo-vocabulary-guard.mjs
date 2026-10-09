@@ -25,6 +25,11 @@ assert.equal(
   "legacy token matching must be case-insensitive",
 );
 assert.equal(
+  validateAddedVocabulary("+Atlas curricular authority", registry, "docs/current.md").length,
+  1,
+  "the curricular derivative must also be rejected",
+);
+assert.equal(
   validateAddedVocabulary("-old curriculum wording", registry, "docs/current.md").length,
   0,
   "deletions must not be rejected",
