@@ -6,9 +6,9 @@ const target = process.env.ATLAS_CURRICULUM_TARGET
   || "src/features/curriculum/arena-curriculum-export.json";
 const facadePath = "src/features/curriculum/fixtures.ts";
 
-const response = await fetch(sourceUrl, { headers: { "User-Agent": "Curriculum-Atlas-sync" } });
+const response = await fetch(sourceUrl, { headers: { "User-Agent": "Atlas-Curricolo-Sync/1" } });
 if (!response.ok) {
-  throw new Error(`Arena curriculum export fetch failed: ${response.status} ${response.statusText}`);
+  throw new Error(`Arena curricolo export fetch failed: ${response.status} ${response.statusText}`);
 }
 const input = await response.json();
 
@@ -37,7 +37,7 @@ req(input.coverage?.primaryDisciplines === 11, "incomplete Primary discipline co
 req(input.coverage?.secondaryDisciplines === 12, "incomplete Secondary discipline coverage");
 req(input.coverage?.primaryGradeBands === 55, "incomplete Primary grade coverage");
 req(input.coverage?.secondaryGradeBands === 36, "incomplete Secondary grade coverage");
-req(Array.isArray(input.curriculum?.disciplines), "missing curriculum disciplines");
+req(Array.isArray(input.curriculum?.disciplines), "missing curricolo disciplines");
 
 if (input.authorityState === "APPROVED") {
   req(input.authorityReceiptRef && typeof input.authorityReceiptRef === "object", "APPROVED export requires authorityReceiptRef");
@@ -48,7 +48,7 @@ if (input.authorityState === "PROVISIONAL_COMPLETE") {
   req(input.authorityReceiptRef == null, "PROVISIONAL_COMPLETE cannot claim authorityReceiptRef");
 }
 if (errors.length) {
-  throw new Error("Arena curriculum export rejected:\n" + errors.map((e) => "- " + e).join("\n"));
+  throw new Error("Arena curricolo export rejected:\n" + errors.map((e) => "- " + e).join("\n"));
 }
 
 const projectedFacade = `export {
@@ -69,7 +69,7 @@ const samePayload = previous != null
   && JSON.stringify(previous) === JSON.stringify(input);
 
 if (samePayload && currentFacade === projectedFacade) {
-  console.log("Arena curriculum already current:", input.structuralFingerprint.hash, input.authorityState, input.publicationPolicy);
+  console.log("Arena curricolo already current:", input.structuralFingerprint.hash, input.authorityState, input.publicationPolicy);
   process.exit(0);
 }
 
