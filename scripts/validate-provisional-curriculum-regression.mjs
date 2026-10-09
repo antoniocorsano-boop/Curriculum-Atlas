@@ -7,6 +7,10 @@ const req = (ok, message) => { if (!ok) errors.push(message); };
 const fixtures = read("src/features/curriculum/fixtures.ts");
 const arenaProjected = read("src/features/curriculum/arena-projected.ts");
 const staticFixtures = read("src/features/curriculum/fixtures.static.ts");
+const curriculumTree = read("src/components/atlas/curriculum-tree.tsx");
+const relationExplorer = read("src/components/atlas/relation-explorer.tsx");
+const exploreGraph = read("src/features/explore/graph.ts");
+const objectivePage = read("src/app/obiettivi/[id]/page.tsx");
 const page = read("src/app/curricolo/page.tsx");
 const validator = read("scripts/validate-arena-curriculum-authority.mjs");
 const sync = read("scripts/sync-arena-curriculum.mjs");
@@ -28,6 +32,35 @@ req(staticFixtures.includes("CurricoloIstituto"),
   "REGRESSION: static curricolo fixture must use canonical CurricoloIstituto type");
 req(!/\bInstituteCurriculum\b/.test(staticFixtures),
   "REGRESSION: static curricolo fixture must not import legacy InstituteCurriculum type");
+
+req(arenaProjected.includes("export const curricoloIstitutoFixture: CurricoloIstituto"),
+  "REGRESSION: Arena projection must expose curricoloIstitutoFixture as canonical runtime name");
+req(arenaProjected.includes("export const instituteCurriculumFixture = curricoloIstitutoFixture;"),
+  "REGRESSION: Arena projection must preserve an explicit legacy fixture alias");
+req((arenaProjected.match(/\binstituteCurriculumFixture\b/g) ?? []).length === 1,
+  "REGRESSION: Arena projection may use instituteCurriculumFixture only as the legacy alias declaration");
+req(staticFixtures.includes("export const curricoloIstitutoFixture: CurricoloIstituto"),
+  "REGRESSION: static fixture must expose curricoloIstitutoFixture as canonical runtime name");
+req(staticFixtures.includes("export const instituteCurriculumFixture = curricoloIstitutoFixture;"),
+  "REGRESSION: static fixture must preserve an explicit legacy fixture alias");
+req((staticFixtures.match(/\binstituteCurriculumFixture\b/g) ?? []).length === 1,
+  "REGRESSION: static fixture may use instituteCurriculumFixture only as the legacy alias declaration");
+req(fixtures.includes("curricoloIstitutoFixture") && fixtures.includes("instituteCurriculumFixture"),
+  "REGRESSION: fixture facade must expose canonical name and legacy compatibility alias");
+req(sync.includes("curricoloIstitutoFixture") && sync.includes("instituteCurriculumFixture"),
+  "REGRESSION: Arena sync must regenerate canonical fixture export and legacy compatibility alias");
+
+for (const [label, source] of [
+  ["CurriculumTree", curriculumTree],
+  ["RelationExplorer", relationExplorer],
+  ["ExploreGraph", exploreGraph],
+  ["ObjectivePage", objectivePage],
+]) {
+  req(source.includes("curricoloIstitutoFixture"),
+    `REGRESSION: ${label} must consume curricoloIstitutoFixture`);
+  req(!/\binstituteCurriculumFixture\b/.test(source),
+    `REGRESSION: ${label} must not consume the legacy instituteCurriculumFixture alias`);
+}
 
 req(page.includes("Curricolo provvisorio — non vigente."),
   "REGRESSION: indicazione 'Curricolo provvisorio — non vigente' mancante");
