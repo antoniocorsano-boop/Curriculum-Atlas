@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "atlas.smart.asset-receipt/v1",
+  "assetId": "sistema-tecnologico-infografica-dispositivo-elettronico",
+  "version": 2,
+  "sha256": "sha256:6785b7abea214e2cc7336214a793f6f28f5a9328e1267f6ba4f157595bd1363b",
+  "byteSize": 1365,
+  "audience": "STUDENT",
+  "provenanceRef": "smart-remediation:PR55:reconstructed-from-governed-SP01-content",
+  "publicRef": "https://antoniocorsano-boop.github.io/Curriculum-Atlas/materials/smart/sistema-tecnologico/v2/smartphone-sistema-tecnologico.svg",
+  "anonymousReachabilityVerified": true,
+  "verifiedAt": "2026-10-09T11:16:37.113Z",
+  "materialSetId": "sistema-tecnologico-analisi",
+  "releaseSha": "c322b07a68d4508ec437941f8688012765e88848"
+}

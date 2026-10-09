@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "atlas.smart.asset-receipt/v1",
+  "assetId": "sistema-tecnologico-presentazione-lim",
+  "version": 2,
+  "sha256": "sha256:35be95e3950fa77fcedc66315da2c6145015581005d29276bb9cf16e8f8fc18a",
+  "byteSize": 4689,
+  "audience": "BOTH",
+  "provenanceRef": "chat-generated-artifact:file_00000000da548210b89268364aac89de",
+  "publicRef": "https://antoniocorsano-boop.github.io/Curriculum-Atlas/materials/smart/sistema-tecnologico/v2/presentazione-lim.pdf",
+  "anonymousReachabilityVerified": true,
+  "verifiedAt": "2026-10-09T11:16:37.196Z",
+  "materialSetId": "sistema-tecnologico-analisi",
+  "releaseSha": "c322b07a68d4508ec437941f8688012765e88848"
+}
