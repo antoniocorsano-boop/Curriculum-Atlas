@@ -26,6 +26,9 @@ jobs:
       - name: Vocabulary guard tests
         run: node scripts/test-curricolo-vocabulary-guard.mjs
 
+      - name: Residual inventory tests
+        run: node scripts/test-curricolo-residual-inventory.mjs
+
       - name: Validate curricolo vocabulary
         env:
           BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
