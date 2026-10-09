@@ -1,6 +1,6 @@
-# Curriculum Atlas
+# Atlas
 
-Curriculum Atlas è la superficie pubblica di navigazione del curricolo e dei materiali didattici dell'ecosistema TRAMA.
+Atlas è la superficie pubblica di navigazione del curricolo e dei materiali didattici dell'ecosistema TRAMA.
 
 ## Stato S3-V2
 

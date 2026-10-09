@@ -13,7 +13,7 @@ Arena è l'autorità del curricolo di istituto. Ogni aggiornamento strutturalmen
 Quando `authorityState = PROVISIONAL_COMPLETE`:
 
 - Atlas può mostrare pubblicamente la versione aggiornata del curricolo;
-- la versione deve essere identificata come **«Curriculum provvisorio — non vigente»**;
+- la versione deve essere identificata come **«Curricolo provvisorio — non vigente»**;
 - deve essere indicato che **l'approvazione del Collegio dei docenti è in attesa**;
 - la versione non può essere presentata, etichettata o trattata come approvata o vigente;
 - `authorityReceiptRef` deve essere assente;

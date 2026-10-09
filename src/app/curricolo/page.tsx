@@ -23,7 +23,7 @@ export default function CurriculumPage() {
           aria-label="Stato di autorità del curricolo"
           data-authority-state="PROVISIONAL_COMPLETE"
         >
-          <strong>Curriculum provvisorio — non vigente.</strong>
+          <strong>Curricolo provvisorio — non vigente.</strong>
           <span>Versione aggiornata propagata da Arena. L’approvazione del Collegio dei docenti è in attesa.</span>
         </div>
       ) : null}
