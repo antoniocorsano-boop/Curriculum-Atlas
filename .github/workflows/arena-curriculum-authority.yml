@@ -1,4 +1,4 @@
-name: Arena Curriculum Authority Gate
+name: Arena Curricolo Authority Gate
 
 on:
   pull_request:
@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   candidate:
-    name: Arena curriculum candidate integrity
+    name: Arena curricolo candidate integrity
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -28,7 +28,7 @@ jobs:
       - run: node scripts/validate-arena-curriculum-authority.mjs --candidate-only
 
   publication-authority:
-    name: Arena curriculum publication authority
+    name: Arena curricolo publication authority
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -39,7 +39,7 @@ jobs:
       - run: node scripts/validate-arena-curriculum-authority.mjs
 
   provisional-regression:
-    name: Provisional curriculum governance regression
+    name: Provisional curricolo governance regression
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6

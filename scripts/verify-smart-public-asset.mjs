@@ -17,7 +17,7 @@ if (!publicRef || !expectedDigest || !assetId || !audience || !provenanceRef || 
 if (!/^sha256:[a-f0-9]{64}$/.test(expectedDigest)) fail("--sha256 must be sha256:<64 lowercase hex>");
 if (!["STUDENT", "TEACHER", "BOTH"].includes(audience)) fail("Invalid audience");
 
-const response = await fetch(publicRef, { redirect: "follow", headers: { "user-agent": "Curriculum-Atlas-Smart-Asset-Verifier/1" } });
+const response = await fetch(publicRef, { redirect: "follow", headers: { "user-agent": "Atlas-Smart-Asset-Verifier/1" } });
 if (!response.ok) fail(`Public asset unreachable: HTTP ${response.status}`);
 const bytes = Buffer.from(await response.arrayBuffer());
 const actual = `sha256:${crypto.createHash("sha256").update(bytes).digest("hex")}`;
