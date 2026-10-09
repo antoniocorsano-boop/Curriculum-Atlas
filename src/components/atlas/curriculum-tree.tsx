@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ChevronRight } from "lucide-react";
-import { instituteCurriculumFixture } from "@/features/curriculum/fixtures";
+import { curricoloIstitutoFixture } from "@/features/curriculum/fixtures";
 
 const stages = ["Tutti", "Infanzia", "Primaria", "Secondaria di primo grado"] as const;
 
@@ -12,7 +12,7 @@ export function CurriculumTree() {
   const [disciplineId, setDisciplineId] = useState("tutte");
 
   const visibleDisciplines = useMemo(
-    () => instituteCurriculumFixture.disciplines
+    () => curricoloIstitutoFixture.disciplines
       .filter(item => disciplineId === "tutte" || item.id === disciplineId)
       .map(item => ({
         ...item,
@@ -37,7 +37,7 @@ export function CurriculumTree() {
           <span>Disciplina</span>
           <select value={disciplineId} onChange={event => setDisciplineId(event.target.value)}>
             <option value="tutte">Tutte le discipline</option>
-            {instituteCurriculumFixture.disciplines.map(item => (
+            {curricoloIstitutoFixture.disciplines.map(item => (
               <option key={item.id} value={item.id}>{item.label}</option>
             ))}
           </select>

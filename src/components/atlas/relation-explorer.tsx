@@ -16,7 +16,7 @@ import {
   type NodeProps,
 } from "@xyflow/react";
 import { List, Map, Maximize2 } from "lucide-react";
-import { instituteCurriculumFixture } from "@/features/curriculum/fixtures";
+import { curricoloIstitutoFixture } from "@/features/curriculum/fixtures";
 import { exploreGraph, type ExploreNode, type ExploreNodeKind } from "@/features/explore/graph";
 
 const stages = ["Tutti", "Infanzia", "Primaria", "Secondaria di primo grado"] as const;
@@ -224,7 +224,7 @@ export function RelationExplorer() {
               if (event.target.value !== "tutte") setDepth("detail");
             }}>
               <option value="tutte">Tutte le discipline</option>
-              {instituteCurriculumFixture.disciplines.map(item => (
+              {curricoloIstitutoFixture.disciplines.map(item => (
                 <option key={item.id} value={item.id}>{item.label}</option>
               ))}
             </select>

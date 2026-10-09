@@ -7,7 +7,7 @@ export const arenaCurriculumAuthority = {
   fingerprint: "fixture",
 } as const;
 
-export const instituteCurriculumFixture: CurricoloIstituto = {
+export const curricoloIstitutoFixture: CurricoloIstituto = {
   instituteName: "Istituto Comprensivo · fixture Atlas",
   versionLabel: "S3-V2/F1 · dati dimostrativi non autorevoli",
   disciplines: [
@@ -283,8 +283,11 @@ export const instituteCurriculumFixture: CurricoloIstituto = {
   ]
 };
 
+// Compatibility alias for consumers that still depend on the pre-TERM-01 API.
+export const instituteCurriculumFixture = curricoloIstitutoFixture;
+
 export function findObjective(id: string) {
-  for (const discipline of instituteCurriculumFixture.disciplines) {
+  for (const discipline of curricoloIstitutoFixture.disciplines) {
     for (const band of discipline.bands) {
       for (const topic of band.topics) {
         const objective = topic.objectives.find(item => item.id === id);

@@ -1,4 +1,5 @@
 export {
+  curricoloIstitutoFixture,
   instituteCurriculumFixture,
   arenaCurriculumAuthority,
   findObjective,

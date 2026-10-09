@@ -52,6 +52,7 @@ if (errors.length) {
 }
 
 const projectedFacade = `export {
+  curricoloIstitutoFixture,
   instituteCurriculumFixture,
   arenaCurriculumAuthority,
   findObjective,

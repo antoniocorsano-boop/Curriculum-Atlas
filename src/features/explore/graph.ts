@@ -1,4 +1,4 @@
-import { instituteCurriculumFixture } from "@/features/curriculum/fixtures";
+import { curricoloIstitutoFixture } from "@/features/curriculum/fixtures";
 
 export type ExploreNodeKind = "institution" | "discipline" | "stage" | "objective" | "connection";
 
@@ -28,7 +28,7 @@ export function buildExploreGraph(): ExploreGraph {
   const nodes: ExploreNode[] = [
     {
       id: "institute",
-      label: instituteCurriculumFixture.instituteName,
+      label: curricoloIstitutoFixture.instituteName,
       kind: "institution",
       subtitle: "Curricolo verticale di istituto"
     }
@@ -36,7 +36,7 @@ export function buildExploreGraph(): ExploreGraph {
   const edges: ExploreEdge[] = [];
   const relationNodes = new Map<string, string>();
 
-  for (const discipline of instituteCurriculumFixture.disciplines) {
+  for (const discipline of curricoloIstitutoFixture.disciplines) {
     const disciplineNodeId = "discipline:" + discipline.id;
     nodes.push({
       id: disciplineNodeId,
