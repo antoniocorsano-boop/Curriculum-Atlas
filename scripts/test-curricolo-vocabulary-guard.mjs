@@ -11,6 +11,7 @@ const registry = {
   schemaVersion: 1,
   canonicalTerm: "curricolo",
   legacyToken: "curriculum",
+  legacyTokens: ["curriculum", "curricular"],
   exceptions: [],
 };
 
