@@ -1,4 +1,4 @@
-import type { InstituteCurriculum } from "./model";
+import type { CurricoloIstituto } from "./model";
 
 export const arenaCurriculumAuthority = {
   authorityState: "FIXTURE" as "FIXTURE" | "PROVISIONAL_COMPLETE" | "APPROVED",
@@ -7,7 +7,7 @@ export const arenaCurriculumAuthority = {
   fingerprint: "fixture",
 } as const;
 
-export const instituteCurriculumFixture: InstituteCurriculum = {
+export const instituteCurriculumFixture: CurricoloIstituto = {
   instituteName: "Istituto Comprensivo · fixture Atlas",
   versionLabel: "S3-V2/F1 · dati dimostrativi non autorevoli",
   disciplines: [
