@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "canonicalTerm": "curricolo",
+  "legacyToken": "curriculum",
+  "policy": "New occurrences of the legacy token are forbidden unless this registry declares the exact path, matching fragment and reason.",
+  "exceptions": [
+    {
+      "path": "src/features/curriculum/model.ts",
+      "contains": "Curriculum",
+      "reason": "The additive TERM-01 compatibility facade must name the existing v1 TypeScript types while exposing Curricolo* aliases."
+    },
+    {
+      "path": "src/features/curriculum/curricolo-vocabulary.typecheck.ts",
+      "contains": "Curriculum",
+      "reason": "Structural parity checks must name both the existing v1 types and the canonical Curricolo* aliases."
+    },
+    {
+      "path": "src/features/curriculum/arena-projected.ts",
+      "contains": "instituteCurriculumFixture",
+      "reason": "A single explicit compatibility alias is retained for pre-TERM-01 Atlas consumers while curricoloIstitutoFixture is canonical."
+    },
+    {
+      "path": "src/features/curriculum/fixtures.static.ts",
+      "contains": "instituteCurriculumFixture",
+      "reason": "The static fixture mirrors the single compatibility alias retained by the Arena-projected fixture."
+    },
+    {
+      "path": "src/app/obiettivi/[id]/page.tsx",
+      "contains": "@/features/curriculum/fixtures",
+      "reason": "The existing feature-directory path is intentionally not renamed in TERM-01 because open Atlas product branches depend on it."
+    },
+    {
+      "path": "src/components/atlas/curriculum-tree.tsx",
+      "contains": "@/features/curriculum/fixtures",
+      "reason": "The existing feature-directory path is intentionally not renamed in TERM-01 because open Atlas product branches depend on it."
+    },
+    {
+      "path": "src/components/atlas/relation-explorer.tsx",
+      "contains": "@/features/curriculum/fixtures",
+      "reason": "The existing feature-directory path is intentionally not renamed in TERM-01 because open Atlas product branches depend on it."
+    },
+    {
+      "path": "src/features/explore/graph.ts",
+      "contains": "@/features/curriculum/fixtures",
+      "reason": "The existing feature-directory path is intentionally not renamed in TERM-01 because open Atlas product branches depend on it."
+    },
+    {
+      "path": "scripts/validate-provisional-curriculum-regression.mjs",
+      "contains": "curriculum",
+      "reason": "The regression gate intentionally names legacy paths, aliases and v1 types to prove that canonicalization does not break compatibility."
+    },
+    {
+      "path": "docs/ARENA_CURRICULUM_SYNC_V1.md",
+      "contains": "sync/arena-curriculum",
+      "reason": "The established automation branch name remains a technical compatibility identifier in the v1 sync process."
+    },
+    {
+      "path": "scripts/test-curricolo-vocabulary-guard.mjs",
+      "contains": "curriculum",
+      "reason": "Vocabulary policy tests intentionally exercise forbidden and allowed examples of the legacy token."
+    }
+  ]
+}
