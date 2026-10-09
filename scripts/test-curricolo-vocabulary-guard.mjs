@@ -92,6 +92,16 @@ assert.equal(
   "the registry must be able to declare the legacy token it governs",
 );
 
+assert.equal(
+  validateAddedVocabulary(
+    "+{\"path\":\"src/legacy.ts\",\"contains\":\"curriculum\",\"reason\":\"legacy curriculum contract\"}",
+    registry,
+    "docs/governance/TRAMA_TERM_01_ATLAS_RESIDUAL_INVENTORY.json",
+  ).length,
+  0,
+  "the separately validated residual inventory must be self-exempt governance metadata",
+);
+
 const workflow = fs.readFileSync(".github/workflows/curricolo-vocabulary.yml", "utf8");
 assert.match(
   workflow,
