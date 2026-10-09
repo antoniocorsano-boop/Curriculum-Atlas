@@ -74,7 +74,7 @@ jobs:
       - name: Write release identity
         run: |
           printf '%s\n' \
-            "Curriculum Atlas public release" \
+            "Atlas public release" \
             "sha=${{ steps.head.outputs.sha }}" \
             "built_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             > out/RELEASE_IDENTITY.txt

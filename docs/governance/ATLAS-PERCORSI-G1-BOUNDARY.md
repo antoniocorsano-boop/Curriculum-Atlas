@@ -52,7 +52,7 @@ Particular items requiring remapping include local persistence/offline behaviour
 ## Non-interference rule
 Percorsi G1 work must not alter:
 
-- Arena curriculum authority;
+- autorità curricolare di Arena;
 - Arena → Atlas authority-state propagation;
 - validated F1 Curricolo/Materiali behaviour;
 - F2 Esplora relational map;

@@ -1,9 +1,9 @@
 import arenaExport from "./arena-curriculum-export.json";
 import type {
-  CurriculumBand,
-  CurriculumDiscipline,
-  CurriculumObjective,
-  InstituteCurriculum,
+  CurricoloBand,
+  CurricoloDiscipline,
+  CurricoloObjective,
+  CurricoloIstituto,
 } from "./model";
 
 type ArenaBand = {
@@ -72,7 +72,7 @@ function objectiveFromBand(
   band: ArenaBand,
   text: string,
   index: number,
-): CurriculumObjective {
+): CurricoloObjective {
   const base = `${discipline.id}-${slug(band.gradeLabel)}`;
   return {
     id: `${base}-o${index + 1}`,
@@ -88,7 +88,7 @@ function objectiveFromBand(
   };
 }
 
-function bandFromArena(discipline: ArenaDiscipline, band: ArenaBand): CurriculumBand {
+function bandFromArena(discipline: ArenaDiscipline, band: ArenaBand): CurricoloBand {
   const objectiveTexts = band.objectives?.length
     ? band.objectives
     : [band.progression || band.sourceText || `Progressione ${band.gradeLabel}`];
@@ -106,7 +106,7 @@ function bandFromArena(discipline: ArenaDiscipline, band: ArenaBand): Curriculum
   };
 }
 
-function axisToDiscipline(axis: ArenaAxis): CurriculumDiscipline {
+function axisToDiscipline(axis: ArenaAxis): CurricoloDiscipline {
   const description = axis.paragraphs
     .filter((line) => !/^\d+\./.test(line))
     .join("\n\n");
@@ -147,11 +147,14 @@ const ordinary = source.curriculum.disciplines.map((discipline) => ({
   bands: discipline.bands.map((band) => bandFromArena(discipline, band)),
 }));
 
-export const instituteCurriculumFixture: InstituteCurriculum = {
+export const curricoloIstitutoFixture: CurricoloIstituto = {
   instituteName: source.curriculum.instituteName,
   versionLabel: `Arena ${source.curriculum.masterVersion} · ${source.authorityState === "APPROVED" ? "approvato" : "in validazione · non vigente"}`,
   disciplines: [...ordinary, ...source.curriculum.transversalAxes.map(axisToDiscipline)],
 };
+
+// Compatibility alias for consumers that still depend on the pre-TERM-01 API.
+export const instituteCurriculumFixture = curricoloIstitutoFixture;
 
 export const arenaCurriculumAuthority = {
   authorityState: source.authorityState,
@@ -161,7 +164,7 @@ export const arenaCurriculumAuthority = {
 } as const;
 
 export function findObjective(id: string) {
-  for (const discipline of instituteCurriculumFixture.disciplines) {
+  for (const discipline of curricoloIstitutoFixture.disciplines) {
     for (const band of discipline.bands) {
       for (const topic of band.topics) {
         const objective = topic.objectives.find((item) => item.id === id);

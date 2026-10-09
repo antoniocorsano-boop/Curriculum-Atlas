@@ -34,7 +34,7 @@ interface AtlasOptionalResourceRef {
 - Atlas è opzionale;
 - solo risorse con provenance valida possono essere restituite;
 - nessuna pubblicazione viene avviata;
-- nessun curriculum authority claim;
+- nessuna rivendicazione di autorità sul curricolo;
 - nessuna modifica dei materiali;
 - fallimento Atlas non blocca Docente OS.
 

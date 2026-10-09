@@ -1,0 +1,39 @@
+name: TRAMA TERM-01 Curricolo Vocabulary
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  vocabulary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Vocabulary guard tests
+        run: node scripts/test-curricolo-vocabulary-guard.mjs
+
+      - name: Residual inventory tests
+        run: node scripts/test-curricolo-residual-inventory.mjs
+
+      - name: Validate curricolo vocabulary
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        run: node scripts/validate-curricolo-vocabulary.mjs "$BASE_SHA" "$HEAD_SHA"
+
+      - name: Validate classified residual inventory
+        run: node scripts/validate-curricolo-residual-inventory.mjs

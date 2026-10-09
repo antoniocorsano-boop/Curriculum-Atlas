@@ -66,7 +66,7 @@ try {
       if (route === "/curricolo") {
         const body = await page.locator("body").innerText();
         if (!/Infanzia/i.test(body) || !/Primaria/i.test(body) || !/Secondaria/i.test(body)) {
-          throw new Error("Complete institute curriculum stages are not visible on /curricolo");
+          throw new Error("Gli ordini del curricolo di istituto non sono tutti visibili su /curricolo");
         }
       }
     }
