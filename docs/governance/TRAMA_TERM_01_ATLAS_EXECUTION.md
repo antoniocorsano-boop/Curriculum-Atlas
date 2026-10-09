@@ -4,7 +4,7 @@ State: IMPLEMENTATION_COMPLETE / HUMAN_REVIEW_REQUIRED / NO_MERGE
 
 - canonical product name: Atlas
 - canonical institutional term: curricolo / curricolo di istituto
-- Arena remains the sole curricular authority
+- Arena resta l’unica autorità istituzionale sul curricolo
 - v1 contracts, repository slug, established paths and persisted compatibility fields remain unchanged in this tranche
 - anti-regression guard runs on pull requests and pushes to main
 - repository-wide residual inventory is fail-closed and fully classified
