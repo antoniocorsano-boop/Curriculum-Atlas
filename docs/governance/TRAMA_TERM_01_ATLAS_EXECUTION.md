@@ -8,11 +8,11 @@ State: IMPLEMENTATION_COMPLETE / HUMAN_REVIEW_REQUIRED / NO_MERGE
 - v1 contracts, repository slug, established paths and persisted compatibility fields remain unchanged in this tranche
 - anti-regression guard runs on pull requests and pushes to main
 - repository-wide residual inventory is fail-closed and fully classified
-- classified residual occurrences: 209
+- classified residual occurrences: 210
   - contract-v1: 20
   - infrastructure-legacy: 56
   - compatibility-api: 63
-  - test-governance: 62
+  - test-governance: 63
   - historical-evidence: 8
 - unclassified residuals: 0
 - unused inventory rules: 0
