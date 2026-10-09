@@ -2,7 +2,11 @@
   "schemaVersion": 1,
   "canonicalTerm": "curricolo",
   "legacyToken": "curriculum",
-  "policy": "New occurrences of the legacy token are forbidden unless this registry declares the exact path, matching fragment and reason.",
+  "legacyTokens": [
+    "curriculum",
+    "curricular"
+  ],
+  "policy": "New occurrences of the governed legacy tokens are forbidden unless this registry declares the exact path, matching fragment and reason.",
   "exceptions": [
     {
       "path": "src/features/curriculum/model.ts",
@@ -58,6 +62,11 @@
       "path": "scripts/test-curricolo-vocabulary-guard.mjs",
       "contains": "curriculum",
       "reason": "Vocabulary policy tests intentionally exercise forbidden and allowed examples of the legacy token."
+    },
+    {
+      "path": "scripts/test-curricolo-vocabulary-guard.mjs",
+      "contains": "curricular",
+      "reason": "Vocabulary policy tests intentionally exercise the forbidden English derivative to prove the guard remains fail-closed."
     },
     {
       "path": "docs/governance/TRAMA_TERM_01_ATLAS_RESIDUAL_INVENTORY.json",
