@@ -63,6 +63,16 @@
       "path": "docs/governance/TRAMA_TERM_01_ATLAS_RESIDUAL_INVENTORY.json",
       "contains": "\"legacyToken\": \"curriculum\"",
       "reason": "The residual inventory must declare the legacy token it classifies repository-wide."
+    },
+    {
+      "path": "docs/governance/TRAMA_TERM_01_ATLAS_RESIDUAL_INVENTORY.json",
+      "contains": "\"contains\":\"curriculum\"",
+      "reason": "Residual inventory entries must be able to name the exact legacy token they classify; this governance metadata does not authorize product code or prose."
+    },
+    {
+      "path": "scripts/sync-arena-curriculum.mjs",
+      "contains": "input.curriculum",
+      "reason": "The Arena v1 export keeps its published curriculum payload key; the sync adapter canonicalizes messages while preserving the wire field."
     }
   ]
 }
