@@ -1,37 +1,37 @@
-# Arena → Atlas automatic curriculum synchronization
+# Arena → Atlas — sincronizzazione automatica del curricolo
 
-## Runtime model
+## Modello runtime
 
-Atlas never owns curriculum authority.
+Atlas non acquisisce mai autorità sul curricolo.
 
-`Arena release → public export bundle → Atlas hourly watcher → governed sync PR → Atlas gates → human merge`
+`release Arena → bundle pubblico di esportazione → watcher orario Atlas → PR di sincronizzazione governata → gate Atlas → merge umano`
 
-The watcher compares:
-- structural fingerprint;
-- authority state;
-- canonical source revision.
+Il watcher confronta:
+- impronta strutturale;
+- stato di autorità;
+- revisione canonica della fonte.
 
-A change in any of these opens or updates the single branch `sync/arena-curriculum`.
+Una variazione di uno qualsiasi di questi elementi apre o aggiorna l’unico branch `sync/arena-curriculum`.
 
-## Publication rules
+## Regole di pubblicazione
 
 ### PROVISIONAL_COMPLETE
 
-- the candidate may be rendered in the PR preview for professional inspection;
-- candidate-integrity gate may PASS;
-- publication-authority gate MUST FAIL;
-- public `main` must not be updated.
+- il candidato può essere reso nella preview della PR per l’ispezione professionale;
+- il gate di integrità del candidato può risultare PASS;
+- il gate di autorità alla pubblicazione DEVE risultare FAIL;
+- il `main` pubblico non deve essere aggiornato.
 
 ### APPROVED
 
-Public promotion additionally requires:
-- Arena `authorityReceiptRef`;
-- SHA-256 integrity digest over the approved payload;
-- Atlas build/visual/accessibility gates;
-- human review of the exact head.
+La promozione pubblica richiede inoltre:
+- `authorityReceiptRef` emesso da Arena;
+- digest di integrità SHA-256 sul payload approvato;
+- gate Atlas di build, visuali e accessibilità;
+- revisione umana dell’exact head.
 
-No curriculum edit is authored in Atlas. Corrections must return to Arena and produce a new Arena fingerprint.
+Nessuna modifica del curricolo viene redatta in Atlas. Le correzioni devono tornare ad Arena e produrre una nuova impronta Arena.
 
 ## Bootstrap
 
-The first candidate is the complete institutional master materialized by Arena PR #329. It replaces the reduced S3-V2 fixture only inside the sync candidate branch until institutional approval is complete.
+Il primo candidato è il master istituzionale completo materializzato dalla PR Arena #329. Sostituisce la fixture ridotta S3-V2 soltanto nel branch candidato di sincronizzazione finché l’approvazione istituzionale non è completata.
