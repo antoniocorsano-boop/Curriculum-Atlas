@@ -38,6 +38,19 @@ export type InstituteCurriculum = {
   disciplines: CurriculumDiscipline[];
 };
 
+/**
+ * TRAMA-TERM-01 canonical domain vocabulary.
+ *
+ * The Curriculum* exports above remain as compatibility names for the
+ * existing Atlas v1 code and Arena→Atlas contracts. New internal domain work
+ * should prefer the Curricolo* names below.
+ */
+export type CurricoloObjective = CurriculumObjective;
+export type CurricoloTopic = CurriculumTopic;
+export type CurricoloBand = CurriculumBand;
+export type CurricoloDiscipline = CurriculumDiscipline;
+export type CurricoloIstituto = InstituteCurriculum;
+
 export type ResourceKind = "Scheda" | "Presentazione" | "Infografica" | "Video" | "Link" | "Documento";
 
 export type AtlasResource = {
