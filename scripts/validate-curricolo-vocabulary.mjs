@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const VOCABULARY_REGISTRY_PATH = "docs/governance/TRAMA_TERM_01_CURRICOLO_VOCABULARY.json";
+export const RESIDUAL_INVENTORY_PATH = "docs/governance/TRAMA_TERM_01_ATLAS_RESIDUAL_INVENTORY.json";
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -56,7 +57,7 @@ const removeAllowedFragments = (line, registry, filePath) => {
 
 export function validateAddedVocabulary(diffText, registryInput, filePath) {
   const registry = validateVocabularyRegistry(registryInput);
-  if (filePath === VOCABULARY_REGISTRY_PATH) return [];
+  if (filePath === VOCABULARY_REGISTRY_PATH || filePath === RESIDUAL_INVENTORY_PATH) return [];
 
   const forbidden = new RegExp(escapeRegExp(registry.legacyToken), "i");
   const violations = [];
