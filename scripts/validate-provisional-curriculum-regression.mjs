@@ -5,6 +5,8 @@ const errors = [];
 const req = (ok, message) => { if (!ok) errors.push(message); };
 
 const fixtures = read("src/features/curriculum/fixtures.ts");
+const arenaProjected = read("src/features/curriculum/arena-projected.ts");
+const staticFixtures = read("src/features/curriculum/fixtures.static.ts");
 const page = read("src/app/curricolo/page.tsx");
 const validator = read("scripts/validate-arena-curriculum-authority.mjs");
 const sync = read("scripts/sync-arena-curriculum.mjs");
@@ -14,6 +16,18 @@ const arenaExport = JSON.parse(read("src/features/curriculum/arena-curriculum-ex
 
 req(fixtures.includes("./arena-projected"),
   "REGRESSION: Atlas no longer projects the Arena curriculum snapshot");
+
+req(arenaProjected.includes("CurricoloBand")
+  && arenaProjected.includes("CurricoloDiscipline")
+  && arenaProjected.includes("CurricoloObjective")
+  && arenaProjected.includes("CurricoloIstituto"),
+  "REGRESSION: Arena projection producer must use canonical Curricolo* domain types");
+req(!/\b(?:CurriculumBand|CurriculumDiscipline|CurriculumObjective|InstituteCurriculum)\b/.test(arenaProjected),
+  "REGRESSION: Arena projection producer must not import legacy Curriculum* domain types");
+req(staticFixtures.includes("CurricoloIstituto"),
+  "REGRESSION: static curricolo fixture must use canonical CurricoloIstituto type");
+req(!/\bInstituteCurriculum\b/.test(staticFixtures),
+  "REGRESSION: static curricolo fixture must not import legacy InstituteCurriculum type");
 
 req(page.includes("Curricolo provvisorio — non vigente."),
   "REGRESSION: indicazione 'Curricolo provvisorio — non vigente' mancante");
