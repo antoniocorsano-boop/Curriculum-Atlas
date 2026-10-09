@@ -1,12 +1,22 @@
 # TRAMA-TERM-01 — Atlas execution receipt
 
-State: ACTIVE_VOCABULARY_CLEANUP_APPLIED / RESIDUAL_INVENTORY_PENDING
+State: IMPLEMENTATION_COMPLETE / HUMAN_REVIEW_REQUIRED / NO_MERGE
 
 - canonical product name: Atlas
 - canonical institutional term: curricolo / curricolo di istituto
 - Arena remains the sole curricular authority
 - v1 contracts, repository slug, established paths and persisted compatibility fields remain unchanged in this tranche
 - anti-regression guard runs on pull requests and pushes to main
-- repository-wide residual inventory is fail-closed until every remaining occurrence is classified
+- repository-wide residual inventory is fail-closed and fully classified
+- classified residual occurrences: 209
+  - contract-v1: 20
+  - infrastructure-legacy: 56
+  - compatibility-api: 63
+  - test-governance: 62
+  - historical-evidence: 8
+- unclassified residuals: 0
+- unused inventory rules: 0
 
-The inventory may classify only technical compatibility, governed tests, infrastructure identifiers or historical evidence. Active prose must be corrected instead of allowlisted.
+The inventory classifies only technical compatibility, governed tests, infrastructure identifiers or historical evidence. Active prose is corrected instead of allowlisted.
+
+Integration remains subject to exact-head CI and Human Review. No automatic merge is authorized.
