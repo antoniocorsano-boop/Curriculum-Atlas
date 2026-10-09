@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import {
   VOCABULARY_REGISTRY_PATH,
   validateAddedVocabulary,
@@ -90,5 +91,20 @@ assert.equal(
   0,
   "the registry must be able to declare the legacy token it governs",
 );
+
+const workflow = fs.readFileSync(".github/workflows/curricolo-vocabulary.yml", "utf8");
+assert.match(
+  workflow,
+  /pull_request:\s*[\r\n]+\s*push:\s*[\r\n]+\s*branches:\s*[\r\n]+\s*- main/,
+  "vocabulary guard must run on pull requests and pushes to main",
+);
+assert.match(workflow, /github\.event\.pull_request\.base\.sha/,
+  "pull-request validation must use the PR base SHA");
+assert.match(workflow, /github\.event\.pull_request\.head\.sha/,
+  "pull-request validation must use the PR head SHA");
+assert.match(workflow, /github\.event\.before/,
+  "push validation must use the pre-push SHA as its base");
+assert.match(workflow, /github\.sha/,
+  "push validation must use github.sha as its head");
 
 console.log("TRAMA_TERM_01_ATLAS_VOCABULARY_TEST_PASS");
