@@ -34,13 +34,13 @@ const projectsArenaSnapshot = facade.includes("./arena-projected");
 
 if (!candidateOnly && projectsArenaSnapshot) {
   if (input.authorityState === "PROVISIONAL_COMPLETE") {
-    const curriculumPage = fs.readFileSync("src/app/curricolo/page.tsx", "utf8");
+    const curricoloPage = fs.readFileSync("src/app/curricolo/page.tsx", "utf8");
     req(input.authorityReceiptRef == null, "PROVISIONAL_COMPLETE cannot claim authorityReceiptRef");
     req(
-      curriculumPage.includes("Curriculum provvisorio — non vigente.")
-        && curriculumPage.includes("approvazione del Collegio dei docenti")
-        && curriculumPage.includes('data-authority-state="PROVISIONAL_COMPLETE"'),
-      "PUBLICATION BLOCKED: provisional curriculum requires explicit non-vigente Collegio-pending disclosure"
+      curricoloPage.includes("Curricolo provvisorio — non vigente.")
+        && curricoloPage.includes("approvazione del Collegio dei docenti")
+        && curricoloPage.includes('data-authority-state="PROVISIONAL_COMPLETE"'),
+      "PUBLICATION BLOCKED: il curricolo provvisorio richiede indicazione esplicita non-vigente e approvazione del Collegio in attesa"
     );
   } else if (input.authorityState === "APPROVED") {
     req(
