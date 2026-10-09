@@ -58,6 +58,11 @@
       "path": "scripts/test-curricolo-vocabulary-guard.mjs",
       "contains": "curriculum",
       "reason": "Vocabulary policy tests intentionally exercise forbidden and allowed examples of the legacy token."
+    },
+    {
+      "path": "docs/governance/TRAMA_TERM_01_ATLAS_RESIDUAL_INVENTORY.json",
+      "contains": "\"legacyToken\": \"curriculum\"",
+      "reason": "The residual inventory must declare the legacy token it classifies repository-wide."
     }
   ]
 }

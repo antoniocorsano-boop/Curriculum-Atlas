@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "canonicalTerm": "curricolo",
+  "legacyToken": "curriculum",
+  "categories": [
+    "contract-v1",
+    "infrastructure-legacy",
+    "compatibility-api",
+    "test-governance",
+    "historical-evidence"
+  ],
+  "residuals": []
+}
