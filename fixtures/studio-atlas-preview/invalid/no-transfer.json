@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "studio-atlas.preview-snapshot/v0.1",
+  "snapshotId": "fixture-invalid-no-transfer",
+  "packageDigest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "pathwayId": "fixture-invalid",
+  "version": "0.1.0",
+  "title": "Snapshot senza trasferimento",
+  "description": "Deve fallire.",
+  "runtimeAuthorized": false,
+  "studentAuthorized": false,
+  "scenes": [
+    {
+      "sceneId": "S1",
+      "kind": "SCENE",
+      "title": "Scena",
+      "visibleSituation": "Situazione.",
+      "learnerAction": "Agisci.",
+      "consequence": "Cambia qualcosa."
+    }
+  ]
+}

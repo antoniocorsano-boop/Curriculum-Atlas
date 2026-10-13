@@ -29,6 +29,7 @@ export function PathwayRuntimeSurface({
   );
   const [presentationId, setPresentationId] = useState(availablePresentations[0] ?? "");
   const presentation = presentationId ? definition.presentationData?.[presentationId] : undefined;
+  const immersive = definition.graph.nodes.some((node) => node.stage?.visualMode === "CINEMATIC_EDITORIAL");
   const growth = useLocalPathwayGrowth({
     pathwayId: definition.experienceId,
     pathwayVersion: definition.version,
@@ -36,7 +37,7 @@ export function PathwayRuntimeSurface({
   });
 
   return (
-    <main className="pathwayPrototype">
+    <main className={immersive ? "pathwayPrototype pathwayPrototype--immersive" : "pathwayPrototype"}>
       <header className="pathwayPrototype__header">
         <div>
           <p className="pathwayPrototype__eyebrow">Atlas · Percorsi</p>
