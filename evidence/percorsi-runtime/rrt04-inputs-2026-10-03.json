@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "atlas.percorsi.rrt04-inputs/v1",
+  "reviewId": "RRT-04",
+  "runtimeExactHead": "87512daaa3e09d8c48fda7de2c869e0a6d2e43e8",
+  "qualificationContractVersion": "v1",
+  "runtimeAuthorization": "NOT_RUNTIME_AUTHORIZED",
+  "sealedArtifact": {
+    "workflowRunId": 37147171500,
+    "artifactId": 11282302609,
+    "artifactName": "percorsi-sealed-preauth-87512daaa3e09d8c48fda7de2c869e0a6d2e43e8",
+    "artifactDigest": "sha256:4fadb5b3d3bd80fa47e4843fd149987673900cf45f1844bcb6279304ae28af7b"
+  },
+  "publicBoundaryEvidence": {
+    "workflowRunId": 37147171517,
+    "conclusion": "success",
+    "baseUrl": "https://antoniocorsano-boop.github.io/Curriculum-Atlas/"
+  },
+  "candidates": [
+    {
+      "candidateBinding": {
+        "runtimeExactHead": "87512daaa3e09d8c48fda7de2c869e0a6d2e43e8",
+        "pathwayId": "pw-missing-information-01",
+        "contentVersion": "1.0.0",
+        "publicationId": "pw-missing-information-01@1.0.0"
+      },
+      "authorityRef": "antoniocorsano-boop/trama-ecosistema#96@dfb5b106708bee88016907c13ee0d104c093e7ca",
+      "authorityEvidenceRef": "TRAMA RRT-01 #221 @ 1eeef109f33c629a18b505a6177d2bc3df714b00",
+      "intendedPublicPath": "/percorsi/pw-missing-information-01",
+      "surfaceArtifactDigest": "sha256:b0be24515fd2c0e5c85435ba6c0c769a8c7f915c04c5e6a4832d6e5d6933bd63",
+      "q5Transition": {
+        "eventId": "rrt04-pw-missing-lab-to-qualified-20261003",
+        "previousState": "LAB",
+        "requestedTransition": "LAB>QUALIFIED",
+        "resultingState": "QUALIFIED",
+        "transitionAt": "2026-10-03T19:15:45Z"
+      }
+    },
+    {
+      "candidateBinding": {
+        "runtimeExactHead": "87512daaa3e09d8c48fda7de2c869e0a6d2e43e8",
+        "pathwayId": "pw-constraints-tradeoffs-01",
+        "contentVersion": "1.0.0",
+        "publicationId": "pw-constraints-tradeoffs-01@1.0.0"
+      },
+      "authorityRef": "antoniocorsano-boop/trama-ecosistema#217@81534e352396ad858c7cf5ee00c7ec3b0756ae64",
+      "authorityEvidenceRef": "TRAMA RRT-01 #221 @ 1eeef109f33c629a18b505a6177d2bc3df714b00",
+      "intendedPublicPath": "/percorsi/pw-constraints-tradeoffs-01",
+      "surfaceArtifactDigest": "sha256:663d99688d4d410ee7d43361fcbed9985472c1fdf58db1eac9a41874f9769545",
+      "q5Transition": {
+        "eventId": "rrt04-pw-constraints-lab-to-qualified-20261003",
+        "previousState": "LAB",
+        "requestedTransition": "LAB>QUALIFIED",
+        "resultingState": "QUALIFIED",
+        "transitionAt": "2026-10-03T19:15:45Z"
+      }
+    }
+  ]
+}

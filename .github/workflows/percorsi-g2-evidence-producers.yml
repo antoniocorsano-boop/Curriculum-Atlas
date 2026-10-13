@@ -5,6 +5,9 @@ on:
       - 'schemas/percorsi-g2-evidence-producer-result.schema.json'
       - 'scripts/percorsi-g2-evidence-producers.mjs'
       - 'scripts/test-percorsi-g2-evidence-producers.mjs'
+      - 'scripts/test-percorsi-g2-q2-q3-q7-producers.mjs'
+      - 'scripts/run-percorsi-rrt04-qualification.mjs'
+      - 'evidence/percorsi-runtime/rrt04-inputs-2026-10-03.json'
       - 'scripts/validate-percorsi-g2-evidence-producer-schema.mjs'
       - 'scripts/percorsi-g2-invalidation.mjs'
       - 'scripts/test-percorsi-g2-invalidation.mjs'
@@ -26,6 +29,8 @@ jobs:
           node-version: '22'
       - name: Run governed Q5 Q6 Q1 producer tests
         run: node scripts/test-percorsi-g2-evidence-producers.mjs
+      - name: Run governed Q2 Q3 Q7 producer tests
+        run: node scripts/test-percorsi-g2-q2-q3-q7-producers.mjs
       - name: Run invalidation and revalidation tests
         run: node scripts/test-percorsi-g2-invalidation.mjs
       - name: Test fail-closed audit qualification
