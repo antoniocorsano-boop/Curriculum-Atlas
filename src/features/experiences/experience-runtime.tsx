@@ -57,6 +57,8 @@ export function ExperienceRuntime({
   const isChoice = node.interaction === "choice";
   const isText = node.interaction === "text";
   const firstTransition = transitions[0];
+  const activeWorld = pendingTransition?.worldAfter ?? node.world;
+  const worldChangedByChoice = Boolean(pendingTransition?.worldAfter);
 
   function selectTransition(transition: ResolvedTransition) {
     setPendingTransition(transition);
@@ -81,6 +83,39 @@ export function ExperienceRuntime({
     >
       <p className="experience-kicker">{definition.mode === "SMART" ? "Attività smart" : "Percorso"}</p>
       <h1 id="experience-heading" ref={headingRef} tabIndex={-1}>{title}</h1>
+
+      {activeWorld && (
+        <section
+          className={worldChangedByChoice ? "experience-world experience-world--changed" : "experience-world"}
+          aria-label={`Stato del mondo: ${activeWorld.place}`}
+        >
+          <div className="experience-world__heading">
+            <div>
+              <p className="experience-world__eyebrow">{activeWorld.place}</p>
+              <h2>{worldChangedByChoice ? "Effetto della prova" : "Stato della scena"}</h2>
+            </div>
+            <strong className="experience-world__status" role="status" aria-live="polite">
+              {activeWorld.status}
+            </strong>
+          </div>
+          <div className="experience-world__signals">
+            {activeWorld.signals.map((signal) => (
+              <article
+                key={signal.id}
+                className="experience-world__signal"
+                data-signal-state={signal.state.toLowerCase()}
+              >
+                <div className="experience-world__signal-head">
+                  <span aria-hidden="true" className="experience-world__dot" />
+                  <strong>{signal.label}</strong>
+                  <span className="experience-world__state">{signal.state}</span>
+                </div>
+                {signal.detail ? <p>{signal.detail}</p> : null}
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
       {facts.length > 0 && (
         <div className="experience-facts">
