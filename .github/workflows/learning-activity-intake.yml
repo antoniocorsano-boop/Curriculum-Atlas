@@ -1,0 +1,30 @@
+name: Atlas - Learning activity intake integrity
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "content/staging/**"
+      - "scripts/validate-activity-intake.mjs"
+      - ".github/workflows/learning-activity-intake.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  learning-intake:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact candidate commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Install Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify staging asset integrity and fail-closed permissions
+        run: node scripts/validate-activity-intake.mjs content/staging/missione-118/intake.json
