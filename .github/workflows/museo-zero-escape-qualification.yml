@@ -1,0 +1,50 @@
+name: Museo Zero - Escape room product qualification
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - feat/museo-zero-product-v0.2
+
+permissions:
+  contents: read
+
+concurrency:
+  group: museo-zero-escape-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  browser-product:
+    if: >-
+      github.event.pull_request.number == 83 &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'feat/museo-zero-escape-room-playable'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Read exact pull request revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Configure pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - name: Configure Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          package-manager-cache: false
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+      - name: TypeScript typecheck
+        run: pnpm typecheck
+      - name: ESLint verification
+        run: pnpm lint
+      - name: Production build
+        run: pnpm build
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Playable escape-room browser scenarios
+        run: pnpm exec playwright test tests/museo-zero-escape.spec.ts --project=chromium

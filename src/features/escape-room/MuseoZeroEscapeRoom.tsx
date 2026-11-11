@@ -81,9 +81,9 @@ export function MuseoZeroEscapeRoom() {
    <section className="zero-opening">
     <div className="zero-opening__light" aria-hidden="true"/>
     <div className="zero-opening__copy">
-     <span className="zero-overline">Una sera prima dell'apertura</span>
+     <span className="zero-overline">Una sera prima dell&apos;apertura</span>
      <h1>La sala<br/><em>che non torna.</em></h1>
-     <p>La parete si illumina quando Lia è già dall'altra parte. Il suono arriva ancora dopo. Nessuno capisce perché.</p>
+     <p>La parete si illumina quando Lia è già dall&apos;altra parte. Il suono arriva ancora dopo. Nessuno capisce perché.</p>
      <blockquote>Teo: «No. Ancora. Ieri funzionava.»</blockquote>
      <button className="zero-primary" type="button" onClick={()=>setStarted(true)}>Entra nel museo <span aria-hidden="true">↗</span></button>
      <small>Non è un questionario: esplora, collega le tracce e prova la tua soluzione.</small>
@@ -122,7 +122,7 @@ export function MuseoZeroEscapeRoom() {
         <div className="zero-board__content">
          {mode==="cronologia"?[...gathered].sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id)).map(item=><article key={item.id}><small>{item.time}</small><b>{item.label}</b><p>{item.detail}</p></article>):
          mode==="collegamenti"?<><article><small>INGRESSO</small><b>Sensore fisico B</b></article><span aria-hidden="true">→</span><article><small>REGIA</small><b>Segnale ascoltato A</b></article><p className="zero-board__message">{cause?"Le tracce mostrano un disallineamento: il sensore fisico è B, ma la regia ascolta A.":"Trova l'etichetta del sensore in laboratorio e il segnale configurato in regia: solo così il confronto è dimostrato."}</p></>:
-         <><article><b>Tornare al vecchio percorso</b><p>Il passaggio tornerebbe meno accessibile.</p></article><article><b>Comando manuale</b><p>Il tempo cambierebbe da una prova all'altra.</p></article><article><b>Configurare B</b><p>Conserva il nuovo ingresso. Serve una prova simulata.</p></article></>}
+         <><article><b>Tornare al vecchio percorso</b><p>Il passaggio tornerebbe meno accessibile.</p></article><article><b>Comando manuale</b><p>Il tempo cambierebbe da una prova all&apos;altra.</p></article><article><b>Configurare B</b><p>Conserva il nuovo ingresso. Serve una prova simulata.</p></article></>}
         </div>}
        <div className="zero-board__pins">{gathered.map(item=><button type="button" key={item.id} onClick={()=>pin(item.id)}>{item.label} <span aria-hidden="true">×</span></button>)}</div>
       </div>:null}
@@ -147,7 +147,7 @@ export function MuseoZeroEscapeRoom() {
       <p>Il visitatore attraversa il nuovo ingresso. La proiezione parte subito. Suono e luce seguono la sequenza. La sala è pronta per la prossima prova.</p>
       <blockquote>Omar: «Il sensore funzionava. Era il collegamento.»</blockquote><div className="zero-end__badge"><strong>Traccia del percorso</strong><p>Hai ricostruito le prove e verificato la causa del ritardo.</p></div>
       <small>Riconoscimento solo in questa sessione. Nessun profilo e nessuna graduatoria.</small>
-      <button type="button" className="zero-primary" onClick={restart}>Rigioca l'indagine</button>
+      <button type="button" className="zero-primary" onClick={restart}>Rigioca l&apos;indagine</button>
      </section></div>:null}
    </>}
   <footer className="zero-footer"><span>Studio Atlas · Museo Zero</span><span>Prototipo in revisione · Non autorizzato agli studenti</span></footer>

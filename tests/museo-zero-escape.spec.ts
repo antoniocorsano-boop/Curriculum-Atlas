@@ -6,18 +6,18 @@ test.describe("Museo Zero – escape room giocabile", () => {
   await page.getByRole("button",{name:/entra nel museo/i}).click();
   await page.getByRole("button",{name:/avvia prova nella sala/i}).click();
   await expect(page.getByText("La proiezione parte in ritardo").first()).toBeVisible();
-  await page.getByRole("button",{name:"Ingresso"}).click();
+  await page.getByRole("navigation",{name:"Luoghi del museo"}).getByRole("button",{name:"Ingresso",exact:true}).click();
   await page.getByRole("button",{name:"Esamina Nuovo accesso"}).click();
   await page.getByRole("button",{name:"Porta sul banco"}).click();
-  await page.getByRole("button",{name:"Laboratorio"}).click();
+  await page.getByRole("navigation",{name:"Luoghi del museo"}).getByRole("button",{name:"Laboratorio",exact:true}).click();
   await page.getByRole("button",{name:"Esamina Sensore B"}).click();
   await page.getByRole("button",{name:"Porta sul banco"}).click();
-  await page.getByRole("button",{name:"Cabina regia"}).click();
+  await page.getByRole("navigation",{name:"Luoghi del museo"}).getByRole("button",{name:"Cabina regia",exact:true}).click();
   await page.getByRole("button",{name:"Esamina Segnale attivo: A"}).click();
   await page.getByRole("button",{name:"Porta sul banco"}).click();
   await page.getByRole("button",{name:/apri il banco/i}).click();
   await expect(page.getByText(/le tracce mostrano un disallineamento/i)).toBeVisible();
-  await page.getByRole("button",{name:"Sensore B"}).click();
+  await page.getByRole("group",{name:"Segnale della simulazione"}).getByRole("button",{name:"Sensore B",exact:true}).click();
   await page.getByRole("button",{name:/avvia prova nella sala/i}).click();
   await page.getByRole("button",{name:"Conferma la soluzione"}).click();
   await expect(page.getByRole("heading",{name:"Sala pronta."})).toBeVisible();
@@ -27,7 +27,7 @@ test.describe("Museo Zero – escape room giocabile", () => {
  test("non basta tentare il sensore corretto senza prova", async ({page}) => {
   await page.goto("/percorsi/lab/museo-zero-escape");
   await page.getByRole("button",{name:/entra nel museo/i}).click();
-  await page.getByRole("button",{name:"Sensore B"}).click();
+  await page.getByRole("group",{name:"Segnale della simulazione"}).getByRole("button",{name:"Sensore B",exact:true}).click();
   await page.getByRole("button",{name:/avvia prova nella sala/i}).click();
   await expect(page.getByRole("button",{name:"Conferma la soluzione"})).toBeDisabled();
  });
