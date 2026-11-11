@@ -93,8 +93,9 @@ export function MuseoZeroEscapeRoom() {
    :<>
     <nav className="zero-map" aria-label="Luoghi del museo">
      {places.map((entry,i)=><button type="button" key={entry.id} onClick={()=>move(entry.id)}
+      aria-label={entry.label}
       aria-current={entry.id===place?"location":undefined} className={entry.id===place?"is-current":""}>
-      <span>0{i+1}</span>{entry.label}</button>)}
+      <span aria-hidden="true">0{i+1}</span>{entry.label}</button>)}
     </nav>
     <div className="zero-layout">
      <section className="zero-world" aria-label="Esplorazione del museo">
