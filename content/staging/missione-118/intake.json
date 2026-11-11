@@ -1,0 +1,173 @@
+{
+  "contract": "trama.activity-intake/v0.1",
+  "activityId": "trama-missione-118-2026",
+  "version": "0.1.0-draft",
+  "title": "Missione 118 — Il futuro è da riprogettare",
+  "kind": "INTERACTIVE_ESCAPE_ROOM",
+  "source": {
+    "channel": "ChatGPT",
+    "provenance": "original user-directed teaching artifact",
+    "originalFile": "Missione_118_V5_audio_professionale.html",
+    "inspiration": {
+      "work": "Good Luck, Have Fun, Don't Die",
+      "relation": "theme only; no film frames or dialogue used",
+      "copyrightReview": "PENDING"
+    }
+  },
+  "learning": {
+    "schoolLevel": "SECONDARIA_I_GRADO",
+    "disciplines": [
+      "TECNOLOGIA",
+      "EDUCAZIONE_CIVICA"
+    ],
+    "suggestedDurationMinutes": 55,
+    "placementStatus": "UNASSIGNED",
+    "arenaObjectiveRefs": [],
+    "udaRefs": [],
+    "objectives": [
+      "Valutare messaggi e notifiche rispetto alla concentrazione e alla sicurezza",
+      "Verificare le informazioni prodotte da sistemi di IA",
+      "Interpretare sensori, condizioni e supervisione di sistemi automatizzati",
+      "Argomentare scelte tecnologiche responsabili e conseguenze"
+    ],
+    "evidenceTypes": [
+      "decisioni motivate",
+      "verifiche e correzioni",
+      "progetto di miglioramento"
+    ],
+    "arenaCurricoloVersionRef": null
+  },
+  "experience": {
+    "entrypoint": "experience.html",
+    "entrypointSha256": "22971583a2a7dc2d45947b4ce19a843a057b05864b9a2b896762728c9519175e",
+    "embeddedImagesCount": 8,
+    "chapters": [
+      "Città delle notifiche",
+      "Laboratorio dell'intelligenza artificiale",
+      "Incrocio intelligente"
+    ],
+    "characters": [
+      "Nora",
+      "Teo",
+      "AX-118"
+    ],
+    "offline": true,
+    "trustPolicy": "ISOLATED_HTML_SANDBOX_REQUIRED",
+    "learnerPersonalData": false,
+    "telemetry": false
+  },
+  "assets": [
+    {
+      "id": "cover",
+      "path": "media/cover.webp",
+      "type": "IMAGE",
+      "format": "image/webp",
+      "sha256": "b579086d786446f7ed30642ae8ff5fc9d9c5b1b9acb607d932a4acc98c63564f",
+      "gitBlob": "815493373347480832ee27535dd976072acd16b8",
+      "bytes": 117782,
+      "rightsState": "PENDING_HUMAN_REVIEW"
+    },
+    {
+      "id": "city",
+      "path": "media/city.webp",
+      "type": "IMAGE",
+      "format": "image/webp",
+      "sha256": "c512666d1688fa76cfb34e31a204fb3a86c50d467a25c9189dc39619e0ef7da2",
+      "gitBlob": "78300d8cd90935fd30878995459b5a119c03a508",
+      "bytes": 132538,
+      "rightsState": "PENDING_HUMAN_REVIEW"
+    },
+    {
+      "id": "lab",
+      "path": "media/lab.webp",
+      "type": "IMAGE",
+      "format": "image/webp",
+      "sha256": "fe9696bc64c0a2d7d5f8b8a182984290d6230f18483b6f47167974ba872279b8",
+      "gitBlob": "736d510b6ede926b2cbe05d1412b6c67c47a449f",
+      "bytes": 120884,
+      "rightsState": "PENDING_HUMAN_REVIEW"
+    },
+    {
+      "id": "traffic",
+      "path": "media/traffic.webp",
+      "type": "IMAGE",
+      "format": "image/webp",
+      "sha256": "f1baa863a22d4a7bc9d4b80ad82ead96d28b139f225214691d9a09e7b2c598b2",
+      "gitBlob": "ec4988fe78400a66f215e53dc46df5123faf2770",
+      "bytes": 67920,
+      "rightsState": "PENDING_HUMAN_REVIEW"
+    },
+    {
+      "id": "end",
+      "path": "media/end.webp",
+      "type": "IMAGE",
+      "format": "image/webp",
+      "sha256": "ec63d1aef89af5189bc9e4e734a21c9c77df0657fb2b5d308aaf2b65caee6932",
+      "gitBlob": "cf529d70d25951f72771f13106cf66592c6c01a9",
+      "bytes": 123446,
+      "rightsState": "PENDING_HUMAN_REVIEW"
+    },
+    {
+      "id": "nora",
+      "path": "media/nora.webp",
+      "type": "IMAGE",
+      "format": "image/webp",
+      "sha256": "0b6018fbc6163b312917eb59b75703a9b8384e4f74d043dd3927cbf97548aa43",
+      "gitBlob": "dfb7f293f93b993be58212fed38216ee49243205",
+      "bytes": 11342,
+      "rightsState": "PENDING_HUMAN_REVIEW"
+    },
+    {
+      "id": "teo",
+      "path": "media/teo.webp",
+      "type": "IMAGE",
+      "format": "image/webp",
+      "sha256": "ac0e33d6698238e73deb075be2cf4aa4aeb294f683770746545ca37378f9807e",
+      "gitBlob": "2c794a048b6499ba8a9a58364188f60966e3a0fa",
+      "bytes": 13334,
+      "rightsState": "PENDING_HUMAN_REVIEW"
+    },
+    {
+      "id": "ax",
+      "path": "media/ax.webp",
+      "type": "IMAGE",
+      "format": "image/webp",
+      "sha256": "53a96a2536c874c518d7842ba56eaaf90c5d0ca1d73e3385ca8e175f05d56f7b",
+      "gitBlob": "0479f456c297568e95289c1176e6c496c09695fe",
+      "bytes": 11564,
+      "rightsState": "PENDING_HUMAN_REVIEW"
+    },
+    {
+      "id": "experience",
+      "path": "experience.html",
+      "type": "INTERACTIVE_HTML",
+      "sha256": "22971583a2a7dc2d45947b4ce19a843a057b05864b9a2b896762728c9519175e",
+      "embeddedImages": true
+    },
+    {
+      "id": "teacher-guide",
+      "path": "teacher/guida_docente.html",
+      "type": "TEACHER_GUIDE",
+      "sha256": "ef7fdb31395901843fd844341399d052ee8cb42c859b7425c0f94e3d8bac8541"
+    }
+  ],
+  "review": {
+    "status": "DRAFT_PENDING_HUMAN_REVIEW",
+    "rights": "PENDING",
+    "accessibility": "PENDING",
+    "mobileProduct": "PENDING",
+    "teacher": "PENDING",
+    "curricolo": "PENDING"
+  },
+  "authorization": {
+    "atlasPublished": false,
+    "studentRuntimeAllowed": false,
+    "docenteOsWriteAllowed": false,
+    "autoMergeAllowed": false
+  },
+  "handoff": {
+    "target": "Studio Atlas",
+    "publicationContract": "ActivityPackage v1 (after binding and review)",
+    "teachingUse": "Docente OS links stable activity ID and version; never duplicates public source files"
+  }
+}
