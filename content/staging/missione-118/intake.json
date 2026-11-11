@@ -22,7 +22,6 @@
     ],
     "suggestedDurationMinutes": 55,
     "placementStatus": "UNASSIGNED",
-    "arenaCurriculumVersionRef": null,
     "arenaObjectiveRefs": [],
     "udaRefs": [],
     "objectives": [
@@ -35,7 +34,8 @@
       "decisioni motivate",
       "verifiche e correzioni",
       "progetto di miglioramento"
-    ]
+    ],
+    "arenaCurricoloVersionRef": null
   },
   "experience": {
     "entrypoint": "experience.html",
@@ -153,11 +153,11 @@
   ],
   "review": {
     "status": "DRAFT_PENDING_HUMAN_REVIEW",
-    "curriculum": "PENDING",
     "rights": "PENDING",
     "accessibility": "PENDING",
     "mobileProduct": "PENDING",
-    "teacher": "PENDING"
+    "teacher": "PENDING",
+    "curricolo": "PENDING"
   },
   "authorization": {
     "atlasPublished": false,

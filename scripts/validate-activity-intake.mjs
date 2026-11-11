@@ -20,7 +20,7 @@ export function validate(file) {
   requireOk(typeof m.activityId === "string" && /^[a-z0-9][a-z0-9._-]{2,127}$/.test(m.activityId), "ACTIVITY_ID");
   requireOk(m.version?.endsWith("-draft") && !!m.title && !!m.kind, "DRAFT_IDENTITY");
   requireOk(object(m.learning) && Array.isArray(m.learning.arenaObjectiveRefs) &&
-    Array.isArray(m.learning.udaRefs), "REUSABLE_CURRICULUM_BINDING");
+    Array.isArray(m.learning.udaRefs), "REUSABLE_CURRICOLO_BINDING");
   requireOk(object(m.review) && Object.values(m.review).every(x => x !== "APPROVED" && x !== "PASS"), "HUMAN_REVIEW_PENDING");
   const a = m.authorization;
   requireOk(object(a) && a.atlasPublished === false && a.studentRuntimeAllowed === false &&
@@ -43,7 +43,7 @@ export function validate(file) {
     requireOk(target.startsWith(root + path.sep) && fs.existsSync(target) &&
       !fs.lstatSync(target).isSymbolicLink() && fs.statSync(target).isFile(), "FILE_NOT_PRESENT");
     const bytes = fs.readFileSync(target);
-    requireOk(sha256(bytes) === asset.sha256, "ASSET_SHA256");
+    requireOk(sha256(bytes) === asset.sha256, "ASSET_SHA256: "+asset.path);
     if (asset.type === "IMAGE") {
       images++;
       requireOk(bytes.toString("ascii", 0, 4) === "RIFF" &&
@@ -66,19 +66,5 @@ if (process.argv[1]?.endsWith("validate-activity-intake.mjs")) {
   try {
     const ok = validate(file);
     console.log(JSON.stringify(ok));
-    const m = JSON.parse(fs.readFileSync(file,"utf8"));
-    for (const mutation of [
-      v => { v.authorization.atlasPublished = true; },
-      v => { v.assets[0].sha256 = "0".repeat(64); },
-      v => { v.assets[0].path = "../private.key"; },
-    ]) {
-      const trial = structuredClone(m); mutation(trial);
-      const name = path.join(path.dirname(file), ".intake-internal-mutated.json");
-      // Do not create mutation files: exercise the payload checks using a temporary directory
-      // mirrored only for current validation (the script keeps repository contents immutable).
-      if (trial.authorization.atlasPublished === true) {
-        if (trial.authorization.atlasPublished !== false) continue;
-      }
-    }
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }
