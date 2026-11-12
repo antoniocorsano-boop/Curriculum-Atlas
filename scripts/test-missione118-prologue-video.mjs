@@ -12,7 +12,13 @@ test('preserves exact supplied bytes and requires explicit matching hash',()=>{
  assert.equal(r.sha256,sha);
  assert.ok(r.html.includes('data:video/mp4;base64,'+fixture.toString('base64')));
  assert.ok(r.html.includes('prologueMode===\'video\''));
- assert.ok(r.html.includes('Leggi la trascrizione'));
+ assert.ok(r.html.includes('Trascrizione del prologo'));
+ assert.ok(r.html.includes('poster="\'+VISUAL_ASSETS.cover+\'"'));
+ assert.ok(r.html.includes('class="intro-film"'));
+ assert.ok(r.html.includes('class="intro-actions"'));
+ assert.ok(!r.html.includes('id="prologuePlay"'));
+ assert.ok(r.html.includes('#playPane>*{flex:0 0 auto'));
+ assert.ok(r.html.includes('min-height:50px'));
  assert.throws(()=>addPrologueVideo(source,fixture,'0'.repeat(64)),/PROLOGUE_HASH_MISMATCH/);
  assert.throws(()=>addPrologueVideo(source,fixture),/PROLOGUE_HASH_MISMATCH/);
 });
