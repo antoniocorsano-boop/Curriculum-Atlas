@@ -25,7 +25,7 @@ between("let activeUtterance=null;","const rooms=","function stopNarration(){st.
 between("function narration(){","function intro(){",[
  "function narration(){",
  " const scene=storyScenes[st.storyIndex];",
- " const footer='<div class=\"narrator-actions\">'+(st.storyIndex>0?btn('← Indietro','storyprev','','secondary'):'')+btn(st.storyIndex===storyScenes.length-1?'Entra nella missione →':'Scena successiva →',st.storyIndex===storyScenes.length-1?'enterMission':'storynext')+btn('Salta prologo','enterMission','','secondary')+'</div>';",
+ " const footer='<div class=\"narrator-actions\">'+(st.storyIndex>0?btn('← Indietro','storyprev','','secondary'):'')+btn(st.storyIndex===storyScenes.length-1?'Entra nella missione →':'Scena successiva →',st.storyIndex===storyScenes.length-1?'enterMission':'storynext')+(st.storyIndex<storyScenes.length-1?btn('Salta prologo','enterMission','','secondary'):'')+'</div>';",
  " return storyFrame(scene,'<div class=\"narrator-stage\"><span class=\"prompt-meta\">Trasmissione dal 2045</span><span class=\"count\">Scena '+(st.storyIndex+1)+' di '+storyScenes.length+'</span></div><h2 class=\"action-title\">'+safe(scene.title)+'</h2><p class=\"action-subtitle\">'+safe(scene.lede)+'</p>'+narrator(safe(scene.text))+'<p class=\"voice-state\">Esperienza locale: nessun account o invio di dati. In questa versione di prova i progressi restano nella sessione. La narrazione audio non è ancora disponibile.</p>',footer,'PROLOGO ILLUSTRATO');",
  "}",
 ].join("\n")+"\n");
