@@ -60,6 +60,7 @@ try{
   assert.ok(layout.controlsVisible,JSON.stringify(layout));
   console.log(name+" narrative layout PASS "+JSON.stringify(layout));
   const crawl=page.locator("#crawlWindow");
+  assert.ok(await crawl.evaluate(e=>e.scrollHeight-e.clientHeight)>=79,"actual scrolling range");
   await page.waitForFunction(()=>document.getElementById("crawlWindow").scrollTop>0);
   await page.locator("#crawlToggle").click();
   const offset=await crawl.evaluate(e=>e.scrollTop);
@@ -76,7 +77,7 @@ try{
   await page.locator('[data-action="crawl-replay"]').click();
   assert.ok(await crawl.evaluate(e=>e.scrollTop)<offset);
   await image();
-  for(let i=1;i<5;i++){await click("storynext");await image()}
+  for(let i=1;i<5;i++){await click("storynext");await image();assert.ok(await crawl.evaluate(e=>e.scrollHeight-e.clientHeight)>=79,"scene "+(i+1)+" scrolling range");}
   assert.match(await page.locator("#mainTitle").textContent(),/ultima possibilità/);
   await click("enterMission");
   assert.match(await page.locator("#mainTitle").textContent(),/città che non dorme/);

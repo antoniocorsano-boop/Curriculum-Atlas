@@ -76,7 +76,7 @@ export function addNarrativeCrawl(source){
  " if(reset){crawlElapsed=0;view.scrollTop=0;}",
  " crawlRunning=true;updateCrawlControls('Scorrimento della scena');crawlFrame=requestAnimationFrame(crawlTick);",
  "}",
- "function initCrawl(){cancelCrawl();crawlElapsed=0;if(!document.getElementById('crawlWindow'))return;if(!crawlStatic)playCrawl(true);}",
+ "function initCrawl(){cancelCrawl();crawlElapsed=0;const view=document.getElementById('crawlWindow'),text=document.getElementById('crawlText');if(!view||!text||crawlStatic)return;const pad=parseFloat(getComputedStyle(text).paddingBottom)||0;const natural=text.scrollHeight-pad;const bottom=Math.max(pad,Math.ceil(view.clientHeight+80-natural));text.style.paddingBottom=bottom+'px';playCrawl(true);}",
  "function crawlAction(action){",
  " const view=document.getElementById('crawlWindow');if(!view)return;",
  " if(action==='crawl-toggle'){if(crawlRunning){cancelCrawl();updateCrawlControls('In pausa');}else{if(view.scrollTop>=view.scrollHeight-view.clientHeight-1)playCrawl(true);else playCrawl();}}",
