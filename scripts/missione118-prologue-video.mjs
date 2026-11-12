@@ -1,0 +1,29 @@
+import {createHash} from 'node:crypto';
+export function addPrologueVideo(source, bytes, expectedSha256) {
+ if (!Buffer.isBuffer(bytes) || bytes.length < 16 || bytes.length > 20*1024*1024 || bytes.toString('ascii',4,8)!=='ftyp') throw Error('PROLOGUE_MP4_INVALID');
+ const sha256=createHash('sha256').update(bytes).digest('hex');
+ if (!/^[a-f0-9]{64}$/.test(expectedSha256||'') || sha256!==expectedSha256) throw Error('PROLOGUE_HASH_MISMATCH');
+ let html=source;
+ function once(a,b){if(html.split(a).length!==2)throw Error('VIDEO_ANCHOR '+a.slice(0,70));html=html.replace(a,()=>b)}
+ const data='data:video/mp4;base64,'+bytes.toString('base64');
+ const runtime=`
+let prologueMode='video';
+const prologueVideoSrc=${JSON.stringify(data)};
+function videoPrologue(){
+ const scene=storyScenes[0];
+ const transcript='<div class="prologue-transcript"><h2>Trascrizione del prologo</h2>'+storyScenes.map(s=>'<section><h3>'+safe(s.title)+'</h3><p>'+safe(s.text)+'</p></section>').join('')+'</div>';
+ const content='<h2 class="video-title">Il futuro è da riprogettare</h2><video id="prologueVideo" controls playsinline preload="metadata" aria-label="Video introduttivo Missione 118" src="'+prologueVideoSrc+'"></video><p id="prologueVideoError" role="status" hidden>Il video non è riproducibile su questo dispositivo. Puoi leggere il prologo.</p><p class="local-note">Riproduzione locale. Puoi guardare il video o leggere la trascrizione.</p><details class="video-transcript"><summary>Leggi la trascrizione</summary>'+transcript+'</details>';
+ const footer='<div class="video-actions">'+btn('Leggi per scene','prologue-text','','secondary')+btn('Entra nella missione →','enterMission')+'</div>';
+ return storyFrame(scene,content,footer,'PROLOGO VIDEO');
+}
+function initPrologueVideo(){const video=document.getElementById('prologueVideo');if(!video)return;const report=()=>{const msg=document.getElementById('prologueVideoError');if(msg)msg.hidden=false;};video.addEventListener('error',report,{once:true});if(video.error)report();}
+`;
+ once('function narration(){',runtime+"\nfunction narration(){\n if(prologueMode==='video')return videoPrologue();");
+ once("'+crawlMarkup(scene.text)+'", "'+crawlMarkup(scene.text)+btn('Torna al video','prologue-video','','secondary')+'");
+ once("initCrawl();\n}","initCrawl(); initPrologueVideo();\n}");
+ once("switch(b.dataset.action){case 'crawl-toggle':", "switch(b.dataset.action){case 'prologue-text':prologueMode='text';crawlStatic=true;render();break;case 'prologue-video':stopNarration();prologueMode='video';render();break;case 'crawl-toggle':");
+ once('function restart(){progressController.resetProgress();}',"function restart(){prologueMode='video';progressController.resetProgress();}");
+ const css=`.stage.prologue:has(#prologueVideo) #playPane{justify-content:flex-start;gap:10px}.video-title{font-size:clamp(20px,3vw,30px);margin:0;color:#f3ecdf}.stage.prologue video{display:block;width:100%;max-height:44vh;min-height:100px;aspect-ratio:16/9;background:#071522;border:1px solid #416477;border-radius:10px}.video-transcript{color:#f3ecdf;font-size:14px;line-height:1.5}.video-transcript summary{cursor:pointer;color:#75e6d5;min-height:44px;display:flex;align-items:center}.prologue-transcript h2{font-size:18px}.prologue-transcript h3{font-size:15px;color:#75e6d5}.prologue-transcript p{font-size:14px}.video-actions{width:100%;display:flex;gap:8px;flex-wrap:wrap}.video-actions button{flex:1;min-height:44px}.stage.prologue:has(#prologueVideo) .section-chip{display:none}@media(max-width:950px){.stage.prologue:has(#prologueVideo){grid-template-rows:minmax(80px,24%) minmax(0,76%)}.stage.prologue video{max-height:33vh}}`;
+ once('</style>',css+'</style>');
+ return {html,sha256};
+}
