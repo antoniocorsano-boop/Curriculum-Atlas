@@ -1,3 +1,4 @@
+import {addPrologueVideo} from "./missione118-prologue-video.mjs";
 import {addCompletionReceipt} from "./missione118-completion-receipt.mjs";
 import {addLocalProgress} from "./missione118-local-progress.mjs";
 import {addNarrativeCrawl} from "./missione118-narrative-crawl.mjs";
@@ -39,8 +40,12 @@ once("case 'exportAudio':saveEmbeddedHTML();break;case 'narrate':startNarration(
 between("document.addEventListener('change'","document.addEventListener('submit'","");
 if(/speechSynthesis|SpeechSynthesisUtterance|recordingImport|voiceSelection|localStorage|sessionStorage|indexedDB|navigator\.sendBeacon|fetch\s*\(|XMLHttpRequest|WebSocket|<script\s+[^>]*src\s*=/i.test(html))throw Error("UNEXPECTED_RUNTIME_CAPABILITY");
 html=addCompletionReceipt(addLocalProgress(addNarrativeCrawl(html)));
+const videoPath=process.env.M118_PROLOGUE_MP4, expectedVideoSha=process.env.M118_PROLOGUE_SHA256;
+if(Boolean(videoPath)!==Boolean(expectedVideoSha))throw Error("PROLOGUE_PATH_AND_HASH_REQUIRED");
+let videoSha=null;
+if(videoPath){const result=addPrologueVideo(html,await readFile(videoPath),expectedVideoSha);html=result.html;videoSha=result.sha256;}
 const output=resolve(process.argv[2]||"artifacts/missione118-runtime/Missione118.html");
 await mkdir(dirname(output),{recursive:true});
 await writeFile(output,html);
-await writeFile(resolve(dirname(output),"manifest.json"),JSON.stringify({contract:"trama.missione118-local-runtime/v0.1",activityId:"trama-missione-118-2026",sourceVersion:"0.1.0-draft",sourceSha256:SHA,entrypoint:"Missione118.html",entrypointSha256:digest(html),mode:"LOCAL_OPTIONAL_PERSISTENCE",checkpoint:"trama.m118-checkpoint/v1",receipt:"trama.m118-completion-receipt/v1",audio:"TEXT_ONLY",narrative:"VERTICAL_CRAWL",studentRuntimeAllowed:false,published:false},null,2)+"\n");
+await writeFile(resolve(dirname(output),"manifest.json"),JSON.stringify({contract:"trama.missione118-local-runtime/v0.1",activityId:"trama-missione-118-2026",sourceVersion:"0.1.0-draft",sourceSha256:SHA,entrypoint:"Missione118.html",entrypointSha256:digest(html),mode:"LOCAL_OPTIONAL_PERSISTENCE",checkpoint:"trama.m118-checkpoint/v1",receipt:"trama.m118-completion-receipt/v1",audio:videoSha?"EMBEDDED_VIDEO_UNREVIEWED":"TEXT_ONLY",narrative:videoSha?"VIDEO_WITH_TEXT_ALTERNATIVE":"VERTICAL_CRAWL",prologueVideoSha256:videoSha,prologueReview:videoSha?"PENDING_HUMAN_REVIEW":"MISSING",studentRuntimeAllowed:false,published:false},null,2)+"\n");
 console.log("Generated local draft",output,digest(html));
