@@ -1,0 +1,43 @@
+name: M118-R1 - Local standalone experience
+on:
+  pull_request:
+    branches: [feat/missione-118-activity-intake]
+    paths:
+      - "scripts/build-missione118-runtime.mjs"
+      - "scripts/test-missione118-local.mjs"
+      - "content/staging/missione-118/**"
+      - ".github/workflows/missione118-local.yml"
+permissions:
+  contents: read
+jobs:
+  offline-browser:
+    if: github.event.repository.private == false && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/missione-118-runtime-local'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify original intake and build standalone draft
+        run: |
+          node scripts/validate-activity-intake.mjs content/staging/missione-118/intake.json
+          node scripts/build-missione118-runtime.mjs
+      - name: Install existing browser test dependencies
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+      - name: Real offline browser desktop and mobile viewport
+        run: node scripts/test-missione118-local.mjs
+      - name: Preserve local candidate only after test
+        uses: actions/upload-artifact@v4
+        with:
+          name: missione118-local-r1
+          path: artifacts/missione118-runtime/
+          retention-days: 7
