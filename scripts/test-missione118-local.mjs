@@ -29,6 +29,22 @@ try{
   async function choose(index){await action("answer").nth(index).click();await click("advance")}
   await page.locator("#mainTitle").waitFor();
   assert.match(await page.locator("#mainTitle").textContent(),/La città perfetta/);
+  const crawl=page.locator("#crawlWindow");
+  await page.waitForFunction(()=>document.getElementById("crawlWindow").scrollTop>0);
+  await page.locator("#crawlToggle").click();
+  const offset=await crawl.evaluate(e=>e.scrollTop);
+  await page.waitForTimeout(350);
+  assert.equal(await crawl.evaluate(e=>e.scrollTop),offset);
+  await page.locator("#crawlSpeed").click();
+  assert.match(await page.locator("#crawlSpeed").textContent(),/rapida/);
+  await page.locator("#crawlToggle").click();
+  await page.waitForFunction(n=>document.getElementById("crawlWindow").scrollTop>n,offset);
+  await page.locator("#crawlStatic").click();
+  assert.equal(await page.locator(".crawl-box").getAttribute("data-static"),"true");
+  assert.equal(await crawl.evaluate(e=>e.scrollHeight===e.clientHeight),true);
+  await page.locator("#crawlStatic").click();
+  await page.locator('[data-action="crawl-replay"]').click();
+  assert.ok(await crawl.evaluate(e=>e.scrollTop)<offset);
   await image();
   for(let i=1;i<5;i++){await click("storynext");await image()}
   assert.match(await page.locator("#mainTitle").textContent(),/ultima possibilità/);
@@ -57,4 +73,9 @@ try{
   console.log(name+" PASS: file offline, five prologue scenes, all three rooms, correction, final code, print, no network/storage/speech access");
   await context.close();
  }
+ const reduced=await browser.newContext({offline:true,reducedMotion:"reduce"});
+ const reducedPage=await reduced.newPage();
+ await reducedPage.goto(pathToFileURL(path).href);
+ assert.equal(await reducedPage.locator(".crawl-box").getAttribute("data-static"),"true");
+ await reduced.close();
 }finally{await browser.close()}
