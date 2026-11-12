@@ -48,6 +48,17 @@ try{
   assert.equal(palette.mask,"none");
   for(const key of ["textContrast","labelContrast","statusContrast","buttonContrast"])assert.ok(palette[key]>=7,key+" "+palette[key]);
   console.log(name+" narrative contrast PASS "+JSON.stringify(palette));
+  assert.equal(await page.locator(".stage.prologue").count(),1);
+  assert.equal(await page.locator("#playPane .action-title").count(),0);
+  const layout=await page.locator(".stage.prologue").evaluate(stage=>{
+    const r=el=>el.getBoundingClientRect();
+    const body=stage.querySelector("#playPane"),footer=stage.querySelector(".stage-footer"),buttons=[...stage.querySelectorAll(".crawl-controls button")];
+    return {bodyScroll:body.scrollHeight-body.clientHeight,footerBottom:r(footer).bottom,viewport:innerHeight,controlsVisible:buttons.every(b=>r(b).bottom<=r(body).bottom+1),titleCount:[...stage.querySelectorAll("h1,h2")].filter(e=>e.textContent==="La città perfetta").length};
+  });
+  assert.equal(layout.titleCount,1);
+  assert.ok(layout.footerBottom<=layout.viewport+1);
+  assert.ok(layout.controlsVisible,JSON.stringify(layout));
+  console.log(name+" narrative layout PASS "+JSON.stringify(layout));
   const crawl=page.locator("#crawlWindow");
   await page.waitForFunction(()=>document.getElementById("crawlWindow").scrollTop>0);
   await page.locator("#crawlToggle").click();

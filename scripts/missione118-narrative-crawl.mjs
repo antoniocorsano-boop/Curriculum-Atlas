@@ -11,7 +11,41 @@ export function addNarrativeCrawl(source){
  '@media(max-width:600px){.crawl-window{height:clamp(112px,19vh,158px)}.crawl-text{font-size:17px;line-height:1.55;padding-top:28px;padding-bottom:48px}.crawl-controls{gap:5px}.crawl-box{padding:9px 10px}.crawl-controls button{min-height:44px}.crawl-note{font-size:11px}}',
  '@media(prefers-reduced-motion:reduce){.crawl-window{scroll-behavior:auto}}'
  ].join('\n');
- once('</style>',css+'</style>');
+ const layout=[
+ '.stage.prologue .control{padding:clamp(10px,2vw,26px);gap:0}',
+ '.stage.prologue .control-heading{margin:0 0 8px;min-height:22px}',
+ '.stage.prologue .panel-body{justify-content:flex-start;padding:0 2px;gap:8px}',
+ '.stage.prologue .crawl-box{margin:0;display:flex;flex-direction:column;flex:1 0 auto;min-height:0}',
+ '.stage.prologue .crawl-box strong{margin:0 0 4px}',
+ '.stage.prologue .crawl-window{height:clamp(130px,30vh,300px);flex:1 0 auto}',
+ '.stage.prologue .crawl-text{padding:8px 2px 22px;text-align:center;font-size:clamp(17px,2vw,22px);line-height:1.55}',
+ '.stage.prologue .crawl-text p{font-size:inherit;line-height:inherit;color:#111111}',
+ '.stage.prologue .crawl-controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:8px}',
+ '.stage.prologue .crawl-controls button{min-width:0;min-height:44px;padding:5px;font-size:12px;line-height:1.2}',
+ '.stage.prologue .crawl-box[data-static="true"] .crawl-window{height:auto;flex:none;overflow:visible}',
+ '.stage.prologue .crawl-box[data-static="true"] .crawl-controls{grid-template-columns:1fr}',
+ '.stage.prologue .crawl-status{margin:4px 0 0;min-height:17px;font-size:11px}',
+ '.stage.prologue .stage-footer{margin-top:8px;padding-top:8px;min-height:0}',
+ '.stage.prologue .narrator-actions{width:100%;display:grid;grid-template-columns:auto 1fr auto;gap:6px}',
+ '.stage.prologue .narrator-actions button{min-height:44px;font-size:12px;padding:8px;min-width:0}',
+ '.stage.prologue .narrator-actions .primary{grid-column:2}',
+ '.stage.prologue .narrator-actions .skip-prologue{grid-column:3}',
+ '.stage.prologue .narrator-actions .prev-prologue{grid-column:1;grid-row:1}',
+ '.stage.prologue .narrator-actions .primary:last-child{grid-column:2 / -1}',
+ '.stage.prologue .local-note{font-size:11px;color:var(--muted);margin:0}',
+ '@media(min-width:951px){.stage.prologue .panel-body{justify-content:center}.stage.prologue .crawl-box{flex:0 0 auto}.stage.prologue .visual-copy h1{max-width:15ch}}',
+ '@media(max-width:950px){.stage.prologue{grid-template-rows:minmax(100px,30%) minmax(0,70%)}.stage.prologue .visual-copy h1{font-size:clamp(22px,5.6vw,34px)}.stage.prologue .visual-copy p{display:none}.stage.prologue .control{padding:9px 12px}.stage.prologue .crawl-window{height:clamp(116px,25vh,225px)}.stage.prologue .crawl-text{font-size:17px;line-height:1.55}.stage.prologue .crawl-box{padding:9px 10px}.stage.prologue .crawl-controls button{font-size:11px}.stage.prologue .control-heading{margin-bottom:5px}}',
+ '@media(max-width:950px) and (max-height:740px){.stage.prologue{grid-template-rows:minmax(80px,24%) minmax(0,76%)}.stage.prologue .crawl-window{height:clamp(100px,23vh,170px)}.stage.prologue .local-note{display:none}.stage.prologue .panel-body{gap:4px}}',
+ '@media(max-width:950px) and (max-height:580px){.stage.prologue{grid-template-rows:minmax(62px,18%) minmax(0,82%)}.stage.prologue .crawl-window{height:100px}.stage.prologue .crawl-controls{grid-template-columns:repeat(2,minmax(0,1fr))}}',
+ '@media(max-width:360px){.stage.prologue .crawl-controls button{font-size:10px}.stage.prologue .narrator-actions button{font-size:11px}}'
+ ].join('\n');
+ once('</style>',css+'\n'+layout+'</style>');
+ once('function storyFrame(scene,content,footer=\'\',subhead=\'VOCE NARRANTE\'){\n return \x60<div class="stage">','function storyFrame(scene,content,footer=\'\',subhead=\'VOCE NARRANTE\'){\n return \x60<div class="stage prologue">');
+ once('<div class="narrator-stage"><span class="prompt-meta">Trasmissione dal 2045</span><span class="count">Scena \'+(st.storyIndex+1)+\' di \'+storyScenes.length+\'</span></div><h2 class="action-title">\'+safe(scene.title)+\'</h2><p class="action-subtitle">\'+safe(scene.lede)+\'</p>','<p class="action-subtitle" style="margin:0">\'+safe(scene.lede)+\'</p>');
+ once("btn('← Indietro','storyprev','','secondary')","btn('← Indietro','storyprev','','secondary prev-prologue')");
+ once("btn('Salta prologo','enterMission','','secondary')","btn('Salta','enterMission','','secondary skip-prologue')");
+ once('<p class="voice-state">Esperienza locale: nessun account o invio di dati. In questa versione di prova i progressi restano nella sessione.','<p class="local-note">Solo sul dispositivo. I progressi restano nella sessione.');
+
  const runtime=[
  "let crawlFrame=0,crawlStatic=window.matchMedia('(prefers-reduced-motion: reduce)').matches,crawlWpm=120,crawlRunning=false,crawlElapsed=0,crawlLast=null;",
  "function cancelCrawl(){if(crawlFrame)cancelAnimationFrame(crawlFrame);crawlFrame=0;crawlLast=null;crawlRunning=false;}",
