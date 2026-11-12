@@ -1,0 +1,3 @@
+M118-R1 — Runtime locale separato dall'intake
+
+Baseline immutata PR #84 f0c29655632a7edc6d78c78d48d006aa8da020a2. Generatore con hash sorgente fissato, otto immagini incorporate e cinque scene testuali, tre ambienti. Rimuove voce del browser, import audio, accesso storage. CSP restrittiva. R1 volutamente in memoria: ricarica riparte dall'inizio; avviso esplicito. R2 stato validato, ripresa esplicita e portabilità; R3 attestato; R4 Android reale, accessibilità, privacy, diritti, curricolo. Stampa esistente non attestato strutturato. Audio solo dopo approvazione, mai remoto. Test Chromium desktop/mobile viewport non equivale ad Android reale. Non autorizzato per uso studente o pubblicazione, no merge/deploy. Ramo separato per preservare intake e integrazione Studio Atlas.
