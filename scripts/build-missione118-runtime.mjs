@@ -1,3 +1,4 @@
+import {addLocalProgress} from "./missione118-local-progress.mjs";
 import {addNarrativeCrawl} from "./missione118-narrative-crawl.mjs";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
@@ -36,9 +37,9 @@ once(" populateVoices();","");
 once("case 'exportAudio':saveEmbeddedHTML();break;case 'narrate':startNarration();break;case 'stopvoice':stopNarration();render();break;","");
 between("document.addEventListener('change'","document.addEventListener('submit'","");
 if(/speechSynthesis|SpeechSynthesisUtterance|recordingImport|voiceSelection|localStorage|sessionStorage|indexedDB|navigator\.sendBeacon|fetch\s*\(|XMLHttpRequest|WebSocket|<script\s+[^>]*src\s*=/i.test(html))throw Error("UNEXPECTED_RUNTIME_CAPABILITY");
-html=addNarrativeCrawl(html);
+html=addLocalProgress(addNarrativeCrawl(html));
 const output=resolve(process.argv[2]||"artifacts/missione118-runtime/Missione118.html");
 await mkdir(dirname(output),{recursive:true});
 await writeFile(output,html);
-await writeFile(resolve(dirname(output),"manifest.json"),JSON.stringify({contract:"trama.missione118-local-runtime/v0.1",activityId:"trama-missione-118-2026",sourceVersion:"0.1.0-draft",sourceSha256:SHA,entrypoint:"Missione118.html",entrypointSha256:digest(html),mode:"LOCAL_SESSION_ONLY",audio:"TEXT_ONLY",narrative:"VERTICAL_CRAWL",studentRuntimeAllowed:false,published:false},null,2)+"\n");
+await writeFile(resolve(dirname(output),"manifest.json"),JSON.stringify({contract:"trama.missione118-local-runtime/v0.1",activityId:"trama-missione-118-2026",sourceVersion:"0.1.0-draft",sourceSha256:SHA,entrypoint:"Missione118.html",entrypointSha256:digest(html),mode:"LOCAL_OPTIONAL_PERSISTENCE",checkpoint:"trama.m118-checkpoint/v1",audio:"TEXT_ONLY",narrative:"VERTICAL_CRAWL",studentRuntimeAllowed:false,published:false},null,2)+"\n");
 console.log("Generated local draft",output,digest(html));

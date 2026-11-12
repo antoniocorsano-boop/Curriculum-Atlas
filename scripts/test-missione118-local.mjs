@@ -97,7 +97,7 @@ try{
   await click("print");
   assert.equal(await page.evaluate(()=>window.__printCount),1);
   assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
-  assert.equal(await page.evaluate(()=>document.querySelectorAll('input[type=file],select,#voiceSelection').length),0);
+  assert.equal(await page.evaluate(()=>document.querySelectorAll('input[type=file]:not(#progressImport),select,#voiceSelection').length),0);
   await page.reload();
   assert.match(await page.locator("#mainTitle").textContent(),/La città perfetta/);
   assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);

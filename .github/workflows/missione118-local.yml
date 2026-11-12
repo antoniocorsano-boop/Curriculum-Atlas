@@ -5,6 +5,8 @@ on:
     paths:
       - "scripts/build-missione118-runtime.mjs"
       - "scripts/test-missione118-local.mjs"
+      - "scripts/missione118-local-progress.mjs"
+      - "scripts/test-missione118-progress.mjs"
       - "content/staging/missione-118/**"
       - ".github/workflows/missione118-local.yml"
 permissions:
@@ -34,9 +36,11 @@ jobs:
         run: |
           cp scripts/test-missione118-local.mjs "$RUNNER_TEMP/m118-test/test.mjs"
           node "$RUNNER_TEMP/m118-test/test.mjs"
+          cp scripts/test-missione118-progress.mjs "$RUNNER_TEMP/m118-test/progress.mjs"
+          node "$RUNNER_TEMP/m118-test/progress.mjs"
       - name: Preserve local candidate only after test
         uses: actions/upload-artifact@v4
         with:
-          name: missione118-local-r1
+          name: missione118-local-r2
           path: artifacts/missione118-runtime/
           retention-days: 7
