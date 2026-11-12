@@ -29,6 +29,25 @@ try{
   async function choose(index){await action("answer").nth(index).click();await click("advance")}
   await page.locator("#mainTitle").waitFor();
   assert.match(await page.locator("#mainTitle").textContent(),/La città perfetta/);
+  const palette=await page.locator(".crawl-box").evaluate(box=>{
+   const css=el=>getComputedStyle(el);
+   const luminance=value=>{
+    const rgb=value.match(/\d+/g).slice(0,3).map(Number).map(x=>{const v=x/255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4});
+    return .2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2];
+   };
+   const contrast=(a,b)=>{const x=luminance(a),y=luminance(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)};
+   const bg=css(box).backgroundColor;
+   return {bg,text:css(box.querySelector(".crawl-text p")).color,mask:css(box.querySelector(".crawl-window")).maskImage,
+    textContrast:contrast(css(box.querySelector(".crawl-text p")).color,bg),
+    labelContrast:contrast(css(box.querySelector("strong")).color,bg),
+    statusContrast:contrast(css(box.querySelector(".crawl-status")).color,bg),
+    buttonContrast:contrast(css(box.querySelector("button")).color,css(box.querySelector("button")).backgroundColor)};
+  });
+  assert.equal(palette.bg,"rgb(207, 232, 255)");
+  assert.equal(palette.text,"rgb(17, 17, 17)");
+  assert.equal(palette.mask,"none");
+  for(const key of ["textContrast","labelContrast","statusContrast","buttonContrast"])assert.ok(palette[key]>=7,key+" "+palette[key]);
+  console.log(name+" narrative contrast PASS "+JSON.stringify(palette));
   const crawl=page.locator("#crawlWindow");
   await page.waitForFunction(()=>document.getElementById("crawlWindow").scrollTop>0);
   await page.locator("#crawlToggle").click();
