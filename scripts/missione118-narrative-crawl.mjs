@@ -2,11 +2,11 @@ export function addNarrativeCrawl(source){
  let html=source;
  function once(a,b){if(html.split(a).length!==2)throw Error('CRAWL_ANCHOR '+a.slice(0,80));html=html.replace(a,()=>b)}
  const css=[
- '.crawl-box{flex-shrink:0;padding:12px 14px;margin:0 0 8px;background:#cfe8ff;border-color:#6ea8d9;color:#111111}',
- '.crawl-box strong{color:#163b59}.crawl-window{height:clamp(116px,23vh,196px);overflow:hidden;position:relative;scrollbar-width:none;}',
- '.crawl-window::-webkit-scrollbar{display:none}.crawl-text{padding:36px 2px 56px;font-size:clamp(16px,2vw,21px);line-height:1.65;text-align:center;letter-spacing:.015em;color:#111111;}',
- ' .crawl-text p{font-size:inherit;line-height:inherit;margin:0 0 .85em;color:#111111}.crawl-text p:last-child{margin-bottom:0}',
- '.crawl-controls{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.crawl-controls button{flex:1 1 auto;min-height:44px;font-size:12px;padding:7px 9px;background:#e8f4ff;color:#111111;border:1px solid #47769c}.crawl-controls button:hover{background:#b8daf5}.crawl-controls button:focus-visible{outline-color:#174c77}.crawl-box .crawl-status{font-size:12px;color:#163b59;margin-top:5px}.crawl-box[data-static="true"] .crawl-window{height:auto;overflow:visible;mask-image:none}.crawl-box[data-static="true"] .crawl-text{padding:0;text-align:left;line-height:1.5}.crawl-box[data-static="true"] .crawl-motion{display:none}',
+ '.crawl-box{flex-shrink:0;padding:12px 14px;margin:0 0 8px;background:#102a3b;border-color:#416477;color:#f3ecdf}',
+ '.crawl-box strong{color:#75e6d5}.crawl-window{height:clamp(116px,23vh,196px);overflow:hidden;position:relative;scrollbar-width:none;}',
+ '.crawl-window::-webkit-scrollbar{display:none}.crawl-text{padding:36px 2px 56px;font-size:clamp(16px,2vw,21px);line-height:1.65;text-align:center;letter-spacing:.015em;color:#f3ecdf;}',
+ ' .crawl-text p{font-size:inherit;line-height:inherit;margin:0 0 .85em;color:#f3ecdf}.crawl-text p:last-child{margin-bottom:0}',
+ '.crawl-controls{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.crawl-controls button{flex:1 1 auto;min-height:44px;font-size:12px;padding:7px 9px;background:#17354b;color:#f3ecdf;border:1px solid #527b8f}.crawl-controls button:hover{background:#25475c}.crawl-controls button:focus-visible{outline-color:#75e6d5}.crawl-box .crawl-status{font-size:12px;color:#bcd5e4;margin-top:5px}.crawl-box[data-static="true"] .crawl-window{height:auto;overflow:visible;mask-image:none}.crawl-box[data-static="true"] .crawl-text{padding:0;text-align:left;line-height:1.5}.crawl-box[data-static="true"] .crawl-motion{display:none}',
  '#playPane:has(.crawl-box){justify-content:flex-start}.crawl-note{font-size:12px;color:var(--muted);margin-top:4px}',
  '@media(max-width:600px){.crawl-window{height:clamp(112px,19vh,158px)}.crawl-text{font-size:17px;line-height:1.55;padding-top:28px;padding-bottom:48px}.crawl-controls{gap:5px}.crawl-box{padding:9px 10px}.crawl-controls button{min-height:44px}.crawl-note{font-size:11px}}',
  '@media(prefers-reduced-motion:reduce){.crawl-window{scroll-behavior:auto}}'
@@ -19,7 +19,7 @@ export function addNarrativeCrawl(source){
  '.stage.prologue .crawl-box strong{margin:0 0 4px}',
  '.stage.prologue .crawl-window{height:clamp(130px,30vh,300px);flex:1 0 auto}',
  '.stage.prologue .crawl-text{padding:8px 2px 22px;text-align:center;font-size:clamp(17px,2vw,22px);line-height:1.55}',
- '.stage.prologue .crawl-text p{font-size:inherit;line-height:inherit;color:#111111}',
+ '.stage.prologue .crawl-text p{font-size:inherit;line-height:inherit;color:#f3ecdf}',
  '.stage.prologue .crawl-controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:8px}',
  '.stage.prologue .crawl-controls button{min-width:0;min-height:44px;padding:5px;font-size:12px;line-height:1.2}',
  '.stage.prologue .crawl-box[data-static="true"] .crawl-window{height:auto;flex:none;overflow:visible}',
