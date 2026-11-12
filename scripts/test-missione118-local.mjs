@@ -44,8 +44,8 @@ try{
     statusContrast:contrast(css(box.querySelector(".crawl-status")).color,bg),
     buttonContrast:contrast(css(box.querySelector("button")).color,css(box.querySelector("button")).backgroundColor)};
   });
-  assert.equal(palette.bg,"rgb(207, 232, 255)");
-  assert.equal(palette.text,"rgb(17, 17, 17)");
+  assert.equal(palette.bg,"rgb(16, 42, 59)");
+  assert.equal(palette.text,"rgb(243, 236, 223)");
   assert.equal(palette.mask,"none");
   for(const key of ["textContrast","labelContrast","statusContrast","buttonContrast"])assert.ok(palette[key]>=7,key+" "+palette[key]);
   console.log(name+" narrative contrast PASS "+JSON.stringify(palette));
@@ -97,6 +97,10 @@ try{
   assert.match(await page.locator("#playPane").textContent(),/verifica umana/i);
   assert.match(await page.locator("#playPane .mission-receipt").textContent(),/non ufficiale/);
   assert.equal(await page.locator("#playPane .receipt-evidence section").count(),3);
+  const art=page.locator("#playPane .receipt-art");
+  assert.equal(await art.count(),1);
+  assert.equal(await art.evaluate(async img=>{await img.decode();return img.naturalWidth>0&&img.getAttribute("src").startsWith("data:image/")}),true);
+  assert.match(await page.locator("#playPane .receipt-brand").textContent(),/MISSIONE 118/);
   const downloadPromise=page.waitForEvent("download");
   await click("receipt-export");
   const file=await downloadPromise;
@@ -111,9 +115,12 @@ try{
    await page.emulateMedia({media:"print"});
    assert.equal(await page.locator("#receiptPrint").isVisible(),true);
    assert.equal(await page.locator("#app").isVisible(),false);
+   const printArt=page.locator("#receiptPrint .receipt-art");
+   assert.equal(await printArt.evaluate(async img=>{await img.decode();return img.naturalWidth>0}),true);
    const pdf=await page.pdf({preferCSSPageSize:true,printBackground:true});
    assert.equal(pdf.subarray(0,5).toString(),"%PDF-");
    assert.ok(pdf.length>5000);
+   assert.equal((pdf.toString("latin1").match(/\/Type\s*\/Page\b/g)||[]).length,1,"receipt must occupy exactly one PDF page");
    const {writeFile}=await import("node:fs/promises");
    await writeFile(resolve(dirname(path),"Esempio-attestato-collaudo.pdf"),pdf);
    await page.emulateMedia({media:"screen"});
