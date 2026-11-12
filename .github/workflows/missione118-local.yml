@@ -19,9 +19,6 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.17.1
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -31,10 +28,12 @@ jobs:
           node scripts/build-missione118-runtime.mjs
       - name: Install existing browser test dependencies
         run: |
-          pnpm install --frozen-lockfile
-          pnpm exec playwright install --with-deps chromium
+          npm install --prefix "$RUNNER_TEMP/m118-test" --no-audit --no-fund --save-exact playwright@1.55.0
+          "$RUNNER_TEMP/m118-test/node_modules/.bin/playwright" install --with-deps chromium
       - name: Real offline browser desktop and mobile viewport
-        run: node scripts/test-missione118-local.mjs
+        run: |
+          cp scripts/test-missione118-local.mjs "$RUNNER_TEMP/m118-test/test.mjs"
+          node "$RUNNER_TEMP/m118-test/test.mjs"
       - name: Preserve local candidate only after test
         uses: actions/upload-artifact@v4
         with:
