@@ -28,6 +28,7 @@ try{
   async function image(){assert.equal(await page.locator(".visual img").evaluate(async i=>{await i.decode();return i.naturalWidth>0}),true)}
   async function choose(index){await action("answer").nth(index).click();await click("advance")}
   await page.locator("#mainTitle").waitFor();
+  assert.equal(await action("receipt-export").count(),0);
   assert.match(await page.locator("#mainTitle").textContent(),/La città perfetta/);
   const palette=await page.locator(".crawl-box").evaluate(box=>{
    const css=el=>getComputedStyle(el);
@@ -94,6 +95,29 @@ try{
   await page.locator("#codeForm button[type=submit]").click();
   assert.match(await page.locator("#playPane").textContent(),/Il futuro è cambiato/);
   assert.match(await page.locator("#playPane").textContent(),/verifica umana/i);
+  assert.match(await page.locator("#playPane .mission-receipt").textContent(),/non ufficiale/);
+  assert.equal(await page.locator("#playPane .receipt-evidence section").count(),3);
+  const downloadPromise=page.waitForEvent("download");
+  await click("receipt-export");
+  const file=await downloadPromise;
+  const receipt=JSON.parse(await readFile(await file.path(),"utf8"));
+  assert.equal(receipt.result,"PERCORSO_COMPLETATO");assert.equal(receipt.principle.id,"verifica");
+  assert.equal(receipt.origin,"SESSIONE_LOCALE");assert.equal(receipt.identityVerified,false);
+  assert.equal(receipt.learningCertified,false);assert.equal(receipt.official,false);
+  assert.equal(receipt.evidence.length,3);
+  assert.equal(Object.hasOwn(receipt,"errors"),false);
+  assert.equal(Object.hasOwn(receipt,"studentName"),false);
+  if(name==="desktop"){
+   await page.emulateMedia({media:"print"});
+   assert.equal(await page.locator("#receiptPrint").isVisible(),true);
+   assert.equal(await page.locator("#app").isVisible(),false);
+   const pdf=await page.pdf({preferCSSPageSize:true,printBackground:true});
+   assert.equal(pdf.subarray(0,5).toString(),"%PDF-");
+   assert.ok(pdf.length>5000);
+   const {writeFile}=await import("node:fs/promises");
+   await writeFile(resolve(dirname(path),"Esempio-attestato-collaudo.pdf"),pdf);
+   await page.emulateMedia({media:"screen"});
+  }
   await click("print");
   assert.equal(await page.evaluate(()=>window.__printCount),1);
   assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);

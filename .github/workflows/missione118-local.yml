@@ -1,4 +1,4 @@
-name: M118-R1 - Local standalone experience
+name: M118 - Local experience and formative receipt
 on:
   pull_request:
     branches: [feat/missione-118-activity-intake]
@@ -7,6 +7,8 @@ on:
       - "scripts/test-missione118-local.mjs"
       - "scripts/missione118-local-progress.mjs"
       - "scripts/test-missione118-progress.mjs"
+      - "scripts/missione118-completion-receipt.mjs"
+      - "scripts/test-missione118-receipt-unit.mjs"
       - "content/staging/missione-118/**"
       - ".github/workflows/missione118-local.yml"
 permissions:
@@ -27,6 +29,7 @@ jobs:
       - name: Verify original intake and build standalone draft
         run: |
           node scripts/validate-activity-intake.mjs content/staging/missione-118/intake.json
+          node --test scripts/test-missione118-receipt-unit.mjs
           node scripts/build-missione118-runtime.mjs
       - name: Install existing browser test dependencies
         run: |
@@ -41,6 +44,6 @@ jobs:
       - name: Preserve local candidate only after test
         uses: actions/upload-artifact@v4
         with:
-          name: missione118-local-r2
+          name: missione118-local-r3
           path: artifacts/missione118-runtime/
           retention-days: 7

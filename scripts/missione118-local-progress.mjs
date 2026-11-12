@@ -28,7 +28,7 @@ function browserCheckpoint(){
   return validateCheckpoint({contract:"trama.m118-checkpoint/v1",activity:"trama-missione-118-2026",version:"0.1.0-draft",stage,phase,storyIndex:stage===0?storyIndex:4,step:stage===4?0:step,firstModule:stage===2&&step===5?st.modules[0]:null,principle:stage===4&&["code","done"].includes(phase)?st.focus:null});
  }
  function restore(x){
-  validateCheckpoint(x);stopNarration();st=initial();
+  validateCheckpoint(x);stopNarration();st=initial();st.restoredCheckpoint=true;
   st.stage=x.stage;st.storyIndex=x.storyIndex;st.phase=x.phase==="done"?"code":x.phase;st.step=x.step;st.won=x.phase==="done";st.focus=x.principle||"";
   st.solved=[1,2,3].map(n=>x.stage>n||(x.stage===n&&x.phase==="complete"));st.digits=st.solved.map((v,i)=>v?["3","2","4"][i]:"?");
   const count=n=>x.stage>n?total(n):x.stage===n?x.step:0;

@@ -51,6 +51,12 @@ try{
  assert.equal(await page.locator("#progressDialog").evaluate(d=>d.open),false);
  await page.locator("#progressOpen").click();
  assert.match(await page.locator("#progressStatus").textContent(),/non valido/);
+ await page.locator("#progressImport").setInputFiles({name:"restored.json",mimeType:"application/json",buffer:Buffer.from(JSON.stringify({...exported,stage:4,phase:"done",step:0,principle:"sicurezza"}))});
+ await page.locator("#progressDialog").waitFor({state:"hidden"});
+ assert.match(await page.locator("#playPane .receipt-meta").textContent(),/ripreso da salvataggio/);
+ const restoredDownload=page.waitForEvent("download");await action("receipt-export").click();
+ const restored=JSON.parse(await readFile(await (await restoredDownload).path(),"utf8"));
+ assert.equal(restored.origin,"RIPRESO_DA_SALVATAGGIO");assert.equal(restored.learningCertified,false);
  assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
  await context.close();
  console.log("R2 PASS: resume, correct-response checkpoint, explicit JSON export/import, invalid data, erase, reset, no HTTP");
