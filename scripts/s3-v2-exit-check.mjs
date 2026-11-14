@@ -54,6 +54,23 @@ try {
         await more.click();
       }
 
+      if (route === "/") {
+        const doors = page.locator(".library-door");
+        if (await doors.count() !== 4) throw new Error("Library requires four editorial covers");
+        for (const id of ["storie", "laboratori", "scoperte", "percorsi"]) {
+          if (await page.locator('.library-door[href="#' + id + '"]').count() !== 1 ||
+              await page.locator("#" + id).count() !== 1) throw new Error("Missing shelf: " + id);
+        }
+        await page.waitForFunction(() => Array.from(document.querySelectorAll(".library-door img")).every(img => img.complete && img.naturalWidth > 0));
+        if (await page.locator(".library-work").count() !== 5) throw new Error("Expected five available published materials");
+        for (const href of await page.locator(".library-work").evaluateAll(nodes => nodes.map(node => node.href))) {
+          if (!(await page.request.get(href)).ok()) throw new Error("Unavailable published material: " + href);
+        }
+        if (await page.locator('.atlas-library a[href*="/lab/"], .atlas-library a[href*="/staging/"], .atlas-library a[href*="/attivita/"]').count()) {
+          throw new Error("Unqualified content linked from library");
+        }
+      }
+
       if (route === "/esplora") {
         const listButton = page.getByRole("button", { name: /Elenco/i });
         await listButton.waitFor({ state: "visible" });
