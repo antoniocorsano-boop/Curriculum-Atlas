@@ -27,6 +27,8 @@ test("generated EduTwin keeps the first action visible and reveals consequences 
   await expect(runtime.getByText("Una visitatrice vuole raggiungere il laboratorio.",{exact:true})).toBeVisible();
   await expect(runtime.getByRole("button",{name:"Continua",exact:true})).toHaveCount(0);
   await runtime.getByRole("button",{name:"Raggiungi il punto di incontro"}).click();
+  await expect(runtime.locator(".experience-feedback")).toContainText("La missione comincia.");
+  await runtime.getByRole("button",{name:"Prosegui",exact:true}).click();
   await expect(runtime.getByRole("heading",{name:"Il documento",exact:true})).toBeVisible();
   await expect(runtime.getByText("La chiusura temporanea non equivale a una cancellazione.",{exact:false})).toHaveCount(0);
   await runtime.getByRole("button",{name:"Apri il documento originale"}).click();
