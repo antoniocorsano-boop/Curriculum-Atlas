@@ -7,12 +7,14 @@ import {
   type StudioAtlasPreviewSnapshot,
 } from "@/features/pathways/studio-atlas-preview-adapter";
 
+import {verifyPreviewIllustrations,type VerifiedSceneIllustration} from "./edutwin-preview-media";
+
 const SNAPSHOT_TYPE = "STUDIO_ATLAS_PREVIEW_SNAPSHOT";
 const ACK_TYPE = "STUDIO_ATLAS_PREVIEW_ACK";
 
 type PreviewState =
   | { status: "WAITING" }
-  | { status: "READY"; snapshot: StudioAtlasPreviewSnapshot }
+  | { status: "READY"; snapshot: StudioAtlasPreviewSnapshot; illustrations: ReadonlyMap<string,VerifiedSceneIllustration> }
   | { status: "ERROR"; message: string };
 
 export function StudioAtlasPreviewBridge() {
@@ -42,32 +44,42 @@ export function StudioAtlasPreviewBridge() {
       return;
     }
 
-    let accepted = false;
-
-    function onMessage(event: MessageEvent) {
+    let active = true;
+    let checking = false;
+    let accepted: {snapshotId:string;packageDigest:string;mediaDigest?:string}|undefined;
+    let rejected = false;
+    async function onMessage(event: MessageEvent) {
       if (event.origin !== studioOrigin) return;
       if (!isSnapshotMessage(event.data, channel!)) return;
 
+      const snapshot=event.data.snapshot;
+      const mediaDigest=snapshot.edutwinMedia?.mediaDigest;
+      if(rejected||checking)return;
+      function acknowledge(){
+        opener.postMessage({type:ACK_TYPE,channel,snapshotId:snapshot.snapshotId},studioOrigin!);
+      }
+      if(accepted){
+        // A retry of the exact accepted candidate receives another ACK, without remounting.
+        if(accepted.snapshotId===snapshot.snapshotId&&accepted.packageDigest===snapshot.packageDigest&&accepted.mediaDigest===mediaDigest)acknowledge();
+        return;
+      }
+      checking=true;
       try {
-        // Validation happens before any learner runtime is mounted.
-        studioAtlasSnapshotToExperience(event.data.snapshot);
-        accepted = true;
-        setState({ status: "READY", snapshot: event.data.snapshot });
-
-        opener.postMessage(
-          {
-            type: ACK_TYPE,
-            channel,
-            snapshotId: event.data.snapshot.snapshotId,
-          },
-          studioOrigin,
-        );
+        // Validate the scene graph and actual bounded media bytes before mounting or ACK.
+        studioAtlasSnapshotToExperience(snapshot);
+        const illustrations=await verifyPreviewIllustrations(snapshot);
+        if(!active)return;
+        accepted={snapshotId:snapshot.snapshotId,packageDigest:snapshot.packageDigest,mediaDigest};
+        setState({status:"READY",snapshot,illustrations});
+        acknowledge();
       } catch {
+        if(!active)return;
+        rejected=true;
         setState({
           status: "ERROR",
           message: "Lo snapshot ricevuto non soddisfa il contratto di anteprima.",
         });
-      }
+      } finally { checking=false; }
     }
 
     window.addEventListener("message", onMessage);
@@ -81,6 +93,7 @@ export function StudioAtlasPreviewBridge() {
     // it and returns ACK. This removes a redundant handshake leg and avoids
     // navigation/hydration races.
     return () => {
+      active=false;
       window.removeEventListener("message", onMessage);
     };
   }, []);
@@ -126,6 +139,7 @@ export function StudioAtlasPreviewBridge() {
   return (
     <PathwayRuntimeSurface
       definition={definition}
+      verifiedIllustrations={state.illustrations}
       title={state.snapshot.title}
       description={state.snapshot.description}
       reviewNotice="ANTEPRIMA STUDIO ATLAS · NON AUTORIZZATA AGLI STUDENTI"
