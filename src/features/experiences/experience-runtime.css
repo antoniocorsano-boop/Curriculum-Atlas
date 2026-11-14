@@ -113,3 +113,5 @@
  .experience-character{bottom:114px}
  .experience-investigation,.experience-workbench,.experience-decision{padding:20px 16px}
 }
+
+.experience-illustration{margin:0;min-width:0;display:grid;gap:.4rem}.experience-illustration img{display:block;max-width:100%;height:auto;border-radius:1rem;margin-inline:auto;max-height:60vh;object-fit:contain}.experience-illustration figcaption{font-size:.8rem;opacity:.78;text-align:center;overflow-wrap:anywhere}.experience-story{display:grid;gap:.75rem}.experience-story p{margin:0;line-height:1.55}

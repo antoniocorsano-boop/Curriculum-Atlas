@@ -10,6 +10,7 @@ import type {
 } from "./model";
 import { useExperienceSession } from "./use-experience-session";
 import "./experience-runtime.css";
+import type {VerifiedSceneIllustration} from "../pathways/edutwin-preview-media";
 
 type ResolvedTransition = ExperienceTransition & { key: string };
 
@@ -23,9 +24,11 @@ export function ExperienceRuntime({
   definition,
   presentation,
   onTransition,
+  verifiedIllustrations,
 }: {
   definition: ExperienceDefinition;
   presentation?: ExperiencePresentation;
+  verifiedIllustrations?: ReadonlyMap<string,VerifiedSceneIllustration>;
   onTransition?: (nodeId: string, transitionId: string, targetNodeId: string) => void;
 }) {
   const session = useExperienceSession({
@@ -95,6 +98,7 @@ export function ExperienceRuntime({
   const actionLabel = authoredSummary ? (pendingTransition ? "Prosegui" : firstTransition?.label ?? prompt) : "Continua";
   const activeWorld = pendingTransition?.worldAfter ?? node.world;
   const worldChangedByChoice = Boolean(pendingTransition?.worldAfter);
+  const illustration = isEduTwin ? verifiedIllustrations?.get(node.id) : undefined;
   const stage = node.stage;
   const stageEvidence = stage?.evidence ?? [];
   const activeLocation = stage?.locations?.find((location) => location.id === activeLocationId);
@@ -385,6 +389,12 @@ export function ExperienceRuntime({
     >
       <p className="experience-kicker">{definition.mode === "SMART" ? "Attività smart" : "Percorso"}</p>
       <h1 id="experience-heading" ref={headingRef} tabIndex={-1}>{title}</h1>
+
+      {illustration && <figure className="experience-illustration">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={illustration.src} alt={illustration.alt} width={illustration.width} height={illustration.height}/>
+        <figcaption>{illustration.role==="SETTING"?"Ambientazione di riferimento":illustration.role==="CHARACTER"?"Personaggio di riferimento":"Illustrazione della scena"}</figcaption>
+      </figure>}
 
       {activeWorld && (
         <section
