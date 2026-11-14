@@ -156,3 +156,45 @@ test("invalid consequence signal detail blocks preview before mounting",async({p
  const {runtime}=await openPreview(page,context,candidate,false);
  await expect(runtime).toHaveCount(0);
 });
+
+test("compact illustrated prologue fits the first authored action on ordinary mobile viewports",async({page,context})=>{
+ const candidate=structuredClone(fixture);
+ const beats=["2045. I display guidano la città.","Oggi apre una mostra.","Ada custodisce gli avvisi.","Due messaggi confondono il pubblico.","Ada ti chiede aiuto.","Verifica gli avvisi per orientare i visitatori."];
+ candidate.scenes[0].visibleSituation=beats.join("\n\n");
+ candidate.edutwinMedia.mediaDigest=sha(mediaDigestInput(candidate,candidate.edutwinMedia));
+ const {preview,runtime}=await openPreview(page,context,candidate,true);
+ for(const [width,height] of [[320,700],[393,873],[1280,800]]){
+  await preview.setViewportSize({width,height});
+  await preview.evaluate(()=>window.scrollTo(0,0));
+  const notice=preview.getByText(/NON AUTORIZZATA AGLI STUDENTI/);
+  await expect(notice).toBeVisible();
+  const story=runtime.locator(".experience-story");
+  for(const beat of beats)await expect(story).toContainText(beat);
+  await expect(story.locator("p")).toHaveCount(2);
+  const image=runtime.getByRole("img",{name:"Città sintetica originale"});
+  await expect(image).toBeVisible();
+  const action=runtime.getByRole("button",{name:"Raggiungi il punto di incontro",exact:true});
+  await expect(action).toBeInViewport({ratio:1});
+  expect(await preview.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ }
+ await preview.getByText("Informazioni sull’anteprima",{exact:true}).click();
+ await expect(preview.locator(".pathwayPrototype__review-details")).toContainText(candidate.description);
+ await preview.getByText("Informazioni sull’anteprima",{exact:true}).click();
+ await runtime.getByRole("button",{name:"Raggiungi il punto di incontro",exact:true}).click();
+ await expect(runtime.locator(".experience-feedback")).toContainText("La missione comincia.");
+ await runtime.getByRole("button",{name:"Prosegui",exact:true}).click();
+ await expect(runtime.getByRole("heading",{name:"Il documento",exact:true})).toBeVisible();
+});
+test("long opening keeps all authored paragraphs and a reachable action",async({page,context})=>{
+ const candidate=structuredClone(fixture);
+ const beats=Array.from({length:6},(_,i)=>"Passaggio "+(i+1)+". "+("Una descrizione narrativa completa conserva tutti i suoi dettagli. ".repeat(4)));
+ candidate.scenes[0].visibleSituation=beats.join("\n\n");
+ candidate.edutwinMedia.mediaDigest=sha(mediaDigestInput(candidate,candidate.edutwinMedia));
+ const {preview,runtime}=await openPreview(page,context,candidate,true);
+ await preview.setViewportSize({width:320,height:700});
+ const story=runtime.locator(".experience-story");
+ await expect(story.locator("p")).toHaveCount(6);
+ for(const beat of beats)await expect(story).toContainText(beat.trim());
+ await runtime.getByRole("button",{name:"Raggiungi il punto di incontro",exact:true}).click();
+ await expect(runtime.locator(".experience-feedback")).toContainText("La missione comincia.");
+});

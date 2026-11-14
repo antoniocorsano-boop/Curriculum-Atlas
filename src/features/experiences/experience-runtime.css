@@ -117,3 +117,16 @@
 .experience-illustration{margin:0;min-width:0;display:grid;gap:.4rem}.experience-illustration img{display:block;max-width:100%;height:auto;border-radius:1rem;margin-inline:auto;max-height:60vh;object-fit:contain}.experience-illustration figcaption{font-size:.8rem;opacity:.78;text-align:center;overflow-wrap:anywhere}.experience-story{display:grid;gap:.75rem}.experience-story p{margin:0;line-height:1.55}
 
 .experience-causal-rail__status{margin:0;padding:10px 12px;background:rgba(7,10,15,.82);color:#f5f1e8;font-size:.9rem;font-weight:700;line-height:1.4;overflow-wrap:anywhere}
+
+/* Compact EduTwin opening: keep the entire context, uncropped illustration and authored action. */
+.experience-runtime--edutwin-opening{gap:.6rem;padding:clamp(.75rem,2vw,1.25rem);max-width:42rem;min-width:0}
+.experience-runtime--edutwin-opening .experience-kicker{margin:0;font-size:.75rem}
+.experience-runtime--edutwin-opening h1{font-size:clamp(1.35rem,4vw,2rem);line-height:1.15;margin:0;overflow-wrap:anywhere}
+.experience-runtime--edutwin-opening .experience-illustration img{max-height:min(23vh,210px);width:auto;max-width:100%;height:auto;object-fit:contain;border-radius:.75rem}
+.experience-runtime--edutwin-opening .experience-illustration figcaption{font-size:.72rem}
+.experience-runtime--edutwin-opening .experience-story{gap:.45rem}
+.experience-runtime--edutwin-opening .experience-story p{line-height:1.45;overflow-wrap:anywhere}
+.experience-feedback--empty{min-height:0;margin:0;padding:0}
+.experience-runtime--edutwin-opening .experience-feedback:not(.experience-feedback--empty){margin:0;padding:.65rem .8rem;border-left:3px solid #476d8a;background:#edf4f8;color:#172033;line-height:1.45}
+.experience-runtime--edutwin-opening .experience-actions button{width:100%;border:1px solid #214b62;border-radius:.65rem;background:#214b62;color:#fff;font-weight:700;text-align:center;min-height:48px}
+.experience-runtime--edutwin-opening .experience-actions button:focus-visible{outline:3px solid currentColor;outline-offset:3px}
