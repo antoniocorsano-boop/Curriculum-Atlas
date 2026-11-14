@@ -62,3 +62,11 @@ jobs:
 
       - name: Experience contract regression
         run: pnpm test:experience:contracts
+
+      - name: Install Chromium for EduTwin preview qualification
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Verify generated EduTwin through the real preview bridge
+        env:
+          NEXT_PUBLIC_STUDIO_ATLAS_ORIGIN: http://127.0.0.1:3100
+        run: pnpm exec playwright test tests/edutwin-preview-orientation.spec.ts --project=chromium --reporter=line
