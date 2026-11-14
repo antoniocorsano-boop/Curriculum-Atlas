@@ -117,6 +117,7 @@ function validateWorldState(
     else ids.add(signal.id);
     if (!signal?.label?.trim()) errors.push(`${prefix}:signalLabel`);
     if (!WORLD_SIGNAL_STATES.has(signal?.state)) errors.push(`${prefix}:signalState`);
+    if (signal?.detail !== undefined && typeof signal.detail !== "string") errors.push(`${prefix}:signalDetail`);
   }
 }
 
