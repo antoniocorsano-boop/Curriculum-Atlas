@@ -40,7 +40,7 @@ test('functions and unknown functions fail closed',()=>{
 });
 test('both deployment configurations must exist and no runtime bindings',()=>{
   for(const mode of ['preview','production']){
-    for(const k of ['r2_buckets','env_vars','kv_namespaces','d1_databases','ai_bindings','services','future_paid_binding']){
+    for(const k of ['r2_buckets','env_vars','kv_namespaces','d1_databases','ai_bindings','services','future_paid_binding','browsers','mtls_certificates']){
       const p=fixture();p.result.deployment_configs[mode][k]={x:{}};
       assert.throws(()=>validateProject(p),/STOP_RUNTIME_BINDING/);
     }
