@@ -7,6 +7,8 @@ import type {
   ExperienceWorldSignalState,
 } from "@/features/experiences/model";
 
+import type {PreviewIllustratedMedia} from "./edutwin-preview-media";
+
 export type StudioAtlasPreviewSceneKind = "SCENE" | "TRANSFER";
 
 export interface StudioAtlasPreviewWorldSignal {
@@ -85,6 +87,7 @@ export interface StudioAtlasPreviewSnapshot {
   runtimeAuthorized: false;
   studentAuthorized: false;
   scenes: StudioAtlasPreviewScene[];
+  edutwinMedia?: PreviewIllustratedMedia;
 }
 
 const WORLD_SIGNAL_STATES = new Set<ExperienceWorldSignalState>([
