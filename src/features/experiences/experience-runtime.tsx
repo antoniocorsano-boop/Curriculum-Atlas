@@ -89,6 +89,10 @@ export function ExperienceRuntime({
   const isChoice = node.interaction === "choice";
   const isText = node.interaction === "text";
   const firstTransition = transitions[0];
+  const isEduTwin = definition.qualificationProfileId === "STUDIO_ATLAS_PREVIEW_V0" && definition.graph.entryNodeId === "edutwin-opening";
+  const authoredSummary = isEduTwin && !isChoice && !isText;
+  const revealAfterAction = authoredSummary && node.id !== definition.graph.entryNodeId && !node.terminal;
+  const actionLabel = authoredSummary ? (pendingTransition ? "Prosegui" : firstTransition?.label ?? prompt) : "Continua";
   const activeWorld = pendingTransition?.worldAfter ?? node.world;
   const worldChangedByChoice = Boolean(pendingTransition?.worldAfter);
   const stage = node.stage;
@@ -110,7 +114,12 @@ export function ExperienceRuntime({
   }
 
   function proceed() {
-    const transition = isChoice ? pendingTransition : firstTransition;
+    // The opening action enters the scene; later summary actions expose their consequence first.
+    if (revealAfterAction && !pendingTransition && firstTransition) {
+      selectTransition(firstTransition);
+      return;
+    }
+    const transition = isChoice || revealAfterAction ? pendingTransition : firstTransition;
     if (transition) {
       onTransition?.(node!.id, transition.key, transition.targetNodeId);
       session.choose(transition.targetNodeId);
@@ -344,7 +353,7 @@ export function ExperienceRuntime({
                   onClick={proceed}
                   disabled={isChoice ? !pendingTransition : !firstTransition}
                 >
-                  {worldChangedByChoice ? "Continua dalla conseguenza" : "Continua"}
+                  {authoredSummary ? actionLabel : worldChangedByChoice ? "Continua dalla conseguenza" : "Continua"}
                 </button>
               ) : null}
 
@@ -412,12 +421,14 @@ export function ExperienceRuntime({
 
       {facts.length > 0 && (
         <div className="experience-facts">
-          <h2>Quello che sappiamo</h2>
-          <ul>{facts.map((fact) => <li key={fact}>{fact}</li>)}</ul>
+          {isEduTwin ? <div className="experience-story">{facts.flatMap((fact) => fact.split(/\n\n+/)).map((paragraph, i) => <p key={i}>{paragraph}</p>)}</div> : <>
+            <h2>Quello che sappiamo</h2>
+            <ul>{facts.map((fact) => <li key={fact}>{fact}</li>)}</ul>
+          </>}
         </div>
       )}
 
-      {!isChoice && <p className="experience-prompt">{prompt}</p>}
+      {!isChoice && !authoredSummary && <p className="experience-prompt">{prompt}</p>}
 
       {isText && (
         <label className="experience-field">
@@ -450,7 +461,7 @@ export function ExperienceRuntime({
       )}
 
       <p role="status" aria-live="polite" aria-atomic="true" className="experience-feedback">
-        {choiceFeedback || (isChoice
+        {choiceFeedback || (isEduTwin ? "" : isChoice
           ? "Scegli una possibilità: potrai leggere il feedback prima di continuare."
           : node.feedbackCategory.replaceAll("_", " ").toLowerCase())}
       </p>
@@ -462,7 +473,7 @@ export function ExperienceRuntime({
             onClick={proceed}
             disabled={isChoice ? !pendingTransition : !firstTransition}
           >
-            Continua
+            {actionLabel}
           </button>
         )}
 
