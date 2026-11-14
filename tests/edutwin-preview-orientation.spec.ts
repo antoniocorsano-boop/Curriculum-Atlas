@@ -134,3 +134,25 @@ test("staged story preserves closure and starts a fresh investigation after rest
  await expect(runtime.getByRole("button",{name:"Porta sul banco",exact:true})).toBeVisible();
  await expect(runtime.getByText("0 indizi sul banco",{exact:true})).toBeVisible();
 });
+
+test("cinematic choice displays authored world status and immediate consequence",async({page,context})=>{
+ const candidate=structuredClone(fixture);delete candidate.edutwinMedia;
+ const scene=candidate.scenes.find((s:{interaction:string})=>s.interaction==="CHOICE");
+ scene.stage={visualMode:"CINEMATIC_EDITORIAL"};
+ const {runtime}=await openPreview(page,context,candidate,true);
+ await runtime.getByRole("button",{name:"Raggiungi il punto di incontro",exact:true}).click();
+ await runtime.getByRole("button",{name:"Prosegui",exact:true}).click();
+ await runtime.getByRole("button",{name:"Apri il documento originale",exact:true}).click();
+ await runtime.getByRole("button",{name:"Prosegui",exact:true}).click();
+ const status=runtime.locator(".experience-causal-rail__status");
+ await expect(status).toHaveText("Avviso incompleto");
+ await runtime.getByRole("button",{name:"Esponi solo l'inizio",exact:true}).click();
+ await expect(status).toHaveText("Avviso ancora incompleto");
+});
+test("invalid consequence signal detail blocks preview before mounting",async({page,context})=>{
+ const candidate=structuredClone(fixture);delete candidate.edutwinMedia;
+ const scene=candidate.scenes.find((s:{interaction:string})=>s.interaction==="CHOICE");
+ scene.choices[0].worldAfter.signals[0].detail={text:"not a string"};
+ const {runtime}=await openPreview(page,context,candidate,false);
+ await expect(runtime).toHaveCount(0);
+});
