@@ -24,3 +24,14 @@ const old = studioAtlasSnapshotToExperience(legacy);
 assert.equal(old.graph.nodes[0].transitions[0].label,"Continua");
 assert.equal(old.graph.nodes[1].facts.length,2);
 console.log("EduTwin preview orientation: PASS (authored actions, deferred revelations, branching, terminal closure, legacy compatibility).");
+
+for(const [stage,reason] of [
+ [{visualMode:"CINEMATIC_EDITORIAL",workbench:{prompt:"Test",minEvidence:0}},/workbenchModes/],
+ [{visualMode:"CINEMATIC_EDITORIAL",characterBeat:{role:"Curatrice",line:"Test"}},/characterBeat/],
+ [{visualMode:"CINEMATIC_EDITORIAL",locations:"invalid"},/locations/],
+ [{visualMode:"CINEMATIC_EDITORIAL",evidence:[{id:"a",label:"Test",detail:"Test",kind:"TRACE",locationId:"missing"}]},/evidenceLocation/]
+]){
+ const bad=structuredClone(fixture);bad.scenes[0].stage=stage;
+ assert.throws(()=>studioAtlasSnapshotToExperience(bad),reason);
+}
+console.log("Stage validation: PASS.");
