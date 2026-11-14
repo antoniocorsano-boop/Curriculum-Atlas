@@ -289,6 +289,7 @@ export function studioAtlasSnapshotToExperience(
       prompt: scene.learnerAction,
       facts: [
         scene.visibleSituation,
+        ...(isEduTwin && isTerminal && scene.consequence.trim() !== scene.visibleSituation.trim() ? [scene.consequence] : []),
         ...((!isEduTwin || isTerminal) && scene.reveal?.trim() ? [scene.reveal.trim()] : []),
       ],
       world: scene.world,
