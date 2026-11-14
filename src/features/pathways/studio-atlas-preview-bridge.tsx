@@ -7,7 +7,7 @@ import {
   type StudioAtlasPreviewSnapshot,
 } from "@/features/pathways/studio-atlas-preview-adapter";
 
-import {verifyPreviewIllustrations,type VerifiedSceneIllustration} from "./edutwin-preview-media";
+import {verifyPreviewIllustrations,verifyDecodedIllustrations,type VerifiedSceneIllustration} from "./edutwin-preview-media";
 
 const SNAPSHOT_TYPE = "STUDIO_ATLAS_PREVIEW_SNAPSHOT";
 const ACK_TYPE = "STUDIO_ATLAS_PREVIEW_ACK";
@@ -54,7 +54,7 @@ export function StudioAtlasPreviewBridge() {
 
       const snapshot=event.data.snapshot;
       const mediaDigest=snapshot.edutwinMedia?.mediaDigest;
-      if(rejected||checking)return;
+      if(!active||rejected||checking)return;
       function acknowledge(){
         opener.postMessage({type:ACK_TYPE,channel,snapshotId:snapshot.snapshotId},studioOrigin!);
       }
@@ -68,6 +68,7 @@ export function StudioAtlasPreviewBridge() {
         // Validate the scene graph and actual bounded media bytes before mounting or ACK.
         studioAtlasSnapshotToExperience(snapshot);
         const illustrations=await verifyPreviewIllustrations(snapshot);
+        await verifyDecodedIllustrations(illustrations);
         if(!active)return;
         accepted={snapshotId:snapshot.snapshotId,packageDigest:snapshot.packageDigest,mediaDigest};
         setState({status:"READY",snapshot,illustrations});
