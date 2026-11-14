@@ -202,6 +202,7 @@ export function ExperienceRuntime({
 
             {activeWorld ? (
               <div className="experience-causal-rail" aria-label={`Stato del mondo: ${activeWorld.place}`}>
+                <p className="experience-causal-rail__status" role="status">{activeWorld.status}</p>
                 {activeWorld.signals.map((signal) => (
                   <div
                     key={signal.id}
