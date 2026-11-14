@@ -1,13 +1,13 @@
 .atlas-library { display: grid; gap: 28px; min-width: 0; }
-.library-intro { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 20px; padding: clamp(24px, 5vw, 52px); border-radius: 20px; background: radial-gradient(ellipse at 95% 20%, #255d69, transparent 65%), #10263e; color: #fff; }
+.library-intro { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 20px; padding: clamp(20px, 3vw, 32px); border-radius: 20px; background: radial-gradient(ellipse at 95% 20%, #255d69, transparent 65%), #10263e; color: #fff; }
 .library-intro > div { flex: 1 1 300px; min-width: 0; }
 .library-kicker { color: #f2d19b; font-size: .78rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
 .library-intro h1 { font-family: Georgia, "Times New Roman", serif; font-size: clamp(2.1rem, 5vw, 4.2rem); font-weight: 500; line-height: 1.05; letter-spacing: -.035em; margin: 14px 0; }
 .library-intro p { color: #e3edf2; max-width: 56ch; line-height: 1.55; margin: 6px 0; }
 .library-start { display: inline-flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; background: #f3d6a1; color: #14263b; border-radius: 9px; padding: 12px 16px; min-height: 48px; font-weight: 700; }
-.library-doors { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.library-doors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(12px, 2.5vw, 24px); }
 .library-door { display: flex; flex-direction: column; min-width: 0; border-radius: 14px; overflow: hidden; border: 1px solid var(--border-subtle); background: #fff; box-shadow: var(--shadow-soft); }
-.library-door img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: contain; background: #12263e; }
+.library-door img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; background: #12263e; }
 .library-door > div { position: relative; flex: 1; padding: 14px 34px 16px 14px; }
 .library-door h2 { font: 600 clamp(1.2rem, 2vw, 1.65rem) Georgia, serif; margin: 0 0 5px; overflow-wrap: anywhere; }
 .library-door p { color: var(--text-secondary); font-size: .88rem; margin: 0; line-height: 1.45; }
@@ -29,7 +29,7 @@
 .library-institution a { color: #2458ad; font-weight: 650; font-size: .85rem; }
 .atlas-library a:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
 .library-door:hover, .library-work:hover { border-color: var(--border-strong); }
-@media (max-width: 1100px) { .library-doors { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
 @media (max-width: 720px) {
   .atlas-library { gap: 22px; }
   .library-intro { border-radius: 16px; }
@@ -38,3 +38,8 @@
   .library-works { grid-template-columns: minmax(0, 1fr); gap: 8px; }
 }
 @media (max-width: 340px) { .library-doors { grid-template-columns: minmax(0, 1fr); } }
+
+.library-intro .library-motto { font-weight: 700; color: #fff; font-size: clamp(1.05rem, 2.5vw, 1.5rem); }
+.library-door { transition: transform .16s, box-shadow .16s; }
+.library-door:hover { transform: translateY(-2px); }
+@media (prefers-reduced-motion: reduce) { .library-door { transition: none; } .library-door:hover { transform: none; } }
