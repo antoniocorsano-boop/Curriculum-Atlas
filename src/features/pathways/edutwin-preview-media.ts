@@ -93,3 +93,16 @@ export async function verifyPreviewIllustrations(snapshot:Snapshot):Promise<Read
   return [b.sceneId,{src:"data:image/webp;base64,"+image.base64,alt:b.alt,role:b.role,width:image.pixelWidth,height:image.pixelHeight}];
  }));
 }
+
+/** Browser qualification: a valid header and hash do not guarantee decodable pixels. */
+export async function verifyDecodedIllustrations(illustrations:ReadonlyMap<string,VerifiedSceneIllustration>){
+ const seen=new Set<string>();
+ for(const illustration of illustrations.values()){
+  if(seen.has(illustration.src))continue;
+  seen.add(illustration.src);
+  const image=new Image();
+  image.src=illustration.src;
+  await image.decode();
+  if(image.naturalWidth!==illustration.width||image.naturalHeight!==illustration.height)return fail();
+ }
+}
