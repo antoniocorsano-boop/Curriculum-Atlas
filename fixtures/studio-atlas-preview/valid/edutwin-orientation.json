@@ -1,0 +1,114 @@
+{
+  "schemaVersion": "studio-atlas.preview-snapshot/v0.1",
+  "snapshotId": "fixture-edutwin-orientation",
+  "packageDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "pathwayId": "fixture-edutwin-orientation",
+  "version": "0.1.0-preview.1",
+  "title": "Il percorso dell'avviso",
+  "description": "Fixture tecnica sintetica, non pubblicata.",
+  "runtimeAuthorized": false,
+  "studentAuthorized": false,
+  "scenes": [
+    {
+      "sceneId": "edutwin-opening",
+      "kind": "SCENE",
+      "interaction": "SUMMARY",
+      "title": "Prima della visita",
+      "visibleSituation": "Una visitatrice vuole raggiungere il laboratorio.\n\nNora ti chiede di verificare l'orario prima che la visitatrice parta.",
+      "learnerAction": "Raggiungi il punto di incontro",
+      "consequence": "Sei arrivato al punto di incontro.",
+      "reveal": "La missione comincia.",
+      "choices": []
+    },
+    {
+      "sceneId": "document",
+      "kind": "SCENE",
+      "interaction": "SUMMARY",
+      "title": "Il documento",
+      "visibleSituation": "Un avviso parziale è esposto accanto al documento originale.",
+      "learnerAction": "Apri il documento originale",
+      "consequence": "Il documento riporta la fascia oraria completa.",
+      "reveal": "La chiusura temporanea non equivale a una cancellazione.",
+      "choices": []
+    },
+    {
+      "sceneId": "choice",
+      "kind": "SCENE",
+      "interaction": "CHOICE",
+      "title": "Scegli l'avviso",
+      "visibleSituation": "Ora conosci la fascia oraria dalle 15 alle 17.",
+      "learnerAction": "Quale avviso vuoi esporre?",
+      "consequence": "Cambia l'informazione disponibile.",
+      "reveal": "Il contesto completo aiuta a scegliere.",
+      "world": {
+        "place": "Punto di incontro",
+        "status": "Avviso incompleto",
+        "signals": [
+          {
+            "id": "notice",
+            "label": "Avviso",
+            "state": "MISMATCH"
+          }
+        ]
+      },
+      "choices": [
+        {
+          "choiceId": "complete",
+          "label": "Esponi l'orario completo",
+          "feedback": "La visitatrice conosce l'orario di fine.",
+          "targetSceneId": "finish",
+          "worldAfter": {
+            "place": "Punto di incontro",
+            "status": "Avviso completo",
+            "signals": [
+              {
+                "id": "notice",
+                "label": "Avviso",
+                "state": "STABLE"
+              }
+            ]
+          }
+        },
+        {
+          "choiceId": "partial",
+          "label": "Esponi solo l'inizio",
+          "feedback": "La visitatrice non conosce l'orario di fine.",
+          "targetSceneId": "repair",
+          "worldAfter": {
+            "place": "Punto di incontro",
+            "status": "Avviso ancora incompleto",
+            "signals": [
+              {
+                "id": "notice",
+                "label": "Avviso",
+                "state": "DELAYED"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "sceneId": "repair",
+      "kind": "SCENE",
+      "interaction": "SUMMARY",
+      "title": "L'orario mancante",
+      "visibleSituation": "La visitatrice chiede a che ora termina la visita.",
+      "learnerAction": "Completa l'orario",
+      "consequence": "La visitatrice conosce entrambi gli orari.",
+      "reveal": "Anche la fine della visita è un dato utile.",
+      "choices": []
+    },
+    {
+      "sceneId": "finish",
+      "kind": "TRANSFER",
+      "interaction": "SUMMARY",
+      "title": "Visita possibile",
+      "visibleSituation": "La visitatrice può raggiungere il laboratorio all'ora prevista.",
+      "learnerAction": "Osserva il risultato",
+      "consequence": "Il problema è risolto.",
+      "reveal": "Verificare la fonte prima di agire.",
+      "choices": []
+    }
+  ]
+}
