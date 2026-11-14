@@ -33,6 +33,7 @@ export function PathwayRuntimeSurface({
   const [presentationId, setPresentationId] = useState(availablePresentations[0] ?? "");
   const presentation = presentationId ? definition.presentationData?.[presentationId] : undefined;
   const immersive = definition.graph.nodes.some((node) => node.stage?.visualMode === "CINEMATIC_EDITORIAL");
+  const compactEduTwinReview = Boolean(reviewNotice && !immersive && definition.qualificationProfileId === "STUDIO_ATLAS_PREVIEW_V0" && definition.graph.entryNodeId === "edutwin-opening");
   const growth = useLocalPathwayGrowth({
     pathwayId: definition.experienceId,
     pathwayVersion: definition.version,
@@ -40,13 +41,16 @@ export function PathwayRuntimeSurface({
   });
 
   return (
-    <main className={immersive ? "pathwayPrototype pathwayPrototype--immersive" : "pathwayPrototype"}>
+    <main className={immersive ? "pathwayPrototype pathwayPrototype--immersive" : compactEduTwinReview ? "pathwayPrototype pathwayPrototype--edutwin-review" : "pathwayPrototype"}>
       <header className="pathwayPrototype__header">
-        <div>
+        {compactEduTwinReview ? <details className="pathwayPrototype__review-details">
+          <summary>Informazioni sull’anteprima</summary>
+          <p><strong>{title}</strong></p><p>{description}</p>
+        </details> : <div>
           <p className="pathwayPrototype__eyebrow">Atlas · Percorsi</p>
           <h1>{title}</h1>
           <p>{description}</p>
-        </div>
+        </div>}
         <div className="pathwayPrototype__status">
           {reviewNotice ? <strong>{reviewNotice}</strong> : <strong>Sessione locale</strong>}
           <span>Nessun account, punteggio, profilo o telemetria dello studente.</span>
