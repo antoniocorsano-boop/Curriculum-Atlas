@@ -248,6 +248,11 @@ export function studioAtlasSnapshotToExperience(
 ): ExperienceDefinition {
   validateStudioAtlasPreviewSnapshot(value);
   const snapshot = value;
+  // Reserved opening id emitted by the EduTwin draft compiler.
+  // Preserve the existing presentation of all other Studio Atlas paths.
+  const isEduTwin = snapshot.scenes[0].sceneId === "edutwin-opening";
+  const withReveal = (feedback: string, reveal?: string) =>
+    [feedback, ...(reveal?.trim() ? [reveal.trim()] : [])].join("\n\n");
 
   const nodes = snapshot.scenes.map((scene, index) => {
     const next = snapshot.scenes[index + 1];
@@ -266,14 +271,14 @@ export function studioAtlasSnapshotToExperience(
             id: choice.choiceId,
             targetNodeId: choice.targetSceneId,
             label: choice.label,
-            feedback: choice.feedback,
+            feedback: isEduTwin ? withReveal(choice.feedback, scene.reveal) : choice.feedback,
             worldAfter: choice.worldAfter,
           }))
         : [{
             id: "continue",
             targetNodeId: next.sceneId,
-            label: "Continua",
-            feedback: scene.consequence,
+            label: isEduTwin ? scene.learnerAction : "Continua",
+            feedback: isEduTwin ? withReveal(scene.consequence, scene.reveal) : scene.consequence,
           }];
 
     return {
@@ -284,7 +289,7 @@ export function studioAtlasSnapshotToExperience(
       prompt: scene.learnerAction,
       facts: [
         scene.visibleSituation,
-        ...(scene.reveal?.trim() ? [scene.reveal.trim()] : []),
+        ...((!isEduTwin || isTerminal) && scene.reveal?.trim() ? [scene.reveal.trim()] : []),
       ],
       world: scene.world,
       stage: scene.stage as ExperienceStage | undefined,
