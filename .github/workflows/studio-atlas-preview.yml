@@ -1,0 +1,79 @@
+name: Studio Atlas → Atlas Preview v0.1
+
+on:
+  pull_request:
+    paths:
+      - "src/features/pathways/studio-atlas-preview-adapter.ts"
+      - "src/features/pathways/edutwin-preview-media.ts"
+      - "src/features/pathways/pathway-runtime-surface.tsx"
+      - "src/features/experiences/experience-runtime.css"
+      - "scripts/test-edutwin-preview-media.mjs"
+      - "src/features/pathways/studio-atlas-preview-bridge.tsx"
+      - "src/app/percorsi/lab/studio-atlas-preview/**"
+      - "fixtures/studio-atlas-preview/**"
+      - "scripts/validate-studio-atlas-preview-snapshot.mjs"
+      - "scripts/test-edutwin-preview-orientation.mjs"
+      - "src/features/experiences/experience-runtime.tsx"
+      - "tests/edutwin-preview-orientation.spec.ts"
+      - "docs/STUDIO-ATLAS-PREVIEW-ADAPTER-v0.1.md"
+      - ".github/workflows/studio-atlas-preview.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - run: pnpm install --no-frozen-lockfile
+
+      - name: Validate Studio Atlas preview snapshots
+        run: |
+          node scripts/validate-studio-atlas-preview-snapshot.mjs fixtures/studio-atlas-preview/valid/minimal.json valid
+          node scripts/validate-studio-atlas-preview-snapshot.mjs fixtures/studio-atlas-preview/invalid/no-transfer.json invalid
+
+      - name: Verify EduTwin action and revelation semantics
+        run: node --experimental-strip-types scripts/test-edutwin-preview-orientation.mjs
+
+      - name: Verify original EduTwin media and snapshot binding
+        run: node --experimental-strip-types scripts/test-edutwin-preview-media.mjs
+
+      - name: Enforce origin-bound bridge
+        run: |
+          ! grep -R 'postMessage([^,]*,[[:space:]]*"\*"'             src/features/pathways/studio-atlas-preview-bridge.tsx
+          grep -q 'event.origin !== studioOrigin'             src/features/pathways/studio-atlas-preview-bridge.tsx
+          grep -q 'STUDIO_ATLAS_PREVIEW_ACK'             src/features/pathways/studio-atlas-preview-bridge.tsx
+          grep -q 'message.channel === channel'             src/features/pathways/studio-atlas-preview-bridge.tsx
+          grep -q 'targetNodeId: choice.targetSceneId'       src/features/pathways/studio-atlas-preview-adapter.ts
+          grep -q 'choiceTargetsNotDivergent'                scripts/validate-studio-atlas-preview-snapshot.mjs
+          grep -q 'worldAfter: choice.worldAfter'             src/features/pathways/studio-atlas-preview-adapter.ts
+          grep -q 'experience-world__signals'                 src/features/experiences/experience-runtime.tsx
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build
+        run: pnpm build
+
+      - name: Experience contract regression
+        run: pnpm test:experience:contracts
+
+      - name: Install Chromium for EduTwin preview qualification
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Verify generated EduTwin through the real preview bridge
+        env:
+          NEXT_PUBLIC_STUDIO_ATLAS_ORIGIN: http://127.0.0.1:3100
+        run: pnpm exec playwright test tests/edutwin-preview-orientation.spec.ts --project=chromium --reporter=line

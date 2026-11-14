@@ -5,6 +5,7 @@ import { ExperienceRuntime } from "@/features/experiences/experience-runtime";
 import type { ExperienceDefinition, ExperiencePresentation } from "@/features/experiences/model";
 import { LocalGrowthPanel, useLocalPathwayGrowth, type LocalGrowthAchievement } from "./local-growth-panel";
 import "./pw-missing-information-01/pathway.css";
+import type {VerifiedSceneIllustration} from "./edutwin-preview-media";
 
 type DefinitionWithPresentations = ExperienceDefinition & {
   presentationData?: Record<string, ExperiencePresentation>;
@@ -16,12 +17,14 @@ export function PathwayRuntimeSurface({
   description,
   growthAchievements = [],
   reviewNotice,
+  verifiedIllustrations,
 }: {
   definition: DefinitionWithPresentations;
   title: string;
   description: string;
   growthAchievements?: LocalGrowthAchievement[];
   reviewNotice?: string;
+  verifiedIllustrations?: ReadonlyMap<string,VerifiedSceneIllustration>;
 }) {
   const availablePresentations = useMemo(
     () => definition.presentationGrammarIds.filter((id) => Boolean(definition.presentationData?.[id])),
@@ -29,6 +32,7 @@ export function PathwayRuntimeSurface({
   );
   const [presentationId, setPresentationId] = useState(availablePresentations[0] ?? "");
   const presentation = presentationId ? definition.presentationData?.[presentationId] : undefined;
+  const immersive = definition.graph.nodes.some((node) => node.stage?.visualMode === "CINEMATIC_EDITORIAL");
   const growth = useLocalPathwayGrowth({
     pathwayId: definition.experienceId,
     pathwayVersion: definition.version,
@@ -36,7 +40,7 @@ export function PathwayRuntimeSurface({
   });
 
   return (
-    <main className="pathwayPrototype">
+    <main className={immersive ? "pathwayPrototype pathwayPrototype--immersive" : "pathwayPrototype"}>
       <header className="pathwayPrototype__header">
         <div>
           <p className="pathwayPrototype__eyebrow">Atlas · Percorsi</p>
@@ -78,7 +82,7 @@ export function PathwayRuntimeSurface({
         />
       )}
 
-      <ExperienceRuntime definition={definition} presentation={presentation} onTransition={(nodeId, transitionId) => growth.noteOutcome(nodeId, transitionId)} />
+      <ExperienceRuntime definition={definition} presentation={presentation} verifiedIllustrations={verifiedIllustrations} onTransition={(nodeId, transitionId) => growth.noteOutcome(nodeId, transitionId)} />
 
       <details className="pathwayPrototype__privacy">
         <summary><strong>Privacy del percorso</strong></summary>

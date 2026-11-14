@@ -17,11 +17,72 @@ export interface ChallengeKernel {
   provenanceRefs: string[];
 }
 
+export type ExperienceWorldSignalState =
+  | "OFF"
+  | "READY"
+  | "ACTIVE"
+  | "DELAYED"
+  | "MISMATCH"
+  | "STABLE"
+  | "MANUAL";
+
+export interface ExperienceWorldSignal {
+  id: string;
+  label: string;
+  state: ExperienceWorldSignalState;
+  detail?: string;
+}
+
+export interface ExperienceWorldState {
+  place: string;
+  status: string;
+  signals: ExperienceWorldSignal[];
+}
+
+export type ExperienceStageLocationPosition = "ENTRY" | "ROOM" | "CONTROL" | "LAB";
+export type ExperienceStageEvidenceKind = "TRACE" | "OBJECT" | "PERSON" | "SYSTEM";
+export type ExperienceWorkbenchMode = "TIMELINE" | "CONNECTIONS" | "COMPARE";
+
+export interface ExperienceStageLocation {
+  id: string;
+  label: string;
+  detail: string;
+  position: ExperienceStageLocationPosition;
+}
+
+export interface ExperienceStageEvidence {
+  id: string;
+  label: string;
+  detail: string;
+  locationId: string;
+  kind: ExperienceStageEvidenceKind;
+  character?: string;
+}
+
+export interface ExperienceStage {
+  visualMode: "CINEMATIC_EDITORIAL";
+  focusLocationId?: string;
+  locations?: ExperienceStageLocation[];
+  evidence?: ExperienceStageEvidence[];
+  characterBeat?: {
+    name: string;
+    role: string;
+    line: string;
+  };
+  workbench?: {
+    modes: ExperienceWorkbenchMode[];
+    prompt: string;
+    minEvidence: number;
+    transitionMap?: Partial<Record<ExperienceWorkbenchMode, string>>;
+  };
+}
+
 export interface ExperienceTransition {
   id?: string;
   targetNodeId: string;
   label?: string;
   feedback?: string;
+  worldAfter?: ExperienceWorldState;
 }
 
 export interface ExperienceNode {
@@ -31,6 +92,8 @@ export interface ExperienceNode {
   title?: string;
   prompt?: string;
   facts?: string[];
+  world?: ExperienceWorldState;
+  stage?: ExperienceStage;
   feedbackCategory: FeedbackCategory;
   transitions: ExperienceTransition[];
   terminal?: boolean;
