@@ -50,9 +50,9 @@ export default function HomePage() {
       <div className="atlas-library">
         <header className="library-intro">
           <div>
-            <span className="library-kicker">Atlas · Biblioteca delle conoscenze</span>
-            <h1>Il mondo è da scoprire.</h1>
-            <p>Esplora. Scopri. Comprendi. Sperimenta.</p>
+            <span className="library-kicker">Biblioteca educativa</span>
+            <h1>ATLAS</h1>
+            <p className="library-motto">Esplora · Scopri · Comprendi · Sperimenta</p>
             <p>Entra in una storia, osserva un fenomeno, prova una nuova idea. Scegli da dove cominciare.</p>
           </div>
           <Link href="/esplora" className="library-start"><Compass size={22} aria-hidden="true" /> Esplora la mappa <ArrowRight size={18} aria-hidden="true" /></Link>
@@ -69,7 +69,7 @@ export default function HomePage() {
 
         <section id="storie" className="library-section" aria-labelledby="library-storie">
           <h2 id="library-storie">Storie</h2>
-          <p>Non ci sono ancora storie autorizzate alla consultazione. Le nuove opere saranno aggiunte dopo la revisione.</p>
+          <p>La raccolta è in preparazione. Qui troverai i racconti quando saranno pronti per la lettura.</p>
         </section>
         <section id="laboratori" className="library-section" aria-labelledby="library-laboratori">
           <div className="library-section-heading"><div><span className="atlas-eyebrow">Sperimenta</span><h2 id="library-laboratori">Laboratori</h2></div><Link href="/materiali">Materiali delle lezioni <ArrowRight size={16} aria-hidden="true" /></Link></div>
@@ -83,7 +83,7 @@ export default function HomePage() {
         </section>
         <section id="percorsi" className="library-section" aria-labelledby="library-percorsi">
           <div className="library-section-heading"><div><span className="atlas-eyebrow">Cresci</span><h2 id="library-percorsi">Percorsi</h2></div><Link href="/percorsi">Catalogo dei percorsi <ArrowRight size={16} aria-hidden="true" /></Link></div>
-          <p>Il catalogo mostra esclusivamente le esperienze autorizzate. Se non sono ancora disponibili, non verrà mostrato alcun percorso da avviare.</p>
+          <p>Esplora le esperienze disponibili per imparare, scegliere, collaborare e affrontare problemi.</p>
         </section>
 
         <footer className="library-institution">
