@@ -82,7 +82,7 @@ export function ExperienceRuntime({
       "";
     setActiveLocationId(nextLocation);
     if (session.ready) headingRef.current?.focus();
-  }, [session.currentNodeId, session.ready, presentation?.id, node?.stage]);
+  }, [session.currentNodeId, session.ready, session.sessionVersion, presentation?.id, node?.stage]);
 
   if (!session.ready || !node) return <p>Preparazione esperienza…</p>;
 
@@ -130,6 +130,16 @@ export function ExperienceRuntime({
     }
   }
 
+  function restartExperience() {
+    setPinnedEvidenceIds([]);
+    setEvidenceCatalog({});
+    setActiveEvidenceId("");
+    setPendingTransition(null);
+    setChoiceFeedback("");
+    setWorkbenchMode(null);
+    session.restart();
+  }
+
   function togglePinned(id: string) {
     setPinnedEvidenceIds((current) =>
       current.includes(id) ? current.filter((candidate) => candidate !== id) : [...current, id],
@@ -167,7 +177,7 @@ export function ExperienceRuntime({
             <div className="experience-cinema__copy">
               <p className="experience-cinema__scene">{activeLocation?.detail ?? activeWorld?.place}</p>
               <h1 id="experience-heading" ref={headingRef} tabIndex={-1}>{title}</h1>
-              {facts[0] ? <p className="experience-cinema__situation">{facts[0]}</p> : null}
+              {facts.map((fact, index) => <p key={index} className="experience-cinema__situation">{fact}</p>)}
             </div>
 
             {stage.locations?.length ? (
@@ -364,14 +374,14 @@ export function ExperienceRuntime({
               {node.terminal && definition.mode === "PATHWAY" ? (
                 <>
                   <a href="/percorsi">Esci</a>
-                  <button type="button" onClick={session.restart}>Ricomincia</button>
+                  <button type="button" onClick={restartExperience}>Ricomincia</button>
                 </>
               ) : null}
 
               {node.terminal && definition.mode === "SMART" ? (
                 <>
                   <button type="button" onClick={session.complete}>Completa</button>
-                  <button type="button" onClick={session.restart}>Ricomincia</button>
+                  <button type="button" onClick={restartExperience}>Ricomincia</button>
                 </>
               ) : null}
             </div>
@@ -490,14 +500,14 @@ export function ExperienceRuntime({
         {node.terminal && definition.mode === "PATHWAY" && (
           <>
             <a href="/percorsi">Esci</a>
-            <button type="button" onClick={session.restart}>Nuovo percorso</button>
+            <button type="button" onClick={restartExperience}>Nuovo percorso</button>
           </>
         )}
 
         {node.terminal && definition.mode === "SMART" && (
           <>
             <button type="button" onClick={session.complete}>Completa</button>
-            <button type="button" onClick={session.restart}>Ricomincia</button>
+            <button type="button" onClick={restartExperience}>Ricomincia</button>
           </>
         )}
       </div>
