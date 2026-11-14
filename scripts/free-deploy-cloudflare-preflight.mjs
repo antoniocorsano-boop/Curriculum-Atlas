@@ -20,7 +20,7 @@ function checkAnalytics(build) {
 function checkBindings(config) {
   if (!plain(config)) stop('STOP_DEPLOYMENT_CONFIG');
   for (const [key, value] of Object.entries(config)) {
-    if ((key === 'env_vars' || /binding|namespace|bucket|database|queue|hyperdrive|vectorize|durable_object|service|analytics|secret|placement/i.test(key)) && !empty(value)) {
+    if ((['env_vars', 'browsers', 'mtls_certificates'].includes(key) || /binding|namespace|bucket|database|queue|hyperdrive|vectorize|durable_object|service|analytics|secret|placement/i.test(key)) && !empty(value)) {
       stop('STOP_RUNTIME_BINDING');
     }
   }
