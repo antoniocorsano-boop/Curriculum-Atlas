@@ -8,6 +8,9 @@ on:
       - "src/app/percorsi/lab/studio-atlas-preview/**"
       - "fixtures/studio-atlas-preview/**"
       - "scripts/validate-studio-atlas-preview-snapshot.mjs"
+      - "scripts/test-edutwin-preview-orientation.mjs"
+      - "src/features/experiences/experience-runtime.tsx"
+      - "tests/edutwin-preview-orientation.spec.ts"
       - "docs/STUDIO-ATLAS-PREVIEW-ADAPTER-v0.1.md"
       - ".github/workflows/studio-atlas-preview.yml"
 
@@ -36,6 +39,9 @@ jobs:
         run: |
           node scripts/validate-studio-atlas-preview-snapshot.mjs fixtures/studio-atlas-preview/valid/minimal.json valid
           node scripts/validate-studio-atlas-preview-snapshot.mjs fixtures/studio-atlas-preview/invalid/no-transfer.json invalid
+
+      - name: Verify EduTwin action and revelation semantics
+        run: node --experimental-strip-types scripts/test-edutwin-preview-orientation.mjs
 
       - name: Enforce origin-bound bridge
         run: |
