@@ -155,8 +155,8 @@ export function ExperienceRuntime({
       >
         <div className="experience-cinema">
           <div className="experience-cinema__topline">
-            <p className="experience-kicker">Museo Zero · dopo la chiusura</p>
-            <span>{activeLocation?.label ?? activeWorld?.place ?? "Sala Zero"}</span>
+            <p className="experience-kicker">Percorso interattivo</p>
+            <span>{activeLocation?.label ?? activeWorld?.place ?? title}</span>
           </div>
 
           <div className="experience-cinema__world" data-world-changed={worldChangedByChoice || undefined}>
@@ -171,7 +171,7 @@ export function ExperienceRuntime({
             </div>
 
             {stage.locations?.length ? (
-              <nav className="experience-locations" aria-label="Luoghi di Museo Zero">
+              <nav className="experience-locations" aria-label="Luoghi del percorso">
                 {stage.locations.map((location) => (
                   <button
                     key={location.id}
