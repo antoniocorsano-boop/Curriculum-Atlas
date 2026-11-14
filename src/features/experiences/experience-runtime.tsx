@@ -93,6 +93,14 @@ export function ExperienceRuntime({
   const isText = node.interaction === "text";
   const firstTransition = transitions[0];
   const isEduTwin = definition.qualificationProfileId === "STUDIO_ATLAS_PREVIEW_V0" && definition.graph.entryNodeId === "edutwin-opening";
+  const isEduTwinOpening = isEduTwin && node.id === definition.graph.entryNodeId && !node.stage;
+  const storyParagraphs = facts.flatMap((fact) => fact.split(/\n\n+/));
+  // Group a short, six-field compiled opening into two readable narrative beats.
+  // Longer legacy openings retain every original paragraph and normal scrolling.
+  const openingParagraphs = isEduTwinOpening && storyParagraphs.length === 6 &&
+    storyParagraphs.join(" ").length <= 420
+    ? [storyParagraphs.slice(0,3).join(" "),storyParagraphs.slice(3).join(" ")]
+    : storyParagraphs;
   const authoredSummary = isEduTwin && !isChoice && !isText;
   const revealAfterAction = authoredSummary && !node.terminal;
   const actionLabel = authoredSummary ? (pendingTransition ? "Prosegui" : firstTransition?.label ?? prompt) : "Continua";
@@ -394,11 +402,11 @@ export function ExperienceRuntime({
 
   return (
     <section
-      className="experience-runtime"
+      className={isEduTwinOpening ? "experience-runtime experience-runtime--edutwin-opening" : "experience-runtime"}
       aria-labelledby="experience-heading"
       data-session={session.sessionVersion}
     >
-      <p className="experience-kicker">{definition.mode === "SMART" ? "Attività smart" : "Percorso"}</p>
+      <p className="experience-kicker">{isEduTwinOpening ? "Prologo" : definition.mode === "SMART" ? "Attività smart" : "Percorso"}</p>
       <h1 id="experience-heading" ref={headingRef} tabIndex={-1}>{title}</h1>
 
       {illustration && <figure className="experience-illustration">
@@ -442,7 +450,7 @@ export function ExperienceRuntime({
 
       {facts.length > 0 && (
         <div className="experience-facts">
-          {isEduTwin ? <div className="experience-story">{facts.flatMap((fact) => fact.split(/\n\n+/)).map((paragraph, i) => <p key={i}>{paragraph}</p>)}</div> : <>
+          {isEduTwin ? <div className="experience-story">{openingParagraphs.map((paragraph, i) => <p key={i}>{paragraph}</p>)}</div> : <>
             <h2>Quello che sappiamo</h2>
             <ul>{facts.map((fact) => <li key={fact}>{fact}</li>)}</ul>
           </>}
@@ -481,7 +489,7 @@ export function ExperienceRuntime({
         </fieldset>
       )}
 
-      <p role="status" aria-live="polite" aria-atomic="true" className="experience-feedback">
+      <p role="status" aria-live="polite" aria-atomic="true" className={isEduTwin && !choiceFeedback ? "experience-feedback experience-feedback--empty" : "experience-feedback"}>
         {choiceFeedback || (isEduTwin ? "" : isChoice
           ? "Scegli una possibilità: potrai leggere il feedback prima di continuare."
           : node.feedbackCategory.replaceAll("_", " ").toLowerCase())}
