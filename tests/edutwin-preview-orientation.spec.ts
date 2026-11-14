@@ -20,6 +20,9 @@ async function openPreview(page:import("@playwright/test").Page,context:import("
   await context.route(studioOrigin+"/",route=>route.fulfill({contentType:"text/html",body:"<!doctype html><title>Studio fixture</title><button id='open'>Apri</button>"}));
   await page.goto(studioOrigin+"/");
   await page.evaluate(({atlasOrigin,channel})=>{
+    const host=window as Window & {previewAcks?:number};
+    host.previewAcks=0;
+    window.addEventListener("message",event=>{if(event.origin===atlasOrigin&&event.data?.type==="STUDIO_ATLAS_PREVIEW_ACK"&&event.data?.channel===channel)host.previewAcks=(host.previewAcks??0)+1;});
     document.querySelector("#open")!.addEventListener("click",()=>{
       (window as Window & {qualificationPreview?:Window|null}).qualificationPreview=window.open(atlasOrigin+"/percorsi/lab/studio-atlas-preview/?channel="+channel,"_blank");
     });
@@ -77,4 +80,27 @@ test("altered illustrated snapshot is rejected before runtime mount",async({page
  const {preview,runtime}=await openPreview(page,context,bad,false);
  await expect(runtime).toHaveCount(0);
  await expect(preview.getByRole("heading",{name:"Anteprima non disponibile"})).toBeVisible();
+});
+
+test("tampered retries with unchanged declared digests never receive an ACK",async({page,context})=>{
+ const {preview,runtime}=await openPreview(page,context,fixture,true);
+ const count=()=>page.evaluate(()=>(window as Window & {previewAcks?:number}).previewAcks??0);
+ await expect.poll(count).toBeGreaterThan(0);
+ // Allow ACKs already queued by the opening retry loop to arrive.
+ await page.waitForTimeout(250);
+ const baseline=await count();
+ const altered=structuredClone(fixture);
+ altered.scenes[0].visibleSituation="Testo sostituito";
+ altered.edutwinMedia.images[0].base64="AA==";
+ await page.evaluate(({altered,fixture})=>{
+  const w=(window as Window & {qualificationPreview?:Window|null}).qualificationPreview;
+  const channel="synthetic-edutwin-orientation-qualification";
+  const type="STUDIO_ATLAS_PREVIEW_SNAPSHOT",origin="http://127.0.0.1:3000";
+  w?.postMessage({type,channel,snapshot:altered},origin);
+  w?.postMessage({type,channel,snapshot:fixture},origin);
+ },{altered,fixture});
+ await expect.poll(count).toBe(baseline+1);
+ await expect(runtime.getByText("Una visitatrice vuole raggiungere il laboratorio.",{exact:true})).toBeVisible();
+ await expect(runtime.getByText("Testo sostituito",{exact:true})).toHaveCount(0);
+ await expect(preview.getByRole("img",{name:"Città sintetica originale"})).toBeVisible();
 });
