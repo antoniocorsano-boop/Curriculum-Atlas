@@ -35,3 +35,12 @@ for(const [stage,reason] of [
  assert.throws(()=>studioAtlasSnapshotToExperience(bad),reason);
 }
 console.log("Stage validation: PASS.");
+
+for(const target of ["world","worldAfter"]){
+ const bad=structuredClone(fixture);
+ const choice=bad.scenes.find(scene=>scene.interaction==="CHOICE");
+ const world=target==="world"?choice.world:choice.choices[0].worldAfter;
+ world.signals[0].detail={text:"not a string"};
+ assert.throws(()=>studioAtlasSnapshotToExperience(bad),/signalDetail/);
+}
+console.log("World signal detail validation: PASS.");
