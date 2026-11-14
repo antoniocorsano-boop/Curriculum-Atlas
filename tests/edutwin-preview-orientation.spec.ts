@@ -104,3 +104,33 @@ test("tampered retries with unchanged declared digests never receive an ACK",asy
  await expect(runtime.getByText("Testo sostituito",{exact:true})).toHaveCount(0);
  await expect(preview.getByRole("img",{name:"Città sintetica originale"})).toBeVisible();
 });
+
+test("invalid stage fields block preview before mount",async({page,context})=>{
+ const bad=structuredClone(fixture);delete bad.edutwinMedia;
+ bad.scenes[0].stage={visualMode:"CINEMATIC_EDITORIAL",workbench:{prompt:"Test",minEvidence:0}};
+ const {runtime}=await openPreview(page,context,bad,false);
+ await expect(runtime).toHaveCount(0);
+});
+test("staged story preserves closure and starts a fresh investigation after restart",async({page,context})=>{
+ const candidate=structuredClone(fixture);delete candidate.edutwinMedia;
+ candidate.scenes[0].stage={visualMode:"CINEMATIC_EDITORIAL",locations:[{id:"entry",label:"Ingresso",detail:"Vicino all'avviso",position:"ENTRY"}],evidence:[{id:"notice",label:"Avviso originale",detail:"Testo completo",locationId:"entry",kind:"TRACE"}],workbench:{prompt:"Confronta i documenti",minEvidence:1,modes:["COMPARE"]}};
+ candidate.scenes.at(-1).stage={visualMode:"CINEMATIC_EDITORIAL"};
+ const {runtime}=await openPreview(page,context,candidate,true);
+ await expect(runtime.getByRole("button",{name:"Confronta",exact:true})).toBeDisabled();
+ await runtime.getByRole("button",{name:"Porta sul banco",exact:true}).click();
+ await expect(runtime.getByRole("button",{name:"Confronta",exact:true})).toBeEnabled();
+ await runtime.getByRole("button",{name:"Raggiungi il punto di incontro"}).click();
+ await runtime.getByRole("button",{name:"Prosegui",exact:true}).click();
+ await runtime.getByRole("button",{name:"Apri il documento originale"}).click();
+ await runtime.getByRole("button",{name:"Prosegui",exact:true}).click();
+ await runtime.getByRole("radio",{name:"Esponi solo l'inizio"}).check();
+ await runtime.getByRole("button",{name:"Continua",exact:true}).click();
+ await runtime.getByRole("button",{name:"Completa l'orario"}).click();
+ await runtime.getByRole("button",{name:"Prosegui",exact:true}).click();
+ await expect(runtime.getByText("Il problema è risolto.",{exact:true})).toBeVisible();
+ await expect(runtime.getByText("Verificare la fonte prima di agire.",{exact:true})).toBeVisible();
+ await runtime.getByRole("button",{name:"Ricomincia",exact:true}).click();
+ await expect(runtime.getByRole("button",{name:"Confronta",exact:true})).toBeDisabled();
+ await expect(runtime.getByRole("button",{name:"Porta sul banco",exact:true})).toBeVisible();
+ await expect(runtime.getByText("0 indizi sul banco",{exact:true})).toBeVisible();
+});
