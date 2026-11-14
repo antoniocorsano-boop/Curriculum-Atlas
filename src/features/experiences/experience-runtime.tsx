@@ -91,7 +91,7 @@ export function ExperienceRuntime({
   const firstTransition = transitions[0];
   const isEduTwin = definition.qualificationProfileId === "STUDIO_ATLAS_PREVIEW_V0" && definition.graph.entryNodeId === "edutwin-opening";
   const authoredSummary = isEduTwin && !isChoice && !isText;
-  const revealAfterAction = authoredSummary && node.id !== definition.graph.entryNodeId && !node.terminal;
+  const revealAfterAction = authoredSummary && !node.terminal;
   const actionLabel = authoredSummary ? (pendingTransition ? "Prosegui" : firstTransition?.label ?? prompt) : "Continua";
   const activeWorld = pendingTransition?.worldAfter ?? node.world;
   const worldChangedByChoice = Boolean(pendingTransition?.worldAfter);
@@ -114,7 +114,7 @@ export function ExperienceRuntime({
   }
 
   function proceed() {
-    // The opening action enters the scene; later summary actions expose their consequence first.
+    // Every authored summary, including the opening, exposes its consequence before navigation.
     if (revealAfterAction && !pendingTransition && firstTransition) {
       selectTransition(firstTransition);
       return;
