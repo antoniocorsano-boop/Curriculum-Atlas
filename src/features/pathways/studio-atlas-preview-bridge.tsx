@@ -46,7 +46,7 @@ export function StudioAtlasPreviewBridge() {
 
     let active = true;
     let checking = false;
-    let accepted: {snapshotId:string;packageDigest:string;mediaDigest?:string}|undefined;
+    let accepted: {snapshotId:string;packageDigest:string;mediaDigest?:string;serialized:string}|undefined;
     let rejected = false;
     async function onMessage(event: MessageEvent) {
       if (event.origin !== studioOrigin) return;
@@ -60,7 +60,13 @@ export function StudioAtlasPreviewBridge() {
       }
       if(accepted){
         // A retry of the exact accepted candidate receives another ACK, without remounting.
-        if(accepted.snapshotId===snapshot.snapshotId&&accepted.packageDigest===snapshot.packageDigest&&accepted.mediaDigest===mediaDigest)acknowledge();
+        if(accepted.snapshotId===snapshot.snapshotId&&accepted.packageDigest===snapshot.packageDigest&&accepted.mediaDigest===mediaDigest){
+          try{
+            // Compare the entire received snapshot including actual original bytes.
+            // A sender-provided digest string alone cannot establish retry equality.
+            if(JSON.stringify(snapshot)===accepted.serialized)acknowledge();
+          }catch{/* Malformed retry: no ACK and no replacement of accepted preview. */}
+        }
         return;
       }
       checking=true;
@@ -70,7 +76,7 @@ export function StudioAtlasPreviewBridge() {
         const illustrations=await verifyPreviewIllustrations(snapshot);
         await verifyDecodedIllustrations(illustrations);
         if(!active)return;
-        accepted={snapshotId:snapshot.snapshotId,packageDigest:snapshot.packageDigest,mediaDigest};
+        accepted={snapshotId:snapshot.snapshotId,packageDigest:snapshot.packageDigest,mediaDigest,serialized:JSON.stringify(snapshot)};
         setState({status:"READY",snapshot,illustrations});
         acknowledge();
       } catch {
