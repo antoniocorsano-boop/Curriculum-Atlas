@@ -125,39 +125,58 @@ function validateStage(
   prefix: string,
   errors: string[],
 ) {
-  if (!stage) return;
+  if (stage === undefined) return;
+  const nonempty = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
+  const object = (value: unknown): value is Record<string, unknown> => Boolean(value && typeof value === "object" && !Array.isArray(value));
+  if (!object(stage)) { errors.push(`${prefix}:object`); return; }
   if (stage.visualMode !== "CINEMATIC_EDITORIAL") errors.push(`${prefix}:visualMode`);
+  if (stage.locations !== undefined && !Array.isArray(stage.locations)) errors.push(`${prefix}:locations`);
   const locations = Array.isArray(stage.locations) ? stage.locations : [];
   const locationIds = new Set<string>();
   for (const location of locations) {
-    if (!location?.id?.trim()) errors.push(`${prefix}:locationId`);
+    if (!object(location)) { errors.push(`${prefix}:locationObject`); continue; }
+    if (!nonempty(location.id)) errors.push(`${prefix}:locationId`);
     else if (locationIds.has(location.id)) errors.push(`${prefix}:duplicateLocation:${location.id}`);
     else locationIds.add(location.id);
-    if (!location?.label?.trim()) errors.push(`${prefix}:locationLabel`);
-    if (!location?.detail?.trim()) errors.push(`${prefix}:locationDetail`);
-    if (!["ENTRY", "ROOM", "CONTROL", "LAB"].includes(location?.position)) {
-      errors.push(`${prefix}:locationPosition`);
-    }
+    if (!nonempty(location.label)) errors.push(`${prefix}:locationLabel`);
+    if (!nonempty(location.detail)) errors.push(`${prefix}:locationDetail`);
+    if (!["ENTRY", "ROOM", "CONTROL", "LAB"].includes(location.position)) errors.push(`${prefix}:locationPosition`);
   }
-  if (stage.focusLocationId && locations.length > 0 && !locationIds.has(stage.focusLocationId)) {
+  if (stage.focusLocationId !== undefined && (!nonempty(stage.focusLocationId) || !locationIds.has(stage.focusLocationId))) {
     errors.push(`${prefix}:focusLocation`);
   }
+  if (stage.evidence !== undefined && !Array.isArray(stage.evidence)) errors.push(`${prefix}:evidence`);
   const evidence = Array.isArray(stage.evidence) ? stage.evidence : [];
   const evidenceIds = new Set<string>();
   for (const item of evidence) {
-    if (!item?.id?.trim()) errors.push(`${prefix}:evidenceId`);
+    if (!object(item)) { errors.push(`${prefix}:evidenceObject`); continue; }
+    if (!nonempty(item.id)) errors.push(`${prefix}:evidenceId`);
     else if (evidenceIds.has(item.id)) errors.push(`${prefix}:duplicateEvidence:${item.id}`);
     else evidenceIds.add(item.id);
-    if (!item?.label?.trim()) errors.push(`${prefix}:evidenceLabel`);
-    if (!item?.detail?.trim()) errors.push(`${prefix}:evidenceDetail`);
-    if (locations.length > 0 && !locationIds.has(item?.locationId)) errors.push(`${prefix}:evidenceLocation`);
-    if (!["TRACE", "OBJECT", "PERSON", "SYSTEM"].includes(item?.kind)) errors.push(`${prefix}:evidenceKind`);
+    if (!nonempty(item.label)) errors.push(`${prefix}:evidenceLabel`);
+    if (!nonempty(item.detail)) errors.push(`${prefix}:evidenceDetail`);
+    if (!nonempty(item.locationId) || !locationIds.has(item.locationId)) errors.push(`${prefix}:evidenceLocation`);
+    if (!["TRACE", "OBJECT", "PERSON", "SYSTEM"].includes(item.kind)) errors.push(`${prefix}:evidenceKind`);
+    if (item.character !== undefined && !nonempty(item.character)) errors.push(`${prefix}:evidenceCharacter`);
   }
-  if (stage.workbench) {
-    if (!stage.workbench.prompt?.trim()) errors.push(`${prefix}:workbenchPrompt`);
-    if (!Number.isInteger(stage.workbench.minEvidence) || stage.workbench.minEvidence < 0) errors.push(`${prefix}:workbenchMinEvidence`);
-    for (const mode of stage.workbench.modes ?? []) {
-      if (!["TIMELINE", "CONNECTIONS", "COMPARE"].includes(mode)) errors.push(`${prefix}:workbenchMode`);
+  if (stage.characterBeat !== undefined) {
+    const beat = stage.characterBeat;
+    if (!object(beat) || !nonempty(beat.name) || !nonempty(beat.role) || !nonempty(beat.line)) {
+      errors.push(`${prefix}:characterBeat`);
+    }
+  }
+  if (stage.workbench !== undefined) {
+    const bench = stage.workbench;
+    if (!object(bench)) { errors.push(`${prefix}:workbenchObject`); return; }
+    if (!nonempty(bench.prompt)) errors.push(`${prefix}:workbenchPrompt`);
+    if (!Number.isInteger(bench.minEvidence) || bench.minEvidence < 0) errors.push(`${prefix}:workbenchMinEvidence`);
+    const modes = ["TIMELINE", "CONNECTIONS", "COMPARE"];
+    if (!Array.isArray(bench.modes) || bench.modes.length === 0 || new Set(bench.modes).size !== bench.modes.length || bench.modes.some(mode => !modes.includes(mode))) {
+      errors.push(`${prefix}:workbenchModes`);
+    }
+    if (bench.transitionMap !== undefined && (!object(bench.transitionMap) ||
+      Object.entries(bench.transitionMap).some(([mode, target]) => !modes.includes(mode) || !nonempty(target)))) {
+      errors.push(`${prefix}:workbenchTransitionMap`);
     }
   }
 }
