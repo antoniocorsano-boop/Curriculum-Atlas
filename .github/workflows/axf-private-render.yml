@@ -15,7 +15,7 @@ jobs:
           path: recipe
       - uses: actions/checkout@v4
         with:
-          ref: 9f8a091321edb5a994f7e7f81b389f28fcf2fa1a
+          ref: b41a596f6de5858c0b5aaadc084932326dd76313
           path: source
       - uses: pnpm/action-setup@v4
         with:
@@ -36,7 +36,7 @@ jobs:
       - name: Upload code-only local review bundle
         uses: actions/upload-artifact@v4
         with:
-          name: axf-discovery-code-only-9f8a0913
+          name: axf-discovery-code-only-b41a596f
           path: axf-review/
           if-no-files-found: error
           retention-days: 7
