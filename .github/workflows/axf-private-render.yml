@@ -1,0 +1,39 @@
+name: AXF Private Render Bundle
+on:
+  push:
+    branches: [lab/axf-g2-private-render]
+    paths: [".github/workflows/axf-private-render.yml", "scripts/build-axf-private-render.mjs"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: recipe
+      - uses: actions/checkout@v4
+        with:
+          ref: 742e72ce7b56f258ae68598bfb51167ad667a9b6
+          path: source
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install exact-head dependencies
+        working-directory: source
+        run: pnpm install --frozen-lockfile
+      - name: Build isolated review package
+        working-directory: source
+        run: node ../recipe/scripts/build-axf-private-render.mjs ../axf-review
+      - name: Upload code-only local review bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: axf-g2-code-only-742e72ce
+          path: axf-review/
+          if-no-files-found: error
+          retention-days: 7
