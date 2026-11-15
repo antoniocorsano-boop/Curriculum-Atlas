@@ -175,7 +175,9 @@ export function ExperienceRuntime({
     return <SpecializedNode key={node.id + ":" + session.sessionVersion}
       binding={binding} title={title} prompt={prompt}
       onProceed={(evidence) => {
-        session.writeResponse(node.id, JSON.stringify(evidence));
+        const serialized = JSON.stringify(evidence);
+        if (typeof serialized !== "string") return;
+        session.writeResponse(node.id, serialized);
         onTransition?.(node.id, firstTransition.key, firstTransition.targetNodeId);
         session.choose(firstTransition.targetNodeId);
       }} />;
