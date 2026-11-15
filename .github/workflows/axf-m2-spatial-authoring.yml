@@ -116,13 +116,32 @@ jobs:
           find editor -type f \( -name gdevelop -o -name GDevelop \) -print | head -1 > executable.txt
           test -s executable.txt
           chmod +x "$(cat executable.txt)"
-      - name: Export original official example locally without account or cloud
+      - name: Apply documented startup metrics opt-out in isolated project copy
         run: |
-          project="$PWD/official-example/examples/starting-point-and-click-adventure/starting-point-and-click-adventure.json"
+          cp -a official-example/examples/starting-point-and-click-adventure optout-example
+          python3 - <<'PY'
+          import json,pathlib,hashlib
+          p=pathlib.Path('optout-example/starting-point-and-click-adventure.json')
+          original=p.read_bytes()
+          data=json.loads(original)
+          assert len(data['layouts'])==1
+          scene=data['layouts'][0]
+          first=scene['events'][0]
+          assert first['conditions'][0]['type']['value']=='SceneJustBegins'
+          first['actions'].insert(0,{'type':{'value':'EnableMetrics'},'parameters':['','no']})
+          p.write_text(json.dumps(data,ensure_ascii=False,indent=2))
+          report={'upstreamCommit':'a40f1279fdc6c7b8dd902691aee85630a17568d7','originalSha256':hashlib.sha256(original).hexdigest(),'candidateSha256':hashlib.sha256(p.read_bytes()).hexdigest(),'change':'SceneJustBegins first action EnableMetrics no','engineVersion':'5.6.285'}
+          pathlib.Path('evidence/optout.json').write_text(json.dumps(report,indent=2))
+          PY
+      - name: Export isolated opt-out example locally without account or cloud
+        run: |
+          project="$PWD/optout-example/starting-point-and-click-adventure.json"
           test -s "$project"
           test "$(git -C official-example rev-parse HEAD)" = a40f1279fdc6c7b8dd902691aee85630a17568d7
           timeout 300 xvfb-run -a "$(cat executable.txt)" --no-sandbox --disable-update-check --run-command EXPORT_HTML5_EXTERNAL "$project" 2>&1 | tee evidence/export.log
           test -s "$(dirname "$project")/build/index.html"
+          grep -R -E -l --include="code*.js" "enableMetrics\\([^;]*false" "$(dirname "$project")/build" | tee evidence/compiled-optout.txt
+          test -s evidence/compiled-optout.txt
           du -sb "$(dirname "$project")/build" | tee evidence/size.txt
           find "$(dirname "$project")/build" -type f | wc -l | tee evidence/files.txt
       - name: Install browser harness
@@ -133,7 +152,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Probe official exported scene without external requests
         run: |
-          python3 -m http.server 8766 --bind 127.0.0.1 --directory official-example/examples/starting-point-and-click-adventure/build >/tmp/axf-m2-b.log 2>&1 &
+          python3 -m http.server 8766 --bind 127.0.0.1 --directory optout-example/build >/tmp/axf-m2-b.log 2>&1 &
           cat > harness/test.cjs <<'JS'
           const {chromium}=require('playwright');
           const assert=require('node:assert/strict');
@@ -143,18 +162,29 @@ jobs:
             const reports=[];
             for(const [w,h] of [[390,844],[844,390],[1280,800]]){
               const c=await browser.newContext({viewport:{width:w,height:h},hasTouch:w<900,isMobile:w<900,serviceWorkers:'block'});
-              const page=await c.newPage(),external=[],errors=[];
+              const page=await c.newPage(),external=[],errors=[],writes=[],sockets=[];
               page.on('pageerror',e=>errors.push(String(e)));
-              page.on('request',r=>{if(!r.url().startsWith('http://127.0.0.1:8766/')&&!r.url().startsWith('data:')&&!r.url().startsWith('blob:'))external.push(r.url())});
+              page.on('websocket',s=>sockets.push(s.url()));
+              page.on('request',r=>{if(!['GET','HEAD'].includes(r.method()))writes.push(r.method()+' '+r.url());if(!r.url().startsWith('http://127.0.0.1:8766/')&&!r.url().startsWith('data:')&&!r.url().startsWith('blob:'))external.push(r.url())});
               await c.route('**/*',r=>/^(http:\/\/127\.0\.0\.1:8766\/|data:|blob:)/.test(r.request().url())?r.continue():r.abort());
               await page.goto('http://127.0.0.1:8766/');
               await page.locator('canvas').first().waitFor({state:'visible',timeout:30000});
-              await page.waitForTimeout(4500);
+              await page.waitForTimeout(6500);
               const canvas=page.locator('canvas').first(),box=await canvas.boundingBox();
               assert(box&&box.width>0&&box.height>0);
+              const px=box.x+box.width*.48,py=box.y+box.height*.60;
+              if(w<900)await page.touchscreen.tap(px,py);else await page.mouse.click(px,py);
+              await page.waitForTimeout(1800);
+              const other=await c.newPage();await other.goto('about:blank');await other.bringToFront();
+              await page.waitForTimeout(1000);await page.bringToFront();await page.waitForTimeout(5000);
               await page.screenshot({path:'evidence/gdevelop-'+w+'x'+h+'.png'});
-              assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
-              reports.push({viewport:w+'x'+h,canvas:{width:box.width,height:box.height},external,errors});
+              const storage=await page.evaluate(async()=>({local:Object.keys(localStorage),session:Object.keys(sessionStorage),databases:(await indexedDB.databases()).map(d=>d.name),caches:await caches.keys()}));
+              const cookies=await c.cookies();
+              await page.goto('about:blank');await page.waitForTimeout(1000);
+              reports.push({viewport:w+'x'+h,canvas:{width:box.width,height:box.height},external,errors,writes,sockets,storage,cookieCount:cookies.length});
+              fs.writeFileSync('evidence/gdevelop-browser.json',JSON.stringify(reports,null,2));
+              assert.deepEqual(errors,[]);assert.deepEqual(external,[]);assert.deepEqual(writes,[]);assert.deepEqual(sockets,[]);
+              assert.deepEqual(storage,{local:[],session:[],databases:[],caches:[]});assert.equal(cookies.length,0);
               await c.close();
             }
             await browser.close();fs.writeFileSync('evidence/gdevelop-browser.json',JSON.stringify(reports,null,2));console.log(JSON.stringify(reports));
