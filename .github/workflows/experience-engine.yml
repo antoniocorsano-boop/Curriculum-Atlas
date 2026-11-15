@@ -41,6 +41,8 @@ jobs:
         run: pnpm test:percorsi:product
       - name: Percorsi publication filter contract
         run: node --experimental-strip-types scripts/test-percorsi-publication-filter.mjs
+      - name: AXF shared engine boundary
+        run: node --experimental-strip-types scripts/test-atlas-shell-boundary.mjs
       - name: Smart material contracts
         run: pnpm validate:smart
       - name: Smart conformance cases
