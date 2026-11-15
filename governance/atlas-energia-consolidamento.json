@@ -15,8 +15,8 @@
     "editionSha256": "e9c55945eafff4d2d9cb3cddb506839a65ade34b7ba53b18bc62b6b17d671cfc"
   },
   "next": [
-    "F2_VERIFICA_UMANA",
-    "F3_REVISIONE_NARRATIVA",
+    "F3_VERIFICA_UMANA",
+    "F4_CANDIDATO_DOPO_ACCETTAZIONE_TECNICA",
     "F0_EVIDENZE_ESTERNE"
   ],
   "phases": [
@@ -41,7 +41,7 @@
     {
       "id": "F3",
       "dependsOn": [],
-      "state": "APERTO"
+      "state": "IN_VERIFICA"
     },
     {
       "id": "F4",
@@ -128,8 +128,11 @@
       "title": "Coerenza scientifica e dati simulati",
       "dependsOn": [],
       "acceptance": "Distinzione ipotesi/prova; bilancio coerente, nessuna attività elettrica fisica",
-      "state": "APERTO",
-      "evidence": []
+      "state": "IN_VERIFICA",
+      "evidence": [
+        "content/staging/biblioteca/poesia-energia/qualification-v0.5.json",
+        "docs/ATLAS-ENERGIA-F3-RICEVUTA.md"
+      ]
     },
     {
       "id": "REV-05",
@@ -140,8 +143,11 @@
         "REV-04"
       ],
       "acceptance": "Svolta motivata, attività differenziate e rubrica osservabile",
-      "state": "APERTO",
-      "evidence": []
+      "state": "IN_VERIFICA",
+      "evidence": [
+        "content/staging/biblioteca/poesia-energia/qualification-v0.5.json",
+        "docs/ATLAS-ENERGIA-F3-RICEVUTA.md"
+      ]
     },
     {
       "id": "REV-06",
@@ -166,8 +172,11 @@
       "title": "Identità visive e originali",
       "dependsOn": [],
       "acceptance": "Schede personaggi, impronte conservate, diagrammi distinti",
-      "state": "APERTO",
-      "evidence": []
+      "state": "IN_VERIFICA",
+      "evidence": [
+        "content/staging/biblioteca/poesia-energia/qualification-v0.5.json",
+        "docs/ATLAS-ENERGIA-F3-RICEVUTA.md"
+      ]
     },
     {
       "id": "REV-08",
