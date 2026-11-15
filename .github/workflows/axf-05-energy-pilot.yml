@@ -1,0 +1,144 @@
+name: AXF-05 Energy interactive pilot
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'labs/axf-energy/**'
+      - '.github/workflows/axf-05-energy-pilot.yml'
+permissions:
+  contents: read
+jobs:
+  qualify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test deterministic educational model
+        run: |
+          mkdir -p evidence
+          node --test labs/axf-energy/model.test.mjs | tee evidence/model-tests.txt
+      - name: Audit exact isolated renderer dependencies
+        working-directory: labs/axf-energy
+        run: |
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          cp package-lock.json ../../evidence/energy-lock.json
+          status=0; npm audit --package-lock-only --json > ../../evidence/audit.json || status=$?
+          printf '%s\n' "$status" > ../../evidence/audit-exit.txt
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const a=JSON.parse(fs.readFileSync('../../evidence/audit.json','utf8'));
+          if(a.error||!a.metadata?.vulnerabilities)throw Error('Audit unavailable');
+          console.log(JSON.stringify(a.metadata.vulnerabilities));
+          if(a.metadata.vulnerabilities.total!==0)throw Error('Advisories require triage');
+          JS
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm ls --all --json > ../../evidence/dependencies.json
+          mkdir -p vendor
+          cp node_modules/phaser/dist/phaser.esm.js vendor/
+          cp node_modules/phaser/LICENSE* ../../evidence/
+          du -sh vendor | tee ../../evidence/renderer-size.txt
+      - name: Prepare browser harness
+        run: |
+          mkdir -p harness
+          cd harness
+          npm init -y >/dev/null
+          npm install --ignore-scripts --save-exact playwright@1.56.1
+          cp package-lock.json ../evidence/harness-lock.json
+          npx playwright install --with-deps chromium
+      - name: Test five viewports and meaningful interaction
+        run: |
+          mkdir -p preview
+          cp labs/axf-energy/{index.html,model.mjs,scene.mjs} preview/
+          cp -r labs/axf-energy/vendor preview/
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory preview > evidence/server.log 2>&1 &
+          for i in $(seq 1 20); do if curl -fsS http://127.0.0.1:8765/ >/dev/null; then break; fi; sleep 1; done
+          cat > harness/probe.cjs <<'JS'
+          const {chromium}=require('playwright');
+          const fs=require('node:fs');
+          const assert=require('node:assert/strict');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const base='http://127.0.0.1:8765',results=[];
+            for(const [width,height] of [[320,720],[390,844],[430,932],[844,390],[1280,800]]){
+              const touch=width<900;
+              const context=await browser.newContext({viewport:{width,height},isMobile:touch,hasTouch:touch,serviceWorkers:'block'});
+              const page=await context.newPage();
+              const r={viewport:width+'x'+height,external:[],writes:[],websockets:[],errors:[],httpErrors:[]};
+              await context.route('**/*',async route=>{
+                const req=route.request();
+                if(!['GET','HEAD'].includes(req.method())){r.writes.push(req.url());return route.abort()}
+                if(req.url().startsWith(base+'/')||req.url().startsWith('data:')||req.url().startsWith('blob:'))return route.continue();
+                r.external.push(req.url());return route.abort();
+              });
+              page.on('pageerror',e=>r.errors.push(String(e)));
+              page.on('websocket',w=>r.websockets.push(w.url()));
+              page.on('response',x=>{if(x.status()>=400)r.httpErrors.push(x.status()+' '+x.url())});
+              const button=name=>page.getByRole('button',{name,exact:true});
+              const keyboard=async name=>{await button(name).focus();await page.keyboard.press('Enter')};
+              try{
+                await page.goto(base+'/',{waitUntil:'load',timeout:45000});
+                await page.locator('#game[data-ready=true] canvas').waitFor({state:'visible',timeout:30000});
+                assert(await button('Prova A').isDisabled());
+                await keyboard('Prevedo A');
+                const canvas=page.locator('#game canvas');
+                const drag=async (x,y,tx,ty)=>{
+                  await canvas.scrollIntoViewIfNeeded();
+                  const rect=await canvas.boundingBox();
+                  assert(rect);
+                  const start={x:rect.x+x*rect.width/600,y:rect.y+y*rect.height/400};
+                  const end={x:rect.x+tx*rect.width/600,y:rect.y+ty*rect.height/400};
+                  if(touch){
+                    const session=await context.newCDPSession(page);
+                    await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[start]});
+                    for(let i=1;i<=12;i++){const t=i/12;await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:start.x+(end.x-start.x)*t,y:start.y+(end.y-start.y)*t}]});await page.waitForTimeout(30)}
+                    await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+                    await session.detach();
+                  }else{await page.mouse.move(start.x,start.y);await page.mouse.down();await page.mouse.move(end.x,end.y,{steps:12});await page.mouse.up()}
+                };
+                await drag(100,102,100,220);
+                assert.equal(await page.locator('#trials tr').count(),0,'invalid drop must not record a trial');
+                await drag(300,102,300,241);
+                await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('Lampada B: 50 J'));
+                assert.equal(await page.locator('#trials tr').count(),1);
+                await keyboard('Prova A');
+                await keyboard('Prova A');
+                assert.equal(await page.locator('#trials tr').count(),2);
+                assert(await button('Scelgo C').isDisabled());
+                await keyboard('Prova C');
+                const rows=await page.locator('#trials tr').evaluateAll(rows=>rows.map(r=>[...r.cells].map(c=>c.textContent)));
+                assert.deepEqual(rows,[['B','50','20','30','40'],['A','100','20','80','20'],['C','40','20','20','50']]);
+                await keyboard('Scelgo C');await keyboard('Stessa luce, meno ingresso');
+                assert((await page.locator('#reflection').innerText()).includes('Ipotesi iniziale: A. Scelta rivista: C.'));
+                await canvas.scrollIntoViewIfNeeded();
+                r.layout=await page.evaluate(()=>{const b=document.querySelector('#game canvas').getBoundingClientRect();return {width:innerWidth,scroll:document.documentElement.scrollWidth,canvasWidth:b.width,canvasHeight:b.height,left:b.left,right:b.right}});
+                assert(r.layout.scroll<=width+1&&r.layout.left>=-1&&r.layout.right<=width+1&&Math.abs(r.layout.canvasWidth/r.layout.canvasHeight-1.5)<.02);
+                await page.screenshot({path:'evidence/'+r.viewport+'-comparison.png',fullPage:true});
+                await keyboard('Ricomincia');assert.equal(await page.locator('#trials tr').count(),0);assert(await button('Prova A').isDisabled());
+                r.storage=await page.evaluate(()=>({local:localStorage.length,session:sessionStorage.length,cookies:document.cookie}));
+                assert.deepEqual(r.storage,{local:0,session:0,cookies:''});
+                r.passed=true;r.trials=rows;r.input=touch?'emulated touch + keyboard':'mouse + keyboard';
+              }catch(e){r.failure=String(e);await page.screenshot({path:'evidence/'+r.viewport+'-failure.png',fullPage:true}).catch(()=>{})}
+              results.push(r);await context.close();
+            }
+            await browser.close();
+            fs.writeFileSync('evidence/browser-report.json',JSON.stringify(results,null,2));
+            console.log(JSON.stringify(results,null,2));
+            if(results.some(r=>!r.passed||r.external.length||r.writes.length||r.websockets.length||r.errors.length||r.httpErrors.length))process.exitCode=1;
+          })().catch(e=>{console.error(e);process.exitCode=1});
+          JS
+          node harness/probe.cjs
+      - name: Archive diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: axf-05-energy-diagnostic
+          path: evidence/
+          retention-days: 7
+          if-no-files-found: warn
