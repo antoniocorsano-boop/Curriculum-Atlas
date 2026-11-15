@@ -1,0 +1,9 @@
+{
+  "name": "atlas-axf-energy-lab",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "phaser": "4.2.1",
+    "eventemitter3": "5.0.4"
+  }
+}
