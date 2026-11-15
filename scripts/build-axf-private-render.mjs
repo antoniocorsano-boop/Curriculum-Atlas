@@ -12,15 +12,9 @@ if (fs.existsSync(temp) || fs.existsSync(tempCss)) throw new Error("temporary en
 const out = path.resolve(process.argv[2] ?? "../axf-review");
 fs.mkdirSync(out, { recursive: true });
 const entry = `import { createRoot } from "react-dom/client";
-import { AtlasPreviewHost, type AtlasPreviewPlacement, type AtlasPreviewArtwork, type AtlasStandalonePreview } from "./src/features/experiences/atlas-preview-host";
-import minimal from "./fixtures/studio-atlas-preview/valid/minimal.json";
-import orientation from "./fixtures/studio-atlas-preview/valid/edutwin-orientation.json";
+import { AtlasPreviewHost, type AtlasPreviewArtwork, type AtlasStandalonePreview } from "./src/features/experiences/atlas-preview-host";
 import "./.axf-private-review-globals.css";
-const snapshots = [minimal, orientation, { ...minimal, pathwayId: "denied", title: "SYNTHETIC_DENIED", studentAuthorized: true }];
-const placements: Record<string, AtlasPreviewPlacement> = {
-  "studio-preview-fixture-studio-pathway-01": { world: "tecnologia", section: "Percorsi" },
-  "studio-preview-fixture-edutwin-orientation": { world: "lettura", section: "Percorsi" },
-};
+const snapshots: readonly unknown[] = [];
 const root = createRoot(document.getElementById("root")!);
 // Private assembly injects only a digest-verified R3 artifact, never a content-supplied URL.
 const standalone: AtlasStandalonePreview[] = [];
@@ -34,7 +28,7 @@ if (node?.textContent) {
   const framed = html.replace("</body>",fragmentAdapter+"</body>");
   standalone.push({id:"standalone-preview-luce-r3",title:"Dove va l’energia di una lampada?",description:"Osserva come si trasforma l’energia, confronta le lampade e approfondisci l’efficienza.",version:"0.3.0-review",sha256:"19627994f0f92b1a73d4f73701873e7e78ad529706918b063482c4bf187d544c",world:"energia",section:"Scoperte",availability:"ACTIVE",runtimeAuthorized:false,studentAuthorized:false,render:()=> <iframe title="Dove va l’energia di una lampada? — Scoperta privata" sandbox="allow-scripts" referrerPolicy="no-referrer" srcDoc={framed}/>});
 }
-const mount = (artwork?: AtlasPreviewArtwork) => root.render(<AtlasPreviewHost snapshots={snapshots} placements={placements} artwork={artwork} standalone={standalone} />);
+const mount = (artwork?: AtlasPreviewArtwork) => root.render(<AtlasPreviewHost snapshots={snapshots} artwork={artwork} standalone={standalone} />);
 mount();
 const input = document.getElementById("artwork") as HTMLInputElement;
 const status = document.getElementById("art-status")!;
@@ -65,10 +59,10 @@ try {
   const css = fs.readFileSync(path.join(out,"atlas.css"),"utf8");
   const safeJs = js.replace(/<\/script/gi,"<\\/script");
   const safeCss = css.replace(/<\/style/gi,"<\\/style");
-  const html = `<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; font-src data:; frame-src 'self'; form-action 'none'; base-uri 'none'"><meta name="robots" content="noindex,nofollow"><title>Atlas · revisione privata G2</title><style>${safeCss}</style></head><body><aside style="padding:12px;background:#fff;color:#12213b"><label for="artwork">Carica assets.private.json (solo sul dispositivo)</label> <input type="file" id="artwork" accept=".json,application/json"><p id="art-status" aria-live="polite">Nessuna immagine privata caricata</p></aside><div id="root"></div><script>${safeJs}</script></body></html>`;
+  const html = `<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; font-src data:; frame-src 'self'; form-action 'none'; base-uri 'none'"><meta name="robots" content="noindex,nofollow"><title>Atlas · biblioteca editoriale privata</title><style>${safeCss}</style></head><body><aside style="padding:12px;background:#fff;color:#12213b"><label for="artwork">Carica assets.private.json (solo sul dispositivo)</label> <input type="file" id="artwork" accept=".json,application/json"><p id="art-status" aria-live="polite">Nessuna immagine privata caricata</p></aside><div id="root"></div><script>${safeJs}</script></body></html>`;
   fs.writeFileSync(path.join(out,"Atlas-G2-review.html"),html);
   const sha = name => createHash("sha256").update(fs.readFileSync(path.join(out,name))).digest("hex");
-  const manifest = {sourceHead:exactHead,studentAuthorized:false,runtimeAuthorized:false,privateArtworkIncluded:false,bundler:"esbuild@0.25.5",assets:{html:sha("Atlas-G2-review.html"),js:sha("atlas.js"),css:sha("atlas.css")}};
+  const manifest = {sourceHead:exactHead,studentAuthorized:false,runtimeAuthorized:false,privateArtworkIncluded:false,composition:"EDITORIAL_REVIEW_ONLY",syntheticFixtureCount:0,bundler:"esbuild@0.25.5",assets:{html:sha("Atlas-G2-review.html"),js:sha("atlas.js"),css:sha("atlas.css")}};
   fs.writeFileSync(path.join(out,"receipt.json"),JSON.stringify(manifest,null,2)+"\n");
   console.log(JSON.stringify(manifest));
 } finally { fs.rmSync(temp,{force:true}); fs.rmSync(tempCss,{force:true}); }
