@@ -10,7 +10,7 @@ permissions:
 jobs:
   qualify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 25
     env:
       CI: 'true'
     steps:
@@ -93,7 +93,7 @@ jobs:
       - name: Test five viewports and meaningful interaction
         run: |
           mkdir -p preview
-          cp labs/axf-energy/{index.html,model.mjs,scene.mjs} preview/
+          cp labs/axf-energy/{index.html,model.mjs,scene.mjs,standalone.mjs} preview/
           cp -r labs/axf-energy/vendor preview/
           mkdir -p preview/assets
           cp editorial-source/content/staging/biblioteca/poesia-energia/PE-02.webp preview/assets/
@@ -186,6 +186,24 @@ jobs:
           })().catch(e=>{console.error(e);process.exitCode=1});
           JS
           node harness/probe.cjs
+      - name: Install Atlas dependencies for isolated host verification
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - name: Prepare temporary host route and assets (CI only)
+        run: |
+          pnpm install --no-frozen-lockfile
+          test ! -e src/app/experience-lab/axf-energy-review
+          test ! -e public/__axf-energy-review
+          mkdir -p src/app/experience-lab/axf-energy-review
+          cp labs/axf-energy/host-fixture.tsx.txt src/app/experience-lab/axf-energy-review/page.tsx
+          cp -r preview public/__axf-energy-review
+          cp labs/axf-energy/host-test.spec.ts.txt tests/axf-energy-host-review.spec.ts
+          pnpm typecheck
+      - name: Verify actual Energy renderer within Experience Engine
+        run: |
+          pnpm exec playwright install chromium
+          pnpm exec playwright test tests/axf-energy-host-review.spec.ts --project=chromium --reporter=list | tee evidence/host-tests.txt
       - name: Archive diagnostic evidence
         if: always()
         uses: actions/upload-artifact@v4
