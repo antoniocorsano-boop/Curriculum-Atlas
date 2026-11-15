@@ -222,6 +222,7 @@ export function validateStudioAtlasPreviewSnapshot(
     validateWorldState(scene?.world, `world:${scene?.sceneId ?? "unknown"}`, errors);
     validateStage(scene?.stage, `stage:${scene?.sceneId ?? "unknown"}`, errors);
 
+    if (scene && Object.hasOwn(scene, "specialized")) errors.push(`specializedRequiresV02:${scene.sceneId}`);
     const interaction = scene?.interaction ?? "SUMMARY";
     if (interaction !== "SUMMARY" && interaction !== "CHOICE") {
       errors.push(`interaction:${scene?.sceneId ?? "unknown"}`);

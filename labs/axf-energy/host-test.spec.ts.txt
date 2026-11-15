@@ -1,0 +1,55 @@
+import { test, expect } from "@playwright/test";
+test("trusted renderer must collect valid evidence, can revoke it, and engine owns navigation", async ({page})=>{
+  const writes:string[]=[];
+  const external:string[]=[];
+  page.on("request",r=>{if(!["GET","HEAD"].includes(r.method()))writes.push(r.method());if(!r.url().startsWith("http://127.0.0.1:3000/")&&!r.url().startsWith("data:"))external.push(r.url())});
+  await page.setViewportSize({width:390,height:844});
+  await page.goto("/experience-lab/axf-energy-review");
+  const btn=(name:string)=>page.getByRole("button",{name,exact:true});
+  const next=btn("Continua");
+  const canvas=page.locator("#game[data-ready=true] canvas");
+  await expect(canvas).toBeVisible({timeout:30000});
+  await expect(next).toBeDisabled();
+  await btn("Prevedo A").press("Enter");
+  await canvas.scrollIntoViewIfNeeded();
+  const rect=await canvas.boundingBox();
+  if(!rect)throw Error("Missing canvas");
+  await page.mouse.move(rect.x+rect.width/2,rect.y+rect.height*102/400);
+  await page.mouse.down();
+  await page.mouse.move(rect.x+rect.width/2,rect.y+rect.height*241/400,{steps:12});
+  await page.mouse.up();
+  await expect(page.locator("#status")).toContainText("Lampada B: 50 J");
+  await btn("Prova A").press("Enter");
+  await expect(next).toBeDisabled();
+  await btn("Prova C").press("Enter");
+  await btn("Scelgo C").press("Enter");
+  await expect(next).toBeDisabled();
+  await btn("Stessa luce, meno ingresso").press("Enter");
+  await expect(next).toBeEnabled();
+  await btn("Ricomincia").click();
+  await expect(next).toBeDisabled();
+  await btn("Prevedo B").click();
+  for(const id of ["A","B","C"])await btn("Prova "+id).click();
+  await btn("Scelgo C").click();await btn("Stessa luce, meno ingresso").click();
+  await next.click();
+  await expect(page.getByRole("heading",{name:"Trasferisci il ragionamento"})).toBeVisible();
+  await expect(canvas).toHaveCount(0);
+  await btn("Nuovo percorso").click();
+  await expect(canvas).toBeVisible({timeout:30000});
+  await expect(next).toBeDisabled();
+  await expect(page.locator("#trials tr")).toHaveCount(0);
+  expect(writes).toEqual([]);
+  expect(external).toEqual([]);
+  expect(await page.evaluate(()=>localStorage.getItem("atlas:experience:studio-axf-axf-energy"))).toBeNull();
+});
+test("absent or incompatible renderer fails closed; claimed completion is rejected",async({page})=>{
+  await page.goto("/experience-lab/axf-energy-review");
+  for(const name of ["Renderer assente","Renderer incompatibile"]){
+    await page.getByRole("button",{name,exact:true}).click();
+    await expect(page.getByText("Scena interattiva non disponibile.")).toBeVisible();
+    await expect(page.getByRole("button",{name:"Continua",exact:true})).toHaveCount(0);
+  }
+  await page.getByRole("button",{name:"Evidenza simulata",exact:true}).click();
+  await page.getByRole("button",{name:"Invia evidenza incompleta"}).click();
+  await expect(page.getByRole("button",{name:"Continua",exact:true})).toBeDisabled();
+});

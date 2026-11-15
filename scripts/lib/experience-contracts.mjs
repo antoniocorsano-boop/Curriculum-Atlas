@@ -126,6 +126,21 @@ export function validateExperienceDefinition(value) {
   if (value?.runtime?.learnerIdentityRequired !== false) errors.push("learnerIdentityRequired");
   if (value?.runtime?.telemetryAllowed !== false) errors.push("telemetryAllowed");
   if (!Array.isArray(value?.presentationGrammarIds) || value.presentationGrammarIds.length === 0) errors.push("presentationGrammarIds");
+  for (const node of Array.isArray(value?.graph?.nodes) ? value.graph.nodes : []) {
+    if (node?.interaction !== "specialized" && node?.specialized === undefined) continue;
+    const b = node?.specialized;
+    if (node?.interaction !== "specialized" ||
+        value.qualificationProfileId !== "AXF_SPECIALIZED_PREVIEW_V1" ||
+        value.runtime?.statePolicy !== "VOLATILE_MEMORY" ||
+        !b || typeof b !== "object" || Array.isArray(b) ||
+        Object.keys(b).length !== 2 || b.version !== 1 ||
+        typeof b.rendererId !== "string" || !/^[a-z][a-z0-9-]{0,63}$/.test(b.rendererId) ||
+        node.stage !== undefined || node.terminal === true ||
+        !Array.isArray(node.transitions) || node.transitions.length !== 1 ||
+        typeof node.transitions[0]?.id !== "string" || !node.transitions[0].id.trim()) {
+      errors.push(`specializedBinding:${node?.id ?? "unknown"}`);
+    }
+  }
   const graph = validateExperienceGraph(value?.graph, { mode: value?.mode });
   errors.push(...graph.errors);
   const presentations = validatePresentationData(value);

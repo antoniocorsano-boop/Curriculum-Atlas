@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ExperienceRuntime } from "@/features/experiences/experience-runtime";
+import type { ExperienceDefinition } from "@/features/experiences/model";
+import { specializedSnapshotToExperience } from "./specialized-preview-adapter";
+import { energyReviewBinding,specializedReviewEnabled,verifyEnergyReviewAssets } from "./energy-review-renderer";
 import { PathwayRuntimeSurface } from "@/features/pathways/pathway-runtime-surface";
 import {
   studioAtlasSnapshotToExperience,
@@ -15,6 +19,7 @@ const ACK_TYPE = "STUDIO_ATLAS_PREVIEW_ACK";
 type PreviewState =
   | { status: "WAITING" }
   | { status: "READY"; snapshot: StudioAtlasPreviewSnapshot; illustrations: ReadonlyMap<string,VerifiedSceneIllustration> }
+  | { status: "SPECIALIZED_READY"; definition: ExperienceDefinition; title: string }
   | { status: "ERROR"; message: string };
 
 export function StudioAtlasPreviewBridge() {
@@ -71,6 +76,16 @@ export function StudioAtlasPreviewBridge() {
       }
       checking=true;
       try {
+        if ((snapshot as {schemaVersion:string}).schemaVersion === "studio-atlas.preview-snapshot/v0.2") {
+          if (!specializedReviewEnabled()) throw Error("AXF_REVIEW_DISABLED");
+          const definition=specializedSnapshotToExperience(snapshot,energyReviewBinding);
+          await verifyEnergyReviewAssets();
+          if(!active)return;
+          accepted={snapshotId:snapshot.snapshotId,packageDigest:snapshot.packageDigest,serialized:JSON.stringify(snapshot)};
+          setState({status:"SPECIALIZED_READY",definition,title:snapshot.title});
+          acknowledge();
+          return;
+        }
         // Validate the scene graph and actual bounded media bytes before mounting or ACK.
         studioAtlasSnapshotToExperience(snapshot);
         const illustrations=await verifyPreviewIllustrations(snapshot);
@@ -139,6 +154,13 @@ export function StudioAtlasPreviewBridge() {
         </header>
       </main>
     );
+  }
+
+  if(state.status==="SPECIALIZED_READY"){
+    return <main className="pathwayPrototype">
+      <header className="pathwayPrototype__header"><div><p>Atlas · Anteprima Studio</p><h1>{state.title}</h1><p>Revisione sperimentale locale</p></div><strong>NON AUTORIZZATA AGLI STUDENTI</strong></header>
+      <ExperienceRuntime definition={state.definition} specializedRenderer={energyReviewBinding}/>
+    </main>;
   }
 
   const definition = studioAtlasSnapshotToExperience(state.snapshot);

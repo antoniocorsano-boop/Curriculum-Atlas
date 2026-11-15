@@ -62,3 +62,26 @@ assert.equal(validateExperienceDefinition(noTransfer).valid, false);
 assert.equal(validateExperienceDefinition(smart).valid, true, "SMART may be linear");
 
 console.log("PASS experience contracts");
+
+const specialized = structuredClone(pathway);
+specialized.qualificationProfileId = "AXF_SPECIALIZED_PREVIEW_V1";
+Object.assign(specialized.graph.nodes[0], {
+  interaction: "specialized", specialized: {rendererId:"energy-lamp",version:1},
+  transitions:[{id:"evidence-collected",targetNodeId:"p2"}]
+});
+assert.equal(validateExperienceDefinition(specialized).valid,true);
+for(const mutate of [
+  x=>{delete x.graph.nodes[0].specialized},
+  x=>{x.qualificationProfileId="PATHWAY_G2_PLUS_V1"},
+  x=>{x.runtime.statePolicy="LOCAL_DEVICE"},
+  x=>{x.graph.nodes[0].specialized.rendererId="https://example.com/remote.js"},
+  x=>{x.graph.nodes[0].specialized.version=2},
+  x=>{x.graph.nodes[0].specialized.url="/unknown"},
+  x=>{x.graph.nodes[0].stage={}},
+  x=>{x.graph.nodes[0].interaction="summary"},
+  x=>{x.graph.nodes[0].transitions.push({id:"bypass",targetNodeId:"p3"})},
+  x=>{delete x.graph.nodes[0].transitions[0].id}
+]){
+  const bad=structuredClone(specialized);mutate(bad);assert.equal(validateExperienceDefinition(bad).valid,false);
+}
+console.log("PASS specialized preview contract and fail-closed cases");

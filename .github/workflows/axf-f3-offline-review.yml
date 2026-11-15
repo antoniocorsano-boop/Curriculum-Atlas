@@ -1,0 +1,90 @@
+name: AXF-F3 Offline teacher review
+on:
+  pull_request:
+    paths:
+      - "labs/axf-energy/build-offline-review.mjs"
+      - ".github/workflows/axf-f3-offline-review.yml"
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Recover exact original illustration
+        uses: actions/checkout@v4
+        with:
+          ref: abef350ea4b93730081bbea87d14ac33a0753747
+          path: original
+          persist-credentials: false
+          sparse-checkout: |
+            content/staging/biblioteca/poesia-energia
+      - name: Install and audit isolated renderer
+        working-directory: labs/axf-energy
+        run: |
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm audit --package-lock-only
+          npm ci --ignore-scripts --no-audit --no-fund
+      - name: Assemble self-contained teacher review
+        run: |
+          node labs/axf-energy/build-offline-review.mjs original/content/staging/biblioteca/poesia-energia/PE-02.webp review
+      - name: Install isolated Chromium harness
+        run: |
+          mkdir harness
+          cd harness
+          npm init -y >/dev/null
+          npm install --save-exact --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verify file URL with offline browser and no external traffic
+        run: |
+          cat > harness/offline.cjs <<'JS'
+          const {chromium}=require('playwright');
+          const {pathToFileURL}=require('node:url');
+          const path=require('node:path');
+          const fs=require('node:fs');
+          const assert=require('node:assert/strict');
+          (async()=>{
+            const browser=await chromium.launch();
+            const url=pathToFileURL(path.resolve('review/Atlas-Energia-anteprima-docente.html')).href;
+            const reports=[];
+            for(const [width,height] of [[320,720],[390,844],[844,390],[1280,800]]){
+              const c=await browser.newContext({viewport:{width,height},isMobile:width<900,hasTouch:width<900,offline:true,serviceWorkers:'block'});
+              const page=await c.newPage(), errors=[],external=[];
+              page.on('pageerror',e=>errors.push(String(e)));
+              page.on('request',r=>{if(/^https?:/i.test(r.url()))external.push(r.url());});
+              await c.route(/^https?:/i,r=>r.abort());
+              await page.goto(url);
+              await page.locator('#game[data-ready=true] canvas').waitFor({state:'visible',timeout:30000});
+              await page.waitForFunction(()=>document.querySelector('.context img').naturalWidth===883);
+              const btn=name=>page.getByRole('button',{name,exact:true});
+              assert(await btn('Prova A').isDisabled());
+              await btn('Prevedo A').click();
+              for(const id of ['B','A','C'])await btn('Prova '+id).click();
+              const rows=await page.locator('#trials tr').evaluateAll(rows=>rows.map(r=>[...r.cells].map(c=>c.textContent)));
+              assert.deepEqual(rows,[['B','50','20','30','40'],['A','100','20','80','20'],['C','40','20','20','50']]);
+              await btn('Scelgo C').click();await btn('Stessa luce, meno ingresso').click();
+              assert((await page.locator('#reflection').innerText()).includes('Scelta rivista: C.'));
+              assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+              await page.screenshot({path:'review/collaudo-'+width+'x'+height+'.png',fullPage:true});
+              await btn('Ricomincia').click();assert.equal(await page.locator('#trials tr').count(),0);
+              assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
+              reports.push({viewport:width+'x'+height,passed:true,external,errors});
+              await c.close();
+            }
+            await browser.close();fs.writeFileSync('review/collaudo.json',JSON.stringify(reports,null,2));console.log(JSON.stringify(reports));
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+          node harness/offline.cjs
+      - name: Upload tested teacher review package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Atlas-Energia-anteprima-docente
+          path: review/
+          retention-days: 7
+          if-no-files-found: error
