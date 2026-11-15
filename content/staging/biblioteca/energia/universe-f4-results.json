@@ -1,0 +1,74 @@
+{
+  "state": "IN_VERIFICA",
+  "studentAuthorized": false,
+  "sourceSha256": "531de726ef06aefb5807e2ff0afc1a102efc35724b4c94df43d9422f7dadba9b",
+  "candidateSha256": "50d8ec149f24a21f81856403e3926f661eb87faae1de6f97bd9953a234094e13",
+  "preservedImageOccurrences": 14,
+  "existingContentPreserved": true,
+  "modelBalances": 3,
+  "mapConcepts": 6,
+  "results": [
+    {
+      "viewport": [
+        320,
+        720
+      ],
+      "views": 14,
+      "normalAnd200NoOverflow": true,
+      "fourActionsAndWorksheet": true,
+      "threeModelCases": true,
+      "sixMapConcepts": true,
+      "keyboardAndHistory": true,
+      "externalRequests": 0,
+      "jsErrors": 0
+    },
+    {
+      "viewport": [
+        360,
+        800
+      ],
+      "views": 14,
+      "normalAnd200NoOverflow": true,
+      "fourActionsAndWorksheet": true,
+      "threeModelCases": true,
+      "sixMapConcepts": true,
+      "keyboardAndHistory": true,
+      "externalRequests": 0,
+      "jsErrors": 0
+    },
+    {
+      "viewport": [
+        430,
+        932
+      ],
+      "views": 14,
+      "normalAnd200NoOverflow": true,
+      "fourActionsAndWorksheet": true,
+      "threeModelCases": true,
+      "sixMapConcepts": true,
+      "keyboardAndHistory": true,
+      "externalRequests": 0,
+      "jsErrors": 0
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "views": 14,
+      "normalAnd200NoOverflow": true,
+      "fourActionsAndWorksheet": true,
+      "threeModelCases": true,
+      "sixMapConcepts": true,
+      "keyboardAndHistory": true,
+      "externalRequests": 0,
+      "jsErrors": 0
+    }
+  ],
+  "method": "Chromium set_content, simulated viewports, actual click and keyboard interactions for theme, programmatic route traversal for reflow. Not a physical device or assistive technology certification.",
+  "pending": [
+    "Human editorial, pedagogical, scientific and accessibility review",
+    "Physical devices and full application integration",
+    "Authority, rights and explicit distribution authorization"
+  ]
+}

@@ -15,8 +15,7 @@
     "editionSha256": "e9c55945eafff4d2d9cb3cddb506839a65ade34b7ba53b18bc62b6b17d671cfc"
   },
   "next": [
-    "F3_VERIFICA_UMANA",
-    "F4_CANDIDATO_DOPO_ACCETTAZIONE_TECNICA",
+    "F5_QUALIFICAZIONE_INTEGRATA",
     "F0_EVIDENZE_ESTERNE"
   ],
   "phases": [
@@ -50,7 +49,8 @@
         "F2",
         "F3"
       ],
-      "state": "APERTO"
+      "state": "IN_VERIFICA",
+      "note": "Candidato locale integrato, non build dell'applicazione pubblica. Accettazione tecnica delle dipendenze per il candidato, revisioni umane aperte."
     },
     {
       "id": "F5",
@@ -162,8 +162,11 @@
         "REV-07"
       ],
       "acceptance": "Quattro azioni reali, riferimenti univoci, laboratorio virtuale e mappa",
-      "state": "APERTO",
-      "evidence": []
+      "state": "IN_VERIFICA",
+      "evidence": [
+        "content/staging/biblioteca/energia/universe-f4-results.json",
+        "docs/ATLAS-ENERGIA-F4-RICEVUTA.md"
+      ]
     },
     {
       "id": "REV-07",

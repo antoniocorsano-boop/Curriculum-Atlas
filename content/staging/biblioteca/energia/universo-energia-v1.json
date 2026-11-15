@@ -1,0 +1,29 @@
+{
+  "id": "universo-energia",
+  "version": "1.0-candidato",
+  "status": "HUMAN_REVIEW_REQUIRED",
+  "studentAuthorized": false,
+  "title": "Energia — seguire le trasformazioni",
+  "audience": "Tecnologia · Terza secondaria di primo grado",
+  "estimatedDuration": "40–50 minuti per la lettura e le attività guidate; esplorazione libera in più momenti",
+  "question": "Dove va l’energia e come possiamo confrontare due soluzioni a parità di risultato?",
+  "baseline": {"librarySha256": "531de726ef06aefb5807e2ff0afc1a102efc35724b4c94df43d9422f7dadba9b", "editionSha256": "36b303fafa039ab9cec777dbc5100970b73d3092ae8dc3600f6bfd401635b54e"},
+  "authority": {"discipline": "Tecnologia", "band": "secondaria-di-primo-grado-tecnologia-classe-iii", "section": "7.3.8", "objective": "analizzare sistemi energetici/produttivi", "complementary": "usare dati", "fingerprint": "b355be71", "state": "PROVISIONAL_COMPLETE", "receipt": null},
+  "resources": [
+    {"action":"Scopri","title":"La poesia dell’energia","route":"libro","type":"Racconto illustrato","version":"0.5","source":"content/staging/biblioteca/poesia-energia/index-v0.5.html","description":"Una città in miniatura, una promessa difficile e il coraggio di distinguere fatti e ipotesi.","duration":"8–10 min"},
+    {"action":"Comprendi","title":"Dove va l’energia?","route":"energia","type":"Infografica e spiegazione","source":"public/materials/2026-09-23/3e/dove-va-l-energia.svg","blob":"93a2ac64cb7e66738cb6e0b15999c584d7d4a91e","description":"Segui entrate, trasformazioni, effetto utile e dispersioni.","duration":"5–8 min"},
+    {"action":"Sperimenta","title":"La stessa luce, meno energia?","route":"laboratorio-energia","type":"Simulazione didattica","source":"universo-energia-v1.json#model","description":"Confronta due modelli di lampada e motiva la scelta con i dati.","duration":"8–12 min"},
+    {"action":"Esplora","title":"Atlante dell’energia","route":"mappa-energia","type":"Mappa delle conoscenze","source":"universo-energia-v1.json#concepts","description":"Segui i legami tra fonti, trasformazioni, uso ed effetti sull’ambiente.","duration":"5–8 min"},
+    {"action":"Sperimenta","title":"Scheda operativa sull’energia","route":"scheda-energia","type":"Attività su carta","source":"public/materials/2026-09-23/3e/scheda-studente.svg","blob":"47be892be7ab820d9acdfc8a0f3791893b1182e3","description":"Rappresenta un sistema e confronta le soluzioni.","duration":"10–15 min"}
+  ],
+  "model": {"unit":"J","useful":20,"assumptions":"Dati inventati, stesso intervallo, energia luminosa utile uguale e condizioni equivalenti di spettro e distribuzione. Confine della lampada, senza accumulo, due sole uscite. Non sono misure reali né una diagnosi del plastico.","cases":[{"id":"A","input":100,"useful":20,"thermal":80,"efficiency":20},{"id":"B","input":50,"useful":20,"thermal":30,"efficiency":40},{"id":"C","input":40,"useful":20,"thermal":20,"efficiency":50}],"extension":"C è un terzo caso inventato per esplorare il modello; non appartiene al racconto v0.5."},
+  "concepts": [
+    {"id":"fonti","title":"Fonti e risorse","scope":"Approfondimento introduttivo","text":"L’acqua accumulata in quota possiede energia potenziale gravitazionale. Le fonti e le risorse permettono di avviare trasformazioni energetiche; non sono tutte equivalenti per disponibilità e impatti.","relations":["trasformazioni","ambiente"],"link":"libro-cap2","linkLabel":"Rileggi il viaggio dell’energia"},
+    {"id":"trasformazioni","title":"Trasformazioni","scope":"Nucleo dell’opera","text":"In una centrale idroelettrica l’acqua in movimento aziona la turbina; il generatore converte energia meccanica in elettrica. La lampada trasferisce energia sotto forma di luce e calore.","relations":["fonti","conservazione","effetto"],"link":"libro-mappa","linkLabel":"Apri la catena energetica"},
+    {"id":"conservazione","title":"Conservazione","scope":"Nucleo dell’opera","text":"L’energia non scompare. Nel modello, senza accumulo, l’energia in ingresso è uguale alla somma delle due uscite: energia luminosa utile e trasferimento termico.","relations":["trasformazioni","effetto","efficienza"],"link":"laboratorio-energia","linkLabel":"Verifica i bilanci simulati"},
+    {"id":"effetto","title":"Effetto utile e trasferimenti","scope":"Nucleo dell’opera","text":"L’effetto utile dipende dallo scopo: per illuminare è la luce utile. Il calore trasferito può non essere utile a quello scopo. Anche la luce assorbita può trasformarsi in energia termica.","relations":["trasformazioni","conservazione","efficienza"],"link":"energia","linkLabel":"Apri la spiegazione"},
+    {"id":"efficienza","title":"Efficienza e confronto","scope":"Nucleo dell’opera","text":"Nel modello la quota utile è energia utile divisa per energia in ingresso. A parità di servizio la soluzione con quota utile maggiore richiede meno energia in ingresso. Un modello non dimostra la causa di un guasto.","relations":["conservazione","effetto","ambiente"],"link":"laboratorio-energia","linkLabel":"Confronta le soluzioni"},
+    {"id":"ambiente","title":"Risorse e ambiente","scope":"Approfondimento introduttivo","text":"Ridurre la richiesta energetica a parità di servizio può ridurre l’uso di risorse. L’impatto effettivo dipende anche da fonte, produzione, materiali e durata: il modello delle lampade non misura tali impatti.","relations":["fonti","efficienza"],"link":"agricoltura","linkLabel":"Esplora un altro sistema: agricoltura"}
+  ],
+  "release":"Solo candidato locale. Nessuna autorizzazione alla distribuzione; Percorsi resta non disponibile."
+}
