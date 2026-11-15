@@ -1,0 +1,55 @@
+{
+  "candidateSha256": "6b6b6dad1677599a5adf2aee10ff10b3f29fdee7d2098352ec2c36544d5add6e",
+  "results": [
+    {
+      "viewport": [
+        320,
+        720
+      ],
+      "views": 7,
+      "reflow100and200": true,
+      "observatory": true,
+      "sevenBalances": true,
+      "keyboardSlider": true,
+      "constructionThreeCasesAndTwoErrorTypes": true,
+      "decisionThreeBranches": true,
+      "candidateWorldsNoninteractive": true,
+      "externalRequests": 0,
+      "jsErrors": 0
+    },
+    {
+      "viewport": [
+        430,
+        932
+      ],
+      "views": 7,
+      "reflow100and200": true,
+      "observatory": true,
+      "sevenBalances": true,
+      "keyboardSlider": true,
+      "constructionThreeCasesAndTwoErrorTypes": true,
+      "decisionThreeBranches": true,
+      "candidateWorldsNoninteractive": true,
+      "externalRequests": 0,
+      "jsErrors": 0
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "views": 7,
+      "reflow100and200": true,
+      "observatory": true,
+      "sevenBalances": true,
+      "keyboardSlider": true,
+      "constructionThreeCasesAndTwoErrorTypes": true,
+      "decisionThreeBranches": true,
+      "candidateWorldsNoninteractive": true,
+      "externalRequests": 0,
+      "jsErrors": 0
+    }
+  ],
+  "method": "Chromium set_content; actual control clicks, keyboard slider, programmatic traversal for reflow. Not a physical device or screen reader test.",
+  "studentAuthorized": false
+}

@@ -1,0 +1,39 @@
+{
+  "date": "2026-11-15",
+  "baseline": "0ab59365596cdaf2a4effc7c7dc0edd56c172a6a",
+  "candidateSha256": "50d8ec149f24a21f81856403e3926f661eb87faae1de6f97bd9953a234094e13",
+  "scope": "AUTONOMOUS_CANDIDATE_FORMATIVE_REVIEW",
+  "studentAuthorized": false,
+  "serialProductionAuthorized": false,
+  "review": {
+    "engagement": 4,
+    "pedagogicalEffectiveness": 4,
+    "visualQuality": 5,
+    "navigation": 4,
+    "explorationInterest": 4,
+    "scale": 5,
+    "selectedTests": [],
+    "device": "NOT_RECORDED",
+    "reportedFunctionality": "WORKING",
+    "approval": false,
+    "summary": "Spiegazioni percepite come ermetiche; incertezza sull'efficacia e sul coinvolgimento. Non sono state indicate prove specifiche."
+  },
+  "verifiedSourceFindings": [
+    {
+      "id": "REV-09",
+      "evidence": "Vista energia: sequenze e definizioni brevi; mappa: un paragrafo per concetto; laboratorio: selezione di casi predisposti; racconto: confronto già interpretato."
+    },
+    {
+      "id": "REV-10",
+      "evidence": "Scheda, punto 3: A meno calore, B più calore. Modello racconto/laboratorio: A 80 J termici, B 30 J termici a pari 20 J utili."
+    }
+  ],
+  "decision": "REVISE_BEFORE_RELEASE",
+  "pending": [
+    "New version with explicit pedagogical mediation",
+    "Resolve label discrepancy without altering source masters",
+    "Requalify affected tests and integrated build",
+    "Human reassessment and physical/assistive tests",
+    "Authority, rights, authorization"
+  ]
+}

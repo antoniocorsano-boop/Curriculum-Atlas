@@ -1,0 +1,226 @@
+{
+  "schemaVersion": 1,
+  "standardId": "ATLAS-QE-01",
+  "standardVersion": "1.0",
+  "workId": "comprendi-conservazione-energia",
+  "edition": "1.0-candidato",
+  "exactCommit": null,
+  "artifactSha256": "b85ef1d27fdba6189b412933058db65dcca3ac67a2a46179bc770e05f43f7af1",
+  "stage": "G4_QUALIFICAZIONE_TECNICA",
+  "studentAuthorized": false,
+  "serialProductionAuthorized": false,
+  "criteria": [
+    {
+      "id": "PERS-01",
+      "status": "NON_VERIFICATO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6R1-CAMPIONE-COMPRENDI.md"
+      ],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": "Evidenze parziali di progettazione o test locali; requisito non ancora qualificato per il rilascio."
+    },
+    {
+      "id": "PERS-02",
+      "status": "NON_VERIFICATO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6R1-CAMPIONE-COMPRENDI.md"
+      ],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": "Evidenze parziali di progettazione o test locali; requisito non ancora qualificato per il rilascio."
+    },
+    {
+      "id": "PED-01",
+      "status": "NON_VERIFICATO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6R1-CAMPIONE-COMPRENDI.md"
+      ],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": "Evidenze parziali di progettazione o test locali; requisito non ancora qualificato per il rilascio."
+    },
+    {
+      "id": "PED-02",
+      "status": "NON_VERIFICATO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6R1-CAMPIONE-COMPRENDI.md",
+        "content/staging/biblioteca/energia/comprendi-f6r1-results.json"
+      ],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": "Evidenze parziali di progettazione o test locali; requisito non ancora qualificato per il rilascio."
+    },
+    {
+      "id": "PED-03",
+      "status": "NON_VERIFICATO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6R1-CAMPIONE-COMPRENDI.md"
+      ],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": "Evidenze parziali di progettazione o test locali; requisito non ancora qualificato per il rilascio."
+    },
+    {
+      "id": "SCI-01",
+      "status": "NON_VERIFICATO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6R1-CAMPIONE-COMPRENDI.md"
+      ],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": "Evidenze parziali di progettazione o test locali; requisito non ancora qualificato per il rilascio."
+    },
+    {
+      "id": "SCI-02",
+      "status": "NON_VERIFICATO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6R1-CAMPIONE-COMPRENDI.md",
+        "content/staging/biblioteca/energia/comprendi-f6r1-results.json"
+      ],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": "Evidenze parziali di progettazione o test locali; requisito non ancora qualificato per il rilascio."
+    },
+    {
+      "id": "EXP-01",
+      "status": "NON_VERIFICATO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6R1-CAMPIONE-COMPRENDI.md"
+      ],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": "Evidenze parziali di progettazione o test locali; requisito non ancora qualificato per il rilascio."
+    },
+    {
+      "id": "EXP-02",
+      "status": "NON_VERIFICATO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6R1-CAMPIONE-COMPRENDI.md",
+        "content/staging/biblioteca/energia/comprendi-f6r1-results.json"
+      ],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": "Evidenze parziali di progettazione o test locali; requisito non ancora qualificato per il rilascio."
+    },
+    {
+      "id": "ART-01",
+      "status": "NON_VERIFICATO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6R1-CAMPIONE-COMPRENDI.md"
+      ],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": "Evidenze parziali di progettazione o test locali; requisito non ancora qualificato per il rilascio."
+    },
+    {
+      "id": "INC-01",
+      "status": "NON_VERIFICATO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6R1-CAMPIONE-COMPRENDI.md"
+      ],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": "Evidenze parziali di progettazione o test locali; requisito non ancora qualificato per il rilascio."
+    },
+    {
+      "id": "INC-02",
+      "status": "NON_VERIFICATO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6R1-CAMPIONE-COMPRENDI.md",
+        "content/staging/biblioteca/energia/comprendi-f6r1-results.json"
+      ],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": "Evidenze parziali di progettazione o test locali; requisito non ancora qualificato per il rilascio."
+    },
+    {
+      "id": "LAW-01",
+      "status": "NON_VERIFICATO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6R1-CAMPIONE-COMPRENDI.md"
+      ],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": "Evidenze parziali di progettazione o test locali; requisito non ancora qualificato per il rilascio."
+    },
+    {
+      "id": "LAW-02",
+      "status": "NON_VERIFICATO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6R1-CAMPIONE-COMPRENDI.md"
+      ],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": "Evidenze parziali di progettazione o test locali; requisito non ancora qualificato per il rilascio."
+    },
+    {
+      "id": "LAW-03",
+      "status": "NON_VERIFICATO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6R1-CAMPIONE-COMPRENDI.md"
+      ],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": "Evidenze parziali di progettazione o test locali; requisito non ancora qualificato per il rilascio."
+    },
+    {
+      "id": "REL-01",
+      "status": "NON_VERIFICATO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6R1-CAMPIONE-COMPRENDI.md",
+        "content/staging/biblioteca/energia/comprendi-f6r1-results.json"
+      ],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": "Evidenze parziali di progettazione o test locali; requisito non ancora qualificato per il rilascio."
+    },
+    {
+      "id": "REL-02",
+      "status": "NON_VERIFICATO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6R1-CAMPIONE-COMPRENDI.md"
+      ],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": "Evidenze parziali di progettazione o test locali; requisito non ancora qualificato per il rilascio."
+    },
+    {
+      "id": "EVAL-01",
+      "status": "NON_VERIFICATO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6R1-CAMPIONE-COMPRENDI.md"
+      ],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": "Evidenze parziali di progettazione o test locali; requisito non ancora qualificato per il rilascio."
+    }
+  ],
+  "humanDecision": {
+    "status": "NON_VERIFICATO",
+    "evidence": [],
+    "authorizedVersion": null
+  },
+  "authority": {
+    "state": "PROVISIONAL_COMPLETE",
+    "receipt": null
+  },
+  "rights": {
+    "status": "NON_VERIFICATO",
+    "receipt": null
+  },
+  "learningEvidence": {
+    "scope": "Riesame assistito del progetto, non prova di apprendimento",
+    "methods": [
+      "Esempio svolto",
+      "Previsione facoltativa",
+      "Simulazione variabile",
+      "Applicazione a un altro sistema con soluzione apribile"
+    ],
+    "limitations": [
+      "Valutazione umana e prova di trasferimento non effettuate",
+      "Nessun coinvolgimento studente"
+    ]
+  },
+  "releaseDecision": "NO_GO"
+}

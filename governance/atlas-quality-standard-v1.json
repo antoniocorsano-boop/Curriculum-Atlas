@@ -1,0 +1,257 @@
+{
+  "schemaVersion": 1,
+  "id": "ATLAS-QE-01",
+  "version": "1.0",
+  "date": "2026-11-15",
+  "state": "PROPOSTO_CONSOLIDATO_IN_BOZZA",
+  "scope": [
+    "Storie",
+    "Laboratori",
+    "Scoperte",
+    "Percorsi",
+    "Universi tematici"
+  ],
+  "studentAuthorized": false,
+  "serialProductionAuthorized": false,
+  "principle": "Nessuna compensazione tra criteri; un requisito bloccante non superato o non verificato impedisce il rilascio.",
+  "criteria": [
+    {
+      "id": "PERS-01",
+      "domain": "Persona",
+      "priority": "P0",
+      "requirement": "Dignità, non discriminazione, adeguatezza all'età, sicurezza fisica ed emotiva; nessuna manipolazione o pressione.",
+      "evidence": "Analisi contenuto e rischi, revisione umana"
+    },
+    {
+      "id": "PERS-02",
+      "domain": "Persona",
+      "priority": "P0",
+      "requirement": "Autonomia, possibilità di uscire, riprendere e scegliere; niente premi compulsivi, classifiche personali, umiliazione o pubblicità nel percorso.",
+      "evidence": "Percorsi di navigazione e verifica editoriale"
+    },
+    {
+      "id": "PED-01",
+      "domain": "Pedagogia",
+      "priority": "P0",
+      "requirement": "Destinatari, prerequisiti, obiettivi, domanda e risultato atteso verificabili; raccordo Arena con stato effettivo.",
+      "evidence": "Scheda didattica, riferimenti Arena, revisione docente"
+    },
+    {
+      "id": "PED-02",
+      "domain": "Pedagogia",
+      "priority": "P0",
+      "requirement": "Ogni nucleo sviluppa spiegazione progressiva, esempio svolto, rappresentazione pertinente, applicazione nuova e restituzione motivata.",
+      "evidence": "Matrice obiettivo-contenuto-evidenza e revisione disciplinare"
+    },
+    {
+      "id": "PED-03",
+      "domain": "Pedagogia",
+      "priority": "P0",
+      "requirement": "Attività che distinguono guida e autonomia; alternative di accesso e di espressione, guida docente e criteri osservabili.",
+      "evidence": "Guida, attività e rubrica; nessuna valutazione automatica"
+    },
+    {
+      "id": "SCI-01",
+      "domain": "Rigore",
+      "priority": "P0",
+      "requirement": "Fonti verificabili, correttezza dei fatti e dati, limiti del modello, distinzione realtà/finzione/ipotesi.",
+      "evidence": "Registro affermazioni e fonti, controllo disciplinare"
+    },
+    {
+      "id": "SCI-02",
+      "domain": "Rigore",
+      "priority": "P0",
+      "requirement": "Terminologia, simboli, dati e conclusioni coerenti tra tutte le risorse e versioni.",
+      "evidence": "Matrice di coerenza e test incrociati"
+    },
+    {
+      "id": "EXP-01",
+      "domain": "Esperienza",
+      "priority": "P0",
+      "requirement": "Curiosità autentica, scelte significative e collegamenti reali; interazioni finalizzate all'obiettivo; non quiz travestito.",
+      "evidence": "Scenario di esplorazione e revisione umana"
+    },
+    {
+      "id": "EXP-02",
+      "domain": "Esperienza",
+      "priority": "P0",
+      "requirement": "Orientamento chiaro, poche scelte per volta, ritorno e continuità; fruizione senza percorso obbligatorio salvo ragione didattica esplicita.",
+      "evidence": "Prove di compito, mobile e LIM"
+    },
+    {
+      "id": "ART-01",
+      "domain": "Arte",
+      "priority": "P0",
+      "requirement": "Coerenza narrativa, visiva, sonora e didascalica; ogni media ha una funzione; narrazione non sacrificata alla lezione.",
+      "evidence": "Schede identità, storyboard e revisione editoriale"
+    },
+    {
+      "id": "INC-01",
+      "domain": "Inclusione",
+      "priority": "P0",
+      "requirement": "Alternative equivalenti, linguaggio comprensibile, scelta di supporti e livello di approfondimento.",
+      "evidence": "Revisione didattica inclusiva e prove semantiche"
+    },
+    {
+      "id": "INC-02",
+      "domain": "Accessibilità",
+      "priority": "P0",
+      "requirement": "Accesso con tastiera e tecnologie assistive, reflow, contrasto, alternative multimediali, riduzione movimento; obiettivo interno WCAG 2.2 AA, verifica requisiti applicabili.",
+      "evidence": "Test automatici e manuali, prova assistiva"
+    },
+    {
+      "id": "LAW-01",
+      "domain": "Responsabilità",
+      "priority": "P0",
+      "requirement": "Minimizzazione; nessun account, dato identificativo, profilazione o telemetria studente per il perimetro attuale; verifica rete, hosting e log; niente dati personali nei servizi di produzione.",
+      "evidence": "Mappa dati e rete, controllo istituzionale e DPO se pertinente"
+    },
+    {
+      "id": "LAW-02",
+      "domain": "Responsabilità",
+      "priority": "P0",
+      "requirement": "Provenienza e diritti di tutti gli asset, condizioni d'uso e attribuzioni; nessuna pubblicazione se incerti.",
+      "evidence": "Inventario, licenze e ricevute, verifica umana"
+    },
+    {
+      "id": "LAW-03",
+      "domain": "Responsabilità",
+      "priority": "P0",
+      "requirement": "IA assistita dichiarata, supervisione, nessun riconoscimento emozioni, nessuna decisione valutativa automatizzata; verificare classificazione e obblighi applicabili se cambia perimetro.",
+      "evidence": "Registro produzione, revisione umana e valutazione istituzionale"
+    },
+    {
+      "id": "REL-01",
+      "domain": "Distribuzione",
+      "priority": "P0",
+      "requirement": "Candidato esatto riproducibile, prove tecniche e negative di pubblicazione, separazione canali; nessuna spesa nuova.",
+      "evidence": "Impronte, test, artefatto e manifest"
+    },
+    {
+      "id": "REL-02",
+      "domain": "Distribuzione",
+      "priority": "P0",
+      "requirement": "Decisione umana sulla versione, autorità curricolare e autorizzazioni richieste documentate; no studenti prima di autorizzazione.",
+      "evidence": "Ricevute e decisione istituzionale verificabili"
+    },
+    {
+      "id": "EVAL-01",
+      "domain": "Evidenza educativa",
+      "priority": "P0",
+      "requirement": "Riesame umano di chiarezza, comprensione, autonomia, coinvolgimento e trasferimento; distinguere valutazione del prodotto da prova di apprendimento.",
+      "evidence": "Protocollo, esiti verificati e limiti; eventuale studio con studenti soltanto se autorizzato"
+    }
+  ],
+  "sources": [
+    {
+      "id": "N1",
+      "kind": "norma",
+      "title": "Convenzione ONU sui diritti dell'infanzia, artt. 2, 3, 12, 16, 17, 28–31; ratifica italiana L. 176/1991",
+      "url": "https://www.unicef.it/convenzione-diritti-infanzia/articoli/",
+      "application": "Dignità, interesse superiore, ascolto, tutela, sviluppo, gioco e cultura."
+    },
+    {
+      "id": "N2",
+      "kind": "norma",
+      "title": "Regolamento UE 2016/679, artt. 5, 6, 25, 32, 35 e considerando 38",
+      "url": "https://eur-lex.europa.eu/eli/reg/2016/679/",
+      "application": "Valutare trattamenti effettivi, basi giuridiche, minimizzazione e sicurezza; DPIA quando richiesta."
+    },
+    {
+      "id": "N3",
+      "kind": "norma",
+      "title": "Regolamento UE 2024/1689 (AI Act), art. 5 e obblighi pertinenti al caso d'uso",
+      "url": "https://eur-lex.europa.eu/eli/reg/2024/1689",
+      "application": "Nessuna pratica vietata; classificazione, ruoli e obblighi da valutare sul sistema e uso effettivi; non equiparare opera statica a sistema IA in uso."
+    },
+    {
+      "id": "N4",
+      "kind": "norma_e_linee_guida",
+      "title": "L. 4/2004 e regole tecniche AgID, inclusi riferimenti agli strumenti didattici",
+      "url": "https://www.agid.gov.it/it/design-servizi/accessibilita/normativa.html",
+      "application": "Verificare requisiti applicabili al soggetto e al servizio; dichiarazione di accessibilità ove dovuta."
+    },
+    {
+      "id": "N5",
+      "kind": "norma",
+      "title": "L. 633/1941, diritto d'autore e successive modifiche",
+      "url": "https://www.normattiva.it/eli/id/1941/07/16/041U0633",
+      "application": "Verificare licenze, titolarità, fonti, condizioni; finalità didattica non rende automaticamente libero il riuso pubblico."
+    },
+    {
+      "id": "N6",
+      "kind": "norma",
+      "title": "Direttiva UE 2019/790, art. 5, e recepimento nazionale",
+      "url": "https://eur-lex.europa.eu/eli/dir/2019/790/oj",
+      "application": "Le eccezioni didattiche hanno condizioni; un repository o sito pubblico non è ambiente elettronico sicuro della scuola."
+    },
+    {
+      "id": "I1",
+      "kind": "indirizzo_istituzionale",
+      "title": "MIM, Linee guida IA nelle istituzioni scolastiche, v1.0 2025, D.M. 166 del 9 agosto 2025",
+      "url": "https://www.mim.gov.it/documents/8099600/8784171/MIM_Linee%2Bguida%2BIA%2Bnella%2BScuola_09_08_2025-signed.pdf/4bfecbc5-70e1-2973-940f-1aa818a9f3f6?version=1.0",
+      "application": "Centralità umana, equità, trasparenza, supervisione e governance scolastica."
+    },
+    {
+      "id": "I2",
+      "kind": "indirizzo_istituzionale",
+      "title": "Garante, La scuola a prova di privacy, ed. 2025",
+      "url": "https://www.garanteprivacy.it/web/guest/temi/scuola",
+      "application": "Tutela delle persone, trattamento scolastico e uso responsabile IA."
+    },
+    {
+      "id": "T1",
+      "kind": "standard_tecnico",
+      "title": "W3C WCAG 2.2",
+      "url": "https://www.w3.org/TR/WCAG22/",
+      "application": "Obiettivo progettuale AA; non equivale da solo a conformità legale o certificazione."
+    },
+    {
+      "id": "P1",
+      "kind": "riferimento_pedagogico",
+      "title": "CAST Universal Design for Learning Guidelines 3.0 (2024)",
+      "url": "https://udlguidelines.cast.org/",
+      "application": "Molteplici modalità di coinvolgimento, rappresentazione, azione ed espressione."
+    },
+    {
+      "id": "P2",
+      "kind": "riferimento_pedagogico",
+      "title": "IES What Works Clearinghouse, Organizing Instruction and Study to Improve Student Learning (2007)",
+      "url": "https://ies.ed.gov/ncee/WWC/PracticeGuide/1/Published",
+      "application": "Esempi svolti alternati a problemi, rappresentazioni grafiche con spiegazioni, concreto/astratto, domande esplicative e riprese nel tempo."
+    }
+  ],
+  "stages": [
+    "G0_INTENZIONE_E_RISCHI",
+    "G1_PROGETTAZIONE_DIDATTICA",
+    "G2_PRODUZIONE_AUTORIALE",
+    "G3_REVISIONI_ASSISTITE",
+    "G4_QUALIFICAZIONE_TECNICA",
+    "G5_REVISIONE_UMANA",
+    "G6_AUTORIZZAZIONE_ESATTA",
+    "G7_MONITORAGGIO_E_CORREZIONI"
+  ],
+  "decisionRules": {
+    "statuses": [
+      "NON_VERIFICATO",
+      "NON_SUPERATO",
+      "SUPERATO"
+    ],
+    "requireAllP0": true,
+    "requireEvidenceForPass": true,
+    "requireExactVersion": true,
+    "requireHumanDecision": true,
+    "noAutomaticRelease": true,
+    "noStudentTestBeforeAuthorization": true,
+    "learningEffectivenessNotInferredFromTechnicalPass": true
+  },
+  "pilot": {
+    "id": "universo-energia",
+    "baseline": "F4/0ab59365",
+    "findings": [
+      "REV-09",
+      "REV-10"
+    ],
+    "next": "F6_R_COMPRENDI_CAMPIONE"
+  }
+}

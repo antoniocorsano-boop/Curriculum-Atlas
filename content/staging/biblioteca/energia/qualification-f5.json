@@ -1,0 +1,72 @@
+{
+  "date": "2026-11-15",
+  "baseline": "ac9cdb62c3605bb1598daafe6520cb49980bb04f",
+  "scope": "LOCAL_INTEGRATED_CANDIDATE",
+  "studentAuthorized": false,
+  "sha256": "50d8ec149f24a21f81856403e3926f661eb87faae1de6f97bd9953a234094e13",
+  "rebuildByteIdentical": true,
+  "previousGitHubChecks": {
+    "passed": 3,
+    "total": 3
+  },
+  "retest": {
+    "viewports": [
+      [
+        320,
+        720
+      ],
+      [
+        360,
+        800
+      ],
+      [
+        430,
+        932
+      ],
+      [
+        1920,
+        1080
+      ]
+    ],
+    "views": 14,
+    "normalAnd200Percent": true,
+    "viewConfigurations": 112,
+    "modelCases": 3,
+    "mapConcepts": 6,
+    "preservedImageOccurrences": 14,
+    "externalRequests": 0,
+    "jsErrors": 0
+  },
+  "supplemental": {
+    "viewport": [
+      430,
+      932
+    ],
+    "focusOnViewHeading": 14,
+    "unnamedVisibleControls": 0,
+    "solidBackgroundContrastSamples": 546,
+    "belowApplicableRatio": 0,
+    "mapResourceLinkClicks": 6,
+    "mapResourceTargetsVisible": 6,
+    "fileNavigation": "BLOCKED_BY_TEST_ENVIRONMENT",
+    "firstCombinedSupplementalTest": "TIMEOUT; shorter separate probes passed; no claim of additional full history sequence"
+  },
+  "publication": {
+    "staticTreeComplete": true,
+    "newFilesInPublicOrAppRoutes": 0,
+    "applicationBuildForIntegratedCandidate": "NOT_RUN",
+    "repositoryPublic": true,
+    "authorityState": "PROVISIONAL_COMPLETE",
+    "authorityReceipt": null,
+    "arenaFingerprint": "b355be71"
+  },
+  "verdict": "GO_F5_B; NO_GO_STUDENT_RELEASE",
+  "pending": [
+    "Integrate in full application with default-deny publication gate and test generated artifact",
+    "Manual specialist review",
+    "Physical smartphone and LIM",
+    "Screen reader and complete accessibility review",
+    "Rights and authority evidence",
+    "Explicit authorization"
+  ]
+}

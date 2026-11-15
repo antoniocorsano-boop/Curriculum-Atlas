@@ -1,0 +1,15 @@
+# Atlas — F6-R1B, primo candidato Atelier Energia
+
+15 novembre 2026. Baseline 936618251a2742e486f64aebd3c6b9188216c70d, controlli precedenti 10/10 PASS. Artefatto autonomo Atlas_Atelier_Energia_v01.html, SHA-256 6b6b6dad1677599a5adf2aee10ff10b3f29fdee7d2098352ec2c36544d5add6e, conservato nella Libreria (libfile_185370d2a6d48191a9c5e6e962716611). Non autorizzato alla distribuzione. F4 e Comprendi F6-R1 rimangono immutati. Non è ancora integrazione nella vera applicazione Next.
+
+## Prodotto
+Vista dei mondi, ingresso nella città, quattro ambienti indipendenti e taccuino/guida, sette viste. Le tre altre proposte sono dichiarate in progettazione, senza pulsanti non funzionanti. Quattro strumenti reali: osservatorio con evidenziazione dei trasferimenti e spiegazione; laboratorio con sette stati del modello, bilanci e quota utile; atelier che costruisce lo schema dalle due uscite, distinguendo errore di bilancio e servizio non equivalente; tavolo delle decisioni con modelli D ed E, 90=60+30 e 75=60+15 J, motivazione e limiti. Nessun punteggio, dati personali, prove elettriche fisiche o rete. Il modello delle lampade resta A 100/20/80, B 50/20/30, C 40/20/20. I dati sono simulati. Originali delle quattro immagini recuperati dall'esatto F4, senza alterazione; uso come copertine contestuali, non nuovi ambienti illustrati. Schemi SVG originali. La vista dei mondi e le stazioni sono alimentate dal contratto JSON; i contenuti e le interazioni disciplinari sono ancora specifici di Energia. Non attestare riuso completo, narrazione multimediale o integrazione del libro. Le opere precedenti restano separate, nessuna riscrittura.
+
+## Riproduzione
+python scripts/build-atlas-atelier.py <F4-locale> content/staging/biblioteca/energia/atelier-world-v01.json content/staging/biblioteca/energia/atelier-v01.template.html <output-locale>
+python scripts/test-atlas-atelier.py <output-locale> <directory-evidenze>
+
+Test Chromium set_content a 320/430/1920 px: 7 viste a 100/200%, 42 configurazioni di reflow, 21 stati energetici, tre bilanci costruiti per viewport, due tipi di errore e caso incompleto, tre decisioni con restituzione, controllo cursore da tastiera, candidati non interattivi, nessun errore JS o HTTP esterno osservato. Primo tentativo 320/200 overflow 2 px, corretto con regole di reflow e schema verticale mobile; ripetizione positiva. Non prova fisica, assistiva, né di apprendimento. Risultati in content/staging/biblioteca/energia/atelier-v01-results.json. Il diagramma mobile è adattato per mantenere frecce e uscite leggibili. Autorità Arena PROVISIONAL_COMPLETE, ricevuta assente. Diritti e autorizzazioni ancora aperti.
+
+## Decisione
+Primo campione della verticale pronto per riesame; non dichiarare verticale completa o modello generale qualificato. Prima dell'estensione: valutare qualità dell'azione, comprensione e orientamento; verificare riuso con un tema diverso; poi completare collegamenti al libro, mappa, scheda armonizzata e nucleo disciplinare, applicare standard e qualificare applicazione esatta. REV-09/10 aperti. Nessuna pubblicazione, merge, nuova spesa o produzione seriale.

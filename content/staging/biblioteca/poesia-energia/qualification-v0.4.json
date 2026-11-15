@@ -1,0 +1,81 @@
+{
+  "id": "atlas-storia-poesia-energia",
+  "version": "0.4",
+  "state": "HUMAN_REVIEW_REQUIRED",
+  "studentAuthorized": false,
+  "previousVersion": "0.3",
+  "edition": {
+    "file": "index-v0.4.html",
+    "sha256": "e9c55945eafff4d2d9cb3cddb506839a65ade34b7ba53b18bc62b6b17d671cfc",
+    "gitBlob": "fe9cc0de656462f334a56e5d2180201945f2a590"
+  },
+  "originalMediaUnchanged": true,
+  "mediaReceipt": "../la-poesia-dell-energia.v0.3.receipt.json",
+  "testMethod": "Chromium Playwright; exact HTML injected via set_content (local file navigation blocked by test environment policy); emulated CSS viewports, not physical devices. Root font size set to 200%. 14 real fragment link clicks per viewport. No external HTTP requests.",
+  "regressionV03": {
+    "text200OverflowWidths": [
+      320,
+      360,
+      430
+    ],
+    "normalNoOverflow": true
+  },
+  "results": [
+    {
+      "viewport": [
+        320,
+        720
+      ],
+      "images": 4,
+      "links": 14,
+      "normalNoOverflow": true,
+      "text200NoOverflow": true,
+      "externalRequests": 0,
+      "errors": 0
+    },
+    {
+      "viewport": [
+        360,
+        800
+      ],
+      "images": 4,
+      "links": 14,
+      "normalNoOverflow": true,
+      "text200NoOverflow": true,
+      "externalRequests": 0,
+      "errors": 0
+    },
+    {
+      "viewport": [
+        430,
+        932
+      ],
+      "images": 4,
+      "links": 14,
+      "normalNoOverflow": true,
+      "text200NoOverflow": true,
+      "externalRequests": 0,
+      "errors": 0
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "images": 4,
+      "links": 14,
+      "normalNoOverflow": true,
+      "text200NoOverflow": true,
+      "externalRequests": 0,
+      "errors": 0
+    }
+  ],
+  "pending": [
+    "Human editorial and visual review",
+    "Physical smartphone and LIM",
+    "Arena objective binding",
+    "Rights verification",
+    "Explicit publication authorization"
+  ],
+  "publication": "NO_PUBLICATION; all files under content/staging; no public route, no catalog link."
+}

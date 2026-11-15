@@ -1,0 +1,87 @@
+name: Atlas Energia Review Integration
+on:
+  pull_request:
+    paths:
+      - 'review/energia/**'
+      - 'scripts/atlas-energy-review-build.mjs'
+      - 'scripts/test-atlas-energy-review-*.mjs'
+      - 'src/**'
+      - 'next.config.ts'
+      - 'governance/atlas-energia-consolidamento.json'
+      - 'content/staging/biblioteca/energia/**'
+      - '.github/workflows/atlas-energy-review-integration.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-negative:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - run: pnpm install --no-frozen-lockfile
+      - run: node scripts/test-atlas-energy-review-boundary.mjs
+      - run: pnpm typecheck && pnpm lint
+      - name: Compile normal static output
+        env:
+          ATLAS_PREVIEW_ROOT_SCOPED: 'true'
+        run: pnpm build
+      - name: Deny review output in normal artifact
+        run: |
+          node scripts/test-percorsi-publication-filter.mjs
+          node scripts/filter-unauthorized-pathway-routes.mjs out
+          node scripts/atlas-energy-review-build.mjs verify-public out
+  review-shell:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      ATLAS_REVIEW_BUILD: 'true'
+      ATLAS_PREVIEW_ROOT_SCOPED: 'true'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - run: pnpm install --no-frozen-lockfile
+      - name: Generate review-only native entry in disposable checkout
+        run: node scripts/atlas-energy-review-build.mjs prepare .
+      - name: Verify ordinary build refuses the overlay
+        run: |
+          if ATLAS_REVIEW_BUILD=false pnpm exec next build > "$RUNNER_TEMP/denied.log" 2>&1; then
+            echo "Overlay unexpectedly accepted" >&2; exit 1
+          fi
+          grep -q 'ATLAS_REVIEW_BUILD_REQUIRED' "$RUNNER_TEMP/denied.log"
+      - run: pnpm typecheck && pnpm lint
+      - run: pnpm build
+      - name: Apply existing publication boundary and verify shell
+        run: |
+          node scripts/filter-unauthorized-pathway-routes.mjs out
+          node scripts/atlas-energy-review-build.mjs verify-shell out "$(git rev-parse HEAD)"
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Test native navigation with non-content fixture
+        run: node scripts/test-atlas-energy-review-shell.mjs out
+      - name: Ensure full edition not attached
+        run: test ! -e out/revisione/energia/esperienza.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atlas-energia-review-shell-${{ github.event.pull_request.head.sha || github.sha }}
+          path: out/
+          retention-days: 7
+          if-no-files-found: error
+# Artifact only: no deployment, Pages permission, environment, secrets, or student authorization.
+# The uploaded shell has no complete review edition; attach the exact F4 file locally after retrieval.

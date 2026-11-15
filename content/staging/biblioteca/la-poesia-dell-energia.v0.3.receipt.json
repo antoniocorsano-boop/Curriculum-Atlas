@@ -1,0 +1,87 @@
+{
+  "id": "atlas-storia-poesia-energia",
+  "version": "0.3",
+  "state": "HUMAN_REVIEW_REQUIRED",
+  "studentAuthorized": false,
+  "storySource": "la-poesia-dell-energia.v0.2.md",
+  "preservation": {
+    "libraryZip": "Atlas_Poesia_Energia_v03.zip",
+    "libraryZipId": "libfile_886108a204ac8191bd616f0c521fbe24",
+    "libraryHtml": "Atlas_La_poesia_dell_energia.html",
+    "libraryHtmlId": "libfile_fd4555583238819191f91c705d1e6c9f",
+    "gitBinaryImport": "COMPLETE",
+    "gitDirectory": "content/staging/biblioteca/poesia-energia"
+  },
+  "master": {
+    "file": "tavola-originale.png",
+    "sha256": "8dadee8045b27ffdce9f4a9ed9752f7abe33be47134587e7d293f1f5bc816d52",
+    "dimensions": [
+      1774,
+      887
+    ],
+    "gitBlob": "55f218ab8763cf67794278297be291169845ca32"
+  },
+  "assets": [
+    {
+      "file": "PE-01.webp",
+      "sha256": "e8dadbe7b10ea163c6f2e5941f25edcfb3093d3425d171cc29fdd7b7153e5865",
+      "dimensions": [
+        883,
+        439
+      ],
+      "gitBlob": "a0d8dca36e3d7a08a88fc3bfc5b3dfb033639d1f"
+    },
+    {
+      "file": "PE-02.webp",
+      "sha256": "d9f2586cd74bec970263270b5cbbc859b42867b1f7e871217e7408e55398f6ec",
+      "dimensions": [
+        883,
+        439
+      ],
+      "gitBlob": "420e2877603301fd3a735fe24f5626929dd06b58"
+    },
+    {
+      "file": "PE-03.webp",
+      "sha256": "66fd334582294901b99712a096781ea620ad701bc2f2b81d0bee0c0f2b8187cf",
+      "dimensions": [
+        883,
+        440
+      ],
+      "gitBlob": "49ca07cd2ad59d9ffa3e26bf62ecff9ad2dbb828"
+    },
+    {
+      "file": "PE-04.webp",
+      "sha256": "8f9db63137a76263e9af0280e9b64f0c3b499219832cd30bc6f38f67bf5195dc",
+      "dimensions": [
+        883,
+        440
+      ],
+      "gitBlob": "730a6f30b329bd8fc63cc9ddcb86967937b894f6"
+    }
+  ],
+  "edition": {
+    "file": "index-v0.3.html",
+    "sha256": "c8feae0bfe34639e949ad7ece35c14934fba69220b63aa7c0c0e2103a1e1b2f0",
+    "gitBlob": "150b732d0c5b586cf2d9a09ab072080120bc2167"
+  },
+  "characters": {
+    "Matteo": "studente",
+    "Elena": "studentessa",
+    "Samir": "studente",
+    "decision": "nuovo mondo autonomo per non modificare i personaggi adulti di Museo Zero"
+  },
+  "reviewNotes": [
+    "Ultima scena con piazza illuminata: il testo indica una nuova dimostrazione del docente.",
+    "PE-04: frecce decorative non utilizzabili come diagramma fisico; mappa energetica testuale separata.",
+    "Diritti, riferimenti Arena e revisione umana da completare."
+  ],
+  "checks": {
+    "imageCount": 4,
+    "embeddedHashes": "PASS",
+    "localAnchorTargets": "PASS",
+    "noScriptsFormsIframes": "PASS",
+    "zipIntegrity": "PASS",
+    "visualReview": "PENDING",
+    "browserDeviceReview": "SUPERSEDED_BY_V04_REFLOW_FIX"
+  }
+}

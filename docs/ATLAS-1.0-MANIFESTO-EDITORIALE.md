@@ -30,3 +30,11 @@ Tema e intenzione educativa → storia o situazione → struttura → testo comp
 Opere realmente leggibili o utilizzabili, accessibili e autorizzate, non quantità di funzionalità. La home editoriale può avanzare indipendentemente dalla ripresa del motore narrativo. Il primo scaffale deve usare esclusivamente riferimenti pubblicati verificabili; sezioni vuote devono essere dichiarate tali, non simulare disponibilità. Conservare contenuti e gate esistenti; nessun nuovo servizio a pagamento, nessun dato personale studente, nessuna pubblicazione di bozze o attivazione di runtime non autorizzati.
 
 Riferimenti: TRAMA Storytelling First Authoring Contract; proposta TRAMA #330; Content Roadmap C1–C6; Student Library Product Contract. Questo manifesto non modifica l'autorità curricolare o le autorizzazioni.
+
+## Standard permanente della qualità educativa
+
+Il riesame formativo F6 introduce [ATLAS-QE-01 — Carta della qualità educativa](ATLAS-CARTA-QUALITA-EDUCATIVA-v1.md), versione 1.0, in bozza governata. Gli otto pilastri e i requisiti non compensabili si applicano a tutte le opere, senza modificare l'autorità Arena o i controlli di pubblicazione. Ogni opera deve avere una ricevuta di qualificazione legata alla versione; nessuna media tra qualità artistica, didattica, sicurezza e conformità. Il pilota Energia verifica il metodo prima della produzione seriale. Il documento non costituisce autorizzazione.
+
+## Biblioteca di mondi e prima verticale
+
+[Modello comune di mondi e verticali](ATLAS-MONDI-E-VERTICALI-v1.md): Energia è la prima verticale dimostrativa. Il catalogo resta generale e comprende tutti gli ambiti del curricolo. Il mondo tematico collega opere e strumenti senza duplicazioni; il selettore visuale permette ingresso per tema e interesse, con accesso diretto alle opere autorizzate. Il primo Atelier è un candidato circoscritto, non ancora il formato unico della biblioteca.

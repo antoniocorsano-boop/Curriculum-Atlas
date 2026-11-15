@@ -1,0 +1,103 @@
+{
+  "version": "0.5",
+  "studentAuthorized": false,
+  "state": "HUMAN_REVIEW_REQUIRED",
+  "sourceEditionSha256": "e9c55945eafff4d2d9cb3cddb506839a65ade34b7ba53b18bc62b6b17d671cfc",
+  "sourceF2Sha256": "839a3de00ae8644227fc014d06fea5025fb5b9cd20b29997d73b56f24672bb3c",
+  "editionSha256": "36b303fafa039ab9cec777dbc5100970b73d3092ae8dc3600f6bfd401635b54e",
+  "librarySha256": "531de726ef06aefb5807e2ff0afc1a102efc35724b4c94df43d9422f7dadba9b",
+  "originalImagesUnchanged": true,
+  "fiveMaterialsUnchanged": true,
+  "bilanci": "PASS",
+  "sameUsefulEnergy": "PASS",
+  "rubricDescriptors": 12,
+  "results": [
+    {
+      "surface": "book",
+      "viewport": [
+        320,
+        720
+      ],
+      "navigationAndReflow": "PASS",
+      "externalRequests": 0,
+      "errors": 0
+    },
+    {
+      "surface": "library",
+      "viewport": [
+        320,
+        720
+      ],
+      "navigationAndReflow": "PASS",
+      "externalRequests": 0,
+      "errors": 0
+    },
+    {
+      "surface": "book",
+      "viewport": [
+        360,
+        800
+      ],
+      "navigationAndReflow": "PASS",
+      "externalRequests": 0,
+      "errors": 0
+    },
+    {
+      "surface": "library",
+      "viewport": [
+        360,
+        800
+      ],
+      "navigationAndReflow": "PASS",
+      "externalRequests": 0,
+      "errors": 0
+    },
+    {
+      "surface": "book",
+      "viewport": [
+        430,
+        932
+      ],
+      "navigationAndReflow": "PASS",
+      "externalRequests": 0,
+      "errors": 0
+    },
+    {
+      "surface": "library",
+      "viewport": [
+        430,
+        932
+      ],
+      "navigationAndReflow": "PASS",
+      "externalRequests": 0,
+      "errors": 0
+    },
+    {
+      "surface": "book",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "navigationAndReflow": "PASS",
+      "externalRequests": 0,
+      "errors": 0
+    },
+    {
+      "surface": "library",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "navigationAndReflow": "PASS",
+      "externalRequests": 0,
+      "errors": 0
+    }
+  ],
+  "method": "Chromium set_content, simulated viewports; static identity checks; human review pending.",
+  "pending": [
+    "Human scientific, narrative, pedagogical and artistic approval",
+    "Physical devices and assistive technology",
+    "Rights and Arena authority",
+    "Full application integration and authorization"
+  ]
+}

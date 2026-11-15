@@ -1,0 +1,288 @@
+{
+  "schemaVersion": 1,
+  "planId": "ATLAS-ENERGIA-CONSOLIDAMENTO-01",
+  "date": "2026-11-15",
+  "state": "IN_LAVORAZIONE",
+  "studentAuthorized": false,
+  "serialProductionAuthorized": false,
+  "sourceReview": {
+    "pr": 92,
+    "commentId": 6889576483
+  },
+  "baseline": {
+    "home": "3dd2704631716c5f865d1d9193fd4458181f4ad5",
+    "story": "56ec5d5523c3b3212eb2b8c259934fcdc4bf2056",
+    "editionSha256": "e9c55945eafff4d2d9cb3cddb506839a65ade34b7ba53b18bc62b6b17d671cfc"
+  },
+  "next": [
+    "F6_R1B_RIVALUTAZIONE_UMANA",
+    "F6_R1C_VERIFICA_RIUSO_SECONDO_TEMA",
+    "F6_R2_ESTENSIONE_DOPO_RIESAME",
+    "F6_R3_COERENZA_SCHEDA",
+    "F5_R_RIQUALIFICAZIONE_CANDIDATO",
+    "F6_RIVALUTAZIONE_UMANA",
+    "F0_EVIDENZE_ESTERNE"
+  ],
+  "phases": [
+    {
+      "id": "F0",
+      "dependsOn": [],
+      "state": "IN_LAVORAZIONE"
+    },
+    {
+      "id": "F1",
+      "dependsOn": [],
+      "state": "IN_VERIFICA",
+      "note": "Candidato tecnico qualificato; ritorno con posizione e focus verificato in F2. Revisione fisica e assistiva rinviata a F6."
+    },
+    {
+      "id": "F2",
+      "dependsOn": [
+        "F1"
+      ],
+      "state": "IN_VERIFICA"
+    },
+    {
+      "id": "F3",
+      "dependsOn": [],
+      "state": "IN_VERIFICA"
+    },
+    {
+      "id": "F4",
+      "dependsOn": [
+        "F1",
+        "F2",
+        "F3"
+      ],
+      "state": "IN_VERIFICA",
+      "note": "Candidato locale integrato, non build dell'applicazione pubblica. Accettazione tecnica delle dipendenze per il candidato, revisioni umane aperte."
+    },
+    {
+      "id": "F5",
+      "dependsOn": [
+        "F0",
+        "F4"
+      ],
+      "state": "IN_VERIFICA",
+      "note": "Compilazioni e assemblaggio F5-B positivi; navigazione dinamica del pacchetto integrato non verificata. Candidato autonomo riesaminato in F6; nuove criticità pedagogiche e incoerenza della scheda impongono nuova qualificazione."
+    },
+    {
+      "id": "F6",
+      "dependsOn": [
+        "F5"
+      ],
+      "state": "IN_LAVORAZIONE",
+      "note": "F6-R1B: prima verticale dimostrativa con quattro strumenti realizzati in un candidato locale. Revisione umana e verifica generalizzabilità ancora necessarie. REV-09/10 aperti."
+    },
+    {
+      "id": "F7",
+      "dependsOn": [
+        "F0",
+        "F5",
+        "F6"
+      ],
+      "state": "BLOCCATO_ESTERNO"
+    }
+  ],
+  "findings": [
+    {
+      "id": "REV-01",
+      "priority": "P0",
+      "phase": "F2",
+      "title": "Equivalenti accessibili dei cinque materiali",
+      "dependsOn": [
+        "F1"
+      ],
+      "acceptance": "Equivalenza HTML completa, tastiera, ingrandimento, stampa e revisione con lettore di schermo",
+      "state": "IN_VERIFICA",
+      "evidence": [
+        "content/staging/biblioteca/poesia-energia/materials-f2-results.json",
+        "docs/ATLAS-ENERGIA-F2-RICEVUTA.md",
+        "content/staging/biblioteca/energia/qualification-f5.json",
+        "docs/ATLAS-ENERGIA-F5-QUALIFICAZIONE.md"
+      ]
+    },
+    {
+      "id": "REV-02",
+      "priority": "P0",
+      "phase": "F1",
+      "title": "Lettore immersivo riusabile",
+      "dependsOn": [],
+      "acceptance": "Un solo scorrimento, titolo unico, immagine iniziale, ritorno e navigazione verificati",
+      "state": "IN_VERIFICA",
+      "evidence": [
+        "content/staging/biblioteca/poesia-energia/reader-f1-results.json",
+        "docs/ATLAS-ENERGIA-F0-F1-RICEVUTA.md",
+        "content/staging/biblioteca/poesia-energia/materials-f2-results.json",
+        "docs/ATLAS-ENERGIA-F2-RICEVUTA.md",
+        "content/staging/biblioteca/energia/qualification-f5.json",
+        "docs/ATLAS-ENERGIA-F5-QUALIFICAZIONE.md"
+      ]
+    },
+    {
+      "id": "REV-03",
+      "priority": "P0",
+      "phase": "F0",
+      "title": "Autorità, provenienza, diritti e confine di pubblicazione",
+      "dependsOn": [],
+      "acceptance": "Ricevute documentali, autorità effettiva e autorizzazione esplicita; nessuna falsa riservatezza",
+      "state": "BLOCCATO_ESTERNO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F0-F1-RICEVUTA.md",
+        "docs/ATLAS-ENERGIA-F5B-INTEGRAZIONE.md",
+        "content/staging/biblioteca/energia/integration-f5b.json"
+      ]
+    },
+    {
+      "id": "REV-04",
+      "priority": "P1",
+      "phase": "F3",
+      "title": "Coerenza scientifica e dati simulati",
+      "dependsOn": [],
+      "acceptance": "Distinzione ipotesi/prova; bilancio coerente, nessuna attività elettrica fisica",
+      "state": "IN_VERIFICA",
+      "evidence": [
+        "content/staging/biblioteca/poesia-energia/qualification-v0.5.json",
+        "docs/ATLAS-ENERGIA-F3-RICEVUTA.md",
+        "content/staging/biblioteca/energia/qualification-f5.json",
+        "docs/ATLAS-ENERGIA-F5-QUALIFICAZIONE.md"
+      ]
+    },
+    {
+      "id": "REV-05",
+      "priority": "P1",
+      "phase": "F3",
+      "title": "Narrativa e guida docente",
+      "dependsOn": [
+        "REV-04"
+      ],
+      "acceptance": "Svolta motivata, attività differenziate e rubrica osservabile",
+      "state": "IN_VERIFICA",
+      "evidence": [
+        "content/staging/biblioteca/poesia-energia/qualification-v0.5.json",
+        "docs/ATLAS-ENERGIA-F3-RICEVUTA.md",
+        "content/staging/biblioteca/energia/qualification-f5.json",
+        "docs/ATLAS-ENERGIA-F5-QUALIFICAZIONE.md"
+      ]
+    },
+    {
+      "id": "REV-06",
+      "priority": "P1",
+      "phase": "F4",
+      "title": "Universo Energia integrato",
+      "dependsOn": [
+        "REV-01",
+        "REV-02",
+        "REV-04",
+        "REV-05",
+        "REV-07"
+      ],
+      "acceptance": "Quattro azioni reali, riferimenti univoci, laboratorio virtuale e mappa",
+      "state": "IN_VERIFICA",
+      "evidence": [
+        "content/staging/biblioteca/energia/universe-f4-results.json",
+        "docs/ATLAS-ENERGIA-F4-RICEVUTA.md",
+        "content/staging/biblioteca/energia/qualification-f5.json",
+        "docs/ATLAS-ENERGIA-F5-QUALIFICAZIONE.md",
+        "docs/ATLAS-ENERGIA-F5B-INTEGRAZIONE.md",
+        "content/staging/biblioteca/energia/integration-f5b.json"
+      ]
+    },
+    {
+      "id": "REV-07",
+      "priority": "P1",
+      "phase": "F3",
+      "title": "Identità visive e originali",
+      "dependsOn": [],
+      "acceptance": "Schede personaggi, impronte conservate, diagrammi distinti",
+      "state": "IN_VERIFICA",
+      "evidence": [
+        "content/staging/biblioteca/poesia-energia/qualification-v0.5.json",
+        "docs/ATLAS-ENERGIA-F3-RICEVUTA.md",
+        "content/staging/biblioteca/energia/qualification-f5.json",
+        "docs/ATLAS-ENERGIA-F5-QUALIFICAZIONE.md"
+      ]
+    },
+    {
+      "id": "REV-08",
+      "priority": "P2",
+      "phase": "F6",
+      "title": "Revisione umana e prova fisica",
+      "dependsOn": [
+        "F5"
+      ],
+      "acceptance": "Esiti reali versionati; eventuali studenti solo con autorizzazioni",
+      "state": "IN_VERIFICA",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6-RIESAME-FORMATIVO.md",
+        "content/staging/biblioteca/energia/formative-review-f6.json",
+        "docs/ATLAS-ENERGIA-F6R1-RIESAME-STRUMENTI-APPRENDIMENTO.md"
+      ]
+    },
+    {
+      "id": "REV-09",
+      "priority": "P0",
+      "phase": "F6",
+      "title": "Mediazione didattica insufficiente e coinvolgimento da verificare",
+      "dependsOn": [
+        "REV-04",
+        "REV-05",
+        "REV-06"
+      ],
+      "acceptance": "Sequenza di spiegazione progressiva, esempi svolti, applicazione autonoma, restituzione esplicativa; revisione umana su nuova edizione. Nessuna equivalenza tra funzionamento e apprendimento.",
+      "state": "APERTO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6-RIESAME-FORMATIVO.md",
+        "content/staging/biblioteca/energia/formative-review-f6.json",
+        "docs/ATLAS-CARTA-QUALITA-EDUCATIVA-v1.md",
+        "governance/atlas-quality-standard-v1.json",
+        "docs/ATLAS-ENERGIA-F6R1-CAMPIONE-COMPRENDI.md",
+        "content/staging/biblioteca/energia/comprendi-f6r1-results.json",
+        "content/staging/biblioteca/energia/comprendi-qualification-v1.json",
+        "docs/ATLAS-ENERGIA-F6R1-RIESAME-STRUMENTI-APPRENDIMENTO.md",
+        "docs/ATLAS-MONDI-E-VERTICALI-v1.md",
+        "docs/ATLAS-ENERGIA-F6R1B-ATELIER.md",
+        "content/staging/biblioteca/energia/atelier-v01-results.json"
+      ]
+    },
+    {
+      "id": "REV-10",
+      "priority": "P0",
+      "phase": "F6",
+      "title": "Identità delle lampade incoerente tra scheda e laboratorio",
+      "dependsOn": [
+        "REV-04"
+      ],
+      "acceptance": "Nuova scheda o nomi distinti, confronti coerenti, originali conservati, test incrociato di tutti i riferimenti A/B/C.",
+      "state": "APERTO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6-RIESAME-FORMATIVO.md",
+        "content/staging/biblioteca/energia/formative-review-f6.json",
+        "docs/ATLAS-CARTA-QUALITA-EDUCATIVA-v1.md",
+        "governance/atlas-quality-standard-v1.json"
+      ]
+    }
+  ],
+  "releaseConditions": [
+    "Autorità Arena documentata",
+    "Diritti verificati",
+    "Revisione umana e collaudo fisico",
+    "P0 risolti e P1 chiusi o accettati esplicitamente se non bloccanti",
+    "Autorizzazione esplicita della versione",
+    "Nessun dato personale, nessuna spesa nuova"
+  ],
+  "qualityStandard": {
+    "id": "ATLAS-QE-01",
+    "version": "1.0",
+    "state": "PROPOSTO_CONSOLIDATO_IN_BOZZA",
+    "document": "docs/ATLAS-CARTA-QUALITA-EDUCATIVA-v1.md",
+    "contract": "governance/atlas-quality-standard-v1.json",
+    "qualificationTemplate": "governance/templates/atlas-opera-qualification-v1.json"
+  },
+  "worldArchitecture": {
+    "document": "docs/ATLAS-MONDI-E-VERTICALI-v1.md",
+    "firstVertical": "energia",
+    "scope": "CANDIDATO_LOCALE",
+    "serialProductionAuthorized": false
+  }
+}
