@@ -53,7 +53,7 @@ export default function HomePage() {
             <span className="library-kicker">Biblioteca educativa</span>
             <h1>ATLAS</h1>
             <p className="library-motto">Esplora · Scopri · Comprendi · Sperimenta</p>
-            <p>Entra in una storia, osserva un fenomeno, prova una nuova idea. Scegli da dove cominciare.</p>
+            <p>Scegli una storia, una scoperta o un’esperienza.</p>
           </div>
           <Link href="/esplora" className="library-start"><Compass size={22} aria-hidden="true" /> Esplora la mappa <ArrowRight size={18} aria-hidden="true" /></Link>
         </header>
@@ -61,7 +61,7 @@ export default function HomePage() {
         <nav className="library-doors" aria-label="Sezioni della biblioteca">
           {shelves.map(({ id, title, caption, cover }) => (
             <Link key={id} href={"#" + id} className="library-door">
-              <Image src={cover} alt="" unoptimized sizes="(max-width: 720px) 48vw, 25vw" />
+              <Image src={cover} alt="" unoptimized sizes="(max-width: 720px) 48vw, (max-width: 1279px) 40vw, 25vw" />
               <div><h2>{title}</h2><p>{caption}</p><ArrowRight size={18} aria-hidden="true" /></div>
             </Link>
           ))}
