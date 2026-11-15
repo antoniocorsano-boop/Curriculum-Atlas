@@ -1,0 +1,106 @@
+{
+  "candidateSha256": "839a3de00ae8644227fc014d06fea5025fb5b9cd20b29997d73b56f24672bb3c",
+  "sourceF1Sha256": "8cf49de09b929646dc98e2db4f4cdba62a02188c60f841a55df685f47f79aaef",
+  "studentAuthorized": false,
+  "originalReaderAndImagesUnchanged": true,
+  "coverage": {
+    "bisogno": {
+      "sourceTextElements": 23,
+      "represented": 23,
+      "gitBlob": "1deac84adb0f94c09479a0b3f1b2e24652928534"
+    },
+    "scheda-bisogno": {
+      "sourceTextElements": 23,
+      "represented": 23,
+      "gitBlob": "086bbc990921a309321cebd81ef3bedf92312837"
+    },
+    "agricoltura": {
+      "sourceTextElements": 15,
+      "represented": 15,
+      "gitBlob": "ec1468d237a36d6802c1d870771609c3bbc299a1"
+    },
+    "energia": {
+      "sourceTextElements": 19,
+      "represented": 19,
+      "gitBlob": "93a2ac64cb7e66738cb6e0b15999c584d7d4a91e"
+    },
+    "scheda-energia": {
+      "sourceTextElements": 27,
+      "represented": 27,
+      "gitBlob": "47be892be7ab820d9acdfc8a0f3791893b1182e3"
+    }
+  },
+  "results": [
+    {
+      "viewport": [
+        320,
+        720
+      ],
+      "materials": 5,
+      "coverage": "PASS",
+      "keyboardZoomAndReturn": "PASS",
+      "normalAnd200Reflow": "PASS",
+      "printInvocationAndMedia": "PASS",
+      "readerRegression": "PASS",
+      "storyScrollBefore": 606,
+      "storyScrollRestored": 606,
+      "externalRequests": 0,
+      "pageErrors": 0
+    },
+    {
+      "viewport": [
+        360,
+        800
+      ],
+      "materials": 5,
+      "coverage": "PASS",
+      "keyboardZoomAndReturn": "PASS",
+      "normalAnd200Reflow": "PASS",
+      "printInvocationAndMedia": "PASS",
+      "readerRegression": "PASS",
+      "storyScrollBefore": 487,
+      "storyScrollRestored": 487,
+      "externalRequests": 0,
+      "pageErrors": 0
+    },
+    {
+      "viewport": [
+        430,
+        932
+      ],
+      "materials": 5,
+      "coverage": "PASS",
+      "keyboardZoomAndReturn": "PASS",
+      "normalAnd200Reflow": "PASS",
+      "printInvocationAndMedia": "PASS",
+      "readerRegression": "PASS",
+      "storyScrollBefore": 230,
+      "storyScrollRestored": 230,
+      "externalRequests": 0,
+      "pageErrors": 0
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "materials": 5,
+      "coverage": "PASS",
+      "keyboardZoomAndReturn": "PASS",
+      "normalAnd200Reflow": "PASS",
+      "printInvocationAndMedia": "PASS",
+      "readerRegression": "PASS",
+      "storyScrollBefore": 0,
+      "storyScrollRestored": 0,
+      "externalRequests": 0,
+      "pageErrors": 0
+    }
+  ],
+  "method": "Chromium set_content, emulated viewports, keyboard events, intercepted print call and print CSS; actual PDF generated for energy worksheet. Source text normalization coverage is not independent pedagogical or accessibility certification.",
+  "pending": [
+    "Manual screen reader review",
+    "Physical smartphone/LIM and printer review",
+    "Human semantic and pedagogical equivalence review",
+    "Full application integration and publication authorization"
+  ]
+}

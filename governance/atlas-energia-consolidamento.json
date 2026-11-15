@@ -15,9 +15,9 @@
     "editionSha256": "e9c55945eafff4d2d9cb3cddb506839a65ade34b7ba53b18bc62b6b17d671cfc"
   },
   "next": [
-    "F1_VERIFICA",
-    "F0_EVIDENZE_ESTERNE",
-    "F2_DOPO_ACCETTAZIONE_F1"
+    "F2_VERIFICA_UMANA",
+    "F3_REVISIONE_NARRATIVA",
+    "F0_EVIDENZE_ESTERNE"
   ],
   "phases": [
     {
@@ -28,14 +28,15 @@
     {
       "id": "F1",
       "dependsOn": [],
-      "state": "IN_VERIFICA"
+      "state": "IN_VERIFICA",
+      "note": "Candidato tecnico qualificato; ritorno con posizione e focus verificato in F2. Revisione fisica e assistiva rinviata a F6."
     },
     {
       "id": "F2",
       "dependsOn": [
         "F1"
       ],
-      "state": "APERTO"
+      "state": "IN_VERIFICA"
     },
     {
       "id": "F3",
@@ -87,8 +88,11 @@
         "F1"
       ],
       "acceptance": "Equivalenza HTML completa, tastiera, ingrandimento, stampa e revisione con lettore di schermo",
-      "state": "APERTO",
-      "evidence": []
+      "state": "IN_VERIFICA",
+      "evidence": [
+        "content/staging/biblioteca/poesia-energia/materials-f2-results.json",
+        "docs/ATLAS-ENERGIA-F2-RICEVUTA.md"
+      ]
     },
     {
       "id": "REV-02",
@@ -100,7 +104,9 @@
       "state": "IN_VERIFICA",
       "evidence": [
         "content/staging/biblioteca/poesia-energia/reader-f1-results.json",
-        "docs/ATLAS-ENERGIA-F0-F1-RICEVUTA.md"
+        "docs/ATLAS-ENERGIA-F0-F1-RICEVUTA.md",
+        "content/staging/biblioteca/poesia-energia/materials-f2-results.json",
+        "docs/ATLAS-ENERGIA-F2-RICEVUTA.md"
       ]
     },
     {
