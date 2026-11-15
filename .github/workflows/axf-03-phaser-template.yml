@@ -44,6 +44,9 @@ jobs:
           if(p.scripts['build-nolog']!=='next build')throw Error('Unexpected build command');
           // Only the no-log command is allowed. Remove the other commands in this temporary checkout.
           p.scripts={build:'next build'};
+          // Same-major security patches for the three audited transitive packages.
+          // Next pins PostCSS; this explicit override is tested only in the temporary lab.
+          p.overrides={...p.overrides,postcss:'8.5.23',nanoid:'3.3.18','source-map-js':'1.2.2'};
           fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');
           JS
           rm -f log.js
