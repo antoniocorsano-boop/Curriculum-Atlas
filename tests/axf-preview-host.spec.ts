@@ -56,7 +56,7 @@ test("G2 presentation keeps nine worlds, four sections, direct search and denies
   await expect(page.getByRole("button", { name: "Scoperte", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Percorsi", exact: true })).toBeVisible();
   await worlds.getByRole("button", { name: "Tecnologia" }).click();
-  await expect(page.getByRole("status")).toHaveText("1 esperienze disponibili.");
+  await expect(page.getByRole("status")).toHaveText("1 esperienza disponibile.");
   await expect(page.getByRole("link", { name: /La scelta che cambia il sistema/ })).toBeVisible();
   await page.getByRole("button", { name: "Storie", exact: true }).click();
   await expect(page.getByRole("status")).toHaveText("Nessuna esperienza disponibile.");
@@ -66,6 +66,8 @@ test("G2 presentation keeps nine worlds, four sections, direct search and denies
   await expect(page.getByRole("status")).toHaveText("Nessuna esperienza disponibile.");
   await expect(page.getByText("SYNTHETIC_DENIED")).toHaveCount(0);
   expect(external).toEqual([]);
+  expect(await page.locator("[data-world=energia] .axfPreviewHost__sphere").evaluate(el => getComputedStyle(el).backgroundImage)).toContain("data:image/webp;base64,UklGR");
+  expect(await page.locator(".axfPreviewHost__library").evaluate(el => getComputedStyle(el).getPropertyValue("--axf-landscape"))).toBe("");
   for (const width of [320, 390, 844, 1280]) {
     await page.setViewportSize({ width, height: 800 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
