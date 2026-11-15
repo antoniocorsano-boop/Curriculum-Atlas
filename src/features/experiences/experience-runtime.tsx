@@ -10,6 +10,7 @@ import type {
 } from "./model";
 import { useExperienceSession } from "./use-experience-session";
 import "./experience-runtime.css";
+import { SpecializedNode, type SpecializedRendererBinding } from "./specialized-node";
 import type {VerifiedSceneIllustration} from "../pathways/edutwin-preview-media";
 
 type ResolvedTransition = ExperienceTransition & { key: string };
@@ -25,9 +26,11 @@ export function ExperienceRuntime({
   presentation,
   onTransition,
   verifiedIllustrations,
+  specializedRenderer,
 }: {
   definition: ExperienceDefinition;
   presentation?: ExperiencePresentation;
+  specializedRenderer?: SpecializedRendererBinding;
   verifiedIllustrations?: ReadonlyMap<string,VerifiedSceneIllustration>;
   onTransition?: (nodeId: string, transitionId: string, targetNodeId: string) => void;
 }) {
@@ -153,6 +156,29 @@ export function ExperienceRuntime({
       const transition = transitions.find((candidate) => candidate.key === transitionId || candidate.id === transitionId);
       if (transition) selectTransition(transition);
     }
+  }
+
+  // Fail closed before the legacy summary/stage branches can expose an ordinary Continue.
+  if (node.interaction === "specialized" || node.specialized !== undefined) {
+    const spec = node.specialized;
+    const binding = specializedRenderer;
+    if (node.interaction !== "specialized" || !spec || !binding ||
+        definition.qualificationProfileId !== "AXF_SPECIALIZED_PREVIEW_V1" ||
+        definition.runtime.statePolicy !== "VOLATILE_MEMORY" ||
+        definition.runtime.learnerIdentityRequired !== false || definition.runtime.telemetryAllowed !== false ||
+        spec.version !== 1 || binding.version !== spec.version || binding.rendererId !== spec.rendererId ||
+        !/^[a-z][a-z0-9-]{0,63}$/.test(spec.rendererId) || Object.keys(spec).length !== 2 ||
+        stage !== undefined || node.terminal || transitions.length !== 1 || !firstTransition?.id ||
+        !definition.graph.nodes.some(candidate => candidate.id === firstTransition.targetNodeId)) {
+      return <section className="experience-runtime"><h1>{title}</h1><p role="status">Scena interattiva non disponibile.</p></section>;
+    }
+    return <SpecializedNode key={node.id + ":" + session.sessionVersion}
+      binding={binding} title={title} prompt={prompt}
+      onProceed={(evidence) => {
+        session.writeResponse(node.id, JSON.stringify(evidence));
+        onTransition?.(node.id, firstTransition.key, firstTransition.targetNodeId);
+        session.choose(firstTransition.targetNodeId);
+      }} />;
   }
 
   if (stage) {
