@@ -35,6 +35,11 @@ jobs:
           npm --version > ../evidence/npm-version.txt
           npm ci --ignore-scripts
           npm ls --all --json > ../evidence/dependencies.json
+          # Audit is diagnostic: keep both reports, including nonzero exit status.
+          full=0; npm audit --json > ../evidence/audit-full.json || full=$?
+          prod=0; npm audit --omit=dev --json > ../evidence/audit-production.json || prod=$?
+          printf 'full=%s\nproduction=%s\n' "$full" "$prod" > ../evidence/audit-exit.txt
+          node --input-type=module -e 'import fs from "node:fs"; for (const n of ["full","production"]) { const a=JSON.parse(fs.readFileSync("../evidence/audit-"+n+".json","utf8")); console.log(n,JSON.stringify({metadata:a.metadata?.vulnerabilities,error:a.error,vulnerabilities:Object.fromEntries(Object.entries(a.vulnerabilities??{}).map(([k,v])=>[k,{severity:v.severity,isDirect:v.isDirect,range:v.range,via:v.via,fixAvailable:v.fixAvailable}]))},null,2)); }'
           npm run vite-build
           test -f dist/index.html
           du -sh dist | tee ../evidence/build-size.txt
@@ -79,17 +84,50 @@ jobs:
                 await page.keyboard.press('Tab');
                 result.focus=await page.evaluate(()=>({tag:document.activeElement?.tagName,label:document.activeElement?.getAttribute('aria-label'),text:document.activeElement?.textContent?.slice(0,100)}));
                 result.renderObserved=true;
+                // Exercise the original UI, not an injected replacement or model mutation.
+                const screen=page.getByRole('button',{name:'Magnets Screen',exact:true});
+                await screen.focus({timeout:5000});
+                await page.keyboard.press('Enter');
+                const flip=page.getByRole('button',{name:/Flip Polarity/i});
+                await flip.waitFor({state:'attached',timeout:8000});
+                const readAngle=()=>page.evaluate(()=>{const m=document.body.textContent.match(/The magnet is rotated by\\s+([0-9.,]+)\\s+degrees/i);return m?Number(m[1].replace(',','.')):null;});
+                const before=await readAngle();
+                if(!Number.isFinite(before))throw Error('Magnet orientation description unavailable');
+                await flip.focus();
+                await page.keyboard.press('Enter');
+                await page.waitForFunction(a=>{const m=document.body.textContent.match(/The magnet is rotated by\\s+([0-9.,]+)\\s+degrees/i);return m&&((Number(m[1].replace(',','.'))-a+360)%360)===180;},before,{timeout:5000});
+                const after=await readAngle();
+                await page.screenshot({path:'evidence/'+name+'-flipped.png'});
+                await page.keyboard.press('Enter');
+                await page.waitForFunction(a=>{const m=document.body.textContent.match(/The magnet is rotated by\\s+([0-9.,]+)\\s+degrees/i);return m&&Number(m[1].replace(',','.'))===a;},before,{timeout:5000});
+                result.interaction={before,after,restored:await readAngle(),method:'keyboard',passed:true};
               } catch(e){result.failure=String(e);await page.screenshot({path:'evidence/'+name+'-failure.png'}).catch(()=>{});}
               results.push(result);
               await context.close();
             }
             await browser.close();
             fs.writeFileSync('evidence/browser-report.json',JSON.stringify(results,null,2));
-            console.log(JSON.stringify(results.map(r=>({viewport:r.viewport,renderObserved:r.renderObserved||false,external:r.external,errors:r.errors,httpErrors:r.httpErrors,failure:r.failure,focus:r.focus})),null,2));
-            if(results.some(r=>!r.renderObserved||r.external.length||r.errors.length||r.httpErrors.length))process.exitCode=1;
+            console.log(JSON.stringify(results.map(r=>({viewport:r.viewport,renderObserved:r.renderObserved||false,external:r.external,errors:r.errors,httpErrors:r.httpErrors,failure:r.failure,focus:r.focus,interaction:r.interaction})),null,2));
+            if(results.some(r=>!r.renderObserved||!r.interaction?.passed||r.failure||r.external.length||r.errors.length||r.httpErrors.length))process.exitCode=1;
           })().catch(e=>{console.error(e);process.exitCode=1;});
           JS
           node harness/probe.cjs
+      - name: Require security triage before candidate promotion
+        if: always()
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const names=['full','production'];
+          for(const n of names){
+            const a=JSON.parse(fs.readFileSync('evidence/audit-'+n+'.json','utf8'));
+            if(a.error||!a.metadata?.vulnerabilities)throw Error('Incomplete audit: '+n);
+            console.log(n,JSON.stringify(a.metadata.vulnerabilities));
+          }
+          const a=JSON.parse(fs.readFileSync('evidence/audit-production.json','utf8'));
+          const v=a.metadata.vulnerabilities;
+          if(v.high||v.critical)throw Error('Production high/critical advisories require triage; no integration');
+          console.log('Production high/critical gate passed; other advisories and build chain still require review.');
+          JS
       - name: Archive diagnostic evidence only
         if: always()
         uses: actions/upload-artifact@v4
