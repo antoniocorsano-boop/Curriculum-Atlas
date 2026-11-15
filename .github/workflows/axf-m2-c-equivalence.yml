@@ -168,6 +168,18 @@ jobs:
           cp "$src/test-fixture.mjs" harness/m3c-test.mjs
           python3 -m http.server 8769 --bind 127.0.0.1 --directory m3c >/tmp/axf-m3c.log 2>&1 &
           node harness/m3c-test.mjs
+      - name: M3-D package qualified fixture runtime, never E02 art
+        run: |
+          mkdir -p runtime-diagnostic
+          python3 labs/axf-m2/m3-handoff/e02-v2/private-review.py pack m3c runtime-diagnostic/axf-m3c-fixture-runtime.zip
+          sha256sum runtime-diagnostic/axf-m3c-fixture-runtime.zip | tee evidence/m3-c-fixture/runtime-archive.sha256
+      - name: Preserve fixture runtime diagnostic (no E02 master or deployment)
+        uses: actions/upload-artifact@v4
+        with:
+          name: axf-m3c-fixture-runtime
+          path: runtime-diagnostic/axf-m3c-fixture-runtime.zip
+          retention-days: 7
+          if-no-files-found: error
       - name: Preserve diagnostic evidence only
         if: always()
         uses: actions/upload-artifact@v4
