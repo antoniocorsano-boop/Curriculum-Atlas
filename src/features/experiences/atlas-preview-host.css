@@ -1,0 +1,9 @@
+.axfPreviewHost { max-width: 75rem; margin: 0 auto; padding: 1rem; min-width: 0; }
+.axfPreviewHost__header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; margin-block-end: 1rem; }
+.axfPreviewHost__header a { display: inline-flex; align-items: center; min-height: 44px; padding: .5rem 1rem; border: 1px solid currentColor; border-radius: .75rem; }
+.axfPreviewHost__library { display: grid; gap: 1rem; padding: clamp(1rem, 3vw, 2rem); color: #f4f7ff; background: radial-gradient(ellipse at center, #29436b, #101a30 68%); border-radius: 1rem; }
+.axfPreviewHost__library input { width: 100%; min-width: 0; max-width: 32rem; min-height: 44px; padding: .5rem .75rem; background: #fff; color: #101a30; border-radius: .5rem; }
+.axfPreviewHost__orbit { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: 1rem; }
+.axfPreviewHost__orbit a { display: grid; place-items: center; text-align: center; gap: .5rem; overflow-wrap: anywhere; min-height: 8rem; padding: 1rem; color: inherit; border: 1px solid #9cb9dc; border-radius: 1rem; background: #162a48; }
+.axfPreviewHost__orbit span { font-size: 2rem; }
+.axfPreviewHost a:focus-visible, .axfPreviewHost input:focus-visible { outline: 3px solid #e7aa39; outline-offset: 3px; }
