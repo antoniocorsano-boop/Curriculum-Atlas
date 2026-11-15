@@ -45,36 +45,46 @@ test("AXF host handles direct links, invalid previews, reload and mobile reflow"
 });
 
 
-test("G2 presentation keeps nine worlds, four sections, direct search and denies untrusted artwork", async ({ page }) => {
+test("G2 gateway puts all worlds and direct search in the first viewport; contextual filters preserve authority", async ({ page }) => {
   const external: string[] = [];
   page.on("request", request => { if (request.url().includes("invalid.example")) external.push(request.url()); });
-  await page.goto(path);
   const worlds = page.getByRole("navigation", { name: "Mondi della conoscenza" });
-  await expect(worlds.getByRole("button")).toHaveCount(9);
-  await expect(page.getByRole("button", { name: "Storie", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Laboratori", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Scoperte", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Percorsi", exact: true })).toBeVisible();
+  for (const [width,height] of [[320,740],[390,844],[844,900],[1280,900]]) {
+    await page.setViewportSize({ width, height });
+    await page.goto(path);
+    await expect(worlds.getByRole("button")).toHaveCount(9);
+    await expect(page.getByRole("status")).toHaveCount(0);
+    await expect(page.getByRole("searchbox")).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    const search = await page.getByRole("searchbox").boundingBox();
+    expect(search!.y + search!.height).toBeLessThanOrEqual(height);
+    const boxes = await Promise.all((await worlds.getByRole("button").all()).map(button => button.boundingBox()));
+    for (const bounds of boxes) {
+      expect(bounds!.width).toBeGreaterThanOrEqual(44);
+      expect(bounds!.height).toBeGreaterThanOrEqual(44);
+      expect(bounds!.y).toBeGreaterThanOrEqual(0);
+      expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(height);
+    }
+    for (let i=0;i<boxes.length;i++) for (let j=i+1;j<boxes.length;j++) {
+      const a=boxes[i]!,b=boxes[j]!;
+      expect(Math.min(a.x+a.width,b.x+b.width)-Math.max(a.x,b.x)>1 && Math.min(a.y+a.height,b.y+b.height)-Math.max(a.y,b.y)>1).toBe(false);
+    }
+  }
+  expect(await page.locator("[data-world=energia] .axfPreviewHost__sphere").evaluate(el => getComputedStyle(el).backgroundImage)).toContain("data:image/webp;base64,UklGR");
+  expect(await page.locator(".axfPreviewHost__library").evaluate(el => getComputedStyle(el).getPropertyValue("--axf-landscape"))).toBe("");
   await worlds.getByRole("button", { name: "Tecnologia" }).click();
+  await expect(page.getByRole("searchbox")).toBeFocused();
   await expect(page.getByRole("status")).toHaveText("1 esperienza disponibile.");
+  for (const section of ["Storie","Laboratori","Scoperte","Percorsi"]) await expect(page.getByRole("button", { name: section, exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: /La scelta che cambia il sistema/ })).toBeVisible();
   await page.getByRole("button", { name: "Storie", exact: true }).click();
   await expect(page.getByRole("status")).toHaveText("Nessuna esperienza disponibile.");
   await page.getByRole("button", { name: "Azzera filtri" }).click();
   await expect(page.getByRole("status")).toHaveText("2 esperienze disponibili.");
+  await page.getByRole("button", { name: "Esplora i mondi" }).click();
+  await expect(page.getByRole("heading", { name: "Esplora Atlas" })).toBeFocused();
   await worlds.getByRole("button", { name: "Energia" }).click();
   await expect(page.getByRole("status")).toHaveText("Nessuna esperienza disponibile.");
   await expect(page.getByText("SYNTHETIC_DENIED")).toHaveCount(0);
   expect(external).toEqual([]);
-  expect(await page.locator("[data-world=energia] .axfPreviewHost__sphere").evaluate(el => getComputedStyle(el).backgroundImage)).toContain("data:image/webp;base64,UklGR");
-  expect(await page.locator(".axfPreviewHost__library").evaluate(el => getComputedStyle(el).getPropertyValue("--axf-landscape"))).toBe("");
-  for (const width of [320, 390, 844, 1280]) {
-    await page.setViewportSize({ width, height: 800 });
-    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
-    for (const button of await worlds.getByRole("button").all()) {
-      const bounds = await button.boundingBox();
-      expect(bounds?.width ?? 0).toBeGreaterThanOrEqual(44);
-      expect(bounds?.height ?? 0).toBeGreaterThanOrEqual(44);
-    }
-  }
 });
