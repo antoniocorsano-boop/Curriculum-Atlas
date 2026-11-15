@@ -15,10 +15,10 @@
     "editionSha256": "e9c55945eafff4d2d9cb3cddb506839a65ade34b7ba53b18bc62b6b17d671cfc"
   },
   "next": [
-    "F5_B_VERIFICA_COMPILAZIONI_E_CONFINE",
-    "F5_B_ASSEMBLAGGIO_LOCALE_E_COLLAUDO",
-    "F0_EVIDENZE_ESTERNE",
-    "F6_REVISIONE_UMANA_DOPO_F5"
+    "F6_R_RIPROGETTAZIONE_DIDATTICA",
+    "F5_R_RIQUALIFICAZIONE_CANDIDATO",
+    "F6_RIVALUTAZIONE_UMANA",
+    "F0_EVIDENZE_ESTERNE"
   ],
   "phases": [
     {
@@ -61,14 +61,15 @@
         "F4"
       ],
       "state": "IN_VERIFICA",
-      "note": "F5-A positiva per il candidato locale. F5-B implementazione del collegamento nativo e guardie completata; compilazione CI, assemblaggio locale con artefatto nativo e collaudo integrato ancora da qualificare."
+      "note": "Compilazioni e assemblaggio F5-B positivi; navigazione dinamica del pacchetto integrato non verificata. Candidato autonomo riesaminato in F6; nuove criticità pedagogiche e incoerenza della scheda impongono nuova qualificazione."
     },
     {
       "id": "F6",
       "dependsOn": [
         "F5"
       ],
-      "state": "APERTO"
+      "state": "IN_LAVORAZIONE",
+      "note": "Prima valutazione formativa del candidato autonomo: funzionamento riferito, giudizio grafico positivo, efficacia e coinvolgimento non dimostrati. Nessun protocollo di prove selezionato. Revisione correttiva necessaria."
     },
     {
       "id": "F7",
@@ -208,8 +209,43 @@
         "F5"
       ],
       "acceptance": "Esiti reali versionati; eventuali studenti solo con autorizzazioni",
+      "state": "IN_VERIFICA",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6-RIESAME-FORMATIVO.md",
+        "content/staging/biblioteca/energia/formative-review-f6.json"
+      ]
+    },
+    {
+      "id": "REV-09",
+      "priority": "P0",
+      "phase": "F6",
+      "title": "Mediazione didattica insufficiente e coinvolgimento da verificare",
+      "dependsOn": [
+        "REV-04",
+        "REV-05",
+        "REV-06"
+      ],
+      "acceptance": "Sequenza di spiegazione progressiva, esempi svolti, applicazione autonoma, restituzione esplicativa; revisione umana su nuova edizione. Nessuna equivalenza tra funzionamento e apprendimento.",
       "state": "APERTO",
-      "evidence": []
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6-RIESAME-FORMATIVO.md",
+        "content/staging/biblioteca/energia/formative-review-f6.json"
+      ]
+    },
+    {
+      "id": "REV-10",
+      "priority": "P0",
+      "phase": "F6",
+      "title": "Identità delle lampade incoerente tra scheda e laboratorio",
+      "dependsOn": [
+        "REV-04"
+      ],
+      "acceptance": "Nuova scheda o nomi distinti, confronti coerenti, originali conservati, test incrociato di tutti i riferimenti A/B/C.",
+      "state": "APERTO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F6-RIESAME-FORMATIVO.md",
+        "content/staging/biblioteca/energia/formative-review-f6.json"
+      ]
     }
   ],
   "releaseConditions": [
