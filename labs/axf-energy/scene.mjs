@@ -1,11 +1,14 @@
 import {Game,Scene,AUTO,Scale} from "./vendor/phaser.esm.js";
-import {initial,act,measure} from "./model.mjs";
-let state=initial(), view;
+import {initial,act,measure,evidenceTrace} from "./model.mjs";
+
+/** Shared standalone/hosted renderer. Root is a Document or ShadowRoot; all state is volatile. */
+export function mountEnergyLab(root, onEvidence = () => {}) {
+let state=initial(), view, disposed=false;
 const ids=["A","B","C"];
 const reasons=[["same-light","Stessa luce, meno ingresso"],["thermal-loss","Minore energia termica"],["input-only","Solo il valore in ingresso"]];
-function dispatch(action){state=act(state,action);render();view?.sync();}
+function dispatch(action){if(disposed)return;state=act(state,action);render();view?.sync();onEvidence(evidenceTrace(state));}
 function buttons(parent,values,action,selected,disabled){
-  const el=document.getElementById(parent);
+  const el=root.getElementById(parent);
   if(!el.children.length)for(const [id,label] of values){const b=document.createElement("button");b.type="button";b.textContent=label;b.dataset.id=id;b.addEventListener("click",()=>dispatch(action(id)));el.append(b)}
   for(const b of el.children){b.disabled=disabled;b.setAttribute("aria-pressed",String(b.dataset.id===selected));}
 }
@@ -15,12 +18,14 @@ function render(){
   buttons("revisions",ids.map(x=>[x,"Scelgo "+x]),id=>({type:"revise",id}),state.revision,state.trials.length!==3);
   buttons("reasons",reasons,id=>({type:"explain",reason:id}),state.explanation,!state.revision);
   const m=state.active&&measure(state.active);
-  document.getElementById("status").textContent=m?("Lampada "+m.id+": "+m.input+" J in ingresso, "+m.useful+" J luce, "+m.thermal+" J calore, efficienza "+m.efficiency+"%."):state.prediction?"Ipotesi: "+state.prediction+". Prova una lampada.":"Scegli prima un'ipotesi.";
-  const body=document.getElementById("trials");body.replaceChildren();
+  root.getElementById("status").textContent=m?("Lampada "+m.id+": "+m.input+" J in ingresso, "+m.useful+" J luce, "+m.thermal+" J calore, efficienza "+m.efficiency+"%."):state.prediction?"Ipotesi: "+state.prediction+". Prova una lampada.":"Scegli prima un'ipotesi.";
+  const body=root.getElementById("trials");body.replaceChildren();
   for(const id of state.trials){const m=measure(id);const tr=document.createElement("tr");for(const v of [id,m.input,m.useful,m.thermal,m.efficiency]){const cell=document.createElement("td");cell.textContent=String(v);tr.append(cell)}body.append(tr)}
-  document.getElementById("reflection").textContent=state.explanation?"Ipotesi iniziale: "+state.prediction+". Scelta rivista: "+state.revision+". Criterio: "+reasons.find(r=>r[0]===state.explanation)[1]+". Motiva al docente con le misure.":state.trials.length===3?"Hai tre misure: rivedi la tua ipotesi.":"Confronta tutte e tre le lampade.";
+  root.getElementById("reflection").textContent=state.explanation?"Ipotesi iniziale: "+state.prediction+". Scelta rivista: "+state.revision+". Criterio: "+reasons.find(r=>r[0]===state.explanation)[1]+". Motiva al docente con le misure.":state.trials.length===3?"Hai tre misure: rivedi la tua ipotesi.":"Confronta tutte e tre le lampade.";
 }
-document.getElementById("reset").addEventListener("click",()=>dispatch({type:"reset"}));
+const resetButton=root.getElementById("reset");
+const reset=()=>dispatch({type:"reset"});
+resetButton.addEventListener("click",reset);
 class Bench extends Scene{
   constructor(){super("Bench")}
   create(){
@@ -50,7 +55,7 @@ class Bench extends Scene{
       const value=this.add.text(450,y,"—",{fontSize:"17px",color:"#e8f1f5"}).setOrigin(0,.5);
       return {bar,value};
     });
-    this.sync();document.getElementById("game").dataset.ready="true";
+    this.sync();root.getElementById("game").dataset.ready="true";
   }
   sync(){
     if(!this.readout)return;
@@ -66,4 +71,15 @@ class Bench extends Scene{
     for(const [i,t] of this.tokens.entries())t.setFillStyle(state.active===ids[i]?0x287f71:0x2b5b76);
   }
 }
-render();new Game({type:AUTO,width:600,height:400,parent:"game",scale:{mode:Scale.FIT,autoCenter:Scale.CENTER_BOTH},scene:[Bench],backgroundColor:"#10263a"});
+render();
+const game=new Game({type:AUTO,width:600,height:400,parent:root.getElementById("game"),scale:{mode:Scale.FIT,autoCenter:Scale.CENTER_BOTH},scene:[Bench],backgroundColor:"#10263a"});
+onEvidence(null);
+return () => {
+  if(disposed)return;
+  disposed=true;
+  resetButton.removeEventListener("click",reset);
+  view=undefined;
+  game.destroy(true);
+};
+}
+
