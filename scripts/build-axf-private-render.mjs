@@ -2,18 +2,20 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import { createRequire } from "node:module";
 const exactHead = "742e72ce7b56f258ae68598bfb51167ad667a9b6";
 const actual = spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).stdout.trim();
 if (actual !== exactHead) throw new Error("exact source head required");
 const temp = ".axf-private-review-entry.tsx";
-if (fs.existsSync(temp)) throw new Error("temporary entry already exists");
+const tempCss = ".axf-private-review-globals.css";
+if (fs.existsSync(temp) || fs.existsSync(tempCss)) throw new Error("temporary entry already exists");
 const out = path.resolve(process.argv[2] ?? "../axf-review");
 fs.mkdirSync(out, { recursive: true });
 const entry = `import { createRoot } from "react-dom/client";
 import { AtlasPreviewHost, type AtlasPreviewPlacement, type AtlasPreviewArtwork } from "./src/features/experiences/atlas-preview-host";
 import minimal from "./fixtures/studio-atlas-preview/valid/minimal.json";
 import orientation from "./fixtures/studio-atlas-preview/valid/edutwin-orientation.json";
-import "./src/app/globals.css";
+import "./.axf-private-review-globals.css";
 const snapshots = [minimal, orientation, { ...minimal, pathwayId: "denied", title: "SYNTHETIC_DENIED", studentAuthorized: true }];
 const placements: Record<string, AtlasPreviewPlacement> = {
   "studio-preview-fixture-studio-pathway-01": { world: "tecnologia", section: "Percorsi" },
@@ -38,6 +40,12 @@ input.addEventListener("change", async () => {
 });
 `;
 try {
+  const require = createRequire(path.join(process.cwd(),"package.json"));
+  const tailwind = require("@tailwindcss/postcss");
+  const postcss = createRequire(require.resolve("@tailwindcss/postcss"))("postcss");
+  const globalsPath = path.resolve("src/app/globals.css");
+  const globals = await postcss([tailwind({base:process.cwd(),optimize:false})]).process(fs.readFileSync(globalsPath,"utf8"),{from:globalsPath,to:path.resolve(tempCss)});
+  fs.writeFileSync(tempCss,globals.css,{flag:"wx"});
   fs.writeFileSync(temp, entry, { flag: "wx" });
   const build = spawnSync("pnpm", ["dlx", "esbuild@0.25.5", temp, "--bundle", "--jsx=automatic", "--platform=browser", "--format=iife", '--define:process.env.NODE_ENV="production"', "--minify", "--outfile="+path.join(out,"atlas.js")], {stdio:"inherit"});
   if (build.status !== 0) throw Error("bundle failed");
@@ -51,4 +59,4 @@ try {
   const manifest = {sourceHead:exactHead,studentAuthorized:false,runtimeAuthorized:false,privateArtworkIncluded:false,bundler:"esbuild@0.25.5",assets:{html:sha("Atlas-G2-review.html"),js:sha("atlas.js"),css:sha("atlas.css")}};
   fs.writeFileSync(path.join(out,"receipt.json"),JSON.stringify(manifest,null,2)+"\n");
   console.log(JSON.stringify(manifest));
-} finally { fs.rmSync(temp,{force:true}); }
+} finally { fs.rmSync(temp,{force:true}); fs.rmSync(tempCss,{force:true}); }
