@@ -15,8 +15,8 @@
     "editionSha256": "e9c55945eafff4d2d9cb3cddb506839a65ade34b7ba53b18bc62b6b17d671cfc"
   },
   "next": [
-    "F6_R1B_PROTOTIPO_ATELIER_DOPO_RIESAME",
     "F6_R1B_RIVALUTAZIONE_UMANA",
+    "F6_R1C_VERIFICA_RIUSO_SECONDO_TEMA",
     "F6_R2_ESTENSIONE_DOPO_RIESAME",
     "F6_R3_COERENZA_SCHEDA",
     "F5_R_RIQUALIFICAZIONE_CANDIDATO",
@@ -72,7 +72,7 @@
         "F5"
       ],
       "state": "IN_LAVORAZIONE",
-      "note": "F6-R1: riscontro positivo sulla maggiore chiarezza, dubbio sull'acquisizione delle competenze mediante lettura/scorrimento. Riesame degli strumenti registrato. Proposto campione atelier prima dell'estensione; REV-09/10 aperti."
+      "note": "F6-R1B: prima verticale dimostrativa con quattro strumenti realizzati in un candidato locale. Revisione umana e verifica generalizzabilità ancora necessarie. REV-09/10 aperti."
     },
     {
       "id": "F7",
@@ -239,7 +239,10 @@
         "docs/ATLAS-ENERGIA-F6R1-CAMPIONE-COMPRENDI.md",
         "content/staging/biblioteca/energia/comprendi-f6r1-results.json",
         "content/staging/biblioteca/energia/comprendi-qualification-v1.json",
-        "docs/ATLAS-ENERGIA-F6R1-RIESAME-STRUMENTI-APPRENDIMENTO.md"
+        "docs/ATLAS-ENERGIA-F6R1-RIESAME-STRUMENTI-APPRENDIMENTO.md",
+        "docs/ATLAS-MONDI-E-VERTICALI-v1.md",
+        "docs/ATLAS-ENERGIA-F6R1B-ATELIER.md",
+        "content/staging/biblioteca/energia/atelier-v01-results.json"
       ]
     },
     {
@@ -275,5 +278,11 @@
     "document": "docs/ATLAS-CARTA-QUALITA-EDUCATIVA-v1.md",
     "contract": "governance/atlas-quality-standard-v1.json",
     "qualificationTemplate": "governance/templates/atlas-opera-qualification-v1.json"
+  },
+  "worldArchitecture": {
+    "document": "docs/ATLAS-MONDI-E-VERTICALI-v1.md",
+    "firstVertical": "energia",
+    "scope": "CANDIDATO_LOCALE",
+    "serialProductionAuthorized": false
   }
 }

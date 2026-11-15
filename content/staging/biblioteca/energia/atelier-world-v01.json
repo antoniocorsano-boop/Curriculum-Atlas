@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "energia",
+  "title": "La città delle piccole stelle",
+  "topic": "Energia",
+  "edition": "0.1-candidato",
+  "studentAuthorized": false,
+  "qualityStandard": "ATLAS-QE-01",
+  "audience": "Tecnologia · Terza secondaria di primo grado",
+  "objective": "Rappresentare un bilancio energetico, distinguere effetto utile e conservazione, motivare un confronto a parità di servizio.",
+  "authority": {"state":"PROVISIONAL_COMPLETE","fingerprint":"b355be71","receipt":null},
+  "stations": [
+    {"id":"piazza","title":"La piazza","tool":"Osservatorio","action":"Osserva","description":"Segui la luce e il calore.","evidence":"Spiegare i due trasferimenti e lo scopo."},
+    {"id":"laboratorio","title":"Il laboratorio","tool":"Simulazione","action":"Sperimenta","description":"Modifica il modello e confronta i flussi.","evidence":"Motivare la relazione tra ingresso, luce e calore."},
+    {"id":"atelier","title":"L’officina delle idee","tool":"Atelier di costruzione","action":"Comprendi","description":"Componi tu un bilancio energetico.","evidence":"Costruire una rappresentazione coerente."},
+    {"id":"teatro","title":"Il teatro","tool":"Tavolo delle decisioni","action":"Rielabora","description":"Scegli una soluzione e giustificala.","evidence":"Trasferire il ragionamento a un sistema diverso."}
+  ],
+  "catalogSections":["Storie","Laboratori","Scoperte","Percorsi"],
+  "candidateWorlds":["Agricoltura","Tecnologia e progettazione","Cittadinanza digitale"],
+  "model":{"useful":20,"min":40,"max":100,"step":10,"cases":{"A":100,"B":50,"C":40}},
+  "release":"NO_GO"
+}
