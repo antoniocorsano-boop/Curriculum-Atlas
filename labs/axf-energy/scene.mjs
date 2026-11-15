@@ -24,7 +24,7 @@ document.getElementById("reset").addEventListener("click",()=>dispatch({type:"re
 class Bench extends Scene{
   constructor(){super("Bench")}
   create(){
-    view=this;this.cameras.main.setBackgroundColor("#10263a");
+    view={sync:()=>this.sync()};this.cameras.main.setBackgroundColor("#10263a");
     this.add.text(20,16,"SORGENTI VIRTUALI",{fontSize:"15px",color:"#b8dedf"});
     this.add.rectangle(300,241,172,100,0x173d50).setStrokeStyle(3,0x88d9c9);
     this.add.text(300,245,"STAZIONE",{fontSize:"19px",color:"#e5f6f4"}).setOrigin(.5);
