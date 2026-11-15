@@ -40,7 +40,7 @@ class Bench extends Scene{
       token.on("drag",(_p,dx,dy)=>{if(!state.prediction)return;token.setPosition(dx,dy);label.setPosition(dx,dy)});
       token.on("dragend",()=>{const near=Math.abs(token.x-300)<90&&Math.abs(token.y-241)<65;token.setPosition(x,102);label.setPosition(x,102);if(near)dispatch({type:"test",id})});
     }
-    this.readout=this.add.text(20,345,"Formula un'ipotesi",{fontSize:"20px",color:"#d1e8f0"});this.sync();
+    this.readout=this.add.text(20,345,"Formula un'ipotesi",{fontSize:"20px",color:"#d1e8f0"});this.sync();document.getElementById("game").dataset.ready="true";
   }
   sync(){if(!this.readout)return;const m=state.active&&measure(state.active);this.readout.setText(m?m.id+" · "+m.input+" J → 20 J luce + "+m.thermal+" J calore":"Formula un'ipotesi");for(const [i,t] of this.tokens.entries())t.setFillStyle(state.active===ids[i]?0x287f71:0x2b5b76)}
 }
