@@ -86,6 +86,8 @@ export function AtlasPreviewHost({ snapshots, artwork, placements = noPlacements
   const titleRef = useRef<HTMLHeadingElement>(null);
   const wasBrowsing = useRef(false);
   const wasActive = useRef(false);
+  const lastStandalone = useRef<string | null>(null);
+  const returnRef = useRef<HTMLAnchorElement>(null);
   const active = entries.find(entry => routeFor(entry.id) === route);
   useEffect(() => {
     const sync = () => {
@@ -100,14 +102,22 @@ export function AtlasPreviewHost({ snapshots, artwork, placements = noPlacements
     return () => window.removeEventListener("hashchange", sync);
   }, [entries]);
   useEffect(() => {
+    if (active?.kind === "standalone") {
+      lastStandalone.current = active.id;
+      returnRef.current?.focus({ preventScroll: true });
+    }
     if (!active && wasActive.current) {
       setBrowsing(true);
-      searchRef.current?.focus({ preventScroll: true });
+      if (!lastStandalone.current) searchRef.current?.focus({ preventScroll: true });
     }
     wasActive.current = !!active;
   }, [active]);
   useEffect(() => {
-    if (!active && browsing && !wasBrowsing.current) searchRef.current?.focus({ preventScroll: true });
+    if (!active && browsing && lastStandalone.current) {
+      const result = document.getElementById("axf-result-" + lastStandalone.current);
+      (result ?? searchRef.current)?.focus({ preventScroll: true });
+      lastStandalone.current = null;
+    } else if (!active && browsing && !wasBrowsing.current) searchRef.current?.focus({ preventScroll: true });
     if (!active && !browsing && wasBrowsing.current) titleRef.current?.focus({ preventScroll: true });
     wasBrowsing.current = browsing;
   }, [active, browsing]);
@@ -125,15 +135,15 @@ export function AtlasPreviewHost({ snapshots, artwork, placements = noPlacements
     <section className="axfPreviewHost__results" aria-label="Risultati della ricerca">
       <p role="status">{hits.length === 0 ? "Nessuna esperienza disponibile." : hits.length === 1 ? "1 esperienza disponibile." : hits.length + " esperienze disponibili."}</p>
       <nav aria-label="Esperienze di prova">
-        {hits.map(entry => <a key={entry.id} href={routeFor(entry.id)}><strong>{entry.title}</strong><small>{entry.description}</small></a>)}
+        {hits.map(entry => <a key={entry.id} id={"axf-result-" + entry.id} href={routeFor(entry.id)}><strong>{entry.title}</strong><small>{entry.description}</small></a>)}
       </nav>
     </section>
   );
   return (
-    <div className="axfPreviewHost" data-axf-preview="internal">
-      {active && <header className="axfPreviewHost__header">
-        <a href={ROOT}>Atlante</a>
-        <span>Collaudo tecnico · non autorizzato agli studenti</span>
+    <div className="axfPreviewHost" data-axf-preview="internal" data-surface={active?.kind === "standalone" ? "standalone" : undefined}>
+      {active && <header className="axfPreviewHost__header" data-compact={active.kind === "standalone" ? "true" : undefined}>
+        <a href={ROOT} ref={returnRef}>{active.kind === "standalone" && <span aria-hidden="true">‹ </span>}Atlante</a>
+        {active.kind === "standalone" ? <div className="axfPreviewHost__context"><span>{WORLDS.find(([id]) => id === active.resource.world)?.[1]} · {active.resource.section}</span><small title="Collaudo tecnico · non autorizzato agli studenti">Anteprima privata</small></div> : <span>Collaudo tecnico · non autorizzato agli studenti</span>}
       </header>}
       {active ? (
         active.kind === "engine" ? <ExperienceRuntime key={active.id + "@" + active.definition.version} definition={active.definition} /> : <section className="axfPreviewHost__standalone" aria-label={active.title} key={active.id + "@" + active.resource.version}>{active.resource.render()}</section>
