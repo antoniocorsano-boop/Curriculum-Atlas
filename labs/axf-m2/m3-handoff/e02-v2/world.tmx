@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="48" height="32" tilewidth="32" tileheight="32" infinite="0" nextlayerid="3" nextobjectid="4">
+ <imagelayer id="1" name="environment"><image source="assets/AXF-E02-BG-v2-master.png" width="1536" height="1024"/></imagelayer>
+ <objectgroup id="2" name="interactions">
+  <object id="1" name="quaderno" x="25" y="655" width="500" height="315"><properties><property name="action" value="inspect-notebook"/></properties></object>
+  <object id="2" name="piazza" x="540" y="267" width="340" height="390"><properties><property name="action" value="inspect-square"/></properties></object>
+  <object id="3" name="banco" x="990" y="540" width="505" height="330"><properties><property name="action" value="open-bench"/></properties></object>
+ </objectgroup>
+</map>
