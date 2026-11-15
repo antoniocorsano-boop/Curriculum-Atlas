@@ -46,6 +46,33 @@ jobs:
           pathlib.Path('evidence/original-assets.json').write_text(json.dumps(report,indent=2))
           print(json.dumps(report,indent=2))
           PY
+      - name: Checkout exact Studio Atlas authoring compiler
+        uses: actions/checkout@v4
+        with:
+          repository: antoniocorsano-boop/trama-ecosistema
+          ref: ccda8b9c537a4a5d52ba292ea2bdad13ead7f7a1
+          path: axf-authoring-source
+          persist-credentials: false
+          sparse-checkout: |
+            products/studio-atlas/lib/specialized-review-preview.ts
+            products/studio-atlas/lib/fixtures/axf-energy-package.v0.2.json
+            schemas/atlas-pathway-authoring-package.v0.2.schema.json
+          sparse-checkout-cone-mode: false
+      - name: Compile actual Studio package and qualify Atlas consumer
+        run: |
+          mkdir -p evidence
+          mv axf-authoring-source "$RUNNER_TEMP/axf-authoring-source"
+          node --experimental-strip-types --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import {pathToFileURL} from 'node:url';
+          const base=path.join(process.env.RUNNER_TEMP,'axf-authoring-source/products/studio-atlas/lib');
+          const {compileSpecializedReviewSnapshot}=await import(pathToFileURL(path.join(base,'specialized-review-preview.ts')).href);
+          const pkg=JSON.parse(fs.readFileSync(path.join(base,'fixtures/axf-energy-package.v0.2.json'),'utf8'));
+          const snapshot=await compileSpecializedReviewSnapshot(pkg);
+          fs.writeFileSync('evidence/studio-specialized-snapshot.json',JSON.stringify(snapshot,null,2));
+          JS
+          node --experimental-strip-types scripts/test-axf-specialized-handoff.mjs evidence/studio-specialized-snapshot.json | tee evidence/authoring-handoff.txt
       - name: Test deterministic educational model
         run: |
           mkdir -p evidence
