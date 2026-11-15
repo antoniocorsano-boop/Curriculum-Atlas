@@ -41,8 +41,20 @@ jobs:
           npm ci --ignore-scripts --no-audit --no-fund
           npm ls --all --json > ../../evidence/dependencies.json
           mkdir -p vendor
-          cp node_modules/phaser/dist/phaser.esm.js vendor/
+          test -s node_modules/phaser/dist/phaser.esm.min.js
+          cp node_modules/phaser/dist/phaser.esm.min.js vendor/phaser.esm.js
           cp node_modules/phaser/LICENSE* ../../evidence/
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import zlib from 'node:zlib';
+          import crypto from 'node:crypto';
+          const original=fs.readFileSync('node_modules/phaser/dist/phaser.esm.js');
+          const optimized=fs.readFileSync('vendor/phaser.esm.js');
+          const report={originalBytes:original.length,optimizedBytes:optimized.length,originalGzipBytes:zlib.gzipSync(original,{level:9}).length,optimizedGzipBytes:zlib.gzipSync(optimized,{level:9}).length,reductionPercent:100*(1-optimized.length/original.length),sha256:crypto.createHash('sha256').update(optimized).digest('hex')};
+          fs.writeFileSync('../../evidence/renderer-size.json',JSON.stringify(report,null,2));
+          console.log(JSON.stringify(report,null,2));
+          if(report.reductionPercent<40||report.optimizedGzipBytes>=report.originalGzipBytes)throw Error('Optimization budget not met');
+          JS
           du -sh vendor | tee ../../evidence/renderer-size.txt
       - name: Prepare browser harness
         run: |
