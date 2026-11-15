@@ -1,0 +1,138 @@
+name: AXF-03 SceneryStack isolated demo
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/axf-03-scenerystack-demo.yml'
+permissions:
+  contents: read
+jobs:
+  qualify:
+    runs-on: ubuntu-24.04 # Pin supported OS for Playwright 1.56.1; ubuntu-latest moved to 26.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout pinned public upstream
+        uses: actions/checkout@v4
+        with:
+          repository: scenerystack/demo-sim
+          ref: ca77dad8f3f396bafbeb65c62193f1b5be80bf04
+          path: upstream
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify source and frozen dependencies
+        working-directory: upstream
+        run: |
+          test "$(git rev-parse HEAD)" = ca77dad8f3f396bafbeb65c62193f1b5be80bf04
+          test -f LICENSE
+          test -f package-lock.json
+          mkdir -p ../evidence
+          git rev-parse HEAD > ../evidence/upstream-commit.txt
+          cp LICENSE ../evidence/upstream-license.txt
+          cp package-lock.json ../evidence/upstream-lock.json
+          node --version > ../evidence/node-version.txt
+          npm --version > ../evidence/npm-version.txt
+          npm ci --ignore-scripts
+          npm ls --all --json > ../evidence/dependencies.json
+          # Audit is diagnostic: keep both reports, including nonzero exit status.
+          full=0; npm audit --json > ../evidence/audit-full.json || full=$?
+          prod=0; npm audit --omit=dev --json > ../evidence/audit-production.json || prod=$?
+          printf 'full=%s\nproduction=%s\n' "$full" "$prod" > ../evidence/audit-exit.txt
+          node --input-type=module -e 'import fs from "node:fs"; for (const n of ["full","production"]) { const a=JSON.parse(fs.readFileSync("../evidence/audit-"+n+".json","utf8")); console.log(n,JSON.stringify({metadata:a.metadata?.vulnerabilities,error:a.error,vulnerabilities:Object.fromEntries(Object.entries(a.vulnerabilities??{}).map(([k,v])=>[k,{severity:v.severity,isDirect:v.isDirect,range:v.range,via:v.via,fixAvailable:v.fixAvailable}]))},null,2)); }'
+          npm run vite-build
+          test -f dist/index.html
+          du -sh dist | tee ../evidence/build-size.txt
+      - name: Install isolated browser harness
+        run: |
+          mkdir -p harness
+          cd harness
+          npm init -y >/dev/null
+          npm install --ignore-scripts --save-exact playwright@1.56.1
+          cp package-lock.json ../evidence/harness-lock.json
+          npx playwright install --with-deps chromium
+      - name: Observe browser runtime at three viewports
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory upstream/dist > evidence/server.log 2>&1 &
+          cat > harness/probe.cjs <<'JS'
+          const {chromium}=require('playwright');
+          const fs=require('node:fs');
+          const base='http://127.0.0.1:8765';
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const results=[];
+            for(const [width,height] of [[390,844],[844,390],[1280,800]]){
+              const context=await browser.newContext({viewport:{width,height},hasTouch:width<900,isMobile:width<900,serviceWorkers:'block'});
+              const page=await context.newPage();
+              const external=[],errors=[],httpErrors=[],requests=[];
+              await context.route('**/*',async route=>{
+                const url=route.request().url();
+                requests.push({url,method:route.request().method()});
+                if(url.startsWith(base+'/')||url.startsWith('data:')||url.startsWith('blob:')) return route.continue();
+                external.push(url); return route.abort();
+              });
+              page.on('pageerror',e=>errors.push(String(e)));
+              page.on('response',r=>{if(r.status()>=400)httpErrors.push({url:r.url(),status:r.status()})});
+              const name=width+'x'+height;
+              const result={viewport:name,external,errors,httpErrors,requests};
+              try {
+                await page.goto(base+'/',{waitUntil:'load',timeout:45000});
+                await page.waitForFunction(()=>[...document.querySelectorAll('canvas,svg')].some(e=>{const r=e.getBoundingClientRect();return r.width>100&&r.height>100}),{},{timeout:30000});
+                await page.waitForTimeout(3000);
+                result.dom=await page.evaluate(()=>({title:document.title,body:document.body.innerText.slice(0,5000),renderSurfaces:[...document.querySelectorAll('canvas,svg')].map(e=>{const r=e.getBoundingClientRect();return {tag:e.tagName,width:r.width,height:r.height}}),scrollWidth:document.documentElement.scrollWidth,innerWidth:innerWidth,controls:[...document.querySelectorAll('button,[role=button],[tabindex]')].slice(0,60).map(e=>({tag:e.tagName,label:e.getAttribute('aria-label'),text:e.textContent?.slice(0,100),tabindex:e.getAttribute('tabindex')}))}));
+                await page.screenshot({path:'evidence/'+name+'.png'});
+                await page.keyboard.press('Tab');
+                result.focus=await page.evaluate(()=>({tag:document.activeElement?.tagName,label:document.activeElement?.getAttribute('aria-label'),text:document.activeElement?.textContent?.slice(0,100)}));
+                result.renderObserved=true;
+                // Exercise the original UI, not an injected replacement or model mutation.
+                const screen=page.getByRole('button',{name:'Magnets Screen',exact:true});
+                await screen.focus({timeout:5000});
+                await page.keyboard.press('Enter');
+                const flip=page.getByRole('button',{name:/Flip Polarity/i});
+                await flip.waitFor({state:'attached',timeout:8000});
+                const readAngle=()=>page.evaluate(()=>{const m=document.body.textContent.match(/The magnet is rotated by\\s+([0-9.,]+)\\s+degrees/i);return m?Number(m[1].replace(',','.')):null;});
+                const before=await readAngle();
+                if(!Number.isFinite(before))throw Error('Magnet orientation description unavailable');
+                await flip.focus();
+                await page.keyboard.press('Enter');
+                await page.waitForFunction(a=>{const m=document.body.textContent.match(/The magnet is rotated by\\s+([0-9.,]+)\\s+degrees/i);return m&&((Number(m[1].replace(',','.'))-a+360)%360)===180;},before,{timeout:5000});
+                const after=await readAngle();
+                await page.screenshot({path:'evidence/'+name+'-flipped.png'});
+                await page.keyboard.press('Enter');
+                await page.waitForFunction(a=>{const m=document.body.textContent.match(/The magnet is rotated by\\s+([0-9.,]+)\\s+degrees/i);return m&&Number(m[1].replace(',','.'))===a;},before,{timeout:5000});
+                result.interaction={before,after,restored:await readAngle(),method:'keyboard',passed:true};
+              } catch(e){result.failure=String(e);await page.screenshot({path:'evidence/'+name+'-failure.png'}).catch(()=>{});}
+              results.push(result);
+              await context.close();
+            }
+            await browser.close();
+            fs.writeFileSync('evidence/browser-report.json',JSON.stringify(results,null,2));
+            console.log(JSON.stringify(results.map(r=>({viewport:r.viewport,renderObserved:r.renderObserved||false,external:r.external,errors:r.errors,httpErrors:r.httpErrors,failure:r.failure,focus:r.focus,interaction:r.interaction})),null,2));
+            if(results.some(r=>!r.renderObserved||!r.interaction?.passed||r.failure||r.external.length||r.errors.length||r.httpErrors.length))process.exitCode=1;
+          })().catch(e=>{console.error(e);process.exitCode=1;});
+          JS
+          node harness/probe.cjs
+      - name: Require security triage before candidate promotion
+        if: always()
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const names=['full','production'];
+          for(const n of names){
+            const a=JSON.parse(fs.readFileSync('evidence/audit-'+n+'.json','utf8'));
+            if(a.error||!a.metadata?.vulnerabilities)throw Error('Incomplete audit: '+n);
+            console.log(n,JSON.stringify(a.metadata.vulnerabilities));
+          }
+          const a=JSON.parse(fs.readFileSync('evidence/audit-production.json','utf8'));
+          const v=a.metadata.vulnerabilities;
+          if(v.high||v.critical)throw Error('Production high/critical advisories require triage; no integration');
+          console.log('Production high/critical gate passed; other advisories and build chain still require review.');
+          JS
+      - name: Archive diagnostic evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: axf-03-scenerystack-diagnostic
+          path: evidence/
+          retention-days: 7
+          if-no-files-found: warn
