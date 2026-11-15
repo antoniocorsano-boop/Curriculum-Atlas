@@ -115,6 +115,33 @@ jobs:
           cp variant/phaser/world.json evidence/variant/
           python3 -m http.server 8767 --bind 127.0.0.1 --directory variant >/tmp/axf-m2-d.log 2>&1 &
           node harness/test.mjs --variant
+      - uses: actions/checkout@v4
+        with:
+          ref: a7a8539f20336201f3a2c55f801ac2d7df5c16f4
+          path: energy-source
+          persist-credentials: false
+          sparse-checkout: |
+            labs/axf-energy
+      - uses: actions/checkout@v4
+        with:
+          ref: abef350ea4b93730081bbea87d14ac33a0753747
+          path: story-source
+          persist-credentials: false
+          sparse-checkout: |
+            content/staging/biblioteca/poesia-energia
+      - name: M3-A isolated mixed-renderer handoff and reference lock
+        run: |
+          mkdir -p evidence/m3-handoff mixed/energy/vendor mixed/assets
+          cp labs/axf-m2/m3-handoff/{index.html,handoff.mjs} mixed/
+          cp energy-source/labs/axf-energy/{scene.mjs,model.mjs} mixed/energy/
+          cmp preview/model.mjs mixed/energy/model.mjs
+          cp preview/phaser/vendor/phaser.esm.js mixed/energy/vendor/
+          cp -a preview/gdevelop mixed/
+          cp story-source/content/staging/biblioteca/poesia-energia/PE-0{1,3,4}.webp mixed/assets/
+          (cd mixed/assets && printf '%s\n' 'e8dadbe7b10ea163c6f2e5941f25edcfb3093d3425d171cc29fdd7b7153e5865  PE-01.webp' '66fd334582294901b99712a096781ea620ad701bc2f2b81d0bee0c0f2b8187cf  PE-03.webp' '8f9db63137a76263e9af0280e9b64f0c3b499219832cd30bc6f38f67bf5195dc  PE-04.webp' | sha256sum -c) | tee evidence/m3-handoff/reference-lock.txt
+          cp labs/axf-m2/m3-handoff/test.mjs harness/m3-test.mjs
+          python3 -m http.server 8768 --bind 127.0.0.1 --directory mixed >/tmp/axf-m3.log 2>&1 &
+          node harness/m3-test.mjs
       - name: Preserve diagnostic evidence only
         if: always()
         uses: actions/upload-artifact@v4
