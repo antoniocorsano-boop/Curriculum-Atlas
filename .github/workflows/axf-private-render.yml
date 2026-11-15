@@ -26,10 +26,13 @@ jobs:
           node-version: 22
       - name: Install exact-head dependencies
         working-directory: source
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
       - name: Build isolated review package
         working-directory: source
-        run: node ../recipe/scripts/build-axf-private-render.mjs ../axf-review
+        run: |
+          node ../recipe/scripts/build-axf-private-render.mjs ../axf-review
+          cp pnpm-lock.yaml ../axf-review/dependencies.lock.yaml
+          pnpm list react react-dom --depth 0 --json > ../axf-review/react-versions.json
       - name: Upload code-only local review bundle
         uses: actions/upload-artifact@v4
         with:
