@@ -50,10 +50,39 @@ jobs:
           fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');
           JS
           rm -f log.js
+          # Adapt only the demo's container and official Scale Manager, not its scenes.
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const file='src/game/main.ts';
+          let s=fs.readFileSync(file,'utf8');
+          if(!s.includes("import { AUTO, Game } from 'phaser';")||!s.includes("    parent: 'game-container',"))throw Error('Unexpected official game config');
+          s=s.replace("import { AUTO, Game } from 'phaser';","import { AUTO, Game, Scale } from 'phaser';")
+             .replace("    parent: 'game-container',","    parent: 'game-container',\n    scale: { mode: Scale.FIT, autoCenter: Scale.CENTER_BOTH },");
+          fs.writeFileSync(file,s);
+          const css='src/styles/globals.css';
+          fs.appendFileSync(css,`
+          /* AXF-03/C2: bounded container with aspect ratio, no canvas CSS scaling. */
+          #app {
+            box-sizing: border-box; width: 100%; height: auto; min-height: 100dvh;
+            padding: 8px; gap: 8px; overflow: visible;
+            flex-direction: column; justify-content: flex-start; align-items: center;
+          }
+          #game-container { width: min(100%, 1024px); aspect-ratio: 4 / 3; flex: none; position: relative; }
+          #app > div:not(#game-container) {
+            width: min(100%, 1024px); display: flex; flex-wrap: wrap;
+            align-items: center; justify-content: center;
+          }
+          @media (min-width: 700px) and (orientation: landscape) {
+            #app { flex-direction: row; justify-content: center; }
+            #game-container { width: min(calc(100% - 190px), calc(133.333dvh - 22px), 1024px); }
+            #app > div:not(#game-container) { width: 174px; flex-direction: column; flex: none; }
+          }
+          `);
+          JS
           npm install --package-lock-only --ignore-scripts --no-audit --no-fund
           cp package.json ../evidence/candidate-package.json
           cp package-lock.json ../evidence/candidate-lock.json
-          git diff -- package.json package-lock.json log.js > ../evidence/candidate-changes.patch
+          git diff -- package.json package-lock.json log.js src/game/main.ts src/styles/globals.css > ../evidence/candidate-changes.patch
       - name: Security audit before installing or building
         working-directory: upstream
         run: |
@@ -99,7 +128,7 @@ jobs:
           (async()=>{
             const browser=await chromium.launch({headless:true});
             const reports=[];
-            for(const [width,height] of [[390,844],[844,390],[1280,800]]){
+            for(const [width,height] of [[320,720],[390,844],[430,932],[844,390],[1280,800]]){
               const mobile=width<900;
               const context=await browser.newContext({viewport:{width,height},hasTouch:mobile,isMobile:mobile,serviceWorkers:'block'});
               const page=await context.newPage();
@@ -122,7 +151,7 @@ jobs:
                 const scene=page.getByRole('button',{name:'Change Scene',exact:true});
                 const pos=page.locator('.spritePosition pre');
                 await page.waitForFunction(()=>{const b=[...document.querySelectorAll('button')].find(e=>e.textContent.trim()==='Toggle Movement');return b&&!b.disabled;},{},{timeout:30000});
-                report.layout=await page.evaluate(()=>{const r=document.querySelector('#game-container canvas').getBoundingClientRect();return {innerWidth,innerHeight,scrollWidth:document.documentElement.scrollWidth,canvas:{width:r.width,height:r.height}};});
+                report.layout=await page.evaluate(()=>{const r=document.querySelector('#game-container canvas').getBoundingClientRect();return {innerWidth,innerHeight,scrollWidth:document.documentElement.scrollWidth,canvas:{width:r.width,height:r.height,left:r.left,right:r.right}};});
                 report.renderObserved=true;
                 await page.screenshot({path:'evidence/'+report.viewport+'-initial.png'});
                 const before=await pos.innerText();
@@ -156,7 +185,7 @@ jobs:
           node harness/probe.cjs
       - name: Require viewport fit
         run: |
-          node -e 'const r=require("./evidence/browser-report.json");for(const x of r){console.log(x.viewport,x.layout);if(!x.layout||x.layout.scrollWidth>x.layout.innerWidth+1||x.layout.canvas.width>x.layout.innerWidth+1)process.exitCode=1;}'
+          node -e 'const r=require("./evidence/browser-report.json");for(const x of r){console.log(x.viewport,x.layout);if(!x.layout||x.layout.scrollWidth>x.layout.innerWidth+1||x.layout.canvas.width>x.layout.innerWidth+1||x.layout.canvas.left< -1||x.layout.canvas.right>x.layout.innerWidth+1||Math.abs(x.layout.canvas.width/x.layout.canvas.height-4/3)>0.02)process.exitCode=1;}'
       - name: Archive diagnostic evidence only
         if: always()
         uses: actions/upload-artifact@v4
