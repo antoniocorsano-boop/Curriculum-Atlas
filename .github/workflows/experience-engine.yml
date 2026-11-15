@@ -40,7 +40,7 @@ jobs:
       - name: Percorsi student product contract
         run: pnpm test:percorsi:product
       - name: Percorsi publication filter contract
-        run: node scripts/test-percorsi-publication-filter.mjs
+        run: node --experimental-strip-types scripts/test-percorsi-publication-filter.mjs
       - name: Smart material contracts
         run: pnpm validate:smart
       - name: Smart conformance cases
