@@ -1,4 +1,6 @@
-const {chromium}=require("playwright"),assert=require("node:assert/strict"),fs=require("node:fs");
+import {chromium} from "playwright";
+import assert from "node:assert/strict";
+import fs from "node:fs";
 (async()=>{const browser=await chromium.launch(), reports=[];for(const engine of ["phaser","gdevelop"])for(const [w,h] of [[320,720],[390,844],[844,390],[1280,800]]){
  const c=await browser.newContext({viewport:{width:w,height:h},hasTouch:w<900,isMobile:w<900,serviceWorkers:"block"});
  const page=await c.newPage(),external=[],errors=[],writes=[],sockets=[];const origin="http://127.0.0.1:8765/";

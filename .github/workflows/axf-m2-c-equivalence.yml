@@ -63,12 +63,12 @@ jobs:
           cp node_modules/phaser/dist/phaser.esm.min.js ../preview/phaser/vendor/phaser.esm.js
           echo "f4c5fd140d118c10fa9090641a03c17303bab9bfdc28e0626296777db1bb1bde  ../preview/phaser/vendor/phaser.esm.js" | sha256sum -c -
           npx playwright install --with-deps chromium
-          cp ../labs/axf-m2/comparison/test.cjs .
+          cp ../labs/axf-m2/comparison/test.mjs .
       - name: Compare real exported scenes, semantics and privacy
         run: |
           du -sb preview/phaser preview/gdevelop | tee evidence/renderer-bytes.txt
           python3 -m http.server 8765 --bind 127.0.0.1 --directory preview >/tmp/axf-m2-c.log 2>&1 &
-          node harness/test.cjs
+          node harness/test.mjs
       - name: Preserve diagnostic evidence only
         if: always()
         uses: actions/upload-artifact@v4
