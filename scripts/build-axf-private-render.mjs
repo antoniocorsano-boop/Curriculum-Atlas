@@ -3,7 +3,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
-const exactHead = "118e994deaba5bc6bf836e12130160bbba41ce97";
+const exactHead = "b52c8368669bfaf0b20d32282d8a13d38d836c31";
 const actual = spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).stdout.trim();
 if (actual !== exactHead) throw new Error("exact source head required");
 const temp = ".axf-private-review-entry.tsx";
