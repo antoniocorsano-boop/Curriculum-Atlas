@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { ExperienceRuntime } from "@/features/experiences/experience-runtime";
-import type { ExperienceDefinition } from "@/features/experiences/model";
+import { specializedSnapshotToExperience } from "@/features/pathways/specialized-preview-adapter";
+import snapshot from "./studio-specialized-snapshot.json";
 import type { SpecializedRendererProps, SpecializedRendererBinding } from "@/features/experiences/specialized-node";
 import { verifyEvidence } from "@/../labs/axf-energy/model.mjs";
 
@@ -48,14 +49,7 @@ function ForgedRenderer({onEvidence}: SpecializedRendererProps) {
   return <button type="button" onClick={()=>onEvidence({complete:true})}>Invia evidenza incompleta</button>;
 }
 const binding: SpecializedRendererBinding={rendererId:"energy-lamp",version:1,Component:EnergyRenderer,verifyEvidence};
-const definition: ExperienceDefinition={
-  schemaVersion:"atlas.experience/v1",experienceId:"axf-energy-host-review",version:"0.1.0",mode:"PATHWAY",kernelRef:"axf-energy-kernel",qualificationProfileId:"AXF_SPECIALIZED_PREVIEW_V1",
-  runtime:{statePolicy:"VOLATILE_MEMORY",learnerIdentityRequired:false,telemetryAllowed:false},
-  presentationGrammarIds:["axf-specialized-preview"],graph:{entryNodeId:"lab",nodes:[
-    {id:"lab",primitive:"INVESTIGATE",interaction:"specialized",specialized:{rendererId:"energy-lamp",version:1},title:"Laboratorio dell’energia",prompt:"Confronta le lampade virtuali prima di proseguire.",feedbackCategory:"EVIDENCE_INCOMPLETE",transitions:[{id:"evidence-collected",targetNodeId:"transfer"}]},
-    {id:"transfer",primitive:"TRANSFER",interaction:"summary",title:"Trasferisci il ragionamento",prompt:"Quali condizioni devono essere equivalenti per confrontare altri sistemi?",feedbackCategory:"ALTERNATIVE_PLAUSIBLE",terminal:true,transitions:[]}
-  ]}
-};
+const definition = specializedSnapshotToExperience(snapshot,binding);
 export default function ReviewFixture(){
   const [mode,setMode]=useState("valid");
   const active=mode==="missing"?undefined:mode==="wrong"?{...binding,rendererId:"wrong"}:mode==="forged"?{...binding,Component:ForgedRenderer}:binding;
