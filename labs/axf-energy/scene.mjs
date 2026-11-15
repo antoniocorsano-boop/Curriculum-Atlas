@@ -28,9 +28,10 @@ class Bench extends Scene{
     this.add.text(20,16,"SORGENTI VIRTUALI",{fontSize:"15px",color:"#b8dedf"});
     this.add.rectangle(300,241,172,100,0x173d50).setStrokeStyle(3,0x88d9c9);
     this.add.text(300,245,"STAZIONE",{fontSize:"19px",color:"#e5f6f4"}).setOrigin(.5);
-    this.add.circle(492,242,32,0xffdf8b).setStrokeStyle(4,0xcda65c);
+    this.add.line(0,0,386,241,456,241,0x9ab7c5).setOrigin(0);
+    this.lamp=this.add.circle(492,242,32,0x43545b).setStrokeStyle(4,0xcda65c);
     this.add.rectangle(492,280,34,12,0x9bb7c5);
-    this.add.text(492,305,"20 J luce",{fontSize:"17px",color:"#e8f1f5"}).setOrigin(.5);
+    this.lampLabel=this.add.text(492,298,"Luce utile",{fontSize:"17px",color:"#e8f1f5"}).setOrigin(.5);
     this.labels=[];this.tokens=[];
     for(const [i,id] of ids.entries()){
       const x=100+200*i;
@@ -40,8 +41,29 @@ class Bench extends Scene{
       token.on("drag",(_p,dx,dy)=>{if(!state.prediction)return;token.setPosition(dx,dy);label.setPosition(dx,dy)});
       token.on("dragend",()=>{const near=Math.abs(token.x-300)<90&&Math.abs(token.y-241)<65;token.setPosition(x,102);label.setPosition(x,102);if(near)dispatch({type:"test",id})});
     }
-    this.readout=this.add.text(20,345,"Formula un'ipotesi",{fontSize:"20px",color:"#d1e8f0"});this.sync();document.getElementById("game").dataset.ready="true";
+    this.readout=this.add.text(20,307,"Formula un'ipotesi",{fontSize:"15px",color:"#d1e8f0"});
+    this.flows=[["Ingresso",0x8ab3d2],["Luce utile",0xe1b95d],["Calore",0xbb7443]].map(([label,color],i)=>{
+      const y=338+i*24;
+      this.add.text(20,y,label,{fontSize:"16px",color:"#e8f1f5"}).setOrigin(0,.5);
+      this.add.rectangle(144,y,290,14,0x31495b).setOrigin(0,.5);
+      const bar=this.add.rectangle(144,y,290,14,color).setOrigin(0,.5);
+      const value=this.add.text(450,y,"—",{fontSize:"17px",color:"#e8f1f5"}).setOrigin(0,.5);
+      return {bar,value};
+    });
+    this.sync();document.getElementById("game").dataset.ready="true";
   }
-  sync(){if(!this.readout)return;const m=state.active&&measure(state.active);this.readout.setText(m?m.id+" · "+m.input+" J → 20 J luce + "+m.thermal+" J calore":"Formula un'ipotesi");for(const [i,t] of this.tokens.entries())t.setFillStyle(state.active===ids[i]?0x287f71:0x2b5b76)}
+  sync(){
+    if(!this.readout)return;
+    const m=state.active&&measure(state.active);
+    this.readout.setText(m?"Lampada "+m.id+" · bilancio energetico":state.prediction?"Trascina una lampada nella stazione":"Formula un'ipotesi");
+    this.lamp.setFillStyle(m?0xffdf8b:0x43545b);
+    this.lampLabel.setText(m?"20 J luce":"Luce utile");
+    const values=m?[m.input,m.useful,m.thermal]:[0,0,0];
+    for(const [i,item] of this.flows.entries()){
+      item.bar.setDisplaySize(values[i]*2.9,14);
+      item.value.setText(m?values[i]+" J":"—");
+    }
+    for(const [i,t] of this.tokens.entries())t.setFillStyle(state.active===ids[i]?0x287f71:0x2b5b76);
+  }
 }
 render();new Game({type:AUTO,width:600,height:400,parent:"game",scale:{mode:Scale.FIT,autoCenter:Scale.CENTER_BOTH},scene:[Bench],backgroundColor:"#10263a"});
