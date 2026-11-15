@@ -33,7 +33,7 @@ export function filterUnauthorizedPathwayRoutes({
     if (!target?.intendedPublicPath) continue;
 
     const dir = routeDirectory(exportDir, target.intendedPublicPath);
-    const authorized = entry.runtimeAuthorization === "RUNTIME_AUTHORIZED";
+    const authorized = entry.runtimeAuthorization === "RUNTIME_AUTHORIZED" && entry.availability === "ACTIVE";
 
     if (!authorized) {
       fs.rmSync(dir, { recursive: true, force: true });

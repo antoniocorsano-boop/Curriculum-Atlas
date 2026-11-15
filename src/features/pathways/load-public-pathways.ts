@@ -34,7 +34,8 @@ export function loadPublicPathways(entries: readonly PublicPathwaySource[]): Pub
     if (entry.runtimeAuthorization !== "RUNTIME_AUTHORIZED") return [];
     if (!entry.pathwayId || !entry.title || !entry.version || !entry.provenanceRef) return [];
 
-    const availability: PathwayAvailability = entry.availability === "WITHDRAWN" ? "WITHDRAWN" : "ACTIVE";
+    if (entry.availability !== "ACTIVE" && entry.availability !== "WITHDRAWN") return [];
+    const availability: PathwayAvailability = entry.availability;
     if (availability === "ACTIVE" && !validPublicPath(entry.publicPath)) return [];
 
     return [{
