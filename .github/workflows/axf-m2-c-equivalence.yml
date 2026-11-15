@@ -115,6 +115,71 @@ jobs:
           cp variant/phaser/world.json evidence/variant/
           python3 -m http.server 8767 --bind 127.0.0.1 --directory variant >/tmp/axf-m2-d.log 2>&1 &
           node harness/test.mjs --variant
+      - uses: actions/checkout@v4
+        with:
+          ref: a7a8539f20336201f3a2c55f801ac2d7df5c16f4
+          path: energy-source
+          persist-credentials: false
+          sparse-checkout: |
+            labs/axf-energy
+      - uses: actions/checkout@v4
+        with:
+          ref: abef350ea4b93730081bbea87d14ac33a0753747
+          path: story-source
+          persist-credentials: false
+          sparse-checkout: |
+            content/staging/biblioteca/poesia-energia
+      - name: M3-A isolated mixed-renderer handoff and reference lock
+        run: |
+          mkdir -p evidence/m3-handoff mixed/energy/vendor mixed/assets
+          cp labs/axf-m2/m3-handoff/{index.html,handoff.mjs} mixed/
+          cp energy-source/labs/axf-energy/{scene.mjs,model.mjs} mixed/energy/
+          cmp preview/model.mjs mixed/energy/model.mjs
+          cp preview/phaser/vendor/phaser.esm.js mixed/energy/vendor/
+          cp -a preview/gdevelop mixed/
+          cp story-source/content/staging/biblioteca/poesia-energia/PE-0{1,3,4}.webp mixed/assets/
+          (cd mixed/assets && printf '%s\n' 'e8dadbe7b10ea163c6f2e5941f25edcfb3093d3425d171cc29fdd7b7153e5865  PE-01.webp' '66fd334582294901b99712a096781ea620ad701bc2f2b81d0bee0c0f2b8187cf  PE-03.webp' '8f9db63137a76263e9af0280e9b64f0c3b499219832cd30bc6f38f67bf5195dc  PE-04.webp' | sha256sum -c) | tee evidence/m3-handoff/reference-lock.txt
+          cp labs/axf-m2/m3-handoff/test.mjs harness/m3-test.mjs
+          python3 -m http.server 8768 --bind 127.0.0.1 --directory mixed >/tmp/axf-m3.log 2>&1 &
+          node harness/m3-test.mjs
+      - name: M3-C real motor handoff — synthetic fixture only, no E02 master
+        run: |
+          mkdir -p evidence/m3-c-fixture m3c-source m3c/energy/vendor m3c/assets
+          src=labs/axf-m2/m3-handoff/e02-v2
+          cp "$src/world.tmx" m3c-source/
+          /usr/bin/python3 "$src/fixture.py" m3c-source "$src/build-e02.mjs"
+          cp m3c-source/fixture.sha256 evidence/m3-c-fixture/
+          xvfb-run -a tiled --export-map json m3c-source/world.tmx m3c-source/world.json
+          upstream=official-example/examples/starting-point-and-click-adventure/starting-point-and-click-adventure.json
+          if node "$src/build-e02.mjs" m3c-source/world.json "$upstream" m3c-source/assets/AXF-E02-BG-v2-master.png m3c-reject > evidence/m3-c-fixture/rejection.log 2>&1; then
+            echo "FAIL: original master lock accepted substitute"; exit 1
+          fi
+          grep -q 'E02 asset lock mismatch' evidence/m3-c-fixture/rejection.log
+          node m3c-source/build-fixture-only.mjs m3c-source/world.json "$upstream" m3c-source/assets/AXF-E02-BG-v2-master.png m3c-native
+          timeout 300 xvfb-run -a "$(cat executable.txt)" --no-sandbox --disable-update-check --run-command EXPORT_HTML5_EXTERNAL "$PWD/m3c-native/atelier.json" 2>&1 | tee evidence/m3-c-fixture/export.log
+          test -s m3c-native/build/index.html
+          grep -R -E -l --include="code*.js" "enableMetrics\([^;]*false" m3c-native/build | tee evidence/m3-c-fixture/compiled-optout.txt
+          test -s evidence/m3-c-fixture/compiled-optout.txt
+          mv m3c-native/build m3c/gdevelop
+          cp "$src"/{index.html,handoff.mjs} m3c/
+          cp mixed/energy/{scene.mjs,model.mjs} m3c/energy/
+          cp mixed/energy/vendor/phaser.esm.js m3c/energy/vendor/
+          cp mixed/assets/PE-0{1,3,4}.webp m3c/assets/
+          cp "$src/test-fixture.mjs" harness/m3c-test.mjs
+          python3 -m http.server 8769 --bind 127.0.0.1 --directory m3c >/tmp/axf-m3c.log 2>&1 &
+          node harness/m3c-test.mjs
+      - name: M3-D package qualified fixture runtime, never E02 art
+        run: |
+          mkdir -p runtime-diagnostic
+          python3 labs/axf-m2/m3-handoff/e02-v2/private-review.py pack m3c runtime-diagnostic/axf-m3c-fixture-runtime.zip
+          sha256sum runtime-diagnostic/axf-m3c-fixture-runtime.zip | tee evidence/m3-c-fixture/runtime-archive.sha256
+      - name: Preserve fixture runtime diagnostic (no E02 master or deployment)
+        uses: actions/upload-artifact@v4
+        with:
+          name: axf-m3c-fixture-runtime
+          path: runtime-diagnostic/axf-m3c-fixture-runtime.zip
+          retention-days: 7
+          if-no-files-found: error
       - name: Preserve diagnostic evidence only
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,0 +1,33 @@
+// E02 isolated candidate. Input: Tiled JSON export, pinned official template, exact PNG, output dir.
+import fs from 'node:fs';
+import path from 'node:path';
+import {hash as digest} from 'node:crypto';
+const [mapPath, templatePath, masterPath, out] = process.argv.slice(2);
+if(!out) throw Error('Usage: node build-e02.mjs world.json upstream.json master.png output');
+const map=JSON.parse(fs.readFileSync(mapPath,'utf8')), template=JSON.parse(fs.readFileSync(templatePath,'utf8'));
+const bytes=fs.readFileSync(masterPath), hash=digest('sha256',bytes,'hex');
+if(hash!=='509000e27fe51e7c3c3d336029039cf8c6bf52e79fdd0be3d7f722d5a1509eaa' || bytes.readUInt32BE(16)!==1536 || bytes.readUInt32BE(20)!==1024) throw Error('E02 asset lock mismatch');
+const w=map.width*map.tilewidth,h=map.height*map.tileheight;
+if(w!==1536||h!==1024)throw Error('Map dimensions mismatch');
+const bg=map.layers.find(l=>l.name==='environment'&&l.type==='imagelayer');
+if(!bg||path.basename(bg.image)!=='AXF-E02-BG-v2-master.png'||(bg.offsetx||0)!==0||(bg.offsety||0)!==0)throw Error('Invalid image layer');
+const allowed={'quaderno':'inspect-notebook','piazza':'inspect-square','banco':'open-bench'};
+const objects=map.layers.find(l=>l.name==='interactions'&&l.type==='objectgroup')?.objects;
+if(!objects||objects.length!==3)throw Error('Expected exactly three zones');
+const zones=objects.map(o=>({name:o.name,action:o.properties?.find(p=>p.name==='action')?.value,x:o.x,y:o.y,width:o.width,height:o.height}));
+if(new Set(zones.map(z=>z.name)).size!==3)throw Error('Duplicate zones');
+for(const z of zones)if(!Object.hasOwn(allowed,z.name)||allowed[z.name]!==z.action||![z.x,z.y,z.width,z.height].every(Number.isInteger)||z.x<0||z.y<0||z.width<=0||z.height<=0||z.x+z.width>w||z.y+z.height>h)throw Error('Invalid zone');
+for(let i=0;i<zones.length;i++)for(let j=i+1;j<zones.length;j++){const a=zones[i],b=zones[j];if(a.x<b.x+b.width&&a.x+a.width>b.x&&a.y<b.y+b.height&&a.y+a.height>b.y)throw Error('Overlapping zones')}
+const scene=template.layouts[0],sprite=structuredClone(scene.objects.find(o=>o.type==='Sprite')),layer=structuredClone(scene.layers.find(l=>l.name===''));
+const filename='assets/AXF-E02-BG-v2-master.png';
+Object.assign(sprite,{name:'E02Background',persistentUuid:'af202001-0000-4000-8000-000000000001',assetStoreId:'',behaviors:[],variables:[],effects:[],animations:[{name:'',useMultipleDirections:false,directions:[{looping:false,timeBetweenFrames:0.08,sprites:[{image:filename,hasCustomCollisionMask:false,points:[],originPoint:{name:'origine',x:0,y:0},centerPoint:{automatic:true,name:'centre',x:0,y:0},customCollisionMask:[]}]}]}]});
+const code='if (!runtimeScene.__axfReady) { runtimeScene.__axfReady=true; gdjs.evtTools.input.touchSimulateMouse(runtimeScene,true); if(parent!==window&&typeof parent.axfReady==="function")parent.axfReady(); }\nif (gdjs.evtTools.input.isMouseButtonReleased(runtimeScene,"Left")) { const x=gdjs.evtTools.input.getCursorX(runtimeScene,"",0), y=gdjs.evtTools.input.getCursorY(runtimeScene,"",0); for(const z of '+JSON.stringify(zones)+') if(x>=z.x&&x<z.x+z.width&&y>=z.y&&y<z.y+z.height&&parent!==window&&typeof parent.axfSelect==="function"){parent.axfSelect(z.action);break;} }';
+Object.assign(scene,{name:'Atelier',title:'',mangledName:'Atelier',r:170,v:136,b:100,objects:[sprite],instances:[{name:'E02Background',persistentUuid:'af202001-0000-4000-8000-000000000002',x:0,y:0,angle:0,customSize:false,width:0,height:0,layer:'',zOrder:0,numberProperties:[],stringProperties:[],initialVariables:[]}],layers:[layer],objectsGroups:[],variables:[],behaviorsSharedData:[],objectsFolderStructure:{folderName:'__ROOT',children:[{objectName:'E02Background'}]},events:[{type:'BuiltinCommonInstructions::Standard',conditions:[{type:{value:'SceneJustBegins'},parameters:['']}],actions:[{type:{value:'EnableMetrics'},parameters:['','no']}]},{type:'BuiltinCommonInstructions::JsCode',inlineCode:code,parameterObjects:'',useStrict:true,eventsSheetExpanded:true}]});
+Object.assign(template,{firstLayout:'Atelier',layouts:[scene],objects:[],objectsFolderStructure:{folderName:'__ROOT',children:[]},objectsGroups:[],variables:[],externalEvents:[],externalLayouts:[],eventsFunctionsExtensions:[],tests:[]});
+template.resources.resources=[{file:filename,name:filename,kind:'image',metadata:'',smoothed:true,userAdded:true}];
+Object.assign(template.properties,{name:'Atlas E02 v2 review',windowWidth:w,windowHeight:h,adaptGameResolutionAtRuntime:false,orientation:'default',projectUuid:'af202001-0000-4000-8000-000000000003',templateSlug:'',latestCompilationDirectory:''});
+fs.mkdirSync(path.join(out,'assets'),{recursive:true});
+fs.writeFileSync(path.join(out,filename),bytes);
+fs.writeFileSync(path.join(out,'atelier.json'),JSON.stringify(template,null,2));
+fs.writeFileSync(path.join(out,'zones.json'),JSON.stringify(zones,null,2));
+console.log('E02 native project generated; asset and zones locked. Runtime export not attested.');
