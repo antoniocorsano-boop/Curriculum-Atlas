@@ -1,11 +1,11 @@
 // E02 isolated candidate. Input: Tiled JSON export, pinned official template, exact PNG, output dir.
 import fs from 'node:fs';
 import path from 'node:path';
-import {createHash} from 'node:crypto';
+import {hash as digest} from 'node:crypto';
 const [mapPath, templatePath, masterPath, out] = process.argv.slice(2);
 if(!out) throw Error('Usage: node build-e02.mjs world.json upstream.json master.png output');
 const map=JSON.parse(fs.readFileSync(mapPath,'utf8')), template=JSON.parse(fs.readFileSync(templatePath,'utf8'));
-const bytes=fs.readFileSync(masterPath), hash=createHash('sha256').update(bytes).digest('hex');
+const bytes=fs.readFileSync(masterPath), hash=digest('sha256',bytes,'hex');
 if(hash!=='509000e27fe51e7c3c3d336029039cf8c6bf52e79fdd0be3d7f722d5a1509eaa' || bytes.readUInt32BE(16)!==1536 || bytes.readUInt32BE(20)!==1024) throw Error('E02 asset lock mismatch');
 const w=map.width*map.tilewidth,h=map.height*map.tileheight;
 if(w!==1536||h!==1024)throw Error('Map dimensions mismatch');
