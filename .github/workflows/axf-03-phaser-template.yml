@@ -1,0 +1,164 @@
+name: AXF-03 Phaser official template
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/axf-03-phaser-template.yml'
+permissions:
+  contents: read
+jobs:
+  qualify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      CI: 'true'
+    steps:
+      - name: Checkout exact official template
+        uses: actions/checkout@v4
+        with:
+          repository: phaserjs/template-nextjs
+          ref: 15ab00b32d5954c7ca293e9b966fc014fdb4aa4a
+          path: upstream
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve upstream and prepare isolated version-aligned candidate
+        working-directory: upstream
+        run: |
+          test "$(git rev-parse HEAD)" = 15ab00b32d5954c7ca293e9b966fc014fdb4aa4a
+          mkdir -p ../evidence
+          git rev-parse HEAD > ../evidence/upstream-commit.txt
+          cp LICENSE ../evidence/upstream-license.txt
+          cp package.json ../evidence/original-package.json
+          cp package-lock.json ../evidence/original-lock.json
+          node --version > ../evidence/node-version.txt
+          npm --version > ../evidence/npm-version.txt
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const p=JSON.parse(fs.readFileSync('package.json','utf8'));
+          const lock=JSON.parse(fs.readFileSync('package-lock.json','utf8'));
+          if(p.dependencies.phaser!=='4.0.0'||lock.packages['node_modules/phaser'].version!=='3.88.2')throw Error('Unexpected upstream dependency baseline');
+          Object.assign(p.dependencies,{phaser:'4.2.1',next:'15.5.28',react:'19.1.8','react-dom':'19.1.8'});
+          if(p.scripts['build-nolog']!=='next build')throw Error('Unexpected build command');
+          // Only the no-log command is allowed. Remove the other commands in this temporary checkout.
+          p.scripts={build:'next build'};
+          fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');
+          JS
+          rm -f log.js
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          cp package.json ../evidence/candidate-package.json
+          cp package-lock.json ../evidence/candidate-lock.json
+          git diff -- package.json package-lock.json log.js > ../evidence/candidate-changes.patch
+      - name: Security audit before installing or building
+        working-directory: upstream
+        run: |
+          full=0; npm audit --package-lock-only --json > ../evidence/audit-full.json || full=$?
+          prod=0; npm audit --package-lock-only --omit=dev --json > ../evidence/audit-production.json || prod=$?
+          printf 'full=%s\nproduction=%s\n' "$full" "$prod" > ../evidence/audit-exit.txt
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          for(const n of ['full','production']){
+            const a=JSON.parse(fs.readFileSync('../evidence/audit-'+n+'.json','utf8'));
+            if(a.error||!a.metadata?.vulnerabilities)throw Error('Audit unavailable: '+n);
+            console.log(n,JSON.stringify({counts:a.metadata.vulnerabilities,advisories:a.vulnerabilities},null,2));
+          }
+          const a=JSON.parse(fs.readFileSync('../evidence/audit-full.json','utf8'));
+          if(a.metadata.vulnerabilities.high||a.metadata.vulnerabilities.critical)throw Error('High/critical advisory blocks candidate execution');
+          JS
+      - name: Install frozen candidate and export static official demo
+        working-directory: upstream
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm ls --all --json > ../evidence/dependencies.json
+          npm run build
+          if test -f dist/index.html; then export_dir=dist; elif test -f out/index.html; then export_dir=out; else echo 'Static index missing'; exit 1; fi
+          printf '%s\n' "$export_dir" > ../evidence/export-directory.txt
+          du -sh "$export_dir" | tee ../evidence/build-size.txt
+      - name: Install isolated browser harness
+        run: |
+          mkdir -p harness
+          cd harness
+          npm init -y >/dev/null
+          npm install --ignore-scripts --save-exact playwright@1.56.1
+          cp package-lock.json ../evidence/harness-lock.json
+          npx playwright install --with-deps chromium
+      - name: Verify actual React to Phaser interactions
+        run: |
+          export_dir="$(cat evidence/export-directory.txt)"
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory "upstream/$export_dir" > evidence/server.log 2>&1 &
+          for i in $(seq 1 20); do if curl -fsS http://127.0.0.1:8765/ >/dev/null; then break; fi; sleep 1; done
+          cat > harness/probe.cjs <<'JS'
+          const { chromium }=require('playwright');
+          const fs=require('node:fs');
+          const base='http://127.0.0.1:8765';
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const reports=[];
+            for(const [width,height] of [[390,844],[844,390],[1280,800]]){
+              const mobile=width<900;
+              const context=await browser.newContext({viewport:{width,height},hasTouch:mobile,isMobile:mobile,serviceWorkers:'block'});
+              const page=await context.newPage();
+              const report={viewport:width+'x'+height,external:[],writes:[],websockets:[],errors:[],httpErrors:[],requests:[]};
+              await context.route('**/*',async route=>{
+                const req=route.request(),url=req.url(),method=req.method();
+                report.requests.push({url,method});
+                if(!['GET','HEAD'].includes(method)){report.writes.push({url,method});return route.abort();}
+                if(url.startsWith(base+'/')||url.startsWith('data:')||url.startsWith('blob:'))return route.continue();
+                report.external.push(url);return route.abort();
+              });
+              page.on('pageerror',e=>report.errors.push(String(e)));
+              page.on('response',r=>{if(r.status()>=400)report.httpErrors.push({url:r.url(),status:r.status()});});
+              page.on('websocket',w=>report.websockets.push(w.url()));
+              const activate=async locator=>{if(mobile)await locator.tap({timeout:10000});else{await locator.focus({timeout:10000});await page.keyboard.press('Enter');}};
+              try{
+                await page.goto(base+'/',{waitUntil:'load',timeout:45000});
+                await page.locator('#game-container canvas').waitFor({state:'visible',timeout:30000});
+                const move=page.getByRole('button',{name:'Toggle Movement',exact:true});
+                const scene=page.getByRole('button',{name:'Change Scene',exact:true});
+                const pos=page.locator('.spritePosition pre');
+                await page.waitForFunction(()=>{const b=[...document.querySelectorAll('button')].find(e=>e.textContent.trim()==='Toggle Movement');return b&&!b.disabled;},{},{timeout:30000});
+                report.layout=await page.evaluate(()=>{const r=document.querySelector('#game-container canvas').getBoundingClientRect();return {innerWidth,innerHeight,scrollWidth:document.documentElement.scrollWidth,canvas:{width:r.width,height:r.height}};});
+                report.renderObserved=true;
+                await page.screenshot({path:'evidence/'+report.viewport+'-initial.png'});
+                const before=await pos.innerText();
+                await activate(move);
+                await page.waitForFunction(previous=>document.querySelector('.spritePosition pre')?.textContent!==previous,before,{timeout:8000});
+                const moved=await pos.innerText();
+                await page.waitForTimeout(300);
+                await activate(move);
+                await page.waitForTimeout(250);
+                const paused=await pos.innerText();
+                await page.waitForTimeout(500);
+                if(await pos.innerText()!==paused)throw Error('Movement did not pause');
+                await activate(scene);
+                await page.waitForFunction(()=>[...document.querySelectorAll('button')].find(e=>e.textContent.trim()==='Toggle Movement')?.disabled,{},{timeout:8000});
+                await page.screenshot({path:'evidence/'+report.viewport+'-scene.png'});
+                await activate(scene);
+                await page.waitForTimeout(700);
+                await activate(scene);
+                await page.waitForFunction(()=>{const b=[...document.querySelectorAll('button')].find(e=>e.textContent.trim()==='Toggle Movement');return b&&!b.disabled;},{},{timeout:8000});
+                report.interaction={before,moved,paused,returnedToMainMenu:true,method:mobile?'touch DOM controls':'keyboard DOM controls',passed:true};
+              }catch(e){report.failure=String(e);await page.screenshot({path:'evidence/'+report.viewport+'-failure.png'}).catch(()=>{});}
+              reports.push(report);
+              await context.close();
+            }
+            await browser.close();
+            fs.writeFileSync('evidence/browser-report.json',JSON.stringify(reports,null,2));
+            console.log(JSON.stringify(reports.map(({requests,...r})=>r),null,2));
+            if(reports.some(r=>!r.renderObserved||!r.interaction?.passed||r.failure||r.external.length||r.writes.length||r.websockets.length||r.errors.length||r.httpErrors.length))process.exitCode=1;
+          })().catch(e=>{console.error(e);process.exitCode=1;});
+          JS
+          node harness/probe.cjs
+      - name: Require viewport fit
+        run: |
+          node -e 'const r=require("./evidence/browser-report.json");for(const x of r){console.log(x.viewport,x.layout);if(!x.layout||x.layout.scrollWidth>x.layout.innerWidth+1||x.layout.canvas.width>x.layout.innerWidth+1)process.exitCode=1;}'
+      - name: Archive diagnostic evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: axf-03-phaser-diagnostic
+          path: evidence/
+          retention-days: 7
+          if-no-files-found: warn
