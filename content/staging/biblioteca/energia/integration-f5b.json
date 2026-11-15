@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-15",
+  "baseline": "2e70a02728a169a685390d1b3e9a60c485440bf6",
+  "state": "IN_VERIFICA",
+  "studentAuthorized": false,
+  "scope": "NATIVE_REVIEW_OVERLAY_PLUS_QUALIFIED_DOCUMENT",
+  "sourceSha256": "50d8ec149f24a21f81856403e3926f661eb87faae1de6f97bd9953a234094e13",
+  "derivedSha256": "7fc67d266e108d5943d4ab129d9278554430cba2eea0ea93ac13913daf5eeae4",
+  "local": {
+    "boundaryUnitTests": "PASS",
+    "exactInputAssembly": "PASS",
+    "reverseThreeLinksByteIdentical": true,
+    "fixtureOnly": true,
+    "browserLoopback": "BLOCKED_BY_ADMINISTRATOR"
+  },
+  "pending": [
+    "CI normal build and negative export test",
+    "CI review shell build and browser fixture test",
+    "Retrieve exact compiled shell, attach local source and test assembled app",
+    "Human and physical device review",
+    "Authority, rights and explicit authorization"
+  ],
+  "artifactPolicy": "Shell only in CI, full candidate assembled locally; no deployment."
+}

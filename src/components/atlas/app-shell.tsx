@@ -38,7 +38,7 @@ const mobileMoreItems = [
   { href: "/impostazioni", label: "Impostazioni", icon: Settings },
 ];
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({ children, reviewMode = false }: { children: React.ReactNode; reviewMode?: boolean }) {
   const pathname = usePathname();
   const isActive = (href: string) => href === "/" ? pathname === "/" : pathname.startsWith(href);
 
@@ -76,9 +76,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span className="sr-only">Cerca in Atlas</span>
             <input placeholder="Cerca in Atlas" aria-label="Cerca in Atlas" />
           </label>
-          <div className="atlas-public-context" aria-label="Atlas è una vista pubblica senza account">
-            <strong>Vista pubblica</strong>
-            <span>TRAMA · nessun account</span>
+          <div className="atlas-public-context" aria-label={reviewMode ? "Candidato di revisione docente, non autorizzato alla distribuzione" : "Atlas è una vista pubblica senza account"}>
+            <strong>{reviewMode ? "Revisione docente" : "Vista pubblica"}</strong>
+            <span>{reviewMode ? "Non autorizzata" : "TRAMA · nessun account"}</span>
           </div>
         </header>
 

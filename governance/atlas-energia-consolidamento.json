@@ -15,7 +15,8 @@
     "editionSha256": "e9c55945eafff4d2d9cb3cddb506839a65ade34b7ba53b18bc62b6b17d671cfc"
   },
   "next": [
-    "F5_B_INTEGRAZIONE_E_QUALIFICAZIONE_APPLICAZIONE",
+    "F5_B_VERIFICA_COMPILAZIONI_E_CONFINE",
+    "F5_B_ASSEMBLAGGIO_LOCALE_E_COLLAUDO",
     "F0_EVIDENZE_ESTERNE",
     "F6_REVISIONE_UMANA_DOPO_F5"
   ],
@@ -60,7 +61,7 @@
         "F4"
       ],
       "state": "IN_VERIFICA",
-      "note": "Candidato locale ricostruito byte per byte, ripetizione prove e revisione assistita positive. F5-B: integrazione e qualificazione dell'artefatto dell'applicazione completa, controllo negativo di compilazione. Non attestare rilascio."
+      "note": "F5-A positiva per il candidato locale. F5-B implementazione del collegamento nativo e guardie completata; compilazione CI, assemblaggio locale con artefatto nativo e collaudo integrato ancora da qualificare."
     },
     {
       "id": "F6",
@@ -123,7 +124,9 @@
       "acceptance": "Ricevute documentali, autorità effettiva e autorizzazione esplicita; nessuna falsa riservatezza",
       "state": "BLOCCATO_ESTERNO",
       "evidence": [
-        "docs/ATLAS-ENERGIA-F0-F1-RICEVUTA.md"
+        "docs/ATLAS-ENERGIA-F0-F1-RICEVUTA.md",
+        "docs/ATLAS-ENERGIA-F5B-INTEGRAZIONE.md",
+        "content/staging/biblioteca/energia/integration-f5b.json"
       ]
     },
     {
@@ -176,7 +179,9 @@
         "content/staging/biblioteca/energia/universe-f4-results.json",
         "docs/ATLAS-ENERGIA-F4-RICEVUTA.md",
         "content/staging/biblioteca/energia/qualification-f5.json",
-        "docs/ATLAS-ENERGIA-F5-QUALIFICAZIONE.md"
+        "docs/ATLAS-ENERGIA-F5-QUALIFICAZIONE.md",
+        "docs/ATLAS-ENERGIA-F5B-INTEGRAZIONE.md",
+        "content/staging/biblioteca/energia/integration-f5b.json"
       ]
     },
     {
