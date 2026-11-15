@@ -9,4 +9,4 @@ const placements: Record<string, AtlasPreviewPlacement> = {
   "studio-preview-fixture-edutwin-orientation": { world: "lettura", section: "Percorsi" },
   "studio-preview-denied": { world: "energia", section: "Storie" },
 };
-export default function AtlasHostFixture() { return <AtlasPreviewHost snapshots={snapshots} placements={placements} artwork={{ landscape: "https://invalid.example/denied.webp", portrait: "data:image/svg+xml,denied" }} />; }
+export default function AtlasHostFixture() { return <AtlasPreviewHost snapshots={snapshots} placements={placements} artwork={{ landscape: "https://invalid.example/denied.webp", portrait: "data:image/svg+xml,denied", worlds: { energia: "data:image/webp;base64,UklGRjAAAABXRUJQVlA4ICQAAABwAQCdASoCAAIAAUAmJZQCdAFAAAD++/8nWk0k3MYTSR2AAAA=" } }} />; }
