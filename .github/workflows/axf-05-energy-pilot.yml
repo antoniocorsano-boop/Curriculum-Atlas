@@ -20,6 +20,32 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Recover original editorial asset from immutable source
+        uses: actions/checkout@v4
+        with:
+          ref: abef350ea4b93730081bbea87d14ac33a0753747
+          path: editorial-source
+          persist-credentials: false
+          sparse-checkout: |
+            content/staging/biblioteca/poesia-energia
+            content/staging/biblioteca/la-poesia-dell-energia.v0.3.receipt.json
+      - name: Verify original illustration provenance
+        run: |
+          mkdir -p evidence
+          python3 - <<'PY'
+          import hashlib,json,pathlib
+          base=pathlib.Path('editorial-source/content/staging/biblioteca')
+          receipt=json.loads((base/'la-poesia-dell-energia.v0.3.receipt.json').read_text())
+          assert receipt['studentAuthorized'] is False
+          report=[]
+          for asset in receipt['assets']:
+              p=base/'poesia-energia'/asset['file']
+              digest=hashlib.sha256(p.read_bytes()).hexdigest()
+              assert digest==asset['sha256'],p
+              report.append({'file':asset['file'],'sha256':digest,'bytes':p.stat().st_size})
+          pathlib.Path('evidence/original-assets.json').write_text(json.dumps(report,indent=2))
+          print(json.dumps(report,indent=2))
+          PY
       - name: Test deterministic educational model
         run: |
           mkdir -p evidence
@@ -69,6 +95,9 @@ jobs:
           mkdir -p preview
           cp labs/axf-energy/{index.html,model.mjs,scene.mjs} preview/
           cp -r labs/axf-energy/vendor preview/
+          mkdir -p preview/assets
+          cp editorial-source/content/staging/biblioteca/poesia-energia/PE-02.webp preview/assets/
+          printf '%s  %s\n' d9f2586cd74bec970263270b5cbbc859b42867b1f7e871217e7408e55398f6ec preview/assets/PE-02.webp | sha256sum -c -
           python3 -m http.server 8765 --bind 127.0.0.1 --directory preview > evidence/server.log 2>&1 &
           for i in $(seq 1 20); do if curl -fsS http://127.0.0.1:8765/ >/dev/null; then break; fi; sleep 1; done
           cat > harness/probe.cjs <<'JS'
@@ -97,6 +126,11 @@ jobs:
               try{
                 await page.goto(base+'/',{waitUntil:'load',timeout:45000});
                 await page.locator('#game[data-ready=true] canvas').waitFor({state:'visible',timeout:30000});
+                await page.waitForFunction(()=>{const img=document.querySelector('.context img');return img?.complete&&img.naturalWidth===883&&img.naturalHeight===439});
+                assert.equal(await page.locator('#trials tr').count(),0);
+                assert.equal(await page.locator('meta[name=robots]').getAttribute('content'),'noindex,nofollow');
+                r.editorialAsset='PE-02 verified dimensions';
+
                 assert(await button('Prova A').isDisabled());
                 await keyboard('Prevedo A');
                 const canvas=page.locator('#game canvas');
@@ -133,6 +167,12 @@ jobs:
                 assert(r.layout.scroll<=width+1&&r.layout.left>=-1&&r.layout.right<=width+1&&Math.abs(r.layout.canvasWidth/r.layout.canvasHeight-1.5)<.02);
                 await page.screenshot({path:'evidence/'+r.viewport+'-comparison.png',fullPage:true});
                 await keyboard('Ricomincia');assert.equal(await page.locator('#trials tr').count(),0);assert(await button('Prova A').isDisabled());
+                await page.addStyleTag({content:'html{font-size:200%}'});
+                await page.waitForTimeout(300);
+                r.enlargedText=await page.evaluate(()=>({viewport:innerWidth,documentWidth:document.documentElement.scrollWidth}));
+                assert(r.enlargedText.documentWidth<=width+1,'200% root text must not create horizontal overflow');
+                await page.screenshot({path:'evidence/'+r.viewport+'-200percent.png',fullPage:true});
+
                 r.storage=await page.evaluate(()=>({local:localStorage.length,session:sessionStorage.length,cookies:document.cookie}));
                 assert.deepEqual(r.storage,{local:0,session:0,cookies:''});
                 r.passed=true;r.trials=rows;r.input=touch?'emulated touch + keyboard':'mouse + keyboard';
