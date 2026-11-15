@@ -89,6 +89,8 @@ export interface ExperienceNode {
   id: string;
   primitive: ExperiencePrimitive;
   interaction: string;
+  /** Local trusted renderer binding; never a URL or executable payload. */
+  specialized?: { rendererId: string; version: 1 };
   title?: string;
   prompt?: string;
   facts?: string[];
