@@ -16,6 +16,7 @@ assert.equal(d.graph.nodes[0].transitions[0].targetNodeId,"transfer");
 assert.equal(d.graph.nodes[1].primitive,"TRANSFER");
 assert.equal(d.runtime.statePolicy,"VOLATILE_MEMORY");
 assert.throws(()=>studioAtlasSnapshotToExperience(s),/STUDIO_ATLAS_PREVIEW_INVALID/);
+const downgrade=structuredClone(s);downgrade.schemaVersion="studio-atlas.preview-snapshot/v0.1";downgrade.scenes[0].interaction="SUMMARY";assert.throws(()=>studioAtlasSnapshotToExperience(downgrade),/specializedRequiresV02/);
 for(const b of [undefined,{rendererId:"unknown",version:1},{rendererId:"energy-lamp",version:2}])assert.throws(()=>specializedSnapshotToExperience(s,b),/AXF_SPECIALIZED_SNAPSHOT_INVALID/);
 for(const change of [
  x=>{x.studentAuthorized=true},
