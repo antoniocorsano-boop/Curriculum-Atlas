@@ -1,0 +1,78 @@
+name: AXF-M2-C Equivalent world
+on:
+  pull_request:
+    paths:
+      - 'labs/axf-m2/**'
+      - '.github/workflows/axf-m2-c-equivalence.yml'
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: GDevelopApp/GDevelop-examples
+          ref: a40f1279fdc6c7b8dd902691aee85630a17568d7
+          path: official-example
+          persist-credentials: false
+          sparse-checkout: |
+            examples/starting-point-and-click-adventure
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Generate equivalent authoring sources
+        run: |
+          mkdir -p evidence preview/phaser/vendor harness editor
+          sudo apt-get update -q
+          sudo apt-get install -y tiled xvfb python3-pil fonts-dejavu-core libnss3 libasound2t64 libgbm1 libgtk-3-0 libxss1 libatk-bridge2.0-0 libdrm2 libxkbcommon0
+          cp labs/axf-m2/comparison/{index.html,host.mjs,model.mjs} preview/
+          cp labs/axf-m2/comparison/{frame.html,phaser.mjs} preview/phaser/
+          xvfb-run -a tiled --export-map json labs/axf-m2/world.tmx preview/phaser/world.json
+          /usr/bin/python3 labs/axf-m2/comparison/build.py preview/phaser official-example/examples/starting-point-and-click-adventure/starting-point-and-click-adventure.json candidate
+          cp -a candidate/assets preview/phaser/
+          sha256sum candidate/assets/*.png | tee evidence/assets.sha256
+          sha256sum preview/model.mjs | tee evidence/model.sha256
+          diff -r candidate/assets preview/phaser/assets
+          cp candidate/atelier.json evidence/
+      - name: Local GDevelop export
+        run: |
+          curl -fL --retry 2 --max-time 180 https://github.com/4ian/GDevelop/releases/download/v5.6.285/GDevelop-5-5.6.285-linux.zip -o editor.zip
+          echo "4728cf6df5c30aab0c8b211875c0a0a9c6d026da8781a28a389cafe6f3266839  editor.zip" | sha256sum -c -
+          unzip -q editor.zip -d editor
+          find editor -type f \( -name gdevelop -o -name GDevelop \) -print | head -1 > executable.txt
+          test -s executable.txt
+          chmod +x "$(cat executable.txt)"
+          start=$(date +%s)
+          timeout 300 xvfb-run -a "$(cat executable.txt)" --no-sandbox --disable-update-check --run-command EXPORT_HTML5_EXTERNAL "$PWD/candidate/atelier.json" 2>&1 | tee evidence/export.log
+          echo $(($(date +%s)-start)) > evidence/gdevelop-export-seconds.txt
+          test -s candidate/build/index.html
+          grep -R -E -l --include="code*.js" "enableMetrics\([^;]*false" candidate/build | tee evidence/compiled-optout.txt
+          test -s evidence/compiled-optout.txt
+          mv candidate/build preview/gdevelop
+      - name: Install pinned Phaser and browser harness
+        working-directory: harness
+        run: |
+          npm init -y >/dev/null
+          npm install --save-exact --ignore-scripts --no-audit --no-fund phaser@4.2.1 eventemitter3@5.0.4 playwright@1.56.1
+          npm audit --omit=dev
+          cp node_modules/phaser/dist/phaser.esm.min.js ../preview/phaser/vendor/phaser.esm.js
+          echo "f4c5fd140d118c10fa9090641a03c17303bab9bfdc28e0626296777db1bb1bde  ../preview/phaser/vendor/phaser.esm.js" | sha256sum -c -
+          npx playwright install --with-deps chromium
+          cp ../labs/axf-m2/comparison/test.cjs .
+      - name: Compare real exported scenes, semantics and privacy
+        run: |
+          du -sb preview/phaser preview/gdevelop | tee evidence/renderer-bytes.txt
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory preview >/tmp/axf-m2-c.log 2>&1 &
+          node harness/test.cjs
+      - name: Preserve diagnostic evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: axf-m2-c-evidence
+          path: evidence/
+          retention-days: 7
