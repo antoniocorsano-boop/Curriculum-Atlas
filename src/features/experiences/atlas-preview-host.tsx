@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { ExperienceRuntime } from "./experience-runtime";
 import { studioAtlasSnapshotToExperience, validateStudioAtlasPreviewSnapshot } from "../pathways/studio-atlas-preview-adapter";
 import "./atlas-preview-host.css";
@@ -19,6 +19,32 @@ const SECTIONS = ["Storie", "Laboratori", "Scoperte", "Percorsi"] as const;
 type Section = typeof SECTIONS[number];
 export type AtlasPreviewArtwork = { landscape?: string; portrait?: string; worlds?: Partial<Record<WorldId, string>> };
 export type AtlasPreviewPlacement = { world: WorldId; section: Section };
+/** A trusted, compiled private preview registration. Never a public catalogue or content-supplied URL. */
+export type AtlasStandalonePreview = Readonly<{
+  id: string;
+  title: string;
+  description: string;
+  version: string;
+  sha256: string;
+  world: WorldId;
+  section: "Scoperte";
+  availability: "ACTIVE";
+  runtimeAuthorized: false;
+  studentAuthorized: false;
+  render: () => ReactNode;
+}>;
+function validStandalone(value: AtlasStandalonePreview): boolean {
+  return !!value && Object.keys(value).sort().join(",") === "availability,description,id,render,runtimeAuthorized,section,sha256,studentAuthorized,title,version,world" &&
+    typeof value.id === "string" && /^standalone-preview-[a-z0-9-]{3,80}$/.test(value.id) &&
+    typeof value.title === "string" && value.title.trim().length > 0 && value.title.length <= 150 &&
+    typeof value.description === "string" && value.description.trim().length > 0 && value.description.length <= 500 &&
+    typeof value.version === "string" && /^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.-]+)?$/.test(value.version) &&
+    typeof value.sha256 === "string" && /^[a-f0-9]{64}$/.test(value.sha256) &&
+    WORLDS.some(([id]) => id === value.world) && value.section === "Scoperte" &&
+    value.availability === "ACTIVE" && value.runtimeAuthorized === false && value.studentAuthorized === false &&
+    typeof value.render === "function";
+}
+const noStandalone: readonly AtlasStandalonePreview[] = Object.freeze([]);
 const noPlacements: Readonly<Record<string, AtlasPreviewPlacement>> = Object.freeze({});
 // Only inline WebP artwork supplied by a trusted private preview host, never remote URLs, HTML, or SVG.
 function artworkUrl(value: unknown): string | undefined {
@@ -32,7 +58,7 @@ function resolvePreviews(snapshots: readonly unknown[]) {
       if (snapshot.runtimeAuthorized !== false || snapshot.studentAuthorized !== false) return [];
       const definition = studioAtlasSnapshotToExperience(snapshot);
       if (definition.runtime.statePolicy !== "VOLATILE_MEMORY") return [];
-      return [{ id: definition.experienceId, title: snapshot.title, description: snapshot.description, definition }];
+      return [{ kind: "engine" as const, id: definition.experienceId, title: snapshot.title, description: snapshot.description, definition }];
     } catch {
       return [];
     }
@@ -41,12 +67,16 @@ function resolvePreviews(snapshots: readonly unknown[]) {
 }
 
 /** Internal preview composition only. Placement and artwork have no publication authority. */
-export function AtlasPreviewHost({ snapshots, artwork, placements = noPlacements }: {
+export function AtlasPreviewHost({ snapshots, artwork, placements = noPlacements, standalone = noStandalone }: {
   snapshots: readonly unknown[];
   artwork?: AtlasPreviewArtwork;
   placements?: Readonly<Record<string, AtlasPreviewPlacement>>;
+  standalone?: readonly AtlasStandalonePreview[];
 }) {
-  const entries = useMemo(() => resolvePreviews(snapshots), [snapshots]);
+  const entries = useMemo(() => {
+    const combined = [...resolvePreviews(snapshots), ...standalone.filter(validStandalone).map(resource => ({ kind: "standalone" as const, id: resource.id, title: resource.title, description: resource.description, resource }))];
+    return combined.filter(entry => combined.filter(other => other.id === entry.id).length === 1);
+  }, [snapshots, standalone]);
   const [route, setRoute] = useState(ROOT);
   const [query, setQuery] = useState("");
   const [world, setWorld] = useState<WorldId | "">("");
@@ -82,7 +112,7 @@ export function AtlasPreviewHost({ snapshots, artwork, placements = noPlacements
     wasBrowsing.current = browsing;
   }, [active, browsing]);
   const hits = entries.filter(entry => {
-    const placement = placements[entry.id];
+    const placement = entry.kind === "standalone" ? entry.resource : placements[entry.id];
     return (!world || placement?.world === world) && (!section || placement?.section === section) &&
       normalize(entry.title + " " + entry.description).includes(normalize(query.trim()));
   });
@@ -106,7 +136,7 @@ export function AtlasPreviewHost({ snapshots, artwork, placements = noPlacements
         <span>Collaudo tecnico · non autorizzato agli studenti</span>
       </header>}
       {active ? (
-        <ExperienceRuntime key={active.id + "@" + active.definition.version} definition={active.definition} />
+        active.kind === "engine" ? <ExperienceRuntime key={active.id + "@" + active.definition.version} definition={active.definition} /> : <section className="axfPreviewHost__standalone" aria-label={active.title} key={active.id + "@" + active.resource.version}>{active.resource.render()}</section>
       ) : (
         <section aria-labelledby="axf-title" className="axfPreviewHost__library" data-browsing={browsing} style={artStyle}>
           <div className="axfPreviewHost__title">
