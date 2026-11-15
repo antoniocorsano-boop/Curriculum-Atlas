@@ -28,7 +28,11 @@ const node = document.getElementById("axf-private-r3-bytes");
 if (node?.textContent) {
   const bytes = Uint8Array.from(atob(node.textContent.trim()), ch=>ch.charCodeAt(0));
   const html = new TextDecoder("utf-8",{fatal:true}).decode(bytes);
-  standalone.push({id:"standalone-preview-luce-r3",title:"Dove va l’energia di una lampada?",description:"Osserva come si trasforma l’energia, confronta le lampade e approfondisci l’efficienza.",version:"0.3.0-review",sha256:"19627994f0f92b1a73d4f73701873e7e78ad529706918b063482c4bf187d544c",world:"energia",section:"Scoperte",availability:"ACTIVE",runtimeAuthorized:false,studentAuthorized:false,render:()=> <iframe title="Dove va l’energia di una lampada? — Scoperta privata" sandbox="allow-scripts" referrerPolicy="no-referrer" srcDoc={html}/>});
+  // srcdoc resolves fragment href against the parent document. Keep only the known
+  // R3 same-document anchors local, preserving the original R3 bytes separately.
+  const fragmentAdapter = '<script>document.addEventListener("click",function(e){var a=e.target.closest("a[href]");if(!a)return;var h=a.getAttribute("href");if(!["#contenuto","#osserva","#confronto","#oltre","#lettura","#efficienza","#meno"].includes(h))return;e.preventDefault();if(location.hash!==h)location.hash=h;else document.getElementById(h.slice(1))?.scrollIntoView();},true);<'+'/script>';
+  const framed = html.replace("</body>",fragmentAdapter+"</body>");
+  standalone.push({id:"standalone-preview-luce-r3",title:"Dove va l’energia di una lampada?",description:"Osserva come si trasforma l’energia, confronta le lampade e approfondisci l’efficienza.",version:"0.3.0-review",sha256:"19627994f0f92b1a73d4f73701873e7e78ad529706918b063482c4bf187d544c",world:"energia",section:"Scoperte",availability:"ACTIVE",runtimeAuthorized:false,studentAuthorized:false,render:()=> <iframe title="Dove va l’energia di una lampada? — Scoperta privata" sandbox="allow-scripts" referrerPolicy="no-referrer" srcDoc={framed}/>});
 }
 const mount = (artwork?: AtlasPreviewArtwork) => root.render(<AtlasPreviewHost snapshots={snapshots} placements={placements} artwork={artwork} standalone={standalone} />);
 mount();
