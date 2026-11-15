@@ -1,0 +1,336 @@
+name: AXF-03 Phaser official template
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/axf-03-phaser-template.yml'
+permissions:
+  contents: read
+jobs:
+  qualify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      CI: 'true'
+    steps:
+      - name: Checkout exact official template
+        uses: actions/checkout@v4
+        with:
+          repository: phaserjs/template-nextjs
+          ref: 15ab00b32d5954c7ca293e9b966fc014fdb4aa4a
+          path: upstream
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve upstream and prepare isolated version-aligned candidate
+        working-directory: upstream
+        run: |
+          test "$(git rev-parse HEAD)" = 15ab00b32d5954c7ca293e9b966fc014fdb4aa4a
+          mkdir -p ../evidence
+          git rev-parse HEAD > ../evidence/upstream-commit.txt
+          cp LICENSE ../evidence/upstream-license.txt
+          cp package.json ../evidence/original-package.json
+          cp package-lock.json ../evidence/original-lock.json
+          node --version > ../evidence/node-version.txt
+          npm --version > ../evidence/npm-version.txt
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const p=JSON.parse(fs.readFileSync('package.json','utf8'));
+          const lock=JSON.parse(fs.readFileSync('package-lock.json','utf8'));
+          if(p.dependencies.phaser!=='4.0.0'||lock.packages['node_modules/phaser'].version!=='3.88.2')throw Error('Unexpected upstream dependency baseline');
+          Object.assign(p.dependencies,{phaser:'4.2.1',next:'15.5.28',react:'19.1.8','react-dom':'19.1.8'});
+          if(p.scripts['build-nolog']!=='next build')throw Error('Unexpected build command');
+          // Only the no-log command is allowed. Remove the other commands in this temporary checkout.
+          p.scripts={build:'next build'};
+          // Same-major security patches for the three audited transitive packages.
+          // Next pins PostCSS; this explicit override is tested only in the temporary lab.
+          p.overrides={...p.overrides,postcss:'8.5.23',nanoid:'3.3.18','source-map-js':'1.2.2'};
+          fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');
+          JS
+          rm -f log.js
+          # Adapt only the demo's container and official Scale Manager, not its scenes.
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const file='src/game/main.ts';
+          let s=fs.readFileSync(file,'utf8');
+          if(!s.includes("import { AUTO, Game } from 'phaser';")||!s.includes("    parent: 'game-container',"))throw Error('Unexpected official game config');
+          s=s.replace("import { AUTO, Game } from 'phaser';","import { AUTO, Game, Scale } from 'phaser';")
+             .replace("    parent: 'game-container',","    parent: 'game-container',\n    scale: { mode: Scale.FIT, autoCenter: Scale.CENTER_BOTH },");
+          fs.writeFileSync(file,s);
+          const css='src/styles/globals.css';
+          fs.appendFileSync(css,`
+          /* AXF-03/C2: bounded container with aspect ratio, no canvas CSS scaling. */
+          #app {
+            box-sizing: border-box; width: 100%; height: auto; min-height: 100dvh;
+            padding: 8px; gap: 8px; overflow: visible;
+            flex-direction: column; justify-content: flex-start; align-items: center;
+          }
+          #game-container { width: min(100%, 1024px); aspect-ratio: 4 / 3; flex: none; position: relative; }
+          #app > div:not(#game-container) {
+            width: min(100%, 1024px); display: flex; flex-wrap: wrap;
+            align-items: center; justify-content: center;
+          }
+          @media (min-width: 700px) and (orientation: landscape) {
+            #app { flex-direction: row; justify-content: center; }
+            #game-container { width: min(calc(100% - 190px), calc(133.333dvh - 22px), 1024px); }
+            #app > div:not(#game-container) { width: 174px; flex-direction: column; flex: none; }
+          }
+          `);
+          JS
+          # C3: one neutral drag target, semantic equivalent, and lifecycle probe.
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          function edit(path, edits) {
+            let s=fs.readFileSync(path,'utf8').replace(/\r\n/g,'\n');
+            for(const [a,b] of edits){if(!s.includes(a))throw Error('Unexpected upstream '+path+': '+a);s=s.replace(a,b);}
+            fs.writeFileSync(path,s);
+          }
+          edit('src/game/scenes/MainMenu.ts',[
+            ["import { GameObjects, Scene } from 'phaser';","import { GameObjects, Scene, Math as PhaserMath } from 'phaser';"],
+            ['    logoTween: Phaser.Tweens.Tween | null;', '    logoTween: Phaser.Tweens.Tween | null;\n    private token!: GameObjects.Rectangle;'],
+            ["        EventBus.emit('current-scene-ready', this);",`        // Neutral test fixture: not a new educational scene.
+            this.add.rectangle(410, 620, 150, 150, 0x173d66).setStrokeStyle(5, 0xffffff);
+            this.token = this.add.rectangle(170, 620, 150, 150, 0xffcc55).setDepth(200).setInteractive();
+            this.input.setDraggable(this.token);
+            this.token.on('drag', (_pointer: Phaser.Input.Pointer, x: number, y: number) => {
+                this.token.setPosition(PhaserMath.Clamp(x,75,949), PhaserMath.Clamp(y,75,693));
+            });
+            this.token.on('dragend', () => {
+                this.setTokenPlaced(Math.hypot(this.token.x-410,this.token.y-620)<95);
+            });
+            EventBus.emit('axf-token', false);
+            EventBus.emit('current-scene-ready', this);`],
+            ['    changeScene ()',`    setTokenPlaced(placed: boolean) {
+                this.token.setPosition(placed ? 410 : 170, 620);
+                EventBus.emit('axf-token', placed);
+            }
+
+            changeScene ()`]
+          ]);
+          edit('src/App.tsx',[
+            ["import { MainMenu } from './game/scenes/MainMenu';","import { MainMenu } from './game/scenes/MainMenu';\nimport { Math as PhaserMath } from 'phaser';"],
+            ["Phaser.Math.Between(64, scene.scale.width - 64)","PhaserMath.Between(64, scene.scale.width - 64)"],
+            ["Phaser.Math.Between(64, scene.scale.height - 64)","PhaserMath.Between(64, scene.scale.height - 64)"],
+            ["import { useRef, useState } from 'react';","import { useRef, useState, useEffect } from 'react';\nimport { EventBus } from './game/EventBus';"],
+            ['    const [canMoveSprite, setCanMoveSprite] = useState(true);',`    const [canMoveSprite, setCanMoveSprite] = useState(true);
+            const [mounted, setMounted] = useState(true);
+            const [placed, setPlaced] = useState(false);
+            const [destroyed, setDestroyed] = useState(0);
+            const [remainingListeners, setRemainingListeners] = useState(-1);
+            const [closing, setClosing] = useState(false);
+            useEffect(() => {
+                const listener = (value: boolean) => setPlaced(value);
+                EventBus.on('axf-token', listener);
+                return () => { EventBus.off('axf-token', listener); };
+            }, []);`],
+            ['    const changeScene = () => {',`    const setToken = (value: boolean) => {
+                const scene = phaserRef.current?.scene as MainMenu | null | undefined;
+                if (scene?.scene.key === 'MainMenu') scene.setTokenPlaced(value);
+            };
+            const closeScene = () => {
+                const game = phaserRef.current?.game;
+                if (!game) return;
+                setClosing(true);
+                game.events.once('destroy', () => {
+                    setDestroyed(n => n + 1);
+                    setRemainingListeners(EventBus.listenerCount('current-scene-ready'));
+                    setClosing(false);
+                });
+                setMounted(false);
+                setPlaced(false);
+                setCanMoveSprite(true);
+            };
+            const openScene = () => {
+                setPlaced(false);
+                setCanMoveSprite(true);
+                setMounted(true);
+            };
+            const changeScene = () => {`],
+            ['            <PhaserGame ref={phaserRef} currentActiveScene={currentScene} />','            {mounted && <PhaserGame ref={phaserRef} currentActiveScene={currentScene} />}'],
+            ['                    <button className="button" onClick={addSprite}>Add New Sprite</button>',`                    <button className="button" onClick={addSprite}>Add New Sprite</button>
+                        <section aria-label="Object manipulation">
+                          <p role="status" aria-label="Token position">{placed ? 'Target' : 'Start'}</p>
+                          <button className="button" disabled={!mounted || canMoveSprite} onClick={() => setToken(true)}>Place token</button>
+                          <button className="button" disabled={!mounted || canMoveSprite} onClick={() => setToken(false)}>Reset token</button>
+                        </section>
+                        <section aria-label="Scene lifecycle">
+                          <button className="button" disabled={!mounted || canMoveSprite || closing} onClick={closeScene}>Close scene</button>
+                          <button className="button" disabled={mounted || closing} onClick={openScene}>Open scene</button>
+                          <p role="status" aria-label="Lifecycle">Destroyed: {destroyed}; listeners: {remainingListeners}</p>
+                        </section>`]
+          ]);
+          edit('src/PhaserGame.tsx',[
+            ["        EventBus.on('current-scene-ready', (scene_instance: Phaser.Scene) =>","        const onReady = (scene_instance: Phaser.Scene) =>"],
+            ["        });\n        return () =>\n        {\n\n            EventBus.removeListener('current-scene-ready');","        };\n        EventBus.on('current-scene-ready', onReady);\n        return () =>\n        {\n            EventBus.off('current-scene-ready', onReady);"],
+            ["                    game.current = null;","                    game.current = null;\n                    if (typeof ref === 'function') ref(null);\n                    else if (ref) ref.current = null;"]
+          ]);
+          JS
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          cp package.json ../evidence/candidate-package.json
+          cp package-lock.json ../evidence/candidate-lock.json
+          git diff -- package.json package-lock.json log.js src/game/main.ts src/styles/globals.css src/game/scenes/MainMenu.ts src/App.tsx src/PhaserGame.tsx > ../evidence/candidate-changes.patch
+      - name: Security audit before installing or building
+        working-directory: upstream
+        run: |
+          full=0; npm audit --package-lock-only --json > ../evidence/audit-full.json || full=$?
+          prod=0; npm audit --package-lock-only --omit=dev --json > ../evidence/audit-production.json || prod=$?
+          printf 'full=%s\nproduction=%s\n' "$full" "$prod" > ../evidence/audit-exit.txt
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          for(const n of ['full','production']){
+            const a=JSON.parse(fs.readFileSync('../evidence/audit-'+n+'.json','utf8'));
+            if(a.error||!a.metadata?.vulnerabilities)throw Error('Audit unavailable: '+n);
+            console.log(n,JSON.stringify({counts:a.metadata.vulnerabilities,advisories:a.vulnerabilities},null,2));
+          }
+          const a=JSON.parse(fs.readFileSync('../evidence/audit-full.json','utf8'));
+          if(a.metadata.vulnerabilities.high||a.metadata.vulnerabilities.critical)throw Error('High/critical advisory blocks candidate execution');
+          JS
+      - name: Install frozen candidate and export static official demo
+        working-directory: upstream
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm ls --all --json > ../evidence/dependencies.json
+          npm run build
+          if test -f dist/index.html; then export_dir=dist; elif test -f out/index.html; then export_dir=out; else echo 'Static index missing'; exit 1; fi
+          printf '%s\n' "$export_dir" > ../evidence/export-directory.txt
+          du -sh "$export_dir" | tee ../evidence/build-size.txt
+      - name: Install isolated browser harness
+        run: |
+          mkdir -p harness
+          cd harness
+          npm init -y >/dev/null
+          npm install --ignore-scripts --save-exact playwright@1.56.1
+          cp package-lock.json ../evidence/harness-lock.json
+          npx playwright install --with-deps chromium
+      - name: Verify actual React to Phaser interactions
+        run: |
+          export_dir="$(cat evidence/export-directory.txt)"
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory "upstream/$export_dir" > evidence/server.log 2>&1 &
+          for i in $(seq 1 20); do if curl -fsS http://127.0.0.1:8765/ >/dev/null; then break; fi; sleep 1; done
+          cat > harness/probe.cjs <<'JS'
+          const { chromium }=require('playwright');
+          const fs=require('node:fs');
+          const base='http://127.0.0.1:8765';
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const reports=[];
+            for(const [width,height] of [[320,720],[390,844],[430,932],[844,390],[1280,800]]){
+              const mobile=width<900;
+              const context=await browser.newContext({viewport:{width,height},hasTouch:mobile,isMobile:mobile,serviceWorkers:'block'});
+              const page=await context.newPage();
+              const report={viewport:width+'x'+height,external:[],writes:[],websockets:[],errors:[],httpErrors:[],requests:[]};
+              await context.route('**/*',async route=>{
+                const req=route.request(),url=req.url(),method=req.method();
+                report.requests.push({url,method});
+                if(!['GET','HEAD'].includes(method)){report.writes.push({url,method});return route.abort();}
+                if(url.startsWith(base+'/')||url.startsWith('data:')||url.startsWith('blob:'))return route.continue();
+                report.external.push(url);return route.abort();
+              });
+              page.on('pageerror',e=>report.errors.push(String(e)));
+              page.on('response',r=>{if(r.status()>=400)report.httpErrors.push({url:r.url(),status:r.status()});});
+              page.on('websocket',w=>report.websockets.push(w.url()));
+              const activate=async locator=>{if(mobile)await locator.tap({timeout:10000});else{await locator.focus({timeout:10000});await page.keyboard.press('Enter');}};
+              try{
+                await page.goto(base+'/',{waitUntil:'load',timeout:45000});
+                await page.locator('#game-container canvas').waitFor({state:'visible',timeout:30000});
+                const move=page.getByRole('button',{name:'Toggle Movement',exact:true});
+                const scene=page.getByRole('button',{name:'Change Scene',exact:true});
+                const pos=page.locator('.spritePosition pre');
+                await page.waitForFunction(()=>{const b=[...document.querySelectorAll('button')].find(e=>e.textContent.trim()==='Toggle Movement');return b&&!b.disabled;},{},{timeout:30000});
+                report.layout=await page.evaluate(()=>{const r=document.querySelector('#game-container canvas').getBoundingClientRect();return {innerWidth,innerHeight,scrollWidth:document.documentElement.scrollWidth,canvas:{width:r.width,height:r.height,left:r.left,right:r.right}};});
+                report.renderObserved=true;
+                await page.screenshot({path:'evidence/'+report.viewport+'-initial.png'});
+                const before=await pos.innerText();
+                await activate(move);
+                await page.waitForFunction(previous=>document.querySelector('.spritePosition pre')?.textContent!==previous,before,{timeout:8000});
+                const moved=await pos.innerText();
+                await page.waitForTimeout(300);
+                await activate(move);
+                await page.waitForTimeout(250);
+                const paused=await pos.innerText();
+                await page.waitForTimeout(500);
+                if(await pos.innerText()!==paused)throw Error('Movement did not pause');
+                await activate(scene);
+                await page.waitForFunction(()=>[...document.querySelectorAll('button')].find(e=>e.textContent.trim()==='Toggle Movement')?.disabled,{},{timeout:8000});
+                await page.screenshot({path:'evidence/'+report.viewport+'-scene.png'});
+                await activate(scene);
+                await page.waitForTimeout(700);
+                await activate(scene);
+                await page.waitForFunction(()=>{const b=[...document.querySelectorAll('button')].find(e=>e.textContent.trim()==='Toggle Movement');return b&&!b.disabled;},{},{timeout:8000});
+                report.interaction={before,moved,paused,returnedToMainMenu:true,method:mobile?'touch DOM controls':'keyboard DOM controls',passed:true};
+                const status=page.getByRole('status',{name:'Token position'});
+                const expectText=async (loc,value)=>{await page.waitForFunction(({label,value})=>[...document.querySelectorAll('[role="status"]')].some(e=>e.getAttribute('aria-label')===label&&e.textContent.trim()===value),{label:await loc.getAttribute('aria-label'),value},{timeout:8000});};
+                await expectText(status,'Start');
+                const canvas=page.locator('#game-container canvas');
+                await canvas.scrollIntoViewIfNeeded();
+                const rect=await canvas.boundingBox();
+                if(!rect)throw Error('Canvas missing');
+                const point=(x,y)=>({x:rect.x+x*rect.width/1024,y:rect.y+y*rect.height/768});
+                const from=point(170,620),to=point(410,620);
+                if(mobile){
+                  const session=await context.newCDPSession(page);
+                  await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[from]});
+                  for(let i=1;i<=12;i++){
+                    const t=i/12;
+                    await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:from.x+(to.x-from.x)*t,y:from.y+(to.y-from.y)*t}]});
+                    await page.waitForTimeout(35);
+                  }
+                  await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+                  await session.detach();
+                }else{
+                  await page.mouse.move(from.x,from.y);
+                  await page.mouse.down();
+                  await page.mouse.move(to.x,to.y,{steps:12});
+                  await page.mouse.up();
+                }
+                await expectText(status,'Target');
+                await page.screenshot({path:'evidence/'+report.viewport+'-direct-drag.png'});
+                // Same underlying method via real native buttons and keyboard.
+                const reset=page.getByRole('button',{name:'Reset token',exact:true});
+                const place=page.getByRole('button',{name:'Place token',exact:true});
+                await reset.focus();await page.keyboard.press('Enter');await expectText(status,'Start');
+                await place.focus();await page.keyboard.press('Enter');await expectText(status,'Target');
+                await reset.focus();await page.keyboard.press('Enter');await expectText(status,'Start');
+                report.directManipulation={method:mobile?'emulated touch drag':'mouse drag',semanticKeyboard:true,passed:true};
+                const lifecycle=page.getByRole('status',{name:'Lifecycle'});
+                for(let n=1;n<=2;n++){
+                  const oldCanvas=await canvas.elementHandle();
+                  await activate(page.getByRole('button',{name:'Close scene',exact:true}));
+                  await canvas.waitFor({state:'detached',timeout:10000});
+                  await expectText(lifecycle,'Destroyed: '+n+'; listeners: 0');
+                  if(await oldCanvas.evaluate(e=>e.isConnected))throw Error('Old canvas remains attached');
+                  await oldCanvas.dispose();
+                  await activate(page.getByRole('button',{name:'Open scene',exact:true}));
+                  await canvas.waitFor({state:'visible',timeout:15000});
+                  await page.waitForFunction(()=>{const b=[...document.querySelectorAll('button')].find(e=>e.textContent.trim()==='Place token');return b&&!b.disabled;},{},{timeout:15000});
+                  if(await canvas.count()!==1)throw Error('Duplicate canvas');
+                  await expectText(status,'Start');
+                  await place.focus();await page.keyboard.press('Enter');await expectText(status,'Target');
+                  await reset.focus();await page.keyboard.press('Enter');await expectText(status,'Start');
+                }
+                report.lifecycle={cycles:2,destroyEvents:2,remainingSceneListenersAfterClose:0,passed:true};
+
+              }catch(e){report.failure=String(e);await page.screenshot({path:'evidence/'+report.viewport+'-failure.png'}).catch(()=>{});}
+              reports.push(report);
+              await context.close();
+            }
+            await browser.close();
+            fs.writeFileSync('evidence/browser-report.json',JSON.stringify(reports,null,2));
+            console.log(JSON.stringify(reports.map(({requests,...r})=>r),null,2));
+            if(reports.some(r=>!r.renderObserved||!r.interaction?.passed||!r.directManipulation?.passed||!r.lifecycle?.passed||r.failure||r.external.length||r.writes.length||r.websockets.length||r.errors.length||r.httpErrors.length))process.exitCode=1;
+          })().catch(e=>{console.error(e);process.exitCode=1;});
+          JS
+          node harness/probe.cjs
+      - name: Require viewport fit
+        run: |
+          node -e 'const r=require("./evidence/browser-report.json");for(const x of r){console.log(x.viewport,x.layout);if(!x.layout||x.layout.scrollWidth>x.layout.innerWidth+1||x.layout.canvas.width>x.layout.innerWidth+1||x.layout.canvas.left< -1||x.layout.canvas.right>x.layout.innerWidth+1||Math.abs(x.layout.canvas.width/x.layout.canvas.height-4/3)>0.02)process.exitCode=1;}'
+      - name: Archive diagnostic evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: axf-03-phaser-diagnostic
+          path: evidence/
+          retention-days: 7
+          if-no-files-found: warn
