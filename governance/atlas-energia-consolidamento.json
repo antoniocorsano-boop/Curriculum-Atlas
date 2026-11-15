@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "planId": "ATLAS-ENERGIA-CONSOLIDAMENTO-01",
   "date": "2026-11-15",
-  "state": "PLANNED",
+  "state": "IN_LAVORAZIONE",
   "studentAuthorized": false,
   "serialProductionAuthorized": false,
   "sourceReview": {
@@ -15,19 +15,20 @@
     "editionSha256": "e9c55945eafff4d2d9cb3cddb506839a65ade34b7ba53b18bc62b6b17d671cfc"
   },
   "next": [
-    "F0",
-    "F1"
+    "F1_VERIFICA",
+    "F0_EVIDENZE_ESTERNE",
+    "F2_DOPO_ACCETTAZIONE_F1"
   ],
   "phases": [
     {
       "id": "F0",
       "dependsOn": [],
-      "state": "APERTO"
+      "state": "IN_LAVORAZIONE"
     },
     {
       "id": "F1",
       "dependsOn": [],
-      "state": "APERTO"
+      "state": "IN_VERIFICA"
     },
     {
       "id": "F2",
@@ -96,8 +97,11 @@
       "title": "Lettore immersivo riusabile",
       "dependsOn": [],
       "acceptance": "Un solo scorrimento, titolo unico, immagine iniziale, ritorno e navigazione verificati",
-      "state": "APERTO",
-      "evidence": []
+      "state": "IN_VERIFICA",
+      "evidence": [
+        "content/staging/biblioteca/poesia-energia/reader-f1-results.json",
+        "docs/ATLAS-ENERGIA-F0-F1-RICEVUTA.md"
+      ]
     },
     {
       "id": "REV-03",
@@ -106,8 +110,10 @@
       "title": "Autorità, provenienza, diritti e confine di pubblicazione",
       "dependsOn": [],
       "acceptance": "Ricevute documentali, autorità effettiva e autorizzazione esplicita; nessuna falsa riservatezza",
-      "state": "APERTO",
-      "evidence": []
+      "state": "BLOCCATO_ESTERNO",
+      "evidence": [
+        "docs/ATLAS-ENERGIA-F0-F1-RICEVUTA.md"
+      ]
     },
     {
       "id": "REV-04",

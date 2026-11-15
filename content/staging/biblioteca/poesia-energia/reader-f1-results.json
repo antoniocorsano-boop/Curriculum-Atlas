@@ -1,0 +1,70 @@
+[
+  {
+    "viewport": [
+      320,
+      720
+    ],
+    "firstImageY": 360,
+    "singleScroll": true,
+    "oneTitle": true,
+    "images": 4,
+    "chapterLinks": 5,
+    "keyboardIndex": true,
+    "returnFocus": true,
+    "browserBack": true,
+    "reflow200": true,
+    "externalRequests": 0,
+    "pageErrors": 0
+  },
+  {
+    "viewport": [
+      360,
+      800
+    ],
+    "firstImageY": 360,
+    "singleScroll": true,
+    "oneTitle": true,
+    "images": 4,
+    "chapterLinks": 5,
+    "keyboardIndex": true,
+    "returnFocus": true,
+    "browserBack": true,
+    "reflow200": true,
+    "externalRequests": 0,
+    "pageErrors": 0
+  },
+  {
+    "viewport": [
+      430,
+      932
+    ],
+    "firstImageY": 322,
+    "singleScroll": true,
+    "oneTitle": true,
+    "images": 4,
+    "chapterLinks": 5,
+    "keyboardIndex": true,
+    "returnFocus": true,
+    "browserBack": true,
+    "reflow200": true,
+    "externalRequests": 0,
+    "pageErrors": 0
+  },
+  {
+    "viewport": [
+      1920,
+      1080
+    ],
+    "firstImageY": 347,
+    "singleScroll": true,
+    "oneTitle": true,
+    "images": 4,
+    "chapterLinks": 5,
+    "keyboardIndex": true,
+    "returnFocus": true,
+    "browserBack": true,
+    "reflow200": true,
+    "externalRequests": 0,
+    "pageErrors": 0
+  }
+]
