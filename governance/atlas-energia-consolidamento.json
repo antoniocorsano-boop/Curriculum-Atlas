@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "planId": "ATLAS-ENERGIA-CONSOLIDAMENTO-01",
+  "date": "2026-11-15",
+  "state": "PLANNED",
+  "studentAuthorized": false,
+  "serialProductionAuthorized": false,
+  "sourceReview": {
+    "pr": 92,
+    "commentId": 6889576483
+  },
+  "baseline": {
+    "home": "3dd2704631716c5f865d1d9193fd4458181f4ad5",
+    "story": "56ec5d5523c3b3212eb2b8c259934fcdc4bf2056",
+    "editionSha256": "e9c55945eafff4d2d9cb3cddb506839a65ade34b7ba53b18bc62b6b17d671cfc"
+  },
+  "next": [
+    "F0",
+    "F1"
+  ],
+  "phases": [
+    {
+      "id": "F0",
+      "dependsOn": [],
+      "state": "APERTO"
+    },
+    {
+      "id": "F1",
+      "dependsOn": [],
+      "state": "APERTO"
+    },
+    {
+      "id": "F2",
+      "dependsOn": [
+        "F1"
+      ],
+      "state": "APERTO"
+    },
+    {
+      "id": "F3",
+      "dependsOn": [],
+      "state": "APERTO"
+    },
+    {
+      "id": "F4",
+      "dependsOn": [
+        "F1",
+        "F2",
+        "F3"
+      ],
+      "state": "APERTO"
+    },
+    {
+      "id": "F5",
+      "dependsOn": [
+        "F0",
+        "F4"
+      ],
+      "state": "APERTO",
+      "note": "F0: solo controlli negativi e registro, non autorizzazione finale"
+    },
+    {
+      "id": "F6",
+      "dependsOn": [
+        "F5"
+      ],
+      "state": "APERTO"
+    },
+    {
+      "id": "F7",
+      "dependsOn": [
+        "F0",
+        "F5",
+        "F6"
+      ],
+      "state": "BLOCCATO_ESTERNO"
+    }
+  ],
+  "findings": [
+    {
+      "id": "REV-01",
+      "priority": "P0",
+      "phase": "F2",
+      "title": "Equivalenti accessibili dei cinque materiali",
+      "dependsOn": [
+        "F1"
+      ],
+      "acceptance": "Equivalenza HTML completa, tastiera, ingrandimento, stampa e revisione con lettore di schermo",
+      "state": "APERTO",
+      "evidence": []
+    },
+    {
+      "id": "REV-02",
+      "priority": "P0",
+      "phase": "F1",
+      "title": "Lettore immersivo riusabile",
+      "dependsOn": [],
+      "acceptance": "Un solo scorrimento, titolo unico, immagine iniziale, ritorno e navigazione verificati",
+      "state": "APERTO",
+      "evidence": []
+    },
+    {
+      "id": "REV-03",
+      "priority": "P0",
+      "phase": "F0",
+      "title": "Autorità, provenienza, diritti e confine di pubblicazione",
+      "dependsOn": [],
+      "acceptance": "Ricevute documentali, autorità effettiva e autorizzazione esplicita; nessuna falsa riservatezza",
+      "state": "APERTO",
+      "evidence": []
+    },
+    {
+      "id": "REV-04",
+      "priority": "P1",
+      "phase": "F3",
+      "title": "Coerenza scientifica e dati simulati",
+      "dependsOn": [],
+      "acceptance": "Distinzione ipotesi/prova; bilancio coerente, nessuna attività elettrica fisica",
+      "state": "APERTO",
+      "evidence": []
+    },
+    {
+      "id": "REV-05",
+      "priority": "P1",
+      "phase": "F3",
+      "title": "Narrativa e guida docente",
+      "dependsOn": [
+        "REV-04"
+      ],
+      "acceptance": "Svolta motivata, attività differenziate e rubrica osservabile",
+      "state": "APERTO",
+      "evidence": []
+    },
+    {
+      "id": "REV-06",
+      "priority": "P1",
+      "phase": "F4",
+      "title": "Universo Energia integrato",
+      "dependsOn": [
+        "REV-01",
+        "REV-02",
+        "REV-04",
+        "REV-05",
+        "REV-07"
+      ],
+      "acceptance": "Quattro azioni reali, riferimenti univoci, laboratorio virtuale e mappa",
+      "state": "APERTO",
+      "evidence": []
+    },
+    {
+      "id": "REV-07",
+      "priority": "P1",
+      "phase": "F3",
+      "title": "Identità visive e originali",
+      "dependsOn": [],
+      "acceptance": "Schede personaggi, impronte conservate, diagrammi distinti",
+      "state": "APERTO",
+      "evidence": []
+    },
+    {
+      "id": "REV-08",
+      "priority": "P2",
+      "phase": "F6",
+      "title": "Revisione umana e prova fisica",
+      "dependsOn": [
+        "F5"
+      ],
+      "acceptance": "Esiti reali versionati; eventuali studenti solo con autorizzazioni",
+      "state": "APERTO",
+      "evidence": []
+    }
+  ],
+  "releaseConditions": [
+    "Autorità Arena documentata",
+    "Diritti verificati",
+    "Revisione umana e collaudo fisico",
+    "P0 risolti e P1 chiusi o accettati esplicitamente se non bloccanti",
+    "Autorizzazione esplicita della versione",
+    "Nessun dato personale, nessuna spesa nuova"
+  ]
+}
