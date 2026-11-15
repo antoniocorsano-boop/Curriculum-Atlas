@@ -9,7 +9,7 @@ permissions:
 jobs:
   qualify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 18
     env:
       NEXT_TELEMETRY_DISABLED: '1'
       CI: 'true'
@@ -79,10 +79,94 @@ jobs:
           }
           `);
           JS
+          # C3: one neutral drag target, semantic equivalent, and lifecycle probe.
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          function edit(path, edits) {
+            let s=fs.readFileSync(path,'utf8').replace(/\r\n/g,'\n');
+            for(const [a,b] of edits){if(!s.includes(a))throw Error('Unexpected upstream '+path+': '+a);s=s.replace(a,b);}
+            fs.writeFileSync(path,s);
+          }
+          edit('src/game/scenes/MainMenu.ts',[
+            ['    logoTween: Phaser.Tweens.Tween | null;', '    logoTween: Phaser.Tweens.Tween | null;\n    private token!: GameObjects.Rectangle;'],
+            ["        EventBus.emit('current-scene-ready', this);",`        // Neutral test fixture: not a new educational scene.
+            this.add.rectangle(410, 620, 150, 150, 0x173d66).setStrokeStyle(5, 0xffffff);
+            this.token = this.add.rectangle(170, 620, 150, 150, 0xffcc55).setDepth(200).setInteractive();
+            this.input.setDraggable(this.token);
+            this.token.on('drag', (_pointer: Phaser.Input.Pointer, x: number, y: number) => {
+                this.token.setPosition(Phaser.Math.Clamp(x,75,949), Phaser.Math.Clamp(y,75,693));
+            });
+            this.token.on('dragend', () => {
+                this.setTokenPlaced(Math.hypot(this.token.x-410,this.token.y-620)<95);
+            });
+            EventBus.emit('axf-token', false);
+            EventBus.emit('current-scene-ready', this);`],
+            ['    changeScene ()',`    setTokenPlaced(placed: boolean) {
+                this.token.setPosition(placed ? 410 : 170, 620);
+                EventBus.emit('axf-token', placed);
+            }
+
+            changeScene ()`]
+          ]);
+          edit('src/App.tsx',[
+            ["import { useRef, useState } from 'react';","import { useRef, useState, useEffect } from 'react';\nimport { EventBus } from './game/EventBus';"],
+            ['    const [canMoveSprite, setCanMoveSprite] = useState(true);',`    const [canMoveSprite, setCanMoveSprite] = useState(true);
+            const [mounted, setMounted] = useState(true);
+            const [placed, setPlaced] = useState(false);
+            const [destroyed, setDestroyed] = useState(0);
+            const [remainingListeners, setRemainingListeners] = useState(-1);
+            const [closing, setClosing] = useState(false);
+            useEffect(() => {
+                const listener = (value: boolean) => setPlaced(value);
+                EventBus.on('axf-token', listener);
+                return () => { EventBus.off('axf-token', listener); };
+            }, []);`],
+            ['    const changeScene = () => {',`    const setToken = (value: boolean) => {
+                const scene = phaserRef.current?.scene as MainMenu | null | undefined;
+                if (scene?.scene.key === 'MainMenu') scene.setTokenPlaced(value);
+            };
+            const closeScene = () => {
+                const game = phaserRef.current?.game;
+                if (!game) return;
+                setClosing(true);
+                game.events.once('destroy', () => {
+                    setDestroyed(n => n + 1);
+                    setRemainingListeners(EventBus.listenerCount('current-scene-ready'));
+                    setClosing(false);
+                });
+                setMounted(false);
+                setPlaced(false);
+                setCanMoveSprite(true);
+            };
+            const openScene = () => {
+                setPlaced(false);
+                setCanMoveSprite(true);
+                setMounted(true);
+            };
+            const changeScene = () => {`],
+            ['            <PhaserGame ref={phaserRef} currentActiveScene={currentScene} />','            {mounted && <PhaserGame ref={phaserRef} currentActiveScene={currentScene} />}'],
+            ['                    <button className="button" onClick={addSprite}>Add New Sprite</button>',`                    <button className="button" onClick={addSprite}>Add New Sprite</button>
+                        <section aria-label="Object manipulation">
+                          <p role="status" aria-label="Token position">{placed ? 'Target' : 'Start'}</p>
+                          <button className="button" disabled={!mounted || canMoveSprite} onClick={() => setToken(true)}>Place token</button>
+                          <button className="button" disabled={!mounted || canMoveSprite} onClick={() => setToken(false)}>Reset token</button>
+                        </section>
+                        <section aria-label="Scene lifecycle">
+                          <button className="button" disabled={!mounted || canMoveSprite || closing} onClick={closeScene}>Close scene</button>
+                          <button className="button" disabled={mounted || closing} onClick={openScene}>Open scene</button>
+                          <p role="status" aria-label="Lifecycle">Destroyed: {destroyed}; listeners: {remainingListeners}</p>
+                        </section>`]
+          ]);
+          edit('src/PhaserGame.tsx',[
+            ["        EventBus.on('current-scene-ready', (scene_instance: Phaser.Scene) =>","        const onReady = (scene_instance: Phaser.Scene) =>"],
+            ["        });\n        return () =>\n        {\n            EventBus.removeListener('current-scene-ready');","        };\n        EventBus.on('current-scene-ready', onReady);\n        return () =>\n        {\n            EventBus.off('current-scene-ready', onReady);"],
+            ["                    game.current = null;","                    game.current = null;\n                    if (typeof ref === 'function') ref(null);\n                    else if (ref) ref.current = null;"]
+          ]);
+          JS
           npm install --package-lock-only --ignore-scripts --no-audit --no-fund
           cp package.json ../evidence/candidate-package.json
           cp package-lock.json ../evidence/candidate-lock.json
-          git diff -- package.json package-lock.json log.js src/game/main.ts src/styles/globals.css > ../evidence/candidate-changes.patch
+          git diff -- package.json package-lock.json log.js src/game/main.ts src/styles/globals.css src/game/scenes/MainMenu.ts src/App.tsx src/PhaserGame.tsx > ../evidence/candidate-changes.patch
       - name: Security audit before installing or building
         working-directory: upstream
         run: |
@@ -172,6 +256,58 @@ jobs:
                 await activate(scene);
                 await page.waitForFunction(()=>{const b=[...document.querySelectorAll('button')].find(e=>e.textContent.trim()==='Toggle Movement');return b&&!b.disabled;},{},{timeout:8000});
                 report.interaction={before,moved,paused,returnedToMainMenu:true,method:mobile?'touch DOM controls':'keyboard DOM controls',passed:true};
+                const status=page.getByRole('status',{name:'Token position'});
+                const expectText=async (loc,value)=>{await page.waitForFunction(({label,value})=>[...document.querySelectorAll('[role="status"]')].some(e=>e.getAttribute('aria-label')===label&&e.textContent.trim()===value),{label:await loc.getAttribute('aria-label'),value},{timeout:8000});};
+                await expectText(status,'Start');
+                const canvas=page.locator('#game-container canvas');
+                await canvas.scrollIntoViewIfNeeded();
+                const rect=await canvas.boundingBox();
+                if(!rect)throw Error('Canvas missing');
+                const point=(x,y)=>({x:rect.x+x*rect.width/1024,y:rect.y+y*rect.height/768});
+                const from=point(170,620),to=point(410,620);
+                if(mobile){
+                  const session=await context.newCDPSession(page);
+                  await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[from]});
+                  for(let i=1;i<=12;i++){
+                    const t=i/12;
+                    await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:from.x+(to.x-from.x)*t,y:from.y+(to.y-from.y)*t}]});
+                    await page.waitForTimeout(35);
+                  }
+                  await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+                  await session.detach();
+                }else{
+                  await page.mouse.move(from.x,from.y);
+                  await page.mouse.down();
+                  await page.mouse.move(to.x,to.y,{steps:12});
+                  await page.mouse.up();
+                }
+                await expectText(status,'Target');
+                await page.screenshot({path:'evidence/'+report.viewport+'-direct-drag.png'});
+                // Same underlying method via real native buttons and keyboard.
+                const reset=page.getByRole('button',{name:'Reset token',exact:true});
+                const place=page.getByRole('button',{name:'Place token',exact:true});
+                await reset.focus();await page.keyboard.press('Enter');await expectText(status,'Start');
+                await place.focus();await page.keyboard.press('Enter');await expectText(status,'Target');
+                await reset.focus();await page.keyboard.press('Enter');await expectText(status,'Start');
+                report.directManipulation={method:mobile?'emulated touch drag':'mouse drag',semanticKeyboard:true,passed:true};
+                const lifecycle=page.getByRole('status',{name:'Lifecycle'});
+                for(let n=1;n<=2;n++){
+                  const oldCanvas=await canvas.elementHandle();
+                  await activate(page.getByRole('button',{name:'Close scene',exact:true}));
+                  await canvas.waitFor({state:'detached',timeout:10000});
+                  await expectText(lifecycle,'Destroyed: '+n+'; listeners: 0');
+                  if(await oldCanvas.evaluate(e=>e.isConnected))throw Error('Old canvas remains attached');
+                  await oldCanvas.dispose();
+                  await activate(page.getByRole('button',{name:'Open scene',exact:true}));
+                  await canvas.waitFor({state:'visible',timeout:15000});
+                  await page.waitForFunction(()=>{const b=[...document.querySelectorAll('button')].find(e=>e.textContent.trim()==='Place token');return b&&!b.disabled;},{},{timeout:15000});
+                  if(await canvas.count()!==1)throw Error('Duplicate canvas');
+                  await expectText(status,'Start');
+                  await place.focus();await page.keyboard.press('Enter');await expectText(status,'Target');
+                  await reset.focus();await page.keyboard.press('Enter');await expectText(status,'Start');
+                }
+                report.lifecycle={cycles:2,destroyEvents:2,remainingSceneListenersAfterClose:0,passed:true};
+
               }catch(e){report.failure=String(e);await page.screenshot({path:'evidence/'+report.viewport+'-failure.png'}).catch(()=>{});}
               reports.push(report);
               await context.close();
@@ -179,7 +315,7 @@ jobs:
             await browser.close();
             fs.writeFileSync('evidence/browser-report.json',JSON.stringify(reports,null,2));
             console.log(JSON.stringify(reports.map(({requests,...r})=>r),null,2));
-            if(reports.some(r=>!r.renderObserved||!r.interaction?.passed||r.failure||r.external.length||r.writes.length||r.websockets.length||r.errors.length||r.httpErrors.length))process.exitCode=1;
+            if(reports.some(r=>!r.renderObserved||!r.interaction?.passed||!r.directManipulation?.passed||!r.lifecycle?.passed||r.failure||r.external.length||r.writes.length||r.websockets.length||r.errors.length||r.httpErrors.length))process.exitCode=1;
           })().catch(e=>{console.error(e);process.exitCode=1;});
           JS
           node harness/probe.cjs
