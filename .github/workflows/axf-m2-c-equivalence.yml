@@ -142,6 +142,32 @@ jobs:
           cp labs/axf-m2/m3-handoff/test.mjs harness/m3-test.mjs
           python3 -m http.server 8768 --bind 127.0.0.1 --directory mixed >/tmp/axf-m3.log 2>&1 &
           node harness/m3-test.mjs
+      - name: M3-C real motor handoff — synthetic fixture only, no E02 master
+        run: |
+          mkdir -p evidence/m3-c-fixture m3c-source m3c/energy/vendor m3c/assets
+          src=labs/axf-m2/m3-handoff/e02-v2
+          cp "$src/world.tmx" m3c-source/
+          /usr/bin/python3 "$src/fixture.py" m3c-source "$src/build-e02.mjs"
+          cp m3c-source/fixture.sha256 evidence/m3-c-fixture/
+          xvfb-run -a tiled --export-map json m3c-source/world.tmx m3c-source/world.json
+          upstream=official-example/examples/starting-point-and-click-adventure/starting-point-and-click-adventure.json
+          if node "$src/build-e02.mjs" m3c-source/world.json "$upstream" m3c-source/assets/AXF-E02-BG-v2-master.png m3c-reject > evidence/m3-c-fixture/rejection.log 2>&1; then
+            echo "FAIL: original master lock accepted substitute"; exit 1
+          fi
+          grep -q 'E02 asset lock mismatch' evidence/m3-c-fixture/rejection.log
+          node m3c-source/build-fixture-only.mjs m3c-source/world.json "$upstream" m3c-source/assets/AXF-E02-BG-v2-master.png m3c-native
+          timeout 300 xvfb-run -a "$(cat executable.txt)" --no-sandbox --disable-update-check --run-command EXPORT_HTML5_EXTERNAL "$PWD/m3c-native/atelier.json" 2>&1 | tee evidence/m3-c-fixture/export.log
+          test -s m3c-native/build/index.html
+          grep -R -E -l --include="code*.js" "enableMetrics\([^;]*false" m3c-native/build | tee evidence/m3-c-fixture/compiled-optout.txt
+          test -s evidence/m3-c-fixture/compiled-optout.txt
+          mv m3c-native/build m3c/gdevelop
+          cp "$src"/{index.html,handoff.mjs} m3c/
+          cp mixed/energy/{scene.mjs,model.mjs} m3c/energy/
+          cp mixed/energy/vendor/phaser.esm.js m3c/energy/vendor/
+          cp mixed/assets/PE-0{1,3,4}.webp m3c/assets/
+          cp "$src/test-fixture.mjs" harness/m3c-test.mjs
+          python3 -m http.server 8769 --bind 127.0.0.1 --directory m3c >/tmp/axf-m3c.log 2>&1 &
+          node harness/m3c-test.mjs
       - name: Preserve diagnostic evidence only
         if: always()
         uses: actions/upload-artifact@v4
