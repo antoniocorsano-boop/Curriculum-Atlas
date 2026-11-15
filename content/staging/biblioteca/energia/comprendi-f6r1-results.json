@@ -1,0 +1,70 @@
+{
+  "candidateSha256": "b85ef1d27fdba6189b412933058db65dcca3ac67a2a46179bc770e05f43f7af1",
+  "sourceSha256": "50d8ec149f24a21f81856403e3926f661eb87faae1de6f97bd9953a234094e13",
+  "originalIllustrationPreserved": true,
+  "results": [
+    {
+      "viewport": [
+        320,
+        720
+      ],
+      "reflow100and200": true,
+      "detailsOpenReflow": true,
+      "keyboardSlider": true,
+      "predictionOptional": true,
+      "sevenBalances": true,
+      "transferReveal": true,
+      "focusNavigation": true,
+      "externalRequests": 0,
+      "jsErrors": 0
+    },
+    {
+      "viewport": [
+        360,
+        800
+      ],
+      "reflow100and200": true,
+      "detailsOpenReflow": true,
+      "keyboardSlider": true,
+      "predictionOptional": true,
+      "sevenBalances": true,
+      "transferReveal": true,
+      "focusNavigation": true,
+      "externalRequests": 0,
+      "jsErrors": 0
+    },
+    {
+      "viewport": [
+        430,
+        932
+      ],
+      "reflow100and200": true,
+      "detailsOpenReflow": true,
+      "keyboardSlider": true,
+      "predictionOptional": true,
+      "sevenBalances": true,
+      "transferReveal": true,
+      "focusNavigation": true,
+      "externalRequests": 0,
+      "jsErrors": 0
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "reflow100and200": true,
+      "detailsOpenReflow": true,
+      "keyboardSlider": true,
+      "predictionOptional": true,
+      "sevenBalances": true,
+      "transferReveal": true,
+      "focusNavigation": true,
+      "externalRequests": 0,
+      "jsErrors": 0
+    }
+  ],
+  "method": "Chromium set_content; simulated viewports, click and keyboard, explicit model state sweep. No physical-device or screen-reader certification.",
+  "studentAuthorized": false,
+  "state": "HUMAN_REVIEW_REQUIRED"
+}

@@ -1,0 +1,22 @@
+# Atlas — F6-R1, campione Comprendi: Dove va l'energia?
+
+15 novembre 2026. Standard ATLAS-QE-01 v1.0, baseline d29f2de96506fd3500f99f4830779c82e5bf48de. Candidato autonomo di revisione, non autorizzato. Impronta SHA-256 b85ef1d27fdba6189b412933058db65dcca3ac67a2a46179bc770e05f43f7af1. File conservato nella Libreria: Atlas_Comprendi_Energia_F6R1.html (libfile_06baf70bcf0c81918cdd39f7671e7e3f). Il candidato F4 e l'applicazione nativa precedente restano immutati.
+
+## Progettazione educativa
+Destinatari: terza secondaria di primo grado, Tecnologia. Durata stimata 12–18 minuti, non misurata. Raccordo Arena: sezione 7.3.8, analizzare sistemi energetici/produttivi e usare dati; stato PROVISIONAL_COMPLETE, impronta b355be71, ricevuta assente. Obiettivo: bilancio energetico, conservazione, effetto utile ed efficienza del modello. Prerequisiti: sistema, forme di energia, addizione/sottrazione, percentuali.
+Matrice: fenomeno riconoscibile → due effetti e scopo → bilancio A svolto → previsione facoltativa e variazione dell'ingresso → trasferimento al sistema del sipario. Evidenze attese: distinzione dello scopo, bilancio coerente, spiegazione della conservazione, applicazione autonoma e motivazione dei limiti. Il percorso non è obbligatorio e non registra risposte.
+- Osserva: scena del mondo narrativo e diagramma qualitativo lampada/libro.
+- Comprendi: confronto illuminare/riscaldare; approfondimento su accumulo e trasferimento termico.
+- Bilancio: A=100 J=20+80, quota utile 20%; diagramma esplicitamente schematico.
+- Sperimenta: sette valori 40–100 J a passi di 10 J, luce utile fissa 20 J, trasferimento termico pari alla differenza, quota utile 20/input. Caso A 100/20/80; B 50/20/30; C 40/20/20. Previsione facoltativa, restituzione esplicativa e approfondimento del calcolo. Caso iniziale A, senza anticipare l'esito del confronto.
+- Rielabora: nuovo sistema immaginario del teatro, 90 J in ingresso, 60 J meccanici utili, 30 J termici, quota utile circa 67%; soluzione apribile, risposta su carta o a voce.
+- Guida docente: obiettivi, prerequisiti, raccordo provvisorio, evidenze, alternative e limiti. Nessuna prova elettrica fisica, punteggio o raccolta di risposte.
+Le figure scientifiche SVG sono originali, schematiche e corredate di descrizione ed equivalente testuale. L'illustrazione del capitolo 1 è recuperata senza modifica dall'artefatto F4; diritti ancora da verificare. Non genera un nuovo mondo visivo. Fonti scientifiche e metodologiche consultate: OpenStax College Physics §7.6, https://openstax.org/books/college-physics/pages/7-6-conservation-of-energy ; Physics §12.2, https://openstax.org/books/physics/pages/12-2-first-law-of-thermodynamics-thermal-energy-and-work ; IES/WWC Organizing Instruction and Study to Improve Student Learning, https://ies.ed.gov/ncee/WWC/PracticeGuide/1/Published . Testo originale, dati inventati. Il confronto assume stesso intervallo, spettro e distribuzione equivalenti; non è misurazione o diagnosi.
+
+## Riproduzione e prove
+python scripts/build-atlas-comprendi-sample.py <F4-locale> content/staging/biblioteca/energia/comprendi-conservazione-v1.template.html <output-locale>
+python scripts/test-atlas-comprendi-sample.py <F4-locale> <output-locale> <directory-evidenze>
+Richiesti Python, BeautifulSoup, Playwright, Chromium (/usr/bin/chromium). Verifica impronta F4 e immagine identica; nessun input identificativo o collegamento esterno attivo; identificativi univoci; quattro viewport 320/360/430/1920; 100% e 200% con approfondimenti aperti; sette bilanci per viewport (28 stati); controllo cursore da tastiera, scelta e restituzione, attivazione della soluzione, focus agli ancoraggi; nessuna richiesta HTTP esterna o errore JS osservato. Chromium set_content, non apertura fisica del file, non prova completa di accessibilità. I risultati si riferiscono al campione esatto, non alla nuova versione dell'intero universo.
+
+## Decisione
+Campione realizzato, nessuna approvazione. Ricevuta ATLAS-QE-01 con tutti i criteri NON_VERIFICATO per il rilascio: evidenze parziali registrate. Non attribuire efficacia dimostrata. Richiesto riesame umano: comprensibilità senza spiegazione aggiuntiva; ritmo e interesse; collegamento esplicito tra figure, numeri e ragionamento; utilità dell'interazione; capacità attesa di trasferire la spiegazione. Solo dopo giudizio motivato, estendere agli altri nuclei e armonizzare la scheda (REV-10). Nessuna integrazione nativa o chiusura di REV-09/REV-10 in questa fase. F7 e produzione seriale bloccate. Nessun costo, nuovo servizio o pubblicazione.

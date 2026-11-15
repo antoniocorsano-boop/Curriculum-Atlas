@@ -15,7 +15,7 @@
     "editionSha256": "e9c55945eafff4d2d9cb3cddb506839a65ade34b7ba53b18bc62b6b17d671cfc"
   },
   "next": [
-    "F6_R1_COMPRENDI_CAMPIONE",
+    "F6_R1_RIESAME_CAMPIONE",
     "F6_R2_ESTENSIONE_DOPO_RIESAME",
     "F6_R3_COERENZA_SCHEDA",
     "F5_R_RIQUALIFICAZIONE_CANDIDATO",
@@ -71,7 +71,7 @@
         "F5"
       ],
       "state": "IN_LAVORAZIONE",
-      "note": "Prima valutazione formativa del candidato autonomo: funzionamento riferito, giudizio grafico positivo, efficacia e coinvolgimento non dimostrati. Nessun protocollo di prove selezionato. Revisione correttiva necessaria."
+      "note": "F6-R1: campione Comprendi realizzato e verificato tecnicamente; accettazione formativa umana ancora richiesta. Non estendere prima del riesame; REV-09 e REV-10 restano aperti."
     },
     {
       "id": "F7",
@@ -233,7 +233,10 @@
         "docs/ATLAS-ENERGIA-F6-RIESAME-FORMATIVO.md",
         "content/staging/biblioteca/energia/formative-review-f6.json",
         "docs/ATLAS-CARTA-QUALITA-EDUCATIVA-v1.md",
-        "governance/atlas-quality-standard-v1.json"
+        "governance/atlas-quality-standard-v1.json",
+        "docs/ATLAS-ENERGIA-F6R1-CAMPIONE-COMPRENDI.md",
+        "content/staging/biblioteca/energia/comprendi-f6r1-results.json",
+        "content/staging/biblioteca/energia/comprendi-qualification-v1.json"
       ]
     },
     {
