@@ -46,7 +46,7 @@
   .axfPreviewHost__library[data-browsing=true]::before { background-image:linear-gradient(#071320cf,#071320e8),var(--axf-portrait,radial-gradient(ellipse at center,#36678d,#101a30 64%)); }
   .axfPreviewHost__orbit { min-height:max(29rem,50svh); }
   .axfPreviewHost__orbit::before { inset:8% 10% 8%; }
-  .axfPreviewHost__world { width: min(28%,7rem); }
+  .axfPreviewHost__world { width: min(25%,7rem); }
   .axfPreviewHost__sphere { width:clamp(44px,14vw,65px); }
   .axfPreviewHost__worldLabel { font-size:.78rem; }
   .axfPreviewHost__world[data-world=energia] { --x:50%;--y:8%; }
