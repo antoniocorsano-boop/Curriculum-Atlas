@@ -159,7 +159,7 @@ jobs:
           ]);
           edit('src/PhaserGame.tsx',[
             ["        EventBus.on('current-scene-ready', (scene_instance: Phaser.Scene) =>","        const onReady = (scene_instance: Phaser.Scene) =>"],
-            ["        });\n        return () =>\n        {\n            EventBus.removeListener('current-scene-ready');","        };\n        EventBus.on('current-scene-ready', onReady);\n        return () =>\n        {\n            EventBus.off('current-scene-ready', onReady);"],
+            ["        });\n        return () =>\n        {\n\n            EventBus.removeListener('current-scene-ready');","        };\n        EventBus.on('current-scene-ready', onReady);\n        return () =>\n        {\n            EventBus.off('current-scene-ready', onReady);"],
             ["                    game.current = null;","                    game.current = null;\n                    if (typeof ref === 'function') ref(null);\n                    else if (ref) ref.current = null;"]
           ]);
           JS
