@@ -88,5 +88,8 @@ for (const availability of [undefined, null, "", "UNKNOWN", true, "WITHDRAWN", "
   assert.equal(fs.existsSync(path.join(localDir, "index.html")), active);
 }
 const realPortfolio = JSON.parse(fs.readFileSync("governance/percorsi-portfolio.json", "utf8"));
-assert.deepEqual(loadPublicPathways(realPortfolio.pathways), [], "current baseline has no authorized pathways");
+for (const summary of loadPublicPathways(realPortfolio.pathways)) {
+  assert.ok(realPortfolio.pathways.some(entry => entry.pathwayId === summary.pathwayId && entry.runtimeAuthorization === "RUNTIME_AUTHORIZED" && entry.availability === summary.availability));
+  if (summary.availability !== "ACTIVE") assert.equal(summary.launchHref, null);
+}
 console.log("PERCORSI EXPLICIT AVAILABILITY: PASS — catalog and export agree; withdrawn is visible only as a non-launchable summary.");
