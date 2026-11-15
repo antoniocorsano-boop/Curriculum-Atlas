@@ -5,7 +5,7 @@ const [asset,output]=process.argv.slice(2);
 if(!asset||!output)throw Error("Usage: node build-offline-review.mjs <original PE-02> <output directory>");
 const root=path.dirname(new URL(import.meta.url).pathname);
 const read=(p)=>fs.readFileSync(path.join(root,p));
-const hash=(b)=>crypto.createHash("sha256").update(b).digest("hex");
+const hash=(b)=>crypto.hash("sha256",b,"hex");
 const expect=(b,d)=>{if(hash(b)!==d)throw Error("Original byte integrity mismatch");return b;};
 const original=expect(fs.readFileSync(asset),"d9f2586cd74bec970263270b5cbbc859b42867b1f7e871217e7408e55398f6ec");
 const phaser=expect(read("node_modules/phaser/dist/phaser.esm.min.js"),"f4c5fd140d118c10fa9090641a03c17303bab9bfdc28e0626296777db1bb1bde");
@@ -18,7 +18,7 @@ const bundled=scene.replace(importPhaser,data("text/javascript",phaser)).replace
 const entry='<script type="module" src="./standalone.mjs"></script>';
 const html=read("index.html").toString("utf8");
 if(!html.includes(entry)||!html.includes('src="./assets/PE-02.webp"'))throw Error("Unexpected HTML");
-const licenses=["node_modules/phaser/LICENSE","node_modules/eventemitter3/LICENSE"].map(p=>read(p).toString("utf8"));
+const licenses=["node_modules/phaser/LICENSE.md","node_modules/eventemitter3/LICENSE"].map(p=>read(p).toString("utf8"));
 const escape=(s)=>s.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
 const banner='<aside style="max-width:1050px;margin:0 auto;padding:12px 16px;font-size:14px"><strong>ATLAS · ANTEPRIMA LOCALE DI REVISIONE</strong><p>Versione sperimentale del laboratorio. Non autorizzata alla distribuzione agli studenti. Nessun account o salvataggio delle risposte.</p></aside>';
 const footer='<footer style="max-width:1050px;margin:auto;padding:16px;font-size:13px"><details><summary>Licenze dei componenti software</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere">'+escape(licenses.join("\n\n"))+'</pre></details><p>Revisione grafica, didattica e dei diritti ancora necessaria. Questa copia locale non rappresenta il collegamento professionale completo di Studio Atlas.</p></footer>';
