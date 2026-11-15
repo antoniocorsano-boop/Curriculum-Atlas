@@ -111,3 +111,35 @@ test("standalone discovery is reachable through world, section, search and exact
   await page.goto(path+"#axf/standalone-preview-synthetic-discovery");
   await expect(page.getByRole("heading",{name:"Vista autonoma sintetica"})).toBeVisible();
 });
+
+test("standalone compact return preserves context and browser history without changing the gateway", async ({page}) => {
+  await page.setViewportSize({width:320,height:740});
+  await page.goto(path);
+  await page.getByRole("navigation",{name:"Mondi della conoscenza"}).getByRole("button",{name:"Energia"}).click();
+  await page.getByRole("button",{name:"Scoperte",exact:true}).click();
+  await page.getByRole("searchbox").fill("sintetica");
+  const result=page.getByRole("link",{name:/Scoperta sintetica/});
+  await result.click();
+  const back=page.getByRole("link",{name:"Atlante",exact:true});
+  await expect(back).toBeFocused();
+  await expect(page.locator(".axfPreviewHost__context")).toContainText("Energia · Scoperte");
+  await expect(page.getByText("Anteprima privata",{exact:true})).toBeVisible();
+  for (const [width,height] of [[320,740],[390,844],[844,390],[1280,900]]) {
+    await page.setViewportSize({width,height});
+    const header=await page.locator(".axfPreviewHost__header").boundingBox();
+    const surface=await page.locator(".axfPreviewHost__standalone").boundingBox();
+    const target=await back.boundingBox();
+    expect(header!.height).toBeLessThanOrEqual(60);
+    expect(target!.height).toBeGreaterThanOrEqual(44);
+    expect(surface!.y+surface!.height).toBeLessThanOrEqual(height+1);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+  }
+  await page.goBack();
+  await expect(result).toBeFocused();
+  await expect(page.getByRole("searchbox")).toHaveValue("sintetica");
+  await page.goForward();
+  await expect(back).toBeFocused();
+  await back.click();
+  await expect(result).toBeFocused();
+  await expect(page.getByRole("button",{name:"Scoperte",exact:true})).toHaveAttribute("aria-pressed","true");
+});
