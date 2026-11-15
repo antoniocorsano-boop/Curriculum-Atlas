@@ -82,6 +82,16 @@
       "path": "scripts/sync-arena-curriculum.mjs",
       "contains": "input.curriculum",
       "reason": "The Arena v1 export keeps its published curriculum payload key; the sync adapter canonicalizes messages while preserving the wire field."
+    },
+    {
+      "path": "content/staging/biblioteca/poesia-energia/editorial-review-v0.4.md",
+      "contains": "https://github.com/antoniocorsano-boop/CurManLight_arena/blob/d8b1bf43388cb5c4cdcc940b0c558bb128976c4c/exports/atlas-curriculum/current.json",
+      "reason": "Riferimento probatorio immutabile al file originale, identificato dal commit completo; il percorso tecnico esistente non costituisce terminologia editoriale e non deve essere rinominato."
+    },
+    {
+      "path": "content/staging/biblioteca/poesia-energia/editorial-review-v0.4.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas/blob/d2938378c9384c5122adb8379396dbad5b4385fe/src/features/curriculum/arena-curriculum-export.json",
+      "reason": "Riferimento probatorio immutabile al file originale, identificato dal commit completo; il percorso tecnico esistente non costituisce terminologia editoriale e non deve essere rinominato."
     }
   ]
 }
