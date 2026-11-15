@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "axf.e02-zone-candidate/v1",
+  "status": "REVIEW_ONLY_NOT_RUNTIME_AUTHORIZED",
+  "master": {
+    "file": "AXF-E02-BG-v1-master.png",
+    "width": 1536,
+    "height": 1024,
+    "sha256": "009a83c3dfbb1a81b4ee5b8d2fb68c6c34a73ce4f91f948bee28226d5285d5c7",
+    "binaryInRepository": false
+  },
+  "coordinateSystem": "native image pixels; origin top-left; no crop",
+  "zones": [
+    {
+      "id": "notebook",
+      "action": "inspect-notebook",
+      "label": "Quaderno",
+      "x": 45,
+      "y": 585,
+      "width": 540,
+      "height": 320
+    },
+    {
+      "id": "square",
+      "action": "inspect-square",
+      "label": "Piazza",
+      "x": 610,
+      "y": 292,
+      "width": 280,
+      "height": 350
+    },
+    {
+      "id": "bench",
+      "action": "open-bench",
+      "label": "Banco virtuale",
+      "x": 1000,
+      "y": 472,
+      "width": 480,
+      "height": 310
+    }
+  ],
+  "constraints": [
+    "No mapping between commercial-looking bulbs and A/B/C",
+    "Lamp glow is illustrative, not measured; cause of dimming unknown",
+    "Bench opens a separate virtual model; no physical procedure",
+    "Preserve original; review corrected visual candidate before final integration",
+    "Equivalent keyboard/text navigation; no cropping or forced fullscreen",
+    "No runtime adoption, student distribution or paid services"
+  ],
+  "baseline": "Atlas #97 8ff6ece6dc487dc5341881066db6bace5a49d27e"
+}
