@@ -65,3 +65,7 @@
   .axfPreviewHost__world { position:static; transform:none; width:100%; }
 }
 @media(prefers-reduced-motion:reduce) { .axfPreviewHost *,.axfPreviewHost *::before { animation:none!important; transition:none!important; } }
+
+/* Private standalone renderer owns its content; host owns the return and outer layout. */
+.axfPreviewHost__standalone { min-width:0; }
+.axfPreviewHost__standalone > iframe { display:block; width:100%; height:calc(100dvh - 76px); min-height:280px; border:0; }
