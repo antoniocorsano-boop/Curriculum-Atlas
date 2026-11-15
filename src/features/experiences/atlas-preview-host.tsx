@@ -53,6 +53,8 @@ export function AtlasPreviewHost({ snapshots, artwork, placements = noPlacements
   const [section, setSection] = useState<Section | "">("");
   const [browsing, setBrowsing] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const wasBrowsing = useRef(false);
   const wasActive = useRef(false);
   const active = entries.find(entry => routeFor(entry.id) === route);
   useEffect(() => {
@@ -74,6 +76,11 @@ export function AtlasPreviewHost({ snapshots, artwork, placements = noPlacements
     }
     wasActive.current = !!active;
   }, [active]);
+  useEffect(() => {
+    if (!active && browsing && !wasBrowsing.current) searchRef.current?.focus({ preventScroll: true });
+    if (!active && !browsing && wasBrowsing.current) titleRef.current?.focus({ preventScroll: true });
+    wasBrowsing.current = browsing;
+  }, [active, browsing]);
   const hits = entries.filter(entry => {
     const placement = placements[entry.id];
     return (!world || placement?.world === world) && (!section || placement?.section === section) &&
@@ -103,7 +110,7 @@ export function AtlasPreviewHost({ snapshots, artwork, placements = noPlacements
       ) : (
         <section aria-labelledby="axf-title" className="axfPreviewHost__library" data-browsing={browsing} style={artStyle}>
           <div className="axfPreviewHost__title">
-            <h1 id="axf-title" aria-label="Esplora Atlas">Atlas</h1>
+            <h1 id="axf-title" ref={titleRef} tabIndex={-1} aria-label="Esplora Atlas">Atlas</h1>
             <p>La conoscenza come esperienza</p>
           </div>
           {!browsing && <nav aria-label="Mondi della conoscenza" className="axfPreviewHost__orbit">
