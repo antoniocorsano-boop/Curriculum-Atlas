@@ -15,8 +15,9 @@
     "editionSha256": "e9c55945eafff4d2d9cb3cddb506839a65ade34b7ba53b18bc62b6b17d671cfc"
   },
   "next": [
-    "F5_QUALIFICAZIONE_INTEGRATA",
-    "F0_EVIDENZE_ESTERNE"
+    "F5_B_INTEGRAZIONE_E_QUALIFICAZIONE_APPLICAZIONE",
+    "F0_EVIDENZE_ESTERNE",
+    "F6_REVISIONE_UMANA_DOPO_F5"
   ],
   "phases": [
     {
@@ -58,8 +59,8 @@
         "F0",
         "F4"
       ],
-      "state": "APERTO",
-      "note": "F0: solo controlli negativi e registro, non autorizzazione finale"
+      "state": "IN_VERIFICA",
+      "note": "Candidato locale ricostruito byte per byte, ripetizione prove e revisione assistita positive. F5-B: integrazione e qualificazione dell'artefatto dell'applicazione completa, controllo negativo di compilazione. Non attestare rilascio."
     },
     {
       "id": "F6",
@@ -91,7 +92,9 @@
       "state": "IN_VERIFICA",
       "evidence": [
         "content/staging/biblioteca/poesia-energia/materials-f2-results.json",
-        "docs/ATLAS-ENERGIA-F2-RICEVUTA.md"
+        "docs/ATLAS-ENERGIA-F2-RICEVUTA.md",
+        "content/staging/biblioteca/energia/qualification-f5.json",
+        "docs/ATLAS-ENERGIA-F5-QUALIFICAZIONE.md"
       ]
     },
     {
@@ -106,7 +109,9 @@
         "content/staging/biblioteca/poesia-energia/reader-f1-results.json",
         "docs/ATLAS-ENERGIA-F0-F1-RICEVUTA.md",
         "content/staging/biblioteca/poesia-energia/materials-f2-results.json",
-        "docs/ATLAS-ENERGIA-F2-RICEVUTA.md"
+        "docs/ATLAS-ENERGIA-F2-RICEVUTA.md",
+        "content/staging/biblioteca/energia/qualification-f5.json",
+        "docs/ATLAS-ENERGIA-F5-QUALIFICAZIONE.md"
       ]
     },
     {
@@ -131,7 +136,9 @@
       "state": "IN_VERIFICA",
       "evidence": [
         "content/staging/biblioteca/poesia-energia/qualification-v0.5.json",
-        "docs/ATLAS-ENERGIA-F3-RICEVUTA.md"
+        "docs/ATLAS-ENERGIA-F3-RICEVUTA.md",
+        "content/staging/biblioteca/energia/qualification-f5.json",
+        "docs/ATLAS-ENERGIA-F5-QUALIFICAZIONE.md"
       ]
     },
     {
@@ -146,7 +153,9 @@
       "state": "IN_VERIFICA",
       "evidence": [
         "content/staging/biblioteca/poesia-energia/qualification-v0.5.json",
-        "docs/ATLAS-ENERGIA-F3-RICEVUTA.md"
+        "docs/ATLAS-ENERGIA-F3-RICEVUTA.md",
+        "content/staging/biblioteca/energia/qualification-f5.json",
+        "docs/ATLAS-ENERGIA-F5-QUALIFICAZIONE.md"
       ]
     },
     {
@@ -165,7 +174,9 @@
       "state": "IN_VERIFICA",
       "evidence": [
         "content/staging/biblioteca/energia/universe-f4-results.json",
-        "docs/ATLAS-ENERGIA-F4-RICEVUTA.md"
+        "docs/ATLAS-ENERGIA-F4-RICEVUTA.md",
+        "content/staging/biblioteca/energia/qualification-f5.json",
+        "docs/ATLAS-ENERGIA-F5-QUALIFICAZIONE.md"
       ]
     },
     {
@@ -178,7 +189,9 @@
       "state": "IN_VERIFICA",
       "evidence": [
         "content/staging/biblioteca/poesia-energia/qualification-v0.5.json",
-        "docs/ATLAS-ENERGIA-F3-RICEVUTA.md"
+        "docs/ATLAS-ENERGIA-F3-RICEVUTA.md",
+        "content/staging/biblioteca/energia/qualification-f5.json",
+        "docs/ATLAS-ENERGIA-F5-QUALIFICAZIONE.md"
       ]
     },
     {
