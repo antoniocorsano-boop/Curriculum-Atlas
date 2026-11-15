@@ -15,7 +15,9 @@
     "editionSha256": "e9c55945eafff4d2d9cb3cddb506839a65ade34b7ba53b18bc62b6b17d671cfc"
   },
   "next": [
-    "F6_R_RIPROGETTAZIONE_DIDATTICA",
+    "F6_R1_COMPRENDI_CAMPIONE",
+    "F6_R2_ESTENSIONE_DOPO_RIESAME",
+    "F6_R3_COERENZA_SCHEDA",
     "F5_R_RIQUALIFICAZIONE_CANDIDATO",
     "F6_RIVALUTAZIONE_UMANA",
     "F0_EVIDENZE_ESTERNE"
@@ -229,7 +231,9 @@
       "state": "APERTO",
       "evidence": [
         "docs/ATLAS-ENERGIA-F6-RIESAME-FORMATIVO.md",
-        "content/staging/biblioteca/energia/formative-review-f6.json"
+        "content/staging/biblioteca/energia/formative-review-f6.json",
+        "docs/ATLAS-CARTA-QUALITA-EDUCATIVA-v1.md",
+        "governance/atlas-quality-standard-v1.json"
       ]
     },
     {
@@ -244,7 +248,9 @@
       "state": "APERTO",
       "evidence": [
         "docs/ATLAS-ENERGIA-F6-RIESAME-FORMATIVO.md",
-        "content/staging/biblioteca/energia/formative-review-f6.json"
+        "content/staging/biblioteca/energia/formative-review-f6.json",
+        "docs/ATLAS-CARTA-QUALITA-EDUCATIVA-v1.md",
+        "governance/atlas-quality-standard-v1.json"
       ]
     }
   ],
@@ -255,5 +261,13 @@
     "P0 risolti e P1 chiusi o accettati esplicitamente se non bloccanti",
     "Autorizzazione esplicita della versione",
     "Nessun dato personale, nessuna spesa nuova"
-  ]
+  ],
+  "qualityStandard": {
+    "id": "ATLAS-QE-01",
+    "version": "1.0",
+    "state": "PROPOSTO_CONSOLIDATO_IN_BOZZA",
+    "document": "docs/ATLAS-CARTA-QUALITA-EDUCATIVA-v1.md",
+    "contract": "governance/atlas-quality-standard-v1.json",
+    "qualificationTemplate": "governance/templates/atlas-opera-qualification-v1.json"
+  }
 }

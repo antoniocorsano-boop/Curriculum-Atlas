@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 1,
+  "standardId": "ATLAS-QE-01",
+  "standardVersion": "1.0",
+  "workId": null,
+  "edition": null,
+  "exactCommit": null,
+  "artifactSha256": null,
+  "stage": "G0_INTENZIONE_E_RISCHI",
+  "studentAuthorized": false,
+  "serialProductionAuthorized": false,
+  "criteria": [
+    {
+      "id": "PERS-01",
+      "status": "NON_VERIFICATO",
+      "evidence": [],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": null
+    },
+    {
+      "id": "PERS-02",
+      "status": "NON_VERIFICATO",
+      "evidence": [],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": null
+    },
+    {
+      "id": "PED-01",
+      "status": "NON_VERIFICATO",
+      "evidence": [],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": null
+    },
+    {
+      "id": "PED-02",
+      "status": "NON_VERIFICATO",
+      "evidence": [],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": null
+    },
+    {
+      "id": "PED-03",
+      "status": "NON_VERIFICATO",
+      "evidence": [],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": null
+    },
+    {
+      "id": "SCI-01",
+      "status": "NON_VERIFICATO",
+      "evidence": [],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": null
+    },
+    {
+      "id": "SCI-02",
+      "status": "NON_VERIFICATO",
+      "evidence": [],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": null
+    },
+    {
+      "id": "EXP-01",
+      "status": "NON_VERIFICATO",
+      "evidence": [],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": null
+    },
+    {
+      "id": "EXP-02",
+      "status": "NON_VERIFICATO",
+      "evidence": [],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": null
+    },
+    {
+      "id": "ART-01",
+      "status": "NON_VERIFICATO",
+      "evidence": [],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": null
+    },
+    {
+      "id": "INC-01",
+      "status": "NON_VERIFICATO",
+      "evidence": [],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": null
+    },
+    {
+      "id": "INC-02",
+      "status": "NON_VERIFICATO",
+      "evidence": [],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": null
+    },
+    {
+      "id": "LAW-01",
+      "status": "NON_VERIFICATO",
+      "evidence": [],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": null
+    },
+    {
+      "id": "LAW-02",
+      "status": "NON_VERIFICATO",
+      "evidence": [],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": null
+    },
+    {
+      "id": "LAW-03",
+      "status": "NON_VERIFICATO",
+      "evidence": [],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": null
+    },
+    {
+      "id": "REL-01",
+      "status": "NON_VERIFICATO",
+      "evidence": [],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": null
+    },
+    {
+      "id": "REL-02",
+      "status": "NON_VERIFICATO",
+      "evidence": [],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": null
+    },
+    {
+      "id": "EVAL-01",
+      "status": "NON_VERIFICATO",
+      "evidence": [],
+      "reviewRole": null,
+      "reviewDate": null,
+      "note": null
+    }
+  ],
+  "humanDecision": {
+    "status": "NON_VERIFICATO",
+    "evidence": [],
+    "authorizedVersion": null
+  },
+  "authority": {
+    "state": "NON_VERIFICATO",
+    "receipt": null
+  },
+  "rights": {
+    "status": "NON_VERIFICATO",
+    "receipt": null
+  },
+  "learningEvidence": {
+    "scope": "NON_VERIFICATO",
+    "methods": [],
+    "limitations": []
+  },
+  "releaseDecision": "NO_GO"
+}
