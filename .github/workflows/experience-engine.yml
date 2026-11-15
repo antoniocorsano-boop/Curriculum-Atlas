@@ -63,3 +63,14 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Browser conformance
         run: pnpm exec playwright test tests/experience-runtime.spec.ts --project=chromium
+
+      - name: AXF real engine host browser qualification (CI only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          route=src/app/experience-lab/axf-host-ci
+          test ! -e "$route"
+          mkdir -p "$route"
+          trap 'rm -rf "$route"' EXIT
+          printf '%s\n' 'export { default } from "../../../../tests/fixtures/axf-host-ci-page";' > "$route/page.tsx"
+          pnpm exec playwright test tests/axf-preview-host.spec.ts --project=chromium
