@@ -1,7 +1,7 @@
 name: AXF Private Render Bundle
 on:
   push:
-    branches: [lab/axf-discovery-continuity-render]
+    branches: [lab/axf-editorial-only-render]
     paths: [".github/workflows/axf-private-render.yml", "scripts/build-axf-private-render.mjs"]
   workflow_dispatch:
 permissions:
@@ -36,7 +36,7 @@ jobs:
       - name: Upload code-only local review bundle
         uses: actions/upload-artifact@v4
         with:
-          name: axf-discovery-code-only-b41a596f
+          name: axf-editorial-only-code-b41a596f
           path: axf-review/
           if-no-files-found: error
           retention-days: 7
