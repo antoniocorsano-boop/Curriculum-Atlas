@@ -80,11 +80,34 @@ test("G2 gateway puts all worlds and direct search in the first viewport; contex
   await page.getByRole("button", { name: "Storie", exact: true }).click();
   await expect(page.getByRole("status")).toHaveText("Nessuna esperienza disponibile.");
   await page.getByRole("button", { name: "Azzera filtri" }).click();
-  await expect(page.getByRole("status")).toHaveText("2 esperienze disponibili.");
+  await expect(page.getByRole("status")).toHaveText("3 esperienze disponibili.");
   await page.getByRole("button", { name: "Esplora i mondi" }).click();
   await expect(page.getByRole("heading", { name: "Esplora Atlas" })).toBeFocused();
   await worlds.getByRole("button", { name: "Energia" }).click();
-  await expect(page.getByRole("status")).toHaveText("Nessuna esperienza disponibile.");
+  await expect(page.getByRole("status")).toHaveText("1 esperienza disponibile.");
+  await expect(page.getByRole("link", { name: /Scoperta sintetica/ })).toBeVisible();
   await expect(page.getByText("SYNTHETIC_DENIED")).toHaveCount(0);
   expect(external).toEqual([]);
+});
+
+test("standalone discovery is reachable through world, section, search and exact route, while denied registrations are absent", async ({page}) => {
+  await page.goto(path);
+  await page.getByRole("navigation",{name:"Mondi della conoscenza"}).getByRole("button",{name:"Energia"}).click();
+  await page.getByRole("button",{name:"Scoperte",exact:true}).click();
+  await page.getByRole("searchbox").fill("sintetica");
+  await expect(page.getByRole("status")).toHaveText("1 esperienza disponibile.");
+  await page.getByRole("link",{name:/Scoperta sintetica/}).click();
+  await expect(page).toHaveURL(/#axf\/standalone-preview-synthetic-discovery$/);
+  await expect(page.getByRole("heading",{name:"Vista autonoma sintetica"})).toBeVisible();
+  await expect(page.locator(".experience-runtime")).toHaveCount(0);
+  await page.getByRole("link",{name:"Atlante",exact:true}).click();
+  await expect(page.getByRole("searchbox")).toHaveValue("sintetica");
+  await expect(page.getByRole("button",{name:"Scoperte",exact:true})).toHaveAttribute("aria-pressed","true");
+  for (const id of ["denied","withdrawn","bad-hash","duplicate"]) {
+    await page.goto(path+"#axf/standalone-preview-"+id);
+    await expect(page).toHaveURL(/#axf$/);
+    await expect(page.getByRole("heading",{name:"Esplora Atlas"})).toBeVisible();
+  }
+  await page.goto(path+"#axf/standalone-preview-synthetic-discovery");
+  await expect(page.getByRole("heading",{name:"Vista autonoma sintetica"})).toBeVisible();
 });
