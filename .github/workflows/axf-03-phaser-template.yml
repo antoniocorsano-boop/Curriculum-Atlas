@@ -88,13 +88,14 @@ jobs:
             fs.writeFileSync(path,s);
           }
           edit('src/game/scenes/MainMenu.ts',[
+            ["import { GameObjects, Scene } from 'phaser';","import { GameObjects, Scene, Math as PhaserMath } from 'phaser';"],
             ['    logoTween: Phaser.Tweens.Tween | null;', '    logoTween: Phaser.Tweens.Tween | null;\n    private token!: GameObjects.Rectangle;'],
             ["        EventBus.emit('current-scene-ready', this);",`        // Neutral test fixture: not a new educational scene.
             this.add.rectangle(410, 620, 150, 150, 0x173d66).setStrokeStyle(5, 0xffffff);
             this.token = this.add.rectangle(170, 620, 150, 150, 0xffcc55).setDepth(200).setInteractive();
             this.input.setDraggable(this.token);
             this.token.on('drag', (_pointer: Phaser.Input.Pointer, x: number, y: number) => {
-                this.token.setPosition(Phaser.Math.Clamp(x,75,949), Phaser.Math.Clamp(y,75,693));
+                this.token.setPosition(PhaserMath.Clamp(x,75,949), PhaserMath.Clamp(y,75,693));
             });
             this.token.on('dragend', () => {
                 this.setTokenPlaced(Math.hypot(this.token.x-410,this.token.y-620)<95);
@@ -109,6 +110,9 @@ jobs:
             changeScene ()`]
           ]);
           edit('src/App.tsx',[
+            ["import { MainMenu } from './game/scenes/MainMenu';","import { MainMenu } from './game/scenes/MainMenu';\nimport { Math as PhaserMath } from 'phaser';"],
+            ["Phaser.Math.Between(64, scene.scale.width - 64)","PhaserMath.Between(64, scene.scale.width - 64)"],
+            ["Phaser.Math.Between(64, scene.scale.height - 64)","PhaserMath.Between(64, scene.scale.height - 64)"],
             ["import { useRef, useState } from 'react';","import { useRef, useState, useEffect } from 'react';\nimport { EventBus } from './game/EventBus';"],
             ['    const [canMoveSprite, setCanMoveSprite] = useState(true);',`    const [canMoveSprite, setCanMoveSprite] = useState(true);
             const [mounted, setMounted] = useState(true);
