@@ -224,6 +224,7 @@ jobs:
           test ! -e public/__axf-energy-review
           mkdir -p src/app/experience-lab/axf-energy-review
           cp labs/axf-energy/host-fixture.tsx.txt src/app/experience-lab/axf-energy-review/page.tsx
+          cp evidence/studio-specialized-snapshot.json src/app/experience-lab/axf-energy-review/studio-specialized-snapshot.json
           cp -r preview public/__axf-energy-review
           cp labs/axf-energy/host-test.spec.ts.txt tests/axf-energy-host-review.spec.ts
           pnpm typecheck
