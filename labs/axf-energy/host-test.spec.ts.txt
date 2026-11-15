@@ -40,7 +40,7 @@ test("trusted renderer must collect valid evidence, can revoke it, and engine ow
   await expect(page.locator("#trials tr")).toHaveCount(0);
   expect(writes).toEqual([]);
   expect(external).toEqual([]);
-  expect(await page.evaluate(()=>localStorage.getItem("atlas:experience:axf-energy-host-review"))).toBeNull();
+  expect(await page.evaluate(()=>localStorage.getItem("atlas:experience:studio-axf-axf-energy"))).toBeNull();
 });
 test("absent or incompatible renderer fails closed; claimed completion is rejected",async({page})=>{
   await page.goto("/experience-lab/axf-energy-review");
