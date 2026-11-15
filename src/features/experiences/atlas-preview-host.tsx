@@ -79,7 +79,7 @@ export function AtlasPreviewHost({ snapshots, artwork, placements = noPlacements
   const artStyle = { "--axf-landscape": landscape, "--axf-portrait": portrait ?? landscape } as CSSProperties;
   const results = (
     <section className="axfPreviewHost__results" aria-label="Risultati della ricerca">
-      <p role="status">{hits.length === 0 ? "Nessuna esperienza disponibile." : hits.length + " esperienze disponibili."}</p>
+      <p role="status">{hits.length === 0 ? "Nessuna esperienza disponibile." : hits.length === 1 ? "1 esperienza disponibile." : hits.length + " esperienze disponibili."}</p>
       <nav aria-label="Esperienze di prova">
         {hits.map(entry => <a key={entry.id} href={routeFor(entry.id)}><strong>{entry.title}</strong><small>{entry.description}</small></a>)}
       </nav>
