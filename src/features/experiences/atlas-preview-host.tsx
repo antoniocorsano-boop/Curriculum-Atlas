@@ -38,7 +38,7 @@ function validStandalone(value: AtlasStandalonePreview): boolean {
     typeof value.id === "string" && /^standalone-preview-[a-z0-9-]{3,80}$/.test(value.id) &&
     typeof value.title === "string" && value.title.trim().length > 0 && value.title.length <= 150 &&
     typeof value.description === "string" && value.description.trim().length > 0 && value.description.length <= 500 &&
-    typeof value.version === "string" && /^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.-]+)?$/.test(value.version) &&
+    typeof value.version === "string" && /^[0-9]+\.[0-9]+\.[0-9]+(?:-[a-z0-9.-]+)?$/.test(value.version) &&
     typeof value.sha256 === "string" && /^[a-f0-9]{64}$/.test(value.sha256) &&
     WORLDS.some(([id]) => id === value.world) && value.section === "Scoperte" &&
     value.availability === "ACTIVE" && value.runtimeAuthorized === false && value.studentAuthorized === false &&
