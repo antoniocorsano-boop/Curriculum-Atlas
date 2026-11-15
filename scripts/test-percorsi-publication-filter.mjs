@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { loadPublicPathways } from "../src/features/pathways/load-public-pathways.ts";
 import {
   filterUnauthorizedPathwayRoutes,
   routeDirectory,
@@ -22,6 +23,7 @@ const portfolio = {
     {
       pathwayId: "pw-authorized",
       runtimeAuthorization: "RUNTIME_AUTHORIZED",
+      availability: "ACTIVE",
       runtimeQualificationTarget: { intendedPublicPath: "/percorsi/pw-authorized" },
     },
   ],
@@ -60,3 +62,31 @@ assert.throws(
 );
 
 console.log("PERCORSI PUBLICATION FILTER: PASS");
+
+
+// Missing or malformed availability must not activate a catalog entry or retain export bytes.
+const base = {
+  pathwayId: "pw-example", title: "Synthetic example", version: "1.0.0",
+  provenanceRef: "SYNTHETIC_TEST", publicPath: "/percorsi/pw-example",
+  runtimeAuthorization: "RUNTIME_AUTHORIZED",
+};
+for (const availability of [undefined, null, "", "UNKNOWN", true]) {
+  assert.deepEqual(loadPublicPathways([{ ...base, availability }]), []);
+}
+assert.equal(loadPublicPathways([{ ...base, availability: "ACTIVE" }])[0].launchHref, base.publicPath);
+assert.equal(loadPublicPathways([{ ...base, availability: "WITHDRAWN" }])[0].launchHref, null);
+assert.deepEqual(loadPublicPathways([{ ...base, availability: "ACTIVE", runtimeAuthorization: "NOT_RUNTIME_AUTHORIZED" }]), []);
+for (const availability of [undefined, null, "", "UNKNOWN", true, "WITHDRAWN", "ACTIVE"]) {
+  const localDir = routeDirectory(out, base.publicPath);
+  fs.mkdirSync(localDir, { recursive: true });
+  fs.writeFileSync(path.join(localDir, "index.html"), "synthetic bytes");
+  const source = { ...base, availability, runtimeQualificationTarget: { intendedPublicPath: base.publicPath } };
+  fs.writeFileSync(portfolioPath, JSON.stringify({ pathways: [source] }));
+  const [decision] = filterUnauthorizedPathwayRoutes({ exportDir: out, portfolioPath });
+  const active = availability === "ACTIVE";
+  assert.equal(decision.action, active ? "KEPT" : "REMOVED");
+  assert.equal(fs.existsSync(path.join(localDir, "index.html")), active);
+}
+const realPortfolio = JSON.parse(fs.readFileSync("governance/percorsi-portfolio.json", "utf8"));
+assert.deepEqual(loadPublicPathways(realPortfolio.pathways), [], "current baseline has no authorized pathways");
+console.log("PERCORSI EXPLICIT AVAILABILITY: PASS — catalog and export agree; withdrawn is visible only as a non-launchable summary.");
