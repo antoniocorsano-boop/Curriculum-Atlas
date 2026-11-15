@@ -1,68 +1,96 @@
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, BookOpen, Compass, Library, Waypoints } from "lucide-react";
+import { ArrowRight, Compass } from "lucide-react";
 import { AppShell } from "@/components/atlas/app-shell";
+import { publishedLessons } from "@/features/materials/fixtures";
+import storiesCover from "../../public/biblioteca/copertine/storie.webp";
+import labsCover from "../../public/biblioteca/copertine/laboratori.webp";
+import discoveriesCover from "../../public/biblioteca/copertine/scoperte.webp";
+import pathwaysCover from "../../public/biblioteca/copertine/percorsi.webp";
+import "./biblioteca.css";
 
-const quick = [
-  { href: "/esplora", label: "Esplora", detail: "Mappa relazionale del curricolo", icon: Compass },
-  { href: "/curricolo", label: "Curricolo", detail: "Struttura, annualità e obiettivi", icon: BookOpen },
-  { href: "/materiali", label: "Materiali", detail: "Materiali pubblicati, organizzati per lezione", icon: Library },
-  { href: "/percorsi", label: "Percorsi", detail: "Itinerari e connessioni didattiche", icon: Waypoints },
+const shelves = [
+  { id: "storie", title: "Storie", caption: "Racconti e mondi narrativi", cover: storiesCover },
+  { id: "laboratori", title: "Laboratori", caption: "Esperienze e simulazioni", cover: labsCover },
+  { id: "scoperte", title: "Scoperte", caption: "Conoscenze e approfondimenti", cover: discoveriesCover },
+  { id: "percorsi", title: "Percorsi", caption: "Competenze e crescita", cover: pathwaysCover },
+] as const;
+
+const discoveries = [
+  { lessonId: "1c-tec-03", materialId: "1c-20260923-infografica" },
+  { lessonId: "2c-tec-02", materialId: "m4" },
+  { lessonId: "3e-tec-02", materialId: "3e-20260923-infografica" },
 ];
+const labs = [
+  { lessonId: "1c-tec-03", materialId: "1c-20260923-scheda" },
+  { lessonId: "3e-tec-02", materialId: "3e-20260923-scheda" },
+];
+
+function PublishedSelection({ items }: { items: ReadonlyArray<{ lessonId: string; materialId: string }> }) {
+  const available = items.flatMap(item => {
+    const lesson = publishedLessons.find(entry => entry.id === item.lessonId);
+    const material = lesson?.materials.find(entry => entry.id === item.materialId);
+    if (!material?.url || !material.url.startsWith("/materials/")) return [];
+    return [{ ...item, title: material.title, href: material.url, kind: material.kind }];
+  });
+  if (available.length === 0) return <p>Nessun materiale disponibile in questa selezione.</p>;
+  return <div className="library-works">
+    {available.map(item => (
+      <Link href={item.href} key={item.materialId} className="library-work" target="_blank" rel="noreferrer">
+        <span><small>Tecnologia · {item.kind}</small><strong>{item.title}</strong></span>
+        <ArrowRight size={18} aria-hidden="true" />
+      </Link>
+    ))}
+  </div>;
+}
 
 export default function HomePage() {
   return (
     <AppShell>
-      <header className="atlas-page-heading">
-        <div>
-          <span className="atlas-eyebrow">Atlas · TRAMA</span>
-          <h1>Il curricolo, connesso.</h1>
-          <p>Una mappa leggibile di curricolo, relazioni e risorse.</p>
-        </div>
-      </header>
-
-      <div className="atlas-home-grid">
-        <section className="atlas-hero">
-          <span className="atlas-eyebrow">Esplora. Comprendi. Costruisci.</span>
-          <h2>Esplora connessioni, progressioni e risorse.</h2>
-          <p>
-            Atlas rende visibili le relazioni tra annualità, nuclei, obiettivi, prerequisiti e raccordi.
-            Arena resta la fonte curricolare; Atlas organizza l&apos;esplorazione e collega le risorse.
-          </p>
-
-          <div className="atlas-feature-grid">
-            <article className="atlas-feature">
-              <Compass size={22} color="var(--domain-atlas)" aria-hidden="true" />
-              <strong>Esplorazione semantica</strong>
-              <span>Connessioni leggibili tra discipline, concetti e risorse.</span>
-            </article>
-            <article className="atlas-feature">
-              <Waypoints size={22} color="var(--connection-gold)" aria-hidden="true" />
-              <strong>Curricolo vivo</strong>
-              <span>Progressioni, prerequisiti e raccordi in una struttura navigabile.</span>
-            </article>
-            <article className="atlas-feature">
-              <Library size={22} color="var(--authority-arena)" aria-hidden="true" />
-              <strong>Risorse autorevoli</strong>
-              <span>Materiali Atlas collegati a riferimenti curricolari verificabili.</span>
-            </article>
+      <div className="atlas-library">
+        <header className="library-intro">
+          <div>
+            <span className="library-kicker">Biblioteca educativa</span>
+            <h1>ATLAS</h1>
+            <p className="library-motto">Esplora · Scopri · Comprendi · Sperimenta</p>
+            <p>Scegli una storia, una scoperta o un’esperienza.</p>
           </div>
+          <Link href="/esplora" className="library-start"><Compass size={22} aria-hidden="true" /> Esplora la mappa <ArrowRight size={18} aria-hidden="true" /></Link>
+        </header>
+
+        <nav className="library-doors" aria-label="Sezioni della biblioteca">
+          {shelves.map(({ id, title, caption, cover }) => (
+            <Link key={id} href={"#" + id} className="library-door">
+              <Image src={cover} alt="" unoptimized sizes="(max-width: 720px) 48vw, (max-width: 1279px) 40vw, 25vw" />
+              <div><h2>{title}</h2><p>{caption}</p><ArrowRight size={18} aria-hidden="true" /></div>
+            </Link>
+          ))}
+        </nav>
+
+        <section id="storie" className="library-section" aria-labelledby="library-storie">
+          <h2 id="library-storie">Storie</h2>
+          <p>La raccolta è in preparazione. Qui troverai i racconti quando saranno pronti per la lettura.</p>
+        </section>
+        <section id="laboratori" className="library-section" aria-labelledby="library-laboratori">
+          <div className="library-section-heading"><div><span className="atlas-eyebrow">Sperimenta</span><h2 id="library-laboratori">Laboratori</h2></div><Link href="/materiali">Materiali delle lezioni <ArrowRight size={16} aria-hidden="true" /></Link></div>
+          <p>Attività su carta già disponibili per provare e spiegare le proprie idee.</p>
+          <PublishedSelection items={labs} />
+        </section>
+        <section id="scoperte" className="library-section" aria-labelledby="library-scoperte">
+          <div className="library-section-heading"><div><span className="atlas-eyebrow">Comprendi</span><h2 id="library-scoperte">Scoperte</h2></div><Link href="/materiali">Materiali delle lezioni <ArrowRight size={16} aria-hidden="true" /></Link></div>
+          <p>Infografiche per osservare come funzionano le cose.</p>
+          <PublishedSelection items={discoveries} />
+        </section>
+        <section id="percorsi" className="library-section" aria-labelledby="library-percorsi">
+          <div className="library-section-heading"><div><span className="atlas-eyebrow">Cresci</span><h2 id="library-percorsi">Percorsi</h2></div><Link href="/percorsi">Catalogo dei percorsi <ArrowRight size={16} aria-hidden="true" /></Link></div>
+          <p>Esplora le esperienze disponibili per imparare, scegliere, collaborare e affrontare problemi.</p>
         </section>
 
-        <aside className="atlas-panel">
-          <h3>Esplora Atlas</h3>
-          <div className="atlas-quick-list">
-            {quick.map(({ href, label, detail, icon: Icon }) => (
-              <Link key={href} href={href} className="atlas-quick-link">
-                <Icon size={20} aria-hidden="true" />
-                <span>
-                  <strong>{label}</strong><br />
-                  <small>{detail}</small>
-                </span>
-                <ArrowRight size={16} aria-hidden="true" />
-              </Link>
-            ))}
-          </div>
-        </aside>
+        <footer className="library-institution">
+          <div><strong>Il curricolo, connesso.</strong><p>Arena è la fonte curricolare; Atlas organizza la consultazione e collega i materiali disponibili.</p></div>
+          <Link href="/curricolo">Curricolo di istituto</Link>
+          <Link href="/risorse">Catalogo delle risorse</Link>
+        </footer>
       </div>
     </AppShell>
   );

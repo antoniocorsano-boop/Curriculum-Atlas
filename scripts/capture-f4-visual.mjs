@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 
 const base = process.env.BASE_URL || "http://127.0.0.1:3000";
 const viewports = [
+  { name: "mobile-320", width: 320, height: 720, homeOnly: true },
   { name: "mobile-360", width: 360, height: 800 },
   { name: "mobile-430", width: 430, height: 932 },
   { name: "lim-1080p", width: 1920, height: 1080 }
@@ -20,7 +21,7 @@ try {
     });
     const page = await context.newPage();
 
-    for (const surface of surfaces) {
+    for (const surface of (viewport.homeOnly ? [""] : surfaces)) {
       const path = surface ? "/" + surface : "/";
       await page.goto(base + path, { waitUntil: "networkidle" });
       const metrics = await page.evaluate(() => ({
@@ -61,6 +62,30 @@ try {
         });
         console.error("F4 overflow offenders:", JSON.stringify(offenders, null, 2));
         throw new Error(`Horizontal overflow detected on ${path} / ${viewport.name}: ${metrics.scrollWidth} > ${metrics.clientWidth}`);
+      }
+
+      if (!surface) {
+        await page.waitForFunction(() => {
+          const images = [...document.querySelectorAll(".library-door img")];
+          return images.length === 4 && images.every(img => img.complete && img.naturalWidth > 0);
+        });
+        const layout = await page.locator(".library-door").evaluateAll(nodes => {
+          const boxes = nodes.map(node => {
+            const r = node.getBoundingClientRect();
+            return { x: Math.round(r.x), y: Math.round(r.y), bottom: Math.ceil(r.bottom), width: r.width };
+          });
+          return { boxes, rows: new Set(boxes.map(box => box.y)).size, cols: new Set(boxes.map(box => box.x)).size };
+        });
+        const isLim = viewport.name === "lim-1080p";
+        if (layout.boxes.length !== 4 || layout.cols !== (isLim ? 4 : 2) ||
+            layout.rows !== (isLim ? 1 : 2) || layout.boxes.some(box => box.width < 44)) {
+          throw new Error("Invalid library shelf geometry: " + JSON.stringify(layout));
+        }
+        if (isLim && layout.boxes.some(box => box.y < 0 || box.bottom > viewport.height)) {
+          throw new Error("All four library covers must fit in the first LIM viewport: " + JSON.stringify(layout));
+        }
+        console.log("LIBRARY_LAYOUT_PASS", viewport.name, JSON.stringify(layout));
+        await page.screenshot({ path: `artifacts/f4-visual/home-${viewport.name}-viewport.png`, fullPage: false });
       }
 
       if (viewport.name.startsWith("mobile")) {
