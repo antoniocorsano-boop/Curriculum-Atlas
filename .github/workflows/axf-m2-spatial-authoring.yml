@@ -1,0 +1,200 @@
+name: AXF-M2 Spatial authoring baseline
+on:
+  pull_request:
+    paths:
+      - "labs/axf-m2/**"
+      - ".github/workflows/axf-m2-spatial-authoring.yml"
+permissions:
+  contents: read
+jobs:
+  tiled-phaser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Export real Tiled map and record tool version
+        run: |
+          mkdir -p evidence preview/vendor harness
+          sudo apt-get update -q
+          sudo apt-get install -y tiled xvfb
+          xvfb-run -a tiled --version | tee evidence/tiled-version.txt
+          cp labs/axf-m2/{index.html,spatial.mjs} preview/
+          xvfb-run -a tiled --export-map json labs/axf-m2/world.tmx preview/world.json
+          test -s preview/world.json
+          xvfb-run -a tiled --export-map json preview/world.json preview/roundtrip.json
+          python3 - <<'PY'
+          import json
+          a=json.load(open('preview/world.json')); b=json.load(open('preview/roundtrip.json'))
+          def projection(m):
+              return [(o['name'],o['x'],o['y'],o['width'],o['height'],o.get('properties',[])) for l in m['layers'] for o in l['objects']]
+          assert projection(a)==projection(b)
+          assert len(projection(a))==6
+          print("PASS Tiled round-trip with six objects and action metadata")
+          PY
+          cp preview/world.json evidence/
+      - name: Reuse exact Phaser renderer and verify audit
+        working-directory: harness
+        run: |
+          npm init -y >/dev/null
+          npm install --save-exact --ignore-scripts --no-audit --no-fund phaser@4.2.1 eventemitter3@5.0.4 playwright@1.56.1
+          npm audit --omit=dev
+          cp node_modules/phaser/dist/phaser.esm.min.js ../preview/vendor/phaser.esm.js
+          echo "f4c5fd140d118c10fa9090641a03c17303bab9bfdc28e0626296777db1bb1bde  ../preview/vendor/phaser.esm.js" | sha256sum -c -
+          npx playwright install --with-deps chromium
+      - name: Test imported object layers in actual browser
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory preview >/tmp/axf-m2-a.log 2>&1 &
+          cat > harness/test.cjs <<'JS'
+          const {chromium}=require('playwright');
+          const assert=require('node:assert/strict');
+          const fs=require('node:fs');
+          (async()=>{
+            const browser=await chromium.launch();
+            const reports=[];
+            for(const [w,h] of [[320,720],[390,844],[844,390],[1280,800]]){
+              const c=await browser.newContext({viewport:{width:w,height:h},hasTouch:w<900,isMobile:w<900,serviceWorkers:'block'});
+              const page=await c.newPage(),errors=[],external=[];
+              page.on('pageerror',e=>errors.push(String(e)));
+              page.on('request',r=>{if(!r.url().startsWith('http://127.0.0.1:8765/')&&!r.url().startsWith('data:'))external.push(r.url())});
+              await c.route('**/*',r=>r.request().url().startsWith('http://127.0.0.1:8765/')||r.request().url().startsWith('data:')?r.continue():r.abort());
+              await page.goto('http://127.0.0.1:8765/');
+              const canvas=page.locator('#game[data-ready=true] canvas');
+              await canvas.waitFor({state:'visible',timeout:30000});
+              const box=await canvas.boundingBox();
+              for(const [x,y,expected] of [[320,250,'Causa non nota'],[115,77,'stesso servizio'],[510,265,'prova le lampade']]){
+                const px=box.x+box.width*x/640,py=box.y+box.height*y/384;
+                if(w<900)await page.touchscreen.tap(px,py);else await page.mouse.click(px,py);
+                assert((await page.locator('#status').innerText()).includes(expected));
+              }
+              await page.getByRole('button',{name:'Quaderno'}).press('Enter');
+              assert((await page.locator('#status').innerText()).includes('stesso servizio'));
+              assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+              assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
+              await page.screenshot({path:'evidence/tiled-'+w+'x'+h+'.png',fullPage:true});
+              reports.push({viewport:w+'x'+h,threeCanvasZones:true,keyboardAlternative:true,errors,external});
+              await c.close();
+            }
+            await browser.close();fs.writeFileSync('evidence/tiled-browser.json',JSON.stringify(reports,null,2));console.log(JSON.stringify(reports));
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+          node harness/test.cjs
+      - name: Archive diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: axf-m2-a-tiled-phaser
+          path: evidence/
+          retention-days: 7
+  gdevelop-official:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: GDevelopApp/GDevelop-examples
+          ref: a40f1279fdc6c7b8dd902691aee85630a17568d7
+          path: official-example
+          persist-credentials: false
+          sparse-checkout: |
+            examples/starting-point-and-click-adventure
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Download and verify official portable editor
+        run: |
+          mkdir -p evidence editor harness
+          sudo apt-get update -q
+          sudo apt-get install -y xvfb libnss3 libasound2t64 libgbm1 libgtk-3-0 libxss1 libatk-bridge2.0-0 libdrm2 libxkbcommon0
+          curl -fL --retry 2 --max-time 180 https://github.com/4ian/GDevelop/releases/download/v5.6.285/GDevelop-5-5.6.285-linux.zip -o editor.zip
+          echo "4728cf6df5c30aab0c8b211875c0a0a9c6d026da8781a28a389cafe6f3266839  editor.zip" | sha256sum -c -
+          unzip -q editor.zip -d editor
+          find editor -type f \( -name gdevelop -o -name GDevelop \) -print | head -1 > executable.txt
+          test -s executable.txt
+          chmod +x "$(cat executable.txt)"
+      - name: Apply documented startup metrics opt-out in isolated project copy
+        run: |
+          cp -a official-example/examples/starting-point-and-click-adventure optout-example
+          python3 - <<'PY'
+          import json,pathlib,hashlib
+          p=pathlib.Path('optout-example/starting-point-and-click-adventure.json')
+          original=p.read_bytes()
+          data=json.loads(original)
+          assert len(data['layouts'])==1
+          scene=data['layouts'][0]
+          first=scene['events'][0]
+          assert first['conditions'][0]['type']['value']=='SceneJustBegins'
+          first['actions'].insert(0,{'type':{'value':'EnableMetrics'},'parameters':['','no']})
+          p.write_text(json.dumps(data,ensure_ascii=False,indent=2))
+          report={'upstreamCommit':'a40f1279fdc6c7b8dd902691aee85630a17568d7','originalSha256':hashlib.sha256(original).hexdigest(),'candidateSha256':hashlib.sha256(p.read_bytes()).hexdigest(),'change':'SceneJustBegins first action EnableMetrics no','engineVersion':'5.6.285'}
+          pathlib.Path('evidence/optout.json').write_text(json.dumps(report,indent=2))
+          PY
+      - name: Export isolated opt-out example locally without account or cloud
+        run: |
+          project="$PWD/optout-example/starting-point-and-click-adventure.json"
+          test -s "$project"
+          test "$(git -C official-example rev-parse HEAD)" = a40f1279fdc6c7b8dd902691aee85630a17568d7
+          timeout 300 xvfb-run -a "$(cat executable.txt)" --no-sandbox --disable-update-check --run-command EXPORT_HTML5_EXTERNAL "$project" 2>&1 | tee evidence/export.log
+          test -s "$(dirname "$project")/build/index.html"
+          grep -R -E -l --include="code*.js" "enableMetrics\\([^;]*false" "$(dirname "$project")/build" | tee evidence/compiled-optout.txt
+          test -s evidence/compiled-optout.txt
+          du -sb "$(dirname "$project")/build" | tee evidence/size.txt
+          find "$(dirname "$project")/build" -type f | wc -l | tee evidence/files.txt
+      - name: Install browser harness
+        working-directory: harness
+        run: |
+          npm init -y >/dev/null
+          npm install --save-exact --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Probe official exported scene without external requests
+        run: |
+          python3 -m http.server 8766 --bind 127.0.0.1 --directory optout-example/build >/tmp/axf-m2-b.log 2>&1 &
+          cat > harness/test.cjs <<'JS'
+          const {chromium}=require('playwright');
+          const assert=require('node:assert/strict');
+          const fs=require('node:fs');
+          (async()=>{
+            const browser=await chromium.launch();
+            const reports=[];
+            for(const [w,h] of [[390,844],[844,390],[1280,800]]){
+              const c=await browser.newContext({viewport:{width:w,height:h},hasTouch:w<900,isMobile:w<900,serviceWorkers:'block'});
+              const page=await c.newPage(),external=[],errors=[],writes=[],sockets=[];
+              page.on('pageerror',e=>errors.push(String(e)));
+              page.on('websocket',s=>sockets.push(s.url()));
+              page.on('request',r=>{if(!['GET','HEAD'].includes(r.method()))writes.push(r.method()+' '+r.url());if(!r.url().startsWith('http://127.0.0.1:8766/')&&!r.url().startsWith('data:')&&!r.url().startsWith('blob:'))external.push(r.url())});
+              await c.route('**/*',r=>/^(http:\/\/127\.0\.0\.1:8766\/|data:|blob:)/.test(r.request().url())?r.continue():r.abort());
+              await page.goto('http://127.0.0.1:8766/');
+              await page.locator('canvas').first().waitFor({state:'visible',timeout:30000});
+              await page.waitForTimeout(6500);
+              const canvas=page.locator('canvas').first(),box=await canvas.boundingBox();
+              assert(box&&box.width>0&&box.height>0);
+              const px=box.x+box.width*.48,py=box.y+box.height*.60;
+              if(w<900)await page.touchscreen.tap(px,py);else await page.mouse.click(px,py);
+              await page.waitForTimeout(1800);
+              const other=await c.newPage();await other.goto('about:blank');await other.bringToFront();
+              await page.waitForTimeout(1000);await page.bringToFront();await page.waitForTimeout(5000);
+              await page.screenshot({path:'evidence/gdevelop-'+w+'x'+h+'.png'});
+              const storage=await page.evaluate(async()=>({local:Object.keys(localStorage),session:Object.keys(sessionStorage),databases:(await indexedDB.databases()).map(d=>d.name),caches:await caches.keys()}));
+              const cookies=await c.cookies();
+              await page.goto('about:blank');await page.waitForTimeout(1000);
+              reports.push({viewport:w+'x'+h,canvas:{width:box.width,height:box.height},external,errors,writes,sockets,storage,cookieCount:cookies.length});
+              fs.writeFileSync('evidence/gdevelop-browser.json',JSON.stringify(reports,null,2));
+              assert.deepEqual(errors,[]);assert.deepEqual(external,[]);assert.deepEqual(writes,[]);assert.deepEqual(sockets,[]);
+              assert.deepEqual(storage,{local:[],session:[],databases:[],caches:[]});assert.equal(cookies.length,0);
+              await c.close();
+            }
+            await browser.close();fs.writeFileSync('evidence/gdevelop-browser.json',JSON.stringify(reports,null,2));console.log(JSON.stringify(reports));
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+          node harness/test.cjs
+      - name: Archive diagnostics only (no redistribution of upstream export)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: axf-m2-b-gdevelop-baseline
+          path: evidence/
+          retention-days: 7
