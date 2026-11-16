@@ -91,7 +91,34 @@ def main(out):
     (out/"manifest.json").write_text(json.dumps(receipt,indent=2)+"\n")
     print("Powered by Poly Haven — seven local resources verified",flush=True)
 
+def verify_local(out):
+    """Verify the complete provisional source bundle without network access."""
+    receipt=json.loads((out/"manifest.json").read_text())
+    assert receipt["provider"]=="Poly Haven" and receipt["license"]=="CC0-1.0" and receipt["licenseUrl"]=="https://polyhaven.com/license"
+    expected={}
+    for slug,config in SPEC.items():
+        meta=json.loads((out/(slug+"-metadata.json")).read_text())
+        for key in config["keys"]:
+            actual,fmt,entry=select_entry(meta,slug,key)
+            name=slug+".hdr" if key=="hdri" else slug+"_"+key+".jpg"
+            expected[name]=(slug,config,key,actual,fmt,entry)
+    files=receipt["files"]
+    assert len(files)==7 and {i["name"] for i in files}==set(expected)
+    assert sum(i["bytes"] for i in files)<=12*1024*1024
+    for item in files:
+        name=item["name"];slug,config,key,actual,fmt,entry=expected[name]
+        assert (item["asset"],item["author"],item["semanticMap"],item["providerMap"],item["url"],item["resolution"])==(slug,config["author"],key,actual,entry["url"],"1k"),name
+        path=out/name
+        assert path.is_file() and not path.is_symlink(),name
+        assert path.stat().st_size==entry["size"]==item["bytes"],name
+        b=path.read_bytes()
+        assert hashlib.md5(b).hexdigest()==entry["md5"].lower()==item["md5"].lower(),name
+        assert hashlib.sha256(b).hexdigest()==item["sha256"],name
+        assert (b.startswith(b"\xff\xd8") if fmt=="jpg" else b.startswith((b"#?RADIANCE",b"#?RGBE"))),name
+    print("Local source bundle: seven verified resources; no network",flush=True)
+
 if __name__=="__main__":
     if sys.argv[1:]==["--selftest"]: selftest()
+    elif len(sys.argv)==3 and sys.argv[1]=="--verify": verify_local(pathlib.Path(sys.argv[2]))
     elif len(sys.argv)==2: main(pathlib.Path(sys.argv[1]))
-    else: raise SystemExit("Usage: acquire-materials.py OUT or --selftest")
+    else: raise SystemExit("Usage: acquire-materials.py OUT | --selftest | --verify OUT")
