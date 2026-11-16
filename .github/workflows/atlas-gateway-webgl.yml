@@ -1,0 +1,81 @@
+name: Atlas Gateway — Local WebGL
+
+on:
+  pull_request:
+    paths:
+      - "src/features/atlas-gateway/**"
+      - "src/app/gateway/**"
+      - "src/app/esperienze/**"
+      - "docs/atlas-gateway/**"
+      - "scripts/*atlas-gateway*"
+      - "package.json"
+      - ".github/workflows/atlas-gateway-webgl.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  local-webgl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Install existing application dependencies
+        run: pnpm install --no-frozen-lockfile
+      - name: Verify portal contract
+        run: node --experimental-strip-types --test scripts/test-atlas-gateway-ag03.mjs
+      - name: Prepare and verify local engine and styles
+        run: |
+          node scripts/build-atlas-gateway-local.mjs "$RUNNER_TEMP/atlas-gateway"
+          echo "ATLAS_GATEWAY_SCENE_FILE=$RUNNER_TEMP/atlas-gateway/scene.html" >> "$GITHUB_ENV"
+          echo "ATLAS_GATEWAY_SCENE_SHA256=$(sha256sum "$RUNNER_TEMP/atlas-gateway/scene.html" | cut -d' ' -f1)" >> "$GITHUB_ENV"
+          echo "ATLAS_GATEWAY_EVIDENCE=$RUNNER_TEMP/atlas-gateway/evidence" >> "$GITHUB_ENV"
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Lint
+        run: pnpm lint
+      - name: Build local candidate
+        env:
+          ATLAS_GATEWAY_PREVIEW: "true"
+        run: pnpm build
+      - name: Start local candidate and verify real scene
+        shell: bash
+        env:
+          ATLAS_GATEWAY_PREVIEW: "true"
+        run: |
+          set -euo pipefail
+          pnpm start --hostname 127.0.0.1 > "$RUNNER_TEMP/atlas-gateway/server.log" 2>&1 &
+          trap 'kill $! 2>/dev/null || true' EXIT
+          for i in {1..60}; do
+            if curl -fsS http://127.0.0.1:3000/gateway/ >/dev/null; then
+              node scripts/test-atlas-gateway-webgl.mjs
+              exit 0
+            fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/atlas-gateway/server.log"
+          exit 1
+      - name: Preserve qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-gateway-local-webgl
+          path: |
+            ${{ runner.temp }}/atlas-gateway/manifest.json
+            ${{ runner.temp }}/atlas-gateway/*LICENSE.txt
+            ${{ runner.temp }}/atlas-gateway/evidence/
+            ${{ runner.temp }}/atlas-gateway/server.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+# Read-only qualification: no deployment, pages permissions or student authorization.
