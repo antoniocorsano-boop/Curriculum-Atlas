@@ -8,6 +8,11 @@ on:
       - ".github/workflows/atlas-gateway-c3-bay.yml"
   workflow_dispatch:
 
+# Only superseded executions of the same pull request are cancelled.
+concurrency:
+  group: atlas-gateway-c3-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
