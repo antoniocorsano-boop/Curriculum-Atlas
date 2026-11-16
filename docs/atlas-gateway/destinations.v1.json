@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "atlas.gateway.destinations/v1",
+  "phase": "AG-02",
+  "status": "DESIGN_CANDIDATE_NOT_RUNTIME_AUTHORIZED",
+  "atlasEvidenceHead": "d2938378c9384c5122adb8379396dbad5b4385fe",
+  "studioEvidenceHead": "4d9b7b487f3f920dad54593683b19a742d639b84",
+  "navigation": {
+    "useNextLink": true,
+    "pathsAreAppRelative": true,
+    "preserveDirectEntry": true,
+    "homeUnchanged": true,
+    "allowDemoPublication": false
+  },
+  "portals": [
+    {
+      "id": "curricolo",
+      "label": "Curricolo Atlas",
+      "state": "VERIFIED_ROUTE",
+      "primaryPath": "/curricolo",
+      "relatedPaths": [
+        "/esplora"
+      ],
+      "evidence": "src/app/curricolo/page.tsx",
+      "authority": "Arena",
+      "preserveProvenance": true,
+      "foundationOnlyPaths": [
+        "/obiettivi",
+        "/raccordi"
+      ]
+    },
+    {
+      "id": "esperienze",
+      "label": "Esperienze Atlas",
+      "state": "HUB_REQUIRED",
+      "primaryPath": null,
+      "proposedPath": "/esperienze",
+      "relatedPaths": [
+        "/percorsi",
+        "/materiali",
+        "/risorse"
+      ],
+      "categories": [
+        "Storie",
+        "Laboratori",
+        "Scoperte",
+        "Percorsi"
+      ],
+      "publicationPolicy": "EXISTING_AUTHORIZED_CATALOG_ONLY",
+      "noLabLinks": true,
+      "verifiedPortfolioAtEvidenceHead": {
+        "registered": 2,
+        "runtimeAuthorized": 0
+      }
+    },
+    {
+      "id": "studio",
+      "label": "Studio Atlas",
+      "state": "PROFESSIONAL_HANDOFF_BLOCKED",
+      "primaryPath": null,
+      "relatedPaths": [],
+      "externalDestination": null,
+      "productRepository": "antoniocorsano-boop/trama-ecosistema",
+      "productRoot": "products/studio-atlas/",
+      "identityRequired": true,
+      "requireVerifiedAuthorizedOrigin": true
+    }
+  ]
+}
