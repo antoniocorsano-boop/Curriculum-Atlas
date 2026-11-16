@@ -320,3 +320,44 @@ jobs:
           path: ${{ runner.temp }}/atlas-c33-master-architecture/
           if-no-files-found: ignore
           retention-days: 7
+
+  master-materials:
+    name: C3.3A4.2 material and typography master
+    needs: production
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore pinned Blender archive
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-gateway-c32-textured
+          path: ${{ runner.temp }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-c32b-ao
+          path: ${{ runner.temp }}/atlas-c32b
+      - name: Produce material and typography study from locked sources
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c33-master-materials"
+          python3 -m py_compile scripts/atlas-gateway-c3/library-master-materials.py
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/library-master-materials.py -- "$RUNNER_TEMP/atlas-c33-master-materials" 2>&1 | tee "$RUNNER_TEMP/atlas-c33-master-materials/library.log"
+      - name: Verify offline materials and typography contract
+        run: python3 scripts/atlas-gateway-c3/library-master-materials.py --verify "$RUNNER_TEMP/atlas-c33-master-materials"
+      - name: Preserve master materials and actual renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c33a42-materials
+          path: ${{ runner.temp }}/atlas-c33-master-materials/
+          if-no-files-found: ignore
+          retention-days: 7
