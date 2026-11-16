@@ -99,6 +99,15 @@ try {
     const afterNotice=await assertLayout(page,frame,name+" dopo messaggio Studio");
     assert(Math.abs(beforeNotice.y-afterNotice.y)<1 && Math.abs(beforeNotice.height-afterNotice.height)<1,name+" la notifica sposta la sala");
     await page.screenshot({path:evidence+"/"+name+"-studio.png",animations:"disabled"});
+    if (name === "phone") {
+      await page.setViewportSize({width:873,height:393});
+      await waitScene(frame, state => state.calls > 0, "Rotazione schermo");
+      await assertLayout(page,frame,"telefono ruotato durante la sessione");
+      await page.screenshot({path:evidence+"/phone-rotated.png",animations:"disabled"});
+      await page.setViewportSize(device.viewport);
+      await waitScene(frame, state => state.calls > 0, "Ritorno verticale");
+      await assertLayout(page,frame,"telefono tornato verticale");
+    }
     await frame.locator('[data-atlas="esperienze"]').click();
     await page.waitForURL("**/esperienze/",{timeout:60000});
     await page.getByRole("heading",{name:"Esplora, scopri, comprendi."}).waitFor();
