@@ -10,7 +10,7 @@ Atlas main d2938378c9384c5122adb8379396dbad5b4385fe:
 - src/app/obiettivi/page.tsx e src/app/raccordi/page.tsx: superfici predisposte, non funzionalità completate.
 - src/app/materiali/page.tsx, src/app/risorse/page.tsx e src/app/percorsi/page.tsx: destinazioni esistenti, da mantenere; la biblioteca unitaria /esperienze non risulta presente.
 - src/features/pathways/load-public-pathways.ts esclude i percorsi privi di RUNTIME_AUTHORIZED; governance/percorsi-portfolio.json contiene due candidati, nessuno autorizzato al runtime. Non aggirare il filtro tramite deep link.
-- src/components/atlas/app-shell.tsx: Atlas pubblico senza account; next.config.ts: Next static export, basePath /Curriculum-Atlas su GitHub Pages, trailingSlash. Usare Next Link per le rotte interne; non assegnare URL assoluti hardcoded.
+- src/components/atlas/app-shell.tsx: Atlas pubblico senza account; next.config.ts: Next static export, basePath del repository su GitHub Pages, trailingSlash. Usare Next Link per le rotte interne; non assegnare URL assoluti hardcoded.
 
 Studio Atlas, TRAMA main 4d9b7b487f3f920dad54593683b19a742d639b84:
 - docs/decisions/trama-adr-020-studio-atlas-product-boundary.md: prodotto autonomo; nessun editor o login professionale duplicato in Atlas.
