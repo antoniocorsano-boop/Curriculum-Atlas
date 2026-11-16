@@ -89,7 +89,10 @@ export function GatewayCandidate({ preparedScene }: { preparedScene: string | nu
       {immersive && <div className="atlas-gateway-stage">{scene && <iframe ref={iframe} title="Biblioteca Atlas tridimensionale" className="atlas-gateway-frame"
         sandbox="allow-scripts" referrerPolicy="no-referrer" srcDoc={scene.html} />}</div>}
       <nav className="atlas-gateway-portals" aria-label="Accedi agli ambienti Atlas">
-        {PORTALS.map(portal => <div className="atlas-gateway-portal" key={portal.id}>
+        {PORTALS.map(portal => immersive ? (
+          portal.href ? <Link key={portal.id} className="atlas-gateway-direct" data-portal={portal.id} href={portal.href}>{portal.label}<span aria-hidden="true">→</span></Link> :
+            <button key={portal.id} type="button" className="atlas-gateway-direct" data-portal={portal.id} onClick={() => setNotice("Studio Atlas: accesso professionale non ancora abilitato.")}>{portal.label}<span aria-hidden="true">ⓘ</span></button>
+        ) : <div className="atlas-gateway-portal" key={portal.id}>
           <strong>{portal.label}</strong><span className="atlas-gateway-portal-description">{portal.description}</span>
           {portal.href ? <Link href={portal.href}>Entra →</Link> :
             <button type="button" onClick={() => setNotice("Studio Atlas: accesso professionale non ancora abilitato.")}>Informazioni sull’accesso</button>}
