@@ -47,3 +47,17 @@ html:has(.atlas-gateway-immersive),body:has(.atlas-gateway-immersive){height:100
 .atlas-gateway-immersive .atlas-gateway-portals,.atlas-gateway-immersive .atlas-gateway-portal{min-width:0}
 .atlas-gateway-immersive .atlas-gateway-notice{overflow-wrap:anywhere}
 @supports not (height:100dvh){.atlas-gateway-immersive{height:100vh}}
+
+/* AG-04/C: a single destination row; status is an overlay, never a layout row. */
+.atlas-gateway-immersive{position:relative;grid-template-rows:auto minmax(0,1fr) auto;gap:6px;padding:6px clamp(6px,1vw,16px);background:#0c1a25}
+.atlas-gateway-immersive .atlas-gateway-heading{font-family:Georgia,serif;font-size:clamp(.8rem,1.4vw,1.15rem);font-weight:600;letter-spacing:.01em}
+.atlas-gateway-immersive .atlas-gateway-header-actions a,.atlas-gateway-immersive .atlas-gateway-toggle{font-size:clamp(.72rem,1vw,.875rem);text-decoration:none;padding:0 4px}
+.atlas-gateway-immersive .atlas-gateway-notice{position:absolute;z-index:5;right:12px;top:58px;width:min(26rem,calc(100% - 24px));height:auto;min-height:0;max-height:5em;padding:8px 12px;color:#fff4df;background:#13283ef5;border:1px solid #c6a872;border-radius:10px;pointer-events:none}
+.atlas-gateway-immersive .atlas-gateway-notice:empty{display:none}
+.atlas-gateway-immersive .atlas-gateway-portals{gap:6px}
+.atlas-gateway-direct{display:flex;align-items:center;justify-content:center;gap:.55rem;min-width:0;min-height:48px;padding:6px 8px;background:#183344;color:#f6e8d1!important;border:1px solid #c5a67770;border-radius:10px;font-family:Georgia,serif;font-size:clamp(.8rem,1.6vw,1.15rem);font-weight:600;text-decoration:none!important;line-height:1.16;text-align:center;cursor:pointer}
+.atlas-gateway-direct[data-portal=esperienze]{background:#edca84;color:#152635!important;border-color:#f2d8a7}
+.atlas-gateway-direct span{font:400 .9em system-ui,sans-serif;flex-shrink:0}
+.atlas-gateway-direct:hover{filter:brightness(1.12)}
+@media(max-width:600px){.atlas-gateway-immersive .atlas-gateway-heading{max-width:46%;font-size:.8rem}.atlas-gateway-immersive .atlas-gateway-header-actions{max-width:54%;gap:4px}.atlas-gateway-direct{min-height:48px;padding:4px 3px;gap:3px;font-size:.82rem}.atlas-gateway-direct span{display:none}}
+@media(max-height:480px) and (min-width:601px){.atlas-gateway-immersive{gap:4px;padding:2px 6px}.atlas-gateway-direct{min-height:44px;font-size:.9rem}.atlas-gateway-immersive .atlas-gateway-notice{top:48px}}
