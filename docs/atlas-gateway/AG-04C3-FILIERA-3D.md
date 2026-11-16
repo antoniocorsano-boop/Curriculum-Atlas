@@ -20,3 +20,7 @@ C3.2: acquisizione materiali verificati, bake AO/luce e test di compatibilità n
 C3.3: sostituzione modulare delle campate nella biblioteca, cielo e fregio; conservare i tre portali e alternativa HTML. Confronto nei sei formati con riferimento approvato.
 C3.4: prestazioni su dispositivo fisico e riduzione del carico, revisione indipendente. Non integrare né pubblicare fino ad approvazione.
 Registrare ogni fase nel protocollo P3–P7; nessun plugin autonomo prima del pilota e di una seconda prova di riuso.
+
+## C3.1 — Correzione ambiente, ricevuta del primo tentativo
+Il commit 070f331 ha ottenuto 10/11 procedure PASS: tutte le verifiche Atlas superate, produzione Blender interrotta. Run 43844841067, artefatto 14215026911 (solo log, nessun GLB/BLEND/PNG qualificato). Blender 4.0.2: esportatore glTF interrotto da ModuleNotFoundError: numpy; avvisi Weighted normals senza Auto Smooth. Draco non disponibile, non necessario per il pilota non compresso.
+Correzione: installare esplicitamente python3-numpy dallo stesso archivio Ubuntu; registrare le versioni dei pacchetti; eseguire un'esportazione GLB preliminare nel Python effettivo di Blender, verificando intestazione e dimensioni. Abilitare Auto Smooth dove disponibile prima delle normali pesate; altrimenti mantenere la smussatura geometrica. Disattivare esplicitamente Draco. Registrare la versione NumPy nel manifest. Non proseguire con la produzione se il controllo preliminare fallisce. Nessun cambiamento al runtime Atlas. Il nuovo esito resta da verificare.
