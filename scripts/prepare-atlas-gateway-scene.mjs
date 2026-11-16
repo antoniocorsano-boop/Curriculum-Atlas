@@ -17,6 +17,7 @@ function replaceOne(source, before, after) {
 const [threePath, threeSha, cssPath, cssSha, output] = process.argv.slice(2);
 if (!output) throw new Error("Uso: node scripts/prepare-atlas-gateway-scene.mjs THREE SHA256 CSS SHA256 OUTPUT");
 let scene = checked(BASE, BASE_SHA);
+scene = scene.replace(/(<(?:span|h2)\b[^>]*\bid="(?:inspect-title|card-title)"[^>]*>)[^<]*(<\/(?:span|h2)>)/g, "$1Curricolo Atlas$2");
 const three = checked(threePath, threeSha);
 const css = checked(cssPath, cssSha);
 if (/<\/script/i.test(three) || /<\/style/i.test(css)) throw new Error("Dipendenza non incorporabile");
