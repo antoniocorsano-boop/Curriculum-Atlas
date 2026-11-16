@@ -6,7 +6,7 @@ DIR="scripts/atlas-gateway-c3/"
 CONFIG=DIR+"smart-production.json"
 HISTORICAL={"library-composition","master-architecture","master-materials","master-scenography","master-lighting","master-portals","refine-portals","refine-environment","refine-cupola","refine-arch"}
 def validate(data):
-    assert data["schemaVersion"]==1 and data["previewEnabled"] is False
+    assert data["schemaVersion"]==1 and isinstance(data["previewEnabled"],bool)
     a=data["active"]
     assert re.fullmatch(r"C3\.3A[0-9][A-Za-z0-9.]*",a["phase"])
     assert re.fullmatch(r"library-master-[a-z0-9-]+\.py",a["script"])
@@ -15,7 +15,7 @@ def validate(data):
     return a
 def choose(requested,changes,active,event):
     if requested=="full":return "full","explicit full request"
-    if event=="workflow_dispatch":return "qualify","explicit current-candidate qualification"
+    if event=="workflow_dispatch":return requested,"explicit current-candidate "+requested
     if changes is None:return "full","change range unavailable"
     allowed={DIR+active["script"],CONFIG}
     relevant=[p for p in changes if p.startswith(DIR) or p.startswith(".github/workflows/") or p=="package.json" or p=="pnpm-lock.yaml"]
@@ -39,15 +39,17 @@ def selftest():
         ("qualify",None,"pull_request","full"),
         ("full",[],"workflow_dispatch","full"),
         ("qualify",None,"workflow_dispatch","qualify"),
+        ("fast",None,"workflow_dispatch","fast"),
         ("qualify",["package.json"],"pull_request","full"),
         ("qualify",["docs/atlas-gateway/AG-04C3-FILIERA-3D.md"],"pull_request","qualify"),
     ]:
         assert choose(requested,paths,a,event)[0]==want,(requested,paths,event)
-    print("SP-01 selection: 10/10 PASS")
+    print("SP-01 selection: 11/11 PASS")
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument("--selftest",action="store_true");ap.add_argument("--requested",choices=["qualify","full"],default="qualify");ap.add_argument("--event",default="pull_request");ap.add_argument("--before",default="");ap.add_argument("--head",default="");args=ap.parse_args()
+    ap=argparse.ArgumentParser();ap.add_argument("--selftest",action="store_true");ap.add_argument("--requested",choices=["fast","qualify","full"],default="qualify");ap.add_argument("--event",default="pull_request");ap.add_argument("--before",default="");ap.add_argument("--head",default="");args=ap.parse_args()
     if args.selftest:selftest();return
     a=validate(json.loads((ROOT/CONFIG).read_text()))
+    assert args.requested!="fast" or (args.event=="workflow_dispatch" and json.loads((ROOT/CONFIG).read_text())["previewEnabled"] is True)
     script=ROOT/DIR/a["script"];assert script.is_file() and not script.is_symlink()
     mode,reason=choose(args.requested,changed(args.before,args.head),a,args.event)
     result={"mode":mode,"phase":a["phase"],"script":a["script"],"artifact":a["artifact"],"historical_job":a["historicalJob"] or "none","reason":reason}
