@@ -295,6 +295,80 @@ const materialIncrement = [
   ]
 ];
 for (const [before, after] of materialIncrement) scene = replaceOne(scene, before, after);
+// AG-04/B2.3: semantic portal art and central medallion, navigation unchanged.
+// Production protocol P4: separate typography, materials and interaction.
+const identityIncrement = [
+  [
+    "const c=document.createElement('canvas');c.width=c.height=1024;const g=c.getContext('2d');const bg=g.createRadialGradient(512,420,20,512,512,720);bg.addColorStop(0,'#30465b');bg.addColorStop(1,'#101d2b');g.fillStyle=bg;g.fillRect(0,0,1024,1024);g.strokeStyle='#c8a16b';g.lineWidth=3;g.beginPath();g.arc(512,512,475,0,Math.PI*2);g.stroke();g.fillStyle='#ffe1a5';g.font='600 115px Georgia,serif';g.textAlign='center';g.fillText('A T L A S',512,590);g.font='500 35px system-ui,sans-serif';g.fillText('MONDI DELLA CONOSCENZA',512,650);g.beginPath();g.moveTo(512,272);g.lineTo(425,430);g.lineTo(462,430);g.lineTo(512,337);g.lineTo(562,430);g.lineTo(599,430);g.closePath();g.fill();const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t;",
+    "const c=document.createElement('canvas');c.width=c.height=1024;const g=c.getContext('2d');\n            const bg=g.createRadialGradient(512,410,25,512,512,640);bg.addColorStop(0,'#25404d');bg.addColorStop(1,'#091923');g.fillStyle=bg;g.fillRect(0,0,1024,1024);\n            g.save();g.beginPath();g.arc(512,512,481,0,Math.PI*2);g.clip();let seed=381;for(let i=0;i<95;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const y=seed/4294967296*1024;g.strokeStyle=i%5===0?'rgba(159,185,186,.14)':'rgba(166,192,190,.045)';g.lineWidth=i%5===0?2:1;g.beginPath();g.moveTo(0,y);g.bezierCurveTo(290,y-75,670,y+65,1024,y-40);g.stroke();}g.restore();\n            for(const [r,w] of [[475,5],[450,2]]){g.strokeStyle='#d3ae70';g.lineWidth=w;g.beginPath();g.arc(512,512,r,0,Math.PI*2);g.stroke();}\n            const lettering=g.createLinearGradient(0,350,0,640);lettering.addColorStop(0,'#fff3cd');lettering.addColorStop(.55,'#e9cc8e');lettering.addColorStop(1,'#b68542');\n            g.textAlign='center';g.textBaseline='middle';g.font='600 220px Georgia,serif';g.fillStyle='#08151b';g.fillText('ATLAS',512,504,815);g.fillStyle=lettering;g.fillText('ATLAS',512,494,815);\n            g.strokeStyle='#d7b67c';g.lineWidth=4;g.beginPath();g.moveTo(230,622);g.quadraticCurveTo(512,586,794,622);g.stroke();\n            g.font='500 31px system-ui,sans-serif';g.fillStyle='#dac59c';g.fillText('BIBLIOTECA DELLA CONOSCENZA',512,685,720);\n            const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t;"
+  ],
+  [
+    "disc(3.42,3.55,.13,.065,gold);disc(3.25,3.4,.14,.19,navy);disc(3.10,3.20,.08,.29,gold);",
+    "disc(3.86,4.02,.13,.065,gold);disc(3.70,3.83,.12,.19,navy);disc(3.58,3.69,.08,.29,gold);"
+  ],
+  [
+    "new THREE.CircleGeometry(3.07,96)",
+    "new THREE.CircleGeometry(3.55,96)"
+  ],
+  [
+    "for(const r of [3.12,3.43])",
+    "for(const r of [3.60,3.89])"
+  ],
+  [
+    "edge.position.y=r<3.2?.33:.12;",
+    "edge.position.y=r<3.7?.33:.12;"
+  ],
+  [
+    "const pad = 22;\n            const rad = 50;",
+    "const pad = 26;\n            const rad = 64;"
+  ],
+  [
+    "bgGrad.addColorStop(0, 'rgba(36, 65, 84, 0.96)');",
+    "bgGrad.addColorStop(0, index===1?'rgba(30,64,81,0.99)':'rgba(25,47,60,0.98)');"
+  ],
+  [
+    "bgGrad.addColorStop(0.5, 'rgba(15, 35, 50, 0.94)');",
+    "bgGrad.addColorStop(0.5, 'rgba(9,25,35,0.99)');"
+  ],
+  [
+    "bgGrad.addColorStop(1, 'rgba(41, 77, 98, 0.96)');",
+    "bgGrad.addColorStop(1, index===1?'rgba(29,66,80,0.99)':'rgba(24,49,65,0.98)');"
+  ],
+  [
+    "borderGrad.addColorStop(0.7, '#9DC4FF');",
+    "borderGrad.addColorStop(0.7, '#B99C70');"
+  ],
+  [
+    "ctx.lineWidth = 9;\n            ctx.shadowColor = \"#ffdf9e\"; ctx.shadowBlur = 22; ctx.stroke(); ctx.shadowBlur=0;",
+    "ctx.lineWidth = index===1?12:7;\n            ctx.shadowColor = '#ffdf9e';ctx.shadowBlur=index===1?10:4;ctx.stroke();ctx.shadowBlur=0;"
+  ],
+  [
+    "ctx.translate(W / 2, 160);",
+    "ctx.translate(W / 2, 137);"
+  ],
+  [
+    "ctx.font = '700 76px Inter, sans-serif';\n            ctx.textAlign = 'center';\n            ctx.fillText(pillar.title, W / 2, 320, W-78);",
+    "ctx.font = '600 94px Georgia,serif';\n            ctx.textAlign = 'center';\n            const titleWords=pillar.title.split(' ');ctx.fillText(titleWords[0],W/2,282,W-95);ctx.fillText(titleWords.slice(1).join(' '),W/2,388,W-95);"
+  ],
+  [
+    "ctx.font = '500 34px Inter, sans-serif';\n            ctx.fillText(pillar.subtitle, W / 2, 378, W-80);",
+    "ctx.font='500 27px system-ui,sans-serif';\n            const subtitleParts=pillar.subtitle.split(' · ');const midpoint=Math.ceil(subtitleParts.length/2);ctx.fillText(subtitleParts.slice(0,midpoint).join(' · '),W/2,445,W-96);ctx.fillText(subtitleParts.slice(midpoint).join(' · '),W/2,482,W-96);"
+  ],
+  [
+    "ctx.lineWidth=5;ctx.strokeStyle='#9ecfff';ctx.fillStyle='rgba(114,188,240,.18)';",
+    "ctx.lineWidth=5;ctx.strokeStyle='#e5c88f';ctx.fillStyle='rgba(221,187,126,.08)';"
+  ],
+  [
+    "ctx.fillStyle=\"#f6d78e\";ctx.font=\"600 32px Inter,sans-serif\";ctx.textAlign=\"center\";ctx.fillText(index===2?\"ACCESSO PROFESSIONALE  →\":\"ENTRA  →\",W/2,1000);",
+    "ctx.fillStyle=index===1?'#f2d491':'#e4c58e';ctx.font='600 36px system-ui,sans-serif';ctx.textAlign='center';ctx.fillText(index===2?'ACCESSO PROFESSIONALE':'ENTRA  →',W/2,997,W-100);"
+  ],
+  [
+    "g.fillStyle='#79532d';g.fillText('A R E N A',0,2);g.fillStyle='#f0d7a1';g.fillText('A R E N A',0,-1);",
+    "g.fillStyle='#ebd4b4';g.fillText('A R E N A',0,3);g.fillStyle='#5e412b';g.fillText('A R E N A',0,-1);"
+  ]
+];
+for (const [before, after] of identityIncrement) scene = replaceOne(scene, before, after);
+
 
 
 
