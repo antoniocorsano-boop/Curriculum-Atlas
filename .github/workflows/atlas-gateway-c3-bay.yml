@@ -20,8 +20,14 @@ jobs:
       - name: Install Blender from Ubuntu archive
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends blender
+          sudo apt-get install -y --no-install-recommends blender python3-numpy
           blender --version
+          dpkg-query -W blender python3-numpy
+      - name: Preflight actual Blender Python and GLB exporter
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c3"
+          blender --background --factory-startup --python-exit-code 1 --python-expr 'import bpy, numpy, tempfile, pathlib, struct; print("Blender", bpy.app.version_string, "NumPy", numpy.__version__); d=tempfile.TemporaryDirectory(); p=pathlib.Path(d.name)/"preflight.glb"; bpy.ops.export_scene.gltf(filepath=str(p), export_format="GLB", export_draco_mesh_compression_enable=False); b=p.read_bytes(); assert struct.unpack_from("<4sII",b)==(b"glTF",2,len(b)); print("GLB preflight PASS"); d.cleanup()' 2>&1 | tee "$RUNNER_TEMP/atlas-c3/preflight.log"
       - name: Build and render modular bay
         run: |
           set -euo pipefail
