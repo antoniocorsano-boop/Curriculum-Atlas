@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, ">
+    <title>ATLAS — Sala della conoscenza</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #050a14;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #ffffff;
+        }
+
+        #canvas-container {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            touch-action: none;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .glass-pill {
+            background: rgba(10, 17, 30, 0.84);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(235, 193, 108, 0.32);
+            box-shadow: 0 10px 38px rgba(0, 0, 0, 0.6);
+        }
+
+        .glass-modal {
+            background: linear-gradient(155deg, rgba(12, 22, 40, 0.96) 0%, rgba(6, 12, 22, 0.98) 100%);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(235, 193, 108, 0.48);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.88), inset 0 1px 0 rgba(255, 230, 170, 0.25);
+        }
+
+        .gold-btn {
+            background: linear-gradient(135deg, #f6d78e 0%, #d8a648 52%, #b58228 100%);
+            color: #090f1c;
+            border: 1px solid #ffe7ab;
+            box-shadow: 0 6px 26px rgba(216, 166, 72, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.7);
+            transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease, filter 0.25s ease;
+        }
+
+        .gold-btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 10px 34px rgba(246, 215, 142, 0.68), inset 0 1px 2px rgba(255, 255, 255, 0.9);
+            filter: brightness(1.06);
+        }
+
+        .gold-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .nav-item {
+            position: relative;
+            transition: color 0.2s ease;
+        }
+
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #f6d78e, transparent);
+            border-radius: 2px;
+        }
+
+        .fade-transition {
+            transition: opacity 0.38s cubic-bezier(0.22, 1, 0.36, 1), transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .hidden-ui {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: translateY(16px);
+        }
+
+        #loader {
+            position: fixed;
+            inset: 0;
+            z-index: 60;
+            background: radial-gradient(circle at center, #0e1a30 0%, #040811 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.4s ease;
+        }
+
+        .spinner-ring {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 2.5px solid rgba(235, 193, 108, 0.16);
+            border-top-color: #f6d78e;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #gesture-controls{position:fixed;z-index:25;top:76px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:4px;padding:5px;border-radius:30px;white-space:nowrap;max-width:calc(100vw - 16px);font:500 12px system-ui,sans-serif}
+        #gesture-controls button{min-height:36px;min-width:36px;padding:5px 10px;border:0;border-radius:20px;background:transparent;color:#dbe5f2;cursor:pointer}
+        #gesture-controls button[aria-pressed="true"]{background:#edc77930;color:#ffe7ad;box-shadow:inset 0 0 0 1px #edc77966}
+        #gesture-controls button:focus-visible{outline:2px solid #ffe7ad;outline-offset:2px}
+        #gesture-controls .cycle-arrow{color:#f6d78e;font-size:17px;padding:4px 8px}
+        #gesture-controls .gesture-divider{height:20px;width:1px;background:#f6d78e44;margin:0 2px}
+        #gesture-hint{position:fixed;z-index:21;top:128px;left:50%;transform:translateX(-50%);max-width:calc(100vw - 24px);width:max-content;text-align:center;padding:4px 10px;border-radius:12px;font:400 11px system-ui,sans-serif;color:#e7edf7;background:#081321b0;pointer-events:none}
+        #hover-badge{top:155px!important}
+        @media(max-height:500px){#gesture-controls{top:54px;padding:3px}#gesture-controls button{min-height:30px;padding:3px 7px}#gesture-hint{top:94px;font-size:10px}#hover-badge{display:none}}
+        @media(max-width:420px){#gesture-controls{top:61px}#gesture-controls button{font-size:11px;padding:4px 8px}#gesture-hint{top:111px}#hover-badge{top:140px!important}}
+        @media(prefers-reduced-motion:reduce){.fade-transition,.gold-btn{transition:none!important}}
+    #atlas-quick{position:fixed;z-index:26;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:6px;max-width:calc(100vw - 20px);width:max-content;padding:5px;border:1px solid #e6c88860;border-radius:16px;background:#071424ed;box-shadow:0 8px 30px #0008}#atlas-quick button{color:#e0ebf6;font:600 12px system-ui,sans-serif;padding:12px 14px;border-radius:11px;border:1px solid #ffffff25;white-space:nowrap}#atlas-quick button.featured{background:#eac77b;color:#101a27;border-color:#f6d894}#atlas-quick button:focus-visible{outline:2px solid #fff}#hero-footer{bottom:82px!important}#gesture-hint{display:none}#hover-badge{top:130px!important}#module-dock,#module-card,#nav-overlay{display:none!important}@media(max-width:420px){#atlas-quick button{font-size:11px;padding:11px 8px}#hero-footer{bottom:74px!important}}@media(max-height:500px){#hero-footer{bottom:62px!important;gap:0}#hero-footer p{font-size:13px}#hero-footer .gold-btn{display:none}#hero-footer>span{display:none}#atlas-quick{bottom:5px}#atlas-quick button{padding:8px 12px}}
+
+#hero-footer{bottom:74px!important}#hero-footer p{text-shadow:0 2px 8px #000,0 0 20px #000}#hero-footer>span{display:none}#hero-footer>div{margin:7px 0}#hero-footer .gold-btn{border-radius:13px;padding:10px 22px}#atlas-quick{bottom:9px}#gesture-controls{top:68px;background:#0b1926dc}header .glass-pill{background:#0b1926e8}body{background:#101924}@media(max-width:600px){#hero-footer{bottom:67px!important}#hero-footer p{font-size:13px;line-height:1.25}#hero-footer .gold-btn{padding:9px 16px;font-size:13px}#gesture-controls{top:57px}#atlas-quick button{padding:9px 8px}}@media(max-height:500px){#hero-footer{bottom:53px!important}#hero-footer .gold-btn{display:none}#gesture-controls{top:48px}}
+</style>
+</head>
+<body>
+
+    <div id="loader">
+        <div class="spinner-ring mb-4"></div>
+        <div class="tracking-[0.28em] text-sm font-semibold text-[#f6d78e]">ATLAS</div>
+        <div id="loader-status" class="text-xs text-slate-400 mt-1.5">Inizializzazione ambiente 3D...</div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <header class="fixed top-0 left-0 right-0 z-20 px-3 sm:px-8 py-3 sm:py-5 flex items-center justify-between gap-2 pointer-events-none">
+        <div id="brand-home" class="flex items-center gap-2.5 sm:gap-3.5 pointer-events-auto cursor-pointer group shrink-0">
+            <svg class="w-7 h-7 sm:w-9 sm:h-9 transition-transform duration-300 group-hover:scale-105" viewBox="0 0 64 64" fill="none">
+                <defs>
+                    <linearGradient id="goldGradLogo" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#FFF2CC"/>
+                        <stop offset="50%" stop-color="#DDA84B"/>
+                        <stop offset="100%" stop-color="#9A6B1C"/>
+                    </linearGradient>
+                </defs>
+                <path d="M32 6L6 56H17.5L32 27.5L46.5 56H58L32 6Z" fill="url(#goldGradLogo)"/>
+                <path d="M32 35L23 52H41L32 35Z" fill="#FFF2CC" fill-opacity="0.88"/>
+            </svg>
+            <span class="text-base sm:text-xl font-semibold tracking-[0.24em] text-white">ATLAS</span>
+            <div class="hidden md:block h-7 w-[1px] bg-white/25 mx-1"></div>
+            <div class="hidden md:flex flex-col text-[11px] leading-tight text-slate-200/90 font-light tracking-wide">
+                <span>Mondi della</span>
+                <span>conoscenza</span>
+            </div>
+        </div>
+
+        <nav class="glass-pill rounded-full px-3 sm:px-5 py-1.5 sm:py-2.5 flex items-center gap-2.5 sm:gap-5 pointer-events-auto text-xs sm:text-sm">
+            <button data-nav="home" class="nav-item active flex items-center gap-1.5 text-[#f6d78e] font-medium cursor-pointer p-1">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/></svg>
+                <span>Sala</span>
+            </button>
+            <button data-nav="workspaces" class="nav-item flex items-center gap-1.5 text-slate-300 hover:text-white cursor-pointer p-1">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                <span class="hidden sm:inline">Curricolo</span>
+            </button>
+            <button data-nav="insights" class="nav-item flex items-center gap-1.5 text-slate-300 hover:text-white cursor-pointer p-1">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                <span class="hidden sm:inline">Studio</span>
+            </button>
+            <div class="w-7 h-7 rounded-full border border-[#f6d78e]/65 bg-slate-900/90 flex items-center justify-center text-[#f6d78e] shrink-0">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+            </div>
+        </nav>
+    </header>
+
+    <div id="gesture-controls" class="glass-pill" role="group" aria-label="Modalità di movimento">
+        <button type="button" data-gesture="auto" aria-pressed="true" title="Scegli dal punto in cui inizi a trascinare">Auto</button>
+        <button type="button" data-gesture="scene" aria-pressed="false" title="Ruota tutto l’atrio">Atrio</button>
+        <button type="button" data-gesture="cards" aria-pressed="false" title="Ruota soltanto i portali">Portali</button>
+        <span class="gesture-divider" aria-hidden="true"></span>
+        <button type="button" class="cycle-arrow" id="cycle-prev" aria-label="Ruota i portali a sinistra">‹</button>
+        <button type="button" class="cycle-arrow" id="cycle-next" aria-label="Ruota i portali a destra">›</button>
+        <button type="button" id="reset-view" aria-label="Ripristina la panoramica" title="Ripristina panoramica">↺</button>
+    </div>
+    <div id="atlas-quick" role="navigation" aria-label="Ambienti Atlas"><button data-atlas="curricolo">Curricolo Atlas</button><button data-atlas="esperienze" class="featured">Esperienze Atlas</button><button data-atlas="studio">Studio Atlas</button></div>
+    <div id="gesture-hint" role="status">Trascina l’atrio o un portale · due dita per zoomare</div>
+
+    <div id="hover-badge" class="fixed top-20 left-1/2 -translate-x-1/2 z-20 pointer-events-none opacity-0 transition-opacity duration-200">
+        <div class="glass-pill px-4 py-1.5 rounded-full text-[11px] tracking-wider uppercase text-[#f6d78e] flex items-center gap-2 whitespace-nowrap">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#f6d78e] animate-ping"></span>
+            <span id="hover-badge-text">Tocca per entrare</span>
+        </div>
+    </div>
+
+    <footer id="hero-footer" class="fade-transition fixed bottom-5 sm:bottom-8 left-0 right-0 z-20 px-4 flex flex-col items-center text-center pointer-events-none">
+        <p class="text-sm sm:text-xl md:text-2xl font-light text-slate-100 max-w-xl leading-snug drop-shadow-[0_2px_14px_rgba(0,0,0,0.9)]">
+            Conoscere il mondo. Comprenderlo.<br>
+            <span class="font-semibold text-[#f6d78e]">Immaginarlo diversamente.</span>
+        </p>
+        <div class="w-12 h-[1.5px] bg-[#f6d78e]/75 my-3 rounded-full"></div>
+        <button id="btn-enter-arena" class="gold-btn pointer-events-auto px-7 py-3 rounded-full font-semibold text-sm sm:text-base flex items-center gap-2.5 cursor-pointer">
+            <span>Esplora le esperienze</span>
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+        </button>
+        <span class="text-[11px] text-slate-300/85 mt-2.5 tracking-wide drop-shadow">
+            Tocca un portale per entrare
+        </span>
+    </footer>
+
+    <div id="module-dock" class="fade-transition hidden-ui fixed bottom-3 sm:bottom-5 left-1/2 -translate-x-1/2 z-20 px-2 max-w-[96vw] flex flex-col items-center gap-2">
+        <div id="inspect-pill" class="glass-pill rounded-2xl px-3.5 py-2.5 flex items-center justify-between gap-3 w-full max-w-md">
+            <div class="flex flex-col text-left min-w-0">
+                <span id="inspect-title" class="text-xs sm:text-sm font-semibold text-white truncate">Curriculum</span>
+                <span class="text-[10px] sm:text-[11px] text-[#f6d78e]/90 truncate">Tocca per entrare</span>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+                <button id="btn-open-details" class="gold-btn px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold cursor-pointer whitespace-nowrap">
+                    Apri Scheda
+                </button>
+                <button id="btn-inspect-back" class="px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-medium text-slate-200 border border-white/20 hover:bg-white/10 transition cursor-pointer whitespace-nowrap">
+                    Torna alla panoramica
+                </button>
+            </div>
+        </div>
+
+        <div class="glass-pill rounded-2xl p-1.5 flex items-center gap-1 sm:gap-1.5 overflow-x-auto max-w-full">
+            
+            
+            
+            
+            
+        </div>
+    </div>
+
+    <aside id="module-card" class="fade-transition hidden-ui fixed bottom-16 sm:bottom-auto sm:top-24 left-3 right-3 sm:left-auto sm:right-8 z-30 sm:w-96 glass-modal rounded-2xl p-4 sm:p-6">
+        <div class="flex items-start justify-between gap-3">
+            <div>
+                <span id="card-tag" class="text-[10px] uppercase tracking-[0.2em] text-[#f6d78e] font-semibold">PILASTRO 01</span>
+                <h2 id="card-title" class="text-lg sm:text-2xl font-semibold text-white mt-0.5">Curriculum</h2>
+                <p id="card-subtitle" class="text-xs text-amber-200/85 tracking-wide mt-0.5">Design · Plan · Align</p>
+            </div>
+            <button id="btn-close-card" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-200 hover:text-white transition cursor-pointer shrink-0" aria-label="Chiudi scheda">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <div class="h-[1px] w-full bg-gradient-to-r from-[#f6d78e]/50 via-white/15 to-transparent my-3 sm:my-4"></div>
+
+        <p id="card-desc" class="text-xs sm:text-sm text-slate-200/90 leading-relaxed">
+            Progettazione strutturata dei piani di studio e allineamento ai framework europei.
+        </p>
+
+        <div id="card-metrics" class="grid grid-cols-2 gap-2.5 mt-3.5"></div>
+
+        <div class="mt-4 sm:mt-5 flex items-center gap-2">
+            <button id="btn-next-pillar" class="gold-btn flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer">
+                <span>Pilastro Successivo</span>
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+            <button id="btn-back-overview" class="py-2.5 px-3.5 rounded-xl text-xs font-medium text-slate-200 border border-white/20 hover:bg-white/10 transition cursor-pointer whitespace-nowrap">
+                Panoramica
+            </button>
+        </div>
+    </aside>
+
+    <div id="nav-overlay" class="fade-transition hidden-ui fixed inset-0 z-40 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-modal rounded-2xl max-w-lg w-full p-5 sm:p-6">
+            <div class="flex items-center justify-between">
+                <h3 id="nav-modal-title" class="text-base sm:text-lg font-semibold text-[#f6d78e]">Curricolo</h3>
+                <button id="close-nav-overlay" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-200 cursor-pointer">✕</button>
+            </div>
+            <div id="nav-modal-body" class="mt-4 space-y-3 text-xs sm:text-sm text-slate-200"></div>
+        </div>
+    </div>
+
+    <script>
+        const PILLARS_DATA = [{"id": "curricolo", "tag": "CURRICOLO ATLAS", "title": "Curricolo Atlas", "subtitle": "Conoscenze · Competenze · Percorsi", "description": "Esplora il curricolo e i collegamenti con le esperienze.", "metrics": [], "angle": -0.57, "radius": 7.9, "width": 4.15, "height": 5.85, "yOffset": 3.18}, {"id": "esperienze", "tag": "ESPERIENZE ATLAS", "title": "Esperienze Atlas", "subtitle": "Storie · Laboratori · Scoperte · Percorsi", "description": "Entra nella biblioteca dei mondi educativi.", "metrics": [], "angle": 0, "radius": 7.9, "width": 4.55, "height": 6.5, "yOffset": 3.5}, {"id": "studio", "tag": "STUDIO ATLAS", "title": "Studio Atlas", "subtitle": "Progetta · Qualifica · Pubblica", "description": "Ambiente professionale riservato.", "metrics": [], "angle": 0.57, "radius": 7.9, "width": 4.15, "height": 5.85, "yOffset": 3.18}];
+
+        let scene, camera, renderer;
+        const panelGroups = [];
+        const interactiveMeshes = [];
+        const godRayMeshes = [];
+        let clock, raycaster, pointer;
+
+        let hoveredPanelIndex = -1;
+        let selectedPanelIndex = -1;
+        let isDetailsOpen = false;
+
+        let defaultCamPos, DEFAULT_CAM_TARGET;
+        let targetCamPos, targetLookAt, currentLookAt;
+        let isCameraAnimating = false;
+
+        const orbitState = {
+            isDragging: false,
+            startX: 0,
+            startY: 0,
+            lastX: 0,
+            lastY: 0,
+            velTheta: 0,
+            velPhi: 0,
+            pinchStartDist: 0,
+            minDistance: 3.5,
+            maxDistance: 18.7,
+            minPolarAngle: 0.28,
+            maxPolarAngle: Math.PI * 0.47
+        };
+
+
+        const carousel = { offset: 0, target: 0, dragging: false };
+        const motionReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        let gestureMode = 'auto';
+        const gesture = { pointers: new Map(), kind: null, startX:0, startY:0, lastX:0, lastY:0, startOffset:0, moved:false, pinchDistance:0, lastTime:0, velocity:0, primary:null };
+        const mod = (v,n) => ((v % n) + n) % n;
+        function carouselSlot(index, offset) {
+            const count = PILLARS_DATA.length;
+            const q = mod(index + offset, count);
+            const i = Math.min(Math.floor(q), count - 1);
+            const t = q - i;
+            const a = PILLARS_DATA[i];
+            const b = PILLARS_DATA[(i+1)%count];
+            const angle = a.angle + ((i===count-1 ? b.angle+Math.PI*2 : b.angle)-a.angle)*t;
+            const radius = a.radius + (b.radius-a.radius)*t;
+            return {angle, radius};
+        }
+        function layoutCarousel() {
+            panelGroups.forEach((group,i)=>{
+                const p = carouselSlot(i,carousel.offset);
+                group.position.x = Math.sin(p.angle)*p.radius;
+                group.position.z = -1.6-Math.cos(p.angle)*p.radius;
+                group.lookAt(0,group.position.y,-1.6);
+            });
+        }
+        function tickCarousel(dt) {
+            if (!carousel.dragging) {
+                carousel.offset += (carousel.target-carousel.offset)*(motionReduced?1:1-Math.exp(-dt*13));
+                if (Math.abs(carousel.target-carousel.offset)<0.002) {
+                    carousel.offset=carousel.target;
+                    if (Math.abs(carousel.offset)>100) carousel.offset=carousel.target=mod(carousel.offset,PILLARS_DATA.length);
+                }
+            }
+            layoutCarousel();
+        }
+        function leaveInspectionForMotion() {
+            selectedPanelIndex=-1; isDetailsOpen=false;
+            document.getElementById('module-card').classList.add('hidden-ui');
+            document.getElementById('module-dock').classList.add('hidden-ui');
+            document.getElementById('hero-footer').classList.remove('hidden-ui');
+            updateDockActiveState(-1);
+        }
+        function stopCameraMotion() {
+            isCameraAnimating=false;
+            orbitState.velTheta=orbitState.velPhi=0;
+        }
+        function cycleCards(delta) {
+            stopCameraMotion(); leaveInspectionForMotion();
+            carousel.target=Math.round(carousel.target)+delta;
+            if (motionReduced) {carousel.offset=carousel.target;layoutCarousel();}
+        }
+        function setGestureMode(mode) {
+            gestureMode=mode;
+            document.querySelectorAll('[data-gesture]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.gesture===mode)));
+            document.getElementById('gesture-hint').textContent=({auto:'Trascina l’atrio o un portale · due dita per zoomare',scene:'Trascina ovunque per ruotare l’atrio',cards:'Scorri a sinistra o a destra per ruotare i portali'})[mode];
+        }
+        function hitPanel(x,y) {
+            updatePointerNDC(x,y);
+            scene.updateMatrixWorld(true); camera.updateMatrixWorld(true);
+            raycaster.setFromCamera(pointer,camera);
+            const hits=raycaster.intersectObjects(interactiveMeshes,false);
+            return hits.length?hits[0].object.userData.panelIndex:-1;
+        }
+        function chooseGesture(hit) {return gestureMode==='auto'?(hit>=0?'cards':'scene'):gestureMode;}
+        function pixelsPerCard(){return Math.max(66,Math.min(240,window.innerWidth*0.20));}
+        function pointerDistance(){const [a,b]=gesture.pointers.values();return Math.hypot(a.x-b.x,a.y-b.y);}
+        function rotateScene(dx,dy) {
+            const offset = new THREE.Vector3().subVectors(camera.position,currentLookAt);
+            const spherical = new THREE.Spherical().setFromVector3(offset);
+            spherical.theta -= dx*0.005;
+            spherical.phi = THREE.MathUtils.clamp(spherical.phi-dy*0.004,orbitState.minPolarAngle,orbitState.maxPolarAngle);
+            offset.setFromSpherical(spherical);
+            camera.position.copy(currentLookAt).add(offset);
+        }
+
+        function dismissLoader() {
+            const loader = document.getElementById('loader');
+            if (!loader) return;
+            setTimeout(() => {
+                loader.style.opacity = '0';
+                setTimeout(() => { if (loader.parentNode) loader.remove(); }, 400);
+            }, 150);
+        }
+
+        function init() {
+            const container = document.getElementById('canvas-container');
+            const statusEl = document.getElementById('loader-status');
+
+            try {
+                if (typeof THREE === 'undefined') throw new Error('Three.js non disponibile.');
+
+                clock = new THREE.Clock();
+                raycaster = new THREE.Raycaster();
+                pointer = new THREE.Vector2(-99, -99);
+
+                defaultCamPos = new THREE.Vector3(0, 3.5, 14.8);
+                DEFAULT_CAM_TARGET = new THREE.Vector3(0, 4.7, -3.2);
+                targetCamPos = defaultCamPos.clone();
+                targetLookAt = DEFAULT_CAM_TARGET.clone();
+                currentLookAt = DEFAULT_CAM_TARGET.clone();
+
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x050a14);
+                scene.fog = new THREE.FogExp2(0x101924, 0.008);
+
+                const width = Math.max(window.innerWidth, 1);
+                const height = Math.max(window.innerHeight, 1);
+                
+                // CRITICAL FIX: camera.near = 0.5, camera.far = 200
+                camera = new THREE.PerspectiveCamera(44, width / height, 0.5, 200);
+                updateResponsiveCameraDefaults();
+                camera.position.copy(defaultCamPos);
+                targetCamPos.copy(defaultCamPos);
+                currentLookAt.copy(DEFAULT_CAM_TARGET); targetLookAt.copy(DEFAULT_CAM_TARGET);
+                camera.lookAt(currentLookAt);
+
+                renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+                renderer.setSize(width, height);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
+                renderer.outputEncoding = THREE.sRGBEncoding;
+                renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                renderer.toneMappingExposure = 1.05;
+                container.appendChild(renderer.domElement);renderer.domElement.setAttribute("aria-label","Sala Atlas tridimensionale interattiva");
+
+                setupLighting();
+                buildReflectiveFloor();
+                buildRotundaRoom();
+                buildCentralPodium();
+                buildInwardPanels();
+                buildSkylightAndVolumetricRays();
+
+                setupNativeControls(renderer.domElement);
+                setupUIEvents();
+                window.addEventListener('resize', onWindowResize);
+
+                renderer.render(scene, camera);
+                window.parent.postMessage({type:"atlas-3d-ready"}, "*");
+                dismissLoader();
+                animate();
+
+            } catch (err) {
+                console.error('Errore Arena 3D:', err);
+                window.parent.postMessage({type:'atlas-3d-error'}, '*');
+                if (statusEl) {
+                    statusEl.textContent = 'Errore WebGL: ' + (err.message || 'ricarica la pagina');
+                    statusEl.style.color = '#f87171';
+                }
+            }
+        }
+
+        function updateResponsiveCameraDefaults() {
+            const a=Math.max(innerWidth/Math.max(innerHeight,1),.35);
+            DEFAULT_CAM_TARGET.set(0,4.7,-3.2);
+            if(a<.72){defaultCamPos.set(0,4.1,13.4);camera.fov=Math.min(82,Math.max(63,2*Math.atan(Math.tan(24*Math.PI/180)/a)*180/Math.PI));}
+            else if(a<1.1){defaultCamPos.set(0,4.2,14.3);camera.fov=54;}
+            else {defaultCamPos.set(0,4.5,14.4);camera.fov=a>2?49:48;}
+            camera.updateProjectionMatrix();
+        }
+
+        function setupLighting(){
+            scene.add(new THREE.HemisphereLight(0xd6e7ff,0x806044,.83));
+            const sun=new THREE.DirectionalLight(0xffe0aa,1.25);sun.position.set(-4,15,4);scene.add(sun);
+            const sky=new THREE.DirectionalLight(0xb9dfff,.55);sky.position.set(5,11,-8);scene.add(sky);
+            const warm=new THREE.PointLight(0xffca82,.85,24,1);warm.position.set(0,5,-7);scene.add(warm);
+        }
+
+        function buildReflectiveFloor(){
+            const c=document.createElement('canvas');c.width=c.height=512;const g=c.getContext('2d');
+            g.fillStyle='#26313c';g.fillRect(0,0,512,512);
+            const gr=g.createLinearGradient(0,0,512,512);gr.addColorStop(0,'#394653');gr.addColorStop(.48,'#202a36');gr.addColorStop(1,'#3b4146');g.fillStyle=gr;g.fillRect(0,0,512,512);
+            for(let i=0;i<30;i++){g.strokeStyle=i%4===0?'#b2a48a26':'#a0b0c010';g.lineWidth=i%4===0?1.8:.7;g.beginPath();g.moveTo(0,i*21-180);g.bezierCurveTo(180,i*21-100,330,i*21-220,512,i*21-70);g.stroke();}
+            g.strokeStyle='#ad94704a';g.lineWidth=2;g.strokeRect(1,1,510,510);
+            const tex=new THREE.CanvasTexture(c);tex.encoding=THREE.sRGBEncoding;tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(14,14);
+            const floor=new THREE.Mesh(new THREE.CircleGeometry(21.2,96),new THREE.MeshStandardMaterial({map:tex,color:0xc8c7bf,metalness:.24,roughness:.39}));floor.rotation.x=-Math.PI/2;floor.position.z=-1.6;scene.add(floor);
+            const brass=new THREE.MeshBasicMaterial({color:0xd7ab68,transparent:true,opacity:.6,side:THREE.DoubleSide});
+            for(const r of [3.7,7.0,11.5,17.1]){const x=new THREE.Mesh(new THREE.RingGeometry(r-.018,r+.018,96),brass);x.rotation.x=-Math.PI/2;x.position.set(0,.012,-1.6);scene.add(x);}
+            const glow=document.createElement('canvas');glow.width=glow.height=128;const q=glow.getContext('2d');const fade=q.createRadialGradient(64,64,0,64,64,64);fade.addColorStop(0,'rgba(255,214,143,.30)');fade.addColorStop(.45,'rgba(255,188,100,.12)');fade.addColorStop(1,'rgba(255,190,100,0)');q.fillStyle=fade;q.fillRect(0,0,128,128);const gt=new THREE.CanvasTexture(glow);
+            const gm=new THREE.MeshBasicMaterial({map:gt,transparent:true,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending});
+            for(let i=0;i<16;i++){const a=i*Math.PI/8;const p=new THREE.Mesh(new THREE.PlaneGeometry(5,8),gm);p.rotation.x=-Math.PI/2;p.rotation.z=a;p.position.set(Math.sin(a)*16,.025,-1.6-Math.cos(a)*16);scene.add(p);}
+        }
+
+        function buildRotundaRoom(){
+            const center=-1.6,R=20.4,levels=[0,3.8,7.6],bays=32;
+            const walnut=new THREE.MeshStandardMaterial({color:0x654431,roughness:.65,metalness:.06});
+            const navy=new THREE.MeshStandardMaterial({color:0x182b3b,roughness:.46,metalness:.22,side:THREE.DoubleSide});
+            const brass=new THREE.MeshStandardMaterial({color:0xc7a16b,metalness:.48,roughness:.37});
+            const warm=new THREE.MeshBasicMaterial({color:0xffd796});
+            const wall=new THREE.Mesh(new THREE.CylinderGeometry(R,R,11.5,96,1,true),new THREE.MeshStandardMaterial({color:0x382d29,roughness:.78,side:THREE.BackSide}));wall.position.set(0,5.75,center);scene.add(wall);
+            // Four independently painted shelf variants. All textures are generated locally by code.
+            function shelfTexture(seed){
+                const c=document.createElement('canvas');c.width=768;c.height=896;const g=c.getContext('2d');
+                let n=seed;const rand=()=>{n=(1664525*n+1013904223)>>>0;return n/4294967296;};
+                const palette=['#ac865a','#594740','#34535a','#8b4e3c','#d6c2a0','#797f6e','#374c65','#996f48','#eee0c2','#45514b'];
+                g.fillStyle='#2c201b';g.fillRect(0,0,768,896);
+                for(let row=0;row<4;row++){const y=42+row*210;const lg=g.createLinearGradient(0,y,0,y+192);lg.addColorStop(0,'#a37950');lg.addColorStop(.16,'#67503a');lg.addColorStop(1,'#271c19');g.fillStyle=lg;g.fillRect(28,y,712,188);
+                    g.fillStyle='#ffd79a';g.fillRect(35,y+3,698,4);let x=48;
+                    while(x<701){const w=14+rand()*27,h=75+rand()*79;g.fillStyle=palette[Math.floor(rand()*palette.length)];g.fillRect(x,y+180-h,w,h);g.fillStyle='#ffffff24';g.fillRect(x+2,y+182-h,2,h-4);g.fillStyle='#0b101a40';g.fillRect(x+w-3,y+181-h,3,h-1);g.fillStyle='#e6c99488';g.fillRect(x+4,y+193-h,Math.max(2,w-8),2);g.fillRect(x+4,y+166,Math.max(2,w-8),2);if(w>24){g.fillStyle='#efe4cd77';g.fillRect(x+8,y+208-h,3,Math.min(35,h-30));}x+=w+2+rand()*4;}
+                    const wood=g.createLinearGradient(0,y+188,0,y+207);wood.addColorStop(0,'#bd986f');wood.addColorStop(.25,'#795033');wood.addColorStop(1,'#3e2b22');g.fillStyle=wood;g.fillRect(15,y+188,738,18);
+                }
+                g.fillStyle='#835b3c';g.fillRect(0,0,24,896);g.fillRect(744,0,24,896);g.fillRect(0,0,768,25);g.fillRect(0,871,768,25);g.fillStyle='#d0a777';g.fillRect(19,0,3,896);g.fillRect(746,0,3,896);
+                const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());return t;
+            }
+            const shelves=[1,17,81,194].map(seed=>new THREE.MeshBasicMaterial({map:shelfTexture(seed),color:0xdcd0bc}));
+            const shelfGeo=new THREE.PlaneGeometry(3.25,3.15);
+            const shelfBase=new THREE.BoxGeometry(3.36,.16,.65);
+            const colGeo=new THREE.BoxGeometry(.34,11.45,.6);
+            const fasciaGeo=new THREE.CylinderGeometry(17.85,17.85,.37,96,1,true);
+            for(let j=0;j<levels.length;j++){
+                const h=levels[j];
+                for(let i=0;i<bays;i++){
+                    const a=(i+.5)*Math.PI*2/bays;const group=new THREE.Group();group.position.set(Math.sin(a)*19.95,h+1.68,center-Math.cos(a)*19.95);group.lookAt(0,h+1.68,center);
+                    const shelf=new THREE.Mesh(shelfGeo,shelves[(i+j*3)%4]);group.add(shelf);
+                    const base=new THREE.Mesh(shelfBase,walnut);base.position.set(0,-1.58,.18);group.add(base);scene.add(group);
+                }
+                if(j>0){const deck=new THREE.Mesh(new THREE.RingGeometry(17.8,R,96),navy);deck.rotation.x=-Math.PI/2;deck.position.set(0,h,center);scene.add(deck);
+                    const face=new THREE.Mesh(fasciaGeo,navy);face.position.set(0,h-.17,center);scene.add(face);
+                    for(const dy of [-.33,.82]){const rail=new THREE.Mesh(new THREE.TorusGeometry(17.85,.045,8,96),dy<0?warm:brass);rail.rotation.x=Math.PI/2;rail.position.set(0,h+dy,center);scene.add(rail);}
+                    const glass=new THREE.Mesh(new THREE.CylinderGeometry(17.88,17.88,.80,96,1,true),new THREE.MeshBasicMaterial({color:0x9ac6db,side:THREE.DoubleSide,transparent:true,opacity:.13,depthWrite:false}));glass.position.set(0,h+.42,center);scene.add(glass);
+                }
+            }
+            for(let i=0;i<32;i++){const a=i*Math.PI*2/32;const c=new THREE.Mesh(colGeo,navy);c.position.set(Math.sin(a)*19.55,5.75,center-Math.cos(a)*19.55);c.rotation.y=-a;scene.add(c);}
+            // Potted indoor trees: instanced low-poly leaves and warm ceramic planters.
+            const potMat=new THREE.MeshStandardMaterial({color:0xa88c64,roughness:.7});const leafMat=new THREE.MeshStandardMaterial({color:0x42633d,roughness:.86});const trunkMat=new THREE.MeshStandardMaterial({color:0x6f4d32});
+            const leaves=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(.32,1),leafMat,8*17);let idx=0;const dummy=new THREE.Object3D();
+            for(let i=0;i<8;i++){const a=(i+.25)*Math.PI/4,x=Math.sin(a)*15.7,z=center-Math.cos(a)*15.7;const pot=new THREE.Mesh(new THREE.CylinderGeometry(.57,.43,.78,20),potMat);pot.position.set(x,.39,z);scene.add(pot);const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.09,.13,1.8,8),trunkMat);trunk.position.set(x,1.55,z);scene.add(trunk);for(let k=0;k<17;k++){let t=k*2.399;let r=.58*Math.sqrt((k+1)/17);dummy.position.set(x+Math.cos(t)*r,2.2+(k%5)*.18,z+Math.sin(t)*r);dummy.scale.set(1.15,.9,1.1);dummy.rotation.set(t,t*.4,0);dummy.updateMatrix();leaves.setMatrixAt(idx++,dummy.matrix);}}scene.add(leaves);
+        }
+
+        function buildCentralPodium(){
+            const g=new THREE.Group();g.position.set(0,0,-1.6);
+            const gold=new THREE.MeshStandardMaterial({color:0xd8b276,metalness:.55,roughness:.31});
+            const navy=new THREE.MeshStandardMaterial({color:0x192b3d,metalness:.25,roughness:.48});
+            function disc(r1,r2,h,y,mat){const m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,96),mat);m.position.y=y;g.add(m);}
+            disc(3.42,3.55,.13,.065,gold);disc(3.25,3.4,.14,.19,navy);disc(3.10,3.20,.08,.29,gold);
+            const face=new THREE.Mesh(new THREE.CircleGeometry(3.07,96),new THREE.MeshBasicMaterial({map:createPodiumLogoTexture()}));face.rotation.x=-Math.PI/2;face.position.y=.335;g.add(face);
+            for(const r of [3.12,3.43]){const edge=new THREE.Mesh(new THREE.TorusGeometry(r,.025,8,96),new THREE.MeshBasicMaterial({color:0xffd99a}));edge.rotation.x=Math.PI/2;edge.position.y=r<3.2?.33:.12;g.add(edge);}scene.add(g);
+        }
+
+        function createPodiumLogoTexture(){
+            const c=document.createElement('canvas');c.width=c.height=1024;const g=c.getContext('2d');const bg=g.createRadialGradient(512,420,20,512,512,720);bg.addColorStop(0,'#30465b');bg.addColorStop(1,'#101d2b');g.fillStyle=bg;g.fillRect(0,0,1024,1024);g.strokeStyle='#c8a16b';g.lineWidth=3;g.beginPath();g.arc(512,512,475,0,Math.PI*2);g.stroke();g.fillStyle='#ffe1a5';g.font='600 115px Georgia,serif';g.textAlign='center';g.fillText('A T L A S',512,590);g.font='500 35px system-ui,sans-serif';g.fillText('MONDI DELLA CONOSCENZA',512,650);g.beginPath();g.moveTo(512,272);g.lineTo(425,430);g.lineTo(462,430);g.lineTo(512,337);g.lineTo(562,430);g.lineTo(599,430);g.closePath();g.fill();const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t;
+        }
+
+        function buildInwardPanels() {
+            const arcCenterZ = -1.6;
+
+            PILLARS_DATA.forEach((pillar, index) => {
+                const group = new THREE.Group();
+
+                const x = Math.sin(pillar.angle) * pillar.radius;
+                const z = arcCenterZ - Math.cos(pillar.angle) * pillar.radius;
+                group.position.set(x, pillar.yOffset, z);
+                group.lookAt(0, pillar.yOffset, arcCenterZ);
+                group.userData = { baseY: pillar.yOffset };
+
+                const curveRadius = 11.0;
+                const panelGeo = new THREE.PlaneGeometry(pillar.width, pillar.height, 28, 1);
+                const vertices = panelGeo.attributes.position;
+                for (let j = 0; j < vertices.count; j++) {
+                    const x = vertices.getX(j);
+                    vertices.setZ(j, curveRadius - Math.sqrt(curveRadius * curveRadius - x * x));
+                }
+                panelGeo.computeVertexNormals();
+
+                const backMat = new THREE.MeshPhysicalMaterial({
+                    color: 0x16325c,
+                    transparent: true,
+                    opacity: 0.3,
+                    roughness: 0.12,
+                    metalness: 0.1,
+                    side: THREE.DoubleSide
+                });
+                const glassBack = new THREE.Mesh(panelGeo, backMat);
+                group.add(glassBack);
+                group.userData.backMat = backMat;
+
+                const tex = createPillarTexture(pillar, index);
+                const frontMat = new THREE.MeshBasicMaterial({
+                    map: tex,
+                    transparent: true,
+                    opacity: 0.98,
+                    side: THREE.FrontSide,
+                    depthWrite: false
+                });
+                const frontMesh = new THREE.Mesh(panelGeo, frontMat);
+                frontMesh.position.z = 0.02;
+                frontMesh.userData = { panelIndex: index };
+                group.add(frontMesh);
+
+                interactiveMeshes.push(frontMesh);
+                panelGroups.push(group);
+                scene.add(group);
+            });
+        }
+
+        function createPillarTexture(pillar, index) {
+            const W = 800;
+            const H = 1100;
+            const canvas = document.createElement('canvas');
+            canvas.width = W;
+            canvas.height = H;
+            const ctx = canvas.getContext('2d');
+
+            const pad = 22;
+            const rad = 50;
+
+            function roundedRect(x, y, w, h, r) {
+                ctx.beginPath();
+                ctx.moveTo(x + r, y);
+                ctx.lineTo(x + w - r, y);
+                ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+                ctx.lineTo(x + w, y + h - r);
+                ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                ctx.lineTo(x + r, y + h);
+                ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+                ctx.lineTo(x, y + r);
+                ctx.quadraticCurveTo(x, y, x + r, y);
+                ctx.closePath();
+            }
+
+            roundedRect(pad, pad, W - pad * 2, H - pad * 2, rad);
+            const bgGrad = ctx.createLinearGradient(0, pad, 0, H - pad);
+            bgGrad.addColorStop(0, 'rgba(28, 53, 77, 0.91)');
+            bgGrad.addColorStop(0.5, 'rgba(12, 30, 48, 0.82)');
+            bgGrad.addColorStop(1, 'rgba(36, 70, 95, 0.92)');
+            ctx.fillStyle = bgGrad;
+            ctx.fill();
+
+            ctx.save();
+            ctx.clip();
+            const sheen = ctx.createLinearGradient(0, 0, W, H * 0.7);
+            sheen.addColorStop(0, 'rgba(255, 255, 255, 0.16)');
+            sheen.addColorStop(0.5, 'rgba(255, 255, 255, 0.02)');
+            sheen.addColorStop(1, 'rgba(246, 215, 142, 0.08)');
+            ctx.fillStyle = sheen;
+            ctx.fillRect(0, 0, W, H);
+            ctx.restore();
+
+            roundedRect(pad, pad, W - pad * 2, H - pad * 2, rad);
+            const borderGrad = ctx.createLinearGradient(0, pad, W, H - pad);
+            borderGrad.addColorStop(0, '#FFF0C2');
+            borderGrad.addColorStop(0.35, '#E4B458');
+            borderGrad.addColorStop(0.7, '#9DC4FF');
+            borderGrad.addColorStop(1, '#F8D88C');
+            ctx.strokeStyle = borderGrad;
+            ctx.lineWidth = 9;
+            ctx.shadowColor = "#ffdf9e"; ctx.shadowBlur = 22; ctx.stroke(); ctx.shadowBlur=0;
+            ctx.lineWidth=2;ctx.strokeStyle="#fff1cf";ctx.stroke();
+
+            ctx.save();
+            ctx.translate(W / 2, 160);
+            ctx.strokeStyle = '#F6D78E';
+            ctx.fillStyle = '#F6D78E';
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            if (index === 0) {
+                ctx.beginPath();
+                ctx.moveTo(0, -24);
+                ctx.quadraticCurveTo(-36, -42, -74, -26);
+                ctx.lineTo(-74, 34);
+                ctx.quadraticCurveTo(-36, 18, 0, 36);
+                ctx.quadraticCurveTo(36, 18, 74, 34);
+                ctx.lineTo(74, -26);
+                ctx.quadraticCurveTo(36, -42, 0, -24);
+                ctx.moveTo(0, -24);
+                ctx.lineTo(0, 36);
+                ctx.stroke();
+            } else if (index === 1) {
+                ctx.beginPath();ctx.arc(0,0,56,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.ellipse(0,0,25,56,0,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(-56,0);ctx.lineTo(56,0);ctx.stroke();
+            } else if (index === 2) {
+                ctx.strokeRect(-65,-45,130,80);ctx.beginPath();ctx.moveTo(-48,20);ctx.lineTo(-15,-12);ctx.lineTo(8,10);ctx.lineTo(35,-22);ctx.lineTo(52,8);ctx.moveTo(0,35);ctx.lineTo(0,54);ctx.moveTo(-29,54);ctx.lineTo(29,54);ctx.stroke();
+            } else if (index === 3) {
+                ctx.beginPath();
+                ctx.arc(0, 0, 26, 0, Math.PI * 2);
+                ctx.stroke();
+                for (let a = 0; a < 8; a++) {
+                    const ang = (a * Math.PI) / 4;
+                    ctx.beginPath();
+                    ctx.moveTo(Math.cos(ang) * 30, Math.sin(ang) * 30);
+                    ctx.lineTo(Math.cos(ang) * 46, Math.sin(ang) * 46);
+                    ctx.stroke();
+                }
+            } else {
+                ctx.beginPath();
+                ctx.arc(0, 0, 42, -0.3, Math.PI * 0.85);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(0, 0, 42, Math.PI - 0.3, Math.PI * 1.85);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '700 68px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(pillar.title, W / 2, 320, W-78);
+
+            ctx.fillStyle = 'rgba(226, 238, 255, 0.88)';
+            ctx.font = '400 30px Inter, sans-serif';
+            ctx.fillText(pillar.subtitle, W / 2, 378, W-80);
+
+            ctx.save();
+            ctx.translate(W / 2, 690);
+            ctx.lineWidth=5;ctx.strokeStyle='#9ecfff';ctx.fillStyle='rgba(114,188,240,.18)';
+            if(index===0){ // open book and network of learning objectives
+                ctx.beginPath();ctx.moveTo(0,-110);ctx.quadraticCurveTo(-95,-165,-185,-110);ctx.lineTo(-185,95);ctx.quadraticCurveTo(-95,45,0,110);ctx.quadraticCurveTo(95,45,185,95);ctx.lineTo(185,-110);ctx.quadraticCurveTo(95,-165,0,-110);ctx.closePath();ctx.fill();ctx.stroke();ctx.moveTo(0,-110);ctx.lineTo(0,110);ctx.stroke();
+                for(let y=-70;y<65;y+=37){ctx.beginPath();ctx.moveTo(-150,y);ctx.lineTo(-32,y+10);ctx.moveTo(32,y+10);ctx.lineTo(150,y);ctx.stroke();}
+            }else if(index===1){ // planetary atlas, continents and orbits
+                ctx.beginPath();ctx.arc(0,0,153,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.beginPath();ctx.ellipse(0,0,73,153,0,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.ellipse(0,0,153,55,0,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(-153,0);ctx.lineTo(153,0);ctx.stroke();ctx.strokeStyle='#f6d78e';ctx.beginPath();ctx.ellipse(0,0,232,81,-.42,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#f6d78e';[[-185,95],[155,-110],[40,140]].forEach(([x,y])=>{ctx.beginPath();ctx.arc(x,y,11,0,Math.PI*2);ctx.fill();});
+            }else{ // production: frames and tool star
+                [-138,0,138].forEach((x,i)=>{ctx.strokeStyle=i===1?'#f6d78e':'#9ecfff';ctx.strokeRect(x-56,-95,112,152);ctx.beginPath();ctx.moveTo(x-40,25);ctx.lineTo(x-8,-13);ctx.lineTo(x+16,10);ctx.lineTo(x+40,-30);ctx.stroke();});ctx.strokeStyle='#f6d78e';ctx.beginPath();ctx.moveTo(0,75);ctx.lineTo(0,157);ctx.moveTo(-140,115);ctx.lineTo(140,115);ctx.stroke();
+            }
+            ctx.restore();
+
+            ctx.fillStyle="#f6d78e";ctx.font="600 32px Inter,sans-serif";ctx.textAlign="center";ctx.fillText(index===2?"ACCESSO PROFESSIONALE  →":"ENTRA  →",W/2,1000);
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.encoding = THREE.sRGBEncoding;
+            return texture;
+        }
+
+        function buildSkylightAndVolumetricRays(){
+            const cy=11.4,cz=-1.6,r=11.7,rise=5.0;
+            const sky=new THREE.Mesh(new THREE.SphereGeometry(r,64,24,0,Math.PI*2,0,Math.PI/2),new THREE.ShaderMaterial({side:THREE.DoubleSide,vertexShader:`varying vec3 p;void main(){p=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,fragmentShader:`varying vec3 p;void main(){vec3 d=normalize(p);float sun=pow(max(dot(d,normalize(vec3(-.3,.9,.2))),0.),30.);float c=sin(d.x*17.+sin(d.z*11.))*sin(d.z*13.+sin(d.x*9.));float cloud=smoothstep(.16,.75,c);vec3 sky=mix(vec3(.29,.51,.70),vec3(.71,.84,.93),cloud*.75);gl_FragColor=vec4(sky+sun*vec3(.25,.20,.12),1.);}`}));sky.scale.y=rise/r;sky.position.set(0,cy,cz);scene.add(sky);
+            const metal=new THREE.MeshStandardMaterial({color:0x394752,metalness:.35,roughness:.4});const light=new THREE.MeshBasicMaterial({color:0xffd89a});
+            const ceiling=new THREE.Mesh(new THREE.RingGeometry(r,20.55,96),new THREE.MeshStandardMaterial({color:0x233341,roughness:.46,side:THREE.DoubleSide}));ceiling.rotation.x=Math.PI/2;ceiling.position.set(0,cy,cz);scene.add(ceiling);
+            function tube(points,rad,mat){const mesh=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points),32,rad,6,false),mat);scene.add(mesh);}
+            for(let i=0;i<16;i++){const a=i*Math.PI/8,pts=[];for(let j=0;j<=16;j++){const u=j*Math.PI/32;pts.push(new THREE.Vector3(Math.sin(a)*r*Math.cos(u),cy+rise*Math.sin(u),cz-Math.cos(a)*r*Math.cos(u)));}tube(pts,.065,metal);}
+            for(const u of [0,.36,.77,1.14]){const ring=new THREE.Mesh(new THREE.TorusGeometry(r*Math.cos(u),u===0?.095:.045,8,96),u===0?light:metal);ring.rotation.x=Math.PI/2;ring.position.set(0,cy+rise*Math.sin(u),cz);scene.add(ring);}
+            const outer=new THREE.Mesh(new THREE.TorusGeometry(14.2,.045,8,96),light);outer.rotation.x=Math.PI/2;outer.position.set(0,cy-.025,cz);scene.add(outer);
+            // ATLAS wordmark on the architectural frieze, facing the hall from four sides.
+            const c=document.createElement('canvas');c.width=1024;c.height=180;const g=c.getContext('2d');g.fillStyle='#182838';g.fillRect(0,0,1024,180);g.strokeStyle='#d5ad73';g.lineWidth=3;g.strokeRect(3,3,1018,174);g.font='600 95px Georgia,serif';g.textAlign='center';g.fillStyle='#ffe0a5';g.fillText('A T L A S',512,118);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;const mat=new THREE.MeshBasicMaterial({map:t});
+            for(let i=0;i<4;i++){const a=i*Math.PI/2;const sign=new THREE.Mesh(new THREE.PlaneGeometry(5.8,1.02),mat);sign.position.set(Math.sin(a)*18.9,10.93,cz-Math.cos(a)*18.9);sign.lookAt(0,10.93,cz);scene.add(sign);}
+            // Soft light shafts with correct, monotonic fade. No postprocessing dependency.
+            const rayMat=new THREE.ShaderMaterial({uniforms:{uTime:{value:0}},vertexShader:`varying vec2 v;void main(){v=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,fragmentShader:`varying vec2 v;uniform float uTime;void main(){float edge=pow(max(0.,sin(v.x*3.14159)),2.);float fade=smoothstep(0.,.28,v.y)*(1.-smoothstep(.77,1.,v.y));gl_FragColor=vec4(.74,.86,1.,edge*fade*.075*(.94+.06*sin(uTime*.5)));}`,transparent:true,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending});
+            for(let i=0;i<5;i++){const a=(i-2)*.24;const p=new THREE.Mesh(new THREE.PlaneGeometry(1.9+i*.13,11.6),rayMat);p.position.set((i-2)*1.5,7.0,-4.5+i*.2);p.rotation.z=a;p.rotation.y=.13;scene.add(p);godRayMeshes.push(p);}
+        }
+
+        function setupNativeControls(domElement) {
+            domElement.style.touchAction='none';
+            domElement.addEventListener('pointerdown',e=>{
+                if(e.pointerType==='mouse' && e.button!==0)return;
+                if(gesture.pointers.size>=2)return;
+                gesture.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+                domElement.setPointerCapture(e.pointerId);
+                if(gesture.pointers.size===1){
+                    gesture.primary=e.pointerId;
+                    gesture.kind=chooseGesture(hitPanel(e.clientX,e.clientY));
+                    gesture.startX=gesture.lastX=e.clientX;gesture.startY=gesture.lastY=e.clientY;
+                    gesture.startOffset=carousel.offset;gesture.moved=false;gesture.velocity=0;gesture.lastTime=performance.now();
+                }else{
+                    if(carousel.dragging){carousel.dragging=false;carousel.target=Math.round(carousel.offset);}
+                    stopCameraMotion();gesture.kind='pinch';gesture.moved=true;gesture.pinchDistance=pointerDistance();
+                }
+            });
+            domElement.addEventListener('pointermove',e=>{
+                if(!gesture.pointers.has(e.pointerId)){
+                    if(!gesture.pointers.size && e.pointerType==='mouse')handleHoverCheck(e.clientX,e.clientY);
+                    return;
+                }
+                gesture.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+                if(gesture.kind==='pinch'){
+                    if(gesture.pointers.size===2){const dist=pointerDistance();applyZoomDelta((gesture.pinchDistance-dist)*0.035);gesture.pinchDistance=dist;}
+                    return;
+                }
+                if(e.pointerId!==gesture.primary)return;
+                const totalX=e.clientX-gesture.startX,totalY=e.clientY-gesture.startY;
+                if(!gesture.moved){
+                    if(Math.hypot(totalX,totalY)<8)return;
+                    gesture.moved=true;
+                    stopCameraMotion();
+                    if(gesture.kind==='cards'){
+                        leaveInspectionForMotion();carousel.dragging=true;carousel.target=carousel.offset;gesture.startOffset=carousel.offset;
+                    }else{
+                        if(selectedPanelIndex!==-1){leaveInspectionForMotion();currentLookAt.copy(DEFAULT_CAM_TARGET);}
+                        carousel.target=Math.round(carousel.offset);
+                    }
+                }
+                const dx=e.clientX-gesture.lastX,dy=e.clientY-gesture.lastY;
+                if(gesture.kind==='cards'){
+                    carousel.offset=gesture.startOffset+totalX/pixelsPerCard();
+                    carousel.target=carousel.offset;
+                    const now=performance.now();gesture.velocity=dx/Math.max(8,now-gesture.lastTime);gesture.lastTime=now;
+                    layoutCarousel();
+                }else if(gesture.kind==='scene')rotateScene(dx,dy);
+                gesture.lastX=e.clientX;gesture.lastY=e.clientY;
+            });
+            function finish(e,cancelled=false){
+                if(!gesture.pointers.has(e.pointerId))return;
+                gesture.pointers.delete(e.pointerId);
+                if(gesture.kind==='pinch'){
+                    if(!gesture.pointers.size){gesture.kind=null;gesture.primary=null;}
+                    return;
+                }
+                if(e.pointerId!==gesture.primary)return;
+                if(gesture.kind==='cards' && gesture.moved){
+                    const flick=(!cancelled&&!motionReduced&&performance.now()-gesture.lastTime<100)?THREE.MathUtils.clamp(gesture.velocity*0.18,-0.55,0.55):0;
+                    let next=Math.round(carousel.offset+flick);
+                    const delta=carousel.offset-gesture.startOffset;
+                    if(!cancelled&&Math.abs(delta)>0.17&&next===Math.round(gesture.startOffset))next=Math.round(gesture.startOffset)+Math.sign(delta);
+                    carousel.dragging=false;carousel.target=next;
+                }else if(!gesture.moved&&!cancelled){handleTapSelection(e.clientX,e.clientY);}
+                gesture.kind=null;gesture.primary=null;
+            }
+            domElement.addEventListener('pointerup',e=>finish(e));
+            domElement.addEventListener('pointercancel',e=>finish(e,true));
+            domElement.addEventListener('lostpointercapture',e=>finish(e,true));
+            domElement.addEventListener('pointerleave',()=>{if(!gesture.pointers.size){hoveredPanelIndex=-1;document.getElementById('hover-badge').style.opacity='0';}});
+            domElement.addEventListener('wheel',e=>{e.preventDefault();stopCameraMotion();applyZoomDelta(e.deltaY*0.01);},{passive:false});
+            document.querySelectorAll('[data-gesture]').forEach(b=>b.addEventListener('click',()=>setGestureMode(b.dataset.gesture)));
+            document.getElementById('cycle-prev').addEventListener('click',()=>cycleCards(-1));
+            document.getElementById('cycle-next').addEventListener('click',()=>cycleCards(1));
+            document.getElementById('reset-view').addEventListener('click',resetToOverview);
+            document.addEventListener('keydown',e=>{
+                if(e.target.matches('button,input,textarea,select,a'))return;
+                if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();cycleCards(e.key==='ArrowLeft'?-1:1);}
+                if(e.key==='Escape')resetToOverview();
+            });
+        }
+
+        function applyZoomDelta(delta) {
+            const offset = new THREE.Vector3().subVectors(camera.position, currentLookAt);
+            const len = offset.length();
+            const newLen = THREE.MathUtils.clamp(len + delta, orbitState.minDistance, orbitState.maxDistance);
+            offset.setLength(newLen);
+            camera.position.copy(currentLookAt).add(offset);
+            const radial=Math.hypot(camera.position.x,camera.position.z+2);
+            if(radial>19){camera.position.x*=19/radial;camera.position.z=-2+(camera.position.z+2)*19/radial;}
+        }
+
+        function updateOrbitInertia() {
+            if (isCameraAnimating) {
+                orbitState.velTheta = 0;
+                orbitState.velPhi = 0;
+                return;
+            }
+
+            if (Math.abs(orbitState.velTheta) > 0.00005 || Math.abs(orbitState.velPhi) > 0.00005) {
+                const offset = new THREE.Vector3().subVectors(camera.position, currentLookAt);
+                const spherical = new THREE.Spherical().setFromVector3(offset);
+
+                spherical.theta += orbitState.velTheta;
+                spherical.phi = THREE.MathUtils.clamp(
+                    spherical.phi + orbitState.velPhi,
+                    orbitState.minPolarAngle,
+                    orbitState.maxPolarAngle
+                );
+
+                offset.setFromSpherical(spherical);
+                camera.position.copy(currentLookAt).add(offset);
+
+                orbitState.velTheta *= 0.88;
+                orbitState.velPhi *= 0.88;
+            }
+        }
+
+        function updatePointerNDC(clientX, clientY) {
+            pointer.x = (clientX / window.innerWidth) * 2 - 1;
+            pointer.y = -(clientY / window.innerHeight) * 2 + 1;
+        }
+
+        function handleHoverCheck(clientX, clientY) {
+            updatePointerNDC(clientX, clientY);
+            raycaster.setFromCamera(pointer, camera);
+            const intersects = raycaster.intersectObjects(interactiveMeshes, false);
+
+            const hoverBadge = document.getElementById('hover-badge');
+            const hoverText = document.getElementById('hover-badge-text');
+
+            if (intersects.length > 0) {
+                const idx = intersects[0].object.userData.panelIndex;
+                hoveredPanelIndex = idx;
+                document.body.style.cursor = 'pointer';
+                if (selectedPanelIndex === idx && !isDetailsOpen) {
+                    hoverText.textContent = `${PILLARS_DATA[idx].title} — Tocca per entrare`;
+                } else {
+                    hoverText.textContent = `${PILLARS_DATA[idx].title} — Tocca per entrare`;
+                }
+                hoverBadge.style.opacity = '1';
+            } else {
+                hoveredPanelIndex = -1;
+                document.body.style.cursor = 'grab';
+                hoverBadge.style.opacity = '0';
+            }
+        }
+
+        function openAtlas(id){window.parent.postMessage({type:'atlas-open',id},'*');}
+        function handleTapSelection(clientX,clientY){const idx=hitPanel(clientX,clientY);if(idx>=0 && idx<PILLARS_DATA.length)openAtlas(PILLARS_DATA[idx].id);}
+        function computePanelFitDistance(pillar) {
+            const vFovRad = THREE.MathUtils.degToRad(camera.fov);
+            const aspect = Math.max(camera.aspect, 0.35);
+            const padV = aspect < 0.85 ? 1.42 : 1.26;
+            const distV = (pillar.height * padV) / (2 * Math.tan(vFovRad / 2));
+            return Math.max(distV, 5.2);
+        }
+
+        function focusOnPanel(index) {
+            carousel.dragging=false;carousel.offset=carousel.target=Math.round(carousel.offset);layoutCarousel();
+            selectedPanelIndex = index;
+            isDetailsOpen = false;
+
+            const panelGroup = panelGroups[index];
+            const pillar = PILLARS_DATA[index];
+            const isMobile = window.innerWidth < 640;
+            const fitDistance = computePanelFitDistance(pillar);
+
+            const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(panelGroup.quaternion);
+            const verticalBias = isMobile ? -0.16 : -0.06;
+
+            targetLookAt.copy(panelGroup.position).add(new THREE.Vector3(0, verticalBias, 0));
+            targetCamPos.copy(panelGroup.position).addScaledVector(forward, fitDistance);
+            targetCamPos.y = panelGroup.position.y + verticalBias;
+
+            isCameraAnimating = true;
+
+            document.getElementById('hero-footer').classList.add('hidden-ui');
+            document.getElementById('module-card').classList.add('hidden-ui');
+            document.getElementById('module-dock').classList.remove('hidden-ui');
+            document.getElementById('inspect-pill').classList.remove('hidden-ui');
+            document.getElementById('inspect-title').textContent = pillar.title;
+            updateDockActiveState(index);
+        }
+
+        function openPanelDetails(index) {
+            if (selectedPanelIndex !== index) {
+                focusOnPanel(index);
+            }
+            selectedPanelIndex = index;
+            isDetailsOpen = true;
+
+            const pillar = PILLARS_DATA[index];
+            document.getElementById('card-tag').textContent = pillar.tag;
+            document.getElementById('card-title').textContent = pillar.title;
+            document.getElementById('card-subtitle').textContent = pillar.subtitle;
+            document.getElementById('card-desc').textContent = pillar.description;
+
+            const metricsContainer = document.getElementById('card-metrics');
+            metricsContainer.innerHTML = pillar.metrics.map(m => `
+                <div class="bg-white/5 border border-white/10 rounded-xl p-2.5 sm:p-3">
+                    <div class="text-[10px] sm:text-[11px] text-slate-400">${m.label}</div>
+                    <div class="text-base sm:text-lg font-semibold text-[#f6d78e] mt-0.5">${m.value}</div>
+                </div>
+            `).join('');
+
+            document.getElementById('inspect-pill').classList.add('hidden-ui');
+            document.getElementById('module-card').classList.remove('hidden-ui');
+        }
+
+        function closePanelDetails() {
+            isDetailsOpen = false;
+            document.getElementById('module-card').classList.add('hidden-ui');
+            if (selectedPanelIndex !== -1) {
+                document.getElementById('inspect-pill').classList.remove('hidden-ui');
+            }
+        }
+
+        function resetToOverview() {
+            carousel.dragging=false;carousel.target=carousel.offset=0;layoutCarousel();
+            stopCameraMotion();
+            selectedPanelIndex = -1;
+            isDetailsOpen = false;
+            updateResponsiveCameraDefaults();
+            targetCamPos.copy(defaultCamPos);
+            targetLookAt.copy(DEFAULT_CAM_TARGET);
+            isCameraAnimating = true;
+
+            document.getElementById('module-card').classList.add('hidden-ui');
+            document.getElementById('module-dock').classList.add('hidden-ui');
+            document.getElementById('hero-footer').classList.remove('hidden-ui');
+            updateDockActiveState(-1);
+        }
+
+        function updateDockActiveState(activeIdx) {
+            document.querySelectorAll('.dock-btn').forEach((btn, idx) => {
+                if (idx === activeIdx) {
+                    btn.classList.add('bg-[#f6d78e]/20', 'text-[#f6d78e]', 'border', 'border-[#f6d78e]/45');
+                } else {
+                    btn.classList.remove('bg-[#f6d78e]/20', 'text-[#f6d78e]', 'border', 'border-[#f6d78e]/45');
+                }
+            });
+        }
+
+        function setupUIEvents(){
+            document.getElementById('btn-enter-arena').addEventListener('click',()=>openAtlas('esperienze'));
+            document.getElementById('brand-home').addEventListener('click',resetToOverview);
+            document.querySelectorAll('[data-atlas]').forEach(b=>b.addEventListener('click',()=>openAtlas(b.dataset.atlas)));
+            document.querySelectorAll('[data-nav]').forEach(b=>b.addEventListener('click',()=>{const n=b.dataset.nav;if(n==='home')resetToOverview();else openAtlas(n==='workspaces'?'curricolo':'studio');}));
+            window.addEventListener('message',e=>{if(e.source!==window.parent)return;if(e.data?.type==='atlas-pause')paused=!!e.data.value;});
+        }
+        let paused=false;
+        function onWindowResize() {
+            if (!camera || !renderer) return;
+            camera.aspect = window.innerWidth / Math.max(window.innerHeight, 1);
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            if (selectedPanelIndex === -1) {
+                updateResponsiveCameraDefaults();
+                targetCamPos.copy(defaultCamPos);
+                targetLookAt.copy(DEFAULT_CAM_TARGET);
+                isCameraAnimating = true;
+            } else {
+                const wasOpen = isDetailsOpen;
+                focusOnPanel(selectedPanelIndex);
+                if (wasOpen) openPanelDetails(selectedPanelIndex);
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if(paused)return;
+
+            const previousElapsed = clock.elapsedTime;
+            const elapsed = clock.getElapsedTime();
+            const dt = Math.min(0.05, Math.max(0.001, elapsed-previousElapsed));
+            tickCarousel(dt);
+
+            for (let i = 0; i < godRayMeshes.length; i++) {
+                godRayMeshes[i].material.uniforms.uTime.value = elapsed;
+            }
+
+            for (let idx = 0; idx < panelGroups.length; idx++) {
+                const group = panelGroups[idx];
+                const isHighlighted = (idx === hoveredPanelIndex || idx === selectedPanelIndex);
+                const floatY = motionReduced?0:Math.sin(elapsed * 1.3 + idx * 0.9) * 0.03;
+                const liftY = isHighlighted ? 0.14 : 0.0;
+
+                group.position.y = THREE.MathUtils.lerp(
+                    group.position.y,
+                    group.userData.baseY + floatY + liftY,
+                    0.09
+                );
+
+                const targetScale = isHighlighted ? 1.025 : 1.0;
+                group.scale.x = THREE.MathUtils.lerp(group.scale.x, targetScale, 0.1);
+                group.scale.y = THREE.MathUtils.lerp(group.scale.y, targetScale, 0.1);
+
+                group.userData.backMat.opacity = THREE.MathUtils.lerp(
+                    group.userData.backMat.opacity,
+                    isHighlighted ? 0.55 : 0.3,
+                    0.1
+                );
+            }
+
+            if (isCameraAnimating) {
+                camera.position.lerp(targetCamPos, motionReduced?1:0.08);
+                currentLookAt.lerp(targetLookAt, motionReduced?1:0.08);
+
+                if (camera.position.distanceTo(targetCamPos) < 0.02 &&
+                    currentLookAt.distanceTo(targetLookAt) < 0.02) {
+                    isCameraAnimating = false;
+                }
+            } else {
+                updateOrbitInertia();
+            }
+
+            camera.lookAt(currentLookAt);
+            renderer.render(scene, camera);
+        }
+
+        window.onload = function () {
+            init();
+        };
+    </script>
+</body>
+</html>
