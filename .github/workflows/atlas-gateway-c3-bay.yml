@@ -14,25 +14,40 @@ permissions:
 jobs:
   pilot:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
+    env:
+      BLENDER_VERSION: "4.2.23"
     steps:
       - uses: actions/checkout@v6
-      - name: Install Blender from Ubuntu archive
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends blender python3-numpy
-          blender --version
-          dpkg-query -W blender python3-numpy
-      - name: Preflight actual Blender Python and GLB exporter
+      - name: Fetch official versioned Blender distribution and verify integrity
         run: |
           set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/atlas-c3"
-          blender --background --factory-startup --python-exit-code 1 --python-expr 'import bpy, numpy, tempfile, pathlib, struct; print("Blender", bpy.app.version_string, "NumPy", numpy.__version__); d=tempfile.TemporaryDirectory(); p=pathlib.Path(d.name)/"preflight.glb"; bpy.ops.export_scene.gltf(filepath=str(p), export_format="GLB", export_draco_mesh_compression_enable=False); b=p.read_bytes(); assert struct.unpack_from("<4sII",b)==(b"glTF",2,len(b)); print("GLB preflight PASS"); d.cleanup()' 2>&1 | tee "$RUNNER_TEMP/atlas-c3/preflight.log"
+          mkdir -p "$RUNNER_TEMP/atlas-c3" "$RUNNER_TEMP/atlas-blender"
+          cd "$RUNNER_TEMP/atlas-blender"
+          file="blender-$BLENDER_VERSION-linux-x64.tar.xz"
+          base="https://download.blender.org/release/Blender4.2"
+          curl --fail --show-error --silent --location --retry 3 --proto '=https' --proto-redir '=https' "$base/blender-$BLENDER_VERSION.sha256" -o official.sha256
+          awk -v f="$file" '$2==f || $2=="*"f {print $1 "  " f}' official.sha256 > expected.sha256
+          test "$(wc -l < expected.sha256)" -eq 1
+          grep -Eq '^[0-9a-fA-F]{64}  blender-' expected.sha256
+          curl --fail --show-error --silent --location --retry 3 --proto '=https' --proto-redir '=https' "$base/$file" -o "$file"
+          test "$(stat -c %s "$file")" -eq 350707672
+          sha256sum --strict --check expected.sha256
+          cp expected.sha256 "$RUNNER_TEMP/atlas-c3/blender-distribution.sha256"
+          cp official.sha256 "$RUNNER_TEMP/atlas-c3/blender-official.sha256"
+          tar -xJf "$file"
+          bin="$PWD/blender-$BLENDER_VERSION-linux-x64/blender"
+          test -x "$bin"
+          "$bin" --version | tee "$RUNNER_TEMP/atlas-c3/blender-version.log"
+          echo "BLENDER_BIN=$bin" >> "$GITHUB_ENV"
+      - name: Preflight GLB exporter and actual Cycles denoising
+        run: |
+          set -euo pipefail
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/preflight.py -- "$RUNNER_TEMP/atlas-c3" 2>&1 | tee "$RUNNER_TEMP/atlas-c3/preflight.log"
       - name: Build and render modular bay
         run: |
           set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/atlas-c3"
-          blender --background --python-exit-code 1 --python scripts/atlas-gateway-c3/bay.py -- "$RUNNER_TEMP/atlas-c3" 2>&1 | tee "$RUNNER_TEMP/atlas-c3/blender.log"
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/bay.py -- "$RUNNER_TEMP/atlas-c3" 2>&1 | tee "$RUNNER_TEMP/atlas-c3/blender.log"
       - name: Verify local model and evidence
         run: |
           set -euo pipefail
