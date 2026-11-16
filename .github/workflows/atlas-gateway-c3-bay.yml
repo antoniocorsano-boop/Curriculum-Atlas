@@ -571,3 +571,44 @@ jobs:
           path: ${{ runner.temp }}/atlas-c33-refine-environment/
           if-no-files-found: ignore
           retention-days: 7
+
+  refine-cupola:
+    name: C3.3A5.3a light glass cupola
+    needs: production
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore pinned Blender archive
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-gateway-c32-textured
+          path: ${{ runner.temp }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-c32b-ao
+          path: ${{ runner.temp }}/atlas-c32b
+      - name: Produce light glass cupola from locked sources
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c33-refine-cupola"
+          python3 -m py_compile scripts/atlas-gateway-c3/library-master-cupola.py
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/library-master-cupola.py -- "$RUNNER_TEMP/atlas-c33-refine-cupola" 2>&1 | tee "$RUNNER_TEMP/atlas-c33-refine-cupola/library.log"
+      - name: Verify cupola geometry, glazing and inherited contracts
+        run: python3 scripts/atlas-gateway-c3/library-master-cupola.py --verify "$RUNNER_TEMP/atlas-c33-refine-cupola"
+      - name: Preserve cupola master and six actual renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c33a53a-cupola
+          path: ${{ runner.temp }}/atlas-c33-refine-cupola/
+          if-no-files-found: ignore
+          retention-days: 7
