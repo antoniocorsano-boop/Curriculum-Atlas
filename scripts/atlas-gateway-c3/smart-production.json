@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "active": {
+    "phase": "C3.3A5.3b",
+    "script": "library-master-arch.py",
+    "artifact": "atlas-c33a53b-arch",
+    "historicalJob": "refine-arch"
+  },
+  "previewEnabled": false
+}

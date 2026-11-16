@@ -7,6 +7,12 @@ on:
       - "docs/atlas-gateway/AG-04C3-FILIERA-3D.md"
       - ".github/workflows/atlas-gateway-c3-bay.yml"
   workflow_dispatch:
+    inputs:
+      mode:
+        description: Production mode (FAST remains disabled until SP-03 qualification)
+        type: choice
+        options: [qualify, full]
+        default: qualify
 
 # Only superseded executions of the same pull request are cancelled.
 concurrency:
@@ -17,8 +23,35 @@ permissions:
   contents: read
 
 jobs:
+  plan:
+    name: Smart Production — select mode and current candidate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      mode: ${{ steps.selection.outputs.mode }}
+      phase: ${{ steps.selection.outputs.phase }}
+      script: ${{ steps.selection.outputs.script }}
+      artifact: ${{ steps.selection.outputs.artifact }}
+      historical_job: ${{ steps.selection.outputs.historical_job }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Test deterministic mode selection
+        run: python3 scripts/atlas-gateway-c3/smart-production.py --selftest
+      - name: Resolve current candidate and mode
+        id: selection
+        env:
+          REQUESTED: ${{ inputs.mode || 'qualify' }}
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before || '' }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python3 scripts/atlas-gateway-c3/smart-production.py --requested "$REQUESTED" --event "$EVENT_NAME" --before "$BEFORE_SHA" --head "$HEAD_SHA"
+
   materials:
     name: C3.2A source resources
+    needs: plan
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -66,6 +99,7 @@ jobs:
 
   environment:
     name: Qualified Blender environment and baseline
+    needs: plan
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -212,7 +246,8 @@ jobs:
 
   library-composition:
     name: C3.3A circular library architectural prototype
-    needs: production
+    needs: [production, plan]
+    if: needs.plan.outputs.mode == 'full' && needs.plan.outputs.historical_job != 'library-composition'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -287,7 +322,8 @@ jobs:
 
   master-architecture:
     name: C3.3A4.1 architectural master
-    needs: production
+    needs: [production, plan]
+    if: needs.plan.outputs.mode == 'full' && needs.plan.outputs.historical_job != 'master-architecture'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -328,7 +364,8 @@ jobs:
 
   master-materials:
     name: C3.3A4.2 material and typography master
-    needs: production
+    needs: [production, plan]
+    if: needs.plan.outputs.mode == 'full' && needs.plan.outputs.historical_job != 'master-materials'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -369,7 +406,8 @@ jobs:
 
   master-scenography:
     name: C3.3A4.3 cultural scenography master
-    needs: production
+    needs: [production, plan]
+    if: needs.plan.outputs.mode == 'full' && needs.plan.outputs.historical_job != 'master-scenography'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -410,7 +448,8 @@ jobs:
 
   master-lighting:
     name: C3.3A4.4 lighting and atmosphere master
-    needs: production
+    needs: [production, plan]
+    if: needs.plan.outputs.mode == 'full' && needs.plan.outputs.historical_job != 'master-lighting'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -451,7 +490,8 @@ jobs:
 
   master-portals:
     name: C3.3A4.5 semantic portal signage master
-    needs: production
+    needs: [production, plan]
+    if: needs.plan.outputs.mode == 'full' && needs.plan.outputs.historical_job != 'master-portals'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -492,7 +532,8 @@ jobs:
 
   refine-portals:
     name: C3.3A5.1 refined portal composition
-    needs: production
+    needs: [production, plan]
+    if: needs.plan.outputs.mode == 'full' && needs.plan.outputs.historical_job != 'refine-portals'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -533,7 +574,8 @@ jobs:
 
   refine-environment:
     name: C3.3A5.2 refined sky and landscape
-    needs: production
+    needs: [production, plan]
+    if: needs.plan.outputs.mode == 'full' && needs.plan.outputs.historical_job != 'refine-environment'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -574,7 +616,8 @@ jobs:
 
   refine-cupola:
     name: C3.3A5.3a light glass cupola
-    needs: production
+    needs: [production, plan]
+    if: needs.plan.outputs.mode == 'full' && needs.plan.outputs.historical_job != 'refine-cupola'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -615,7 +658,8 @@ jobs:
 
   refine-arch:
     name: C3.3A5.3b refined original rear arch
-    needs: production
+    needs: [production, plan]
+    if: needs.plan.outputs.mode == 'full' && needs.plan.outputs.historical_job != 'refine-arch'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -652,4 +696,52 @@ jobs:
           name: atlas-c33a53b-arch
           path: ${{ runner.temp }}/atlas-c33-refine-arch/
           if-no-files-found: ignore
+          retention-days: 7
+
+  smart-current:
+    name: Smart Production — current candidate qualification
+    needs: [production, plan]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CANDIDATE_SCRIPT: ${{ needs.plan.outputs.script }}
+      CANDIDATE_PHASE: ${{ needs.plan.outputs.phase }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore pinned Blender archive
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-gateway-c32-textured
+          path: ${{ runner.temp }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-c32b-ao
+          path: ${{ runner.temp }}/atlas-c32b
+      - name: Produce current candidate
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-smart-current"
+          script="scripts/atlas-gateway-c3/$CANDIDATE_SCRIPT"
+          python3 -m py_compile "$script"
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python "$script" -- "$RUNNER_TEMP/atlas-smart-current" 2>&1 | tee "$RUNNER_TEMP/atlas-smart-current/library.log"
+      - name: Verify full current candidate contract
+        run: |
+          set -euo pipefail
+          python3 "scripts/atlas-gateway-c3/$CANDIDATE_SCRIPT" --verify "$RUNNER_TEMP/atlas-smart-current"
+          python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"atlas-smart-current"; m=json.loads((p/"library-verification.json").read_text()); assert m["phase"]==os.environ["CANDIDATE_PHASE"] and m["status"]=="PASS"'
+      - name: Preserve current candidate and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.plan.outputs.artifact }}
+          path: ${{ runner.temp }}/atlas-smart-current/
+          if-no-files-found: error
           retention-days: 7
