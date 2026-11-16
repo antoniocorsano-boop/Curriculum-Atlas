@@ -14,7 +14,7 @@ permissions:
 jobs:
   pilot:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 25
     env:
       BLENDER_VERSION: "4.2.23"
     steps:
@@ -32,6 +32,7 @@ jobs:
           grep -Eq '^[0-9a-fA-F]{64}  blender-' expected.sha256
           curl --fail --show-error --silent --location --retry 3 --proto '=https' --proto-redir '=https' "$base/$file" -o "$file"
           test "$(stat -c %s "$file")" -eq 350707672
+          test "$(cut -d ' ' -f1 expected.sha256)" = "bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404"
           sha256sum --strict --check expected.sha256
           cp expected.sha256 "$RUNNER_TEMP/atlas-c3/blender-distribution.sha256"
           cp official.sha256 "$RUNNER_TEMP/atlas-c3/blender-official.sha256"
@@ -58,5 +59,26 @@ jobs:
         with:
           name: atlas-gateway-c3-bay
           path: ${{ runner.temp }}/atlas-c3/
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: C3.2A acquire seven verified local CC0 resources
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c32"
+          python3 scripts/atlas-gateway-c3/acquire-materials.py "$RUNNER_TEMP/atlas-c32/assets" | tee "$RUNNER_TEMP/atlas-c32/acquisition.log"
+      - name: C3.2A build textured and merged bay
+        run: |
+          set -euo pipefail
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/bay-textured.py -- "$RUNNER_TEMP/atlas-c32" 2>&1 | tee "$RUNNER_TEMP/atlas-c32/blender.log"
+      - name: C3.2A verify materials, mesh budget and self-contained GLB
+        run: |
+          set -euo pipefail
+          python3 scripts/atlas-gateway-c3/verify-textured.py "$RUNNER_TEMP/atlas-c32" | tee "$RUNNER_TEMP/atlas-c32/verification.json"
+      - name: Preserve C3.2A evidence and source assets
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-gateway-c32-textured
+          path: ${{ runner.temp }}/atlas-c32/
           if-no-files-found: ignore
           retention-days: 7
