@@ -24,7 +24,7 @@ try {
   assert.equal(createHash("sha256").update(glb).digest("hex"),receipt.files["campata-ao.glb"].sha256);
   const html=Buffer.from('<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;overflow:hidden}canvas{display:block}</style></head><body><script src="/three.js"></script><script src="/loader.js"></script></body></html>');
   const resources={"/": [html,"text/html"],"/three.js":[engine,"text/javascript"],"/loader.js":[loader,"text/javascript"],"/bay.glb":[glb,"model/gltf-binary"]};
-  server=createServer((req,res)=>{const item=resources[req.url];if(!item){res.writeHead(404);res.end();return}res.writeHead(200,{"Content-Type":item[1],"Cache-Control":"no-store"});res.end(item[0])});
+  server=createServer((req,res)=>{if(req.url==="/favicon.ico"){res.writeHead(204);res.end();return}const item=resources[req.url];if(!item){res.writeHead(404);res.end();return}res.writeHead(200,{"Content-Type":item[1],"Cache-Control":"no-store"});res.end(item[0])});
   await new Promise(r=>server.listen(0,"127.0.0.1",r));
   const origin="http://127.0.0.1:"+server.address().port;
   browser=await chromium.launch({headless:true,args:["--use-gl=angle","--use-angle=swiftshader","--enable-unsafe-swiftshader"]});
