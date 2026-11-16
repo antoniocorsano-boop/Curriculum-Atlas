@@ -130,6 +130,40 @@ try {
       await page.screenshot({path:evidence+"/"+name+"-failure.png",animations:"disabled"}).catch(()=>{});
     } finally { await context.close(); }
   }
+  const recovery=await browser.newContext({viewport:{width:393,height:873},hasTouch:true,isMobile:true});
+  const recoveryPage=await recovery.newPage();
+  try {
+    await recoveryPage.goto(baseURL+basePath+"/gateway/");
+    const locator=recoveryPage.locator("iframe[title='Biblioteca Atlas tridimensionale']");
+    await locator.waitFor({state:"visible",timeout:60000});
+    const initialFrame=await (await locator.elementHandle()).contentFrame();
+    await waitScene(initialFrame, state=>state.calls>0,"Preparazione recupero",60000);
+    await recoveryPage.setViewportSize({width:280,height:600});
+    await recoveryPage.getByRole("status").filter({hasText:"spazio disponibile è insufficiente"}).waitFor();
+    await locator.waitFor({state:"detached"});
+    await recoveryPage.setViewportSize({width:393,height:873});
+    await recoveryPage.getByRole("button",{name:"Attiva la sala 3D"}).click();
+    await locator.waitFor({state:"visible",timeout:60000});
+    const recoveredFrame=await (await locator.elementHandle()).contentFrame();
+    await waitScene(recoveredFrame,state=>state.calls>0,"Ripristino motore",60000);
+    const lost=await recoveredFrame.evaluate(()=>{
+      const extension=renderer.getContext().getExtension("WEBGL_lose_context");
+      if (!extension) return false;
+      extension.loseContext();
+      return true;
+    });
+    assert(lost,"Estensione perdita contesto non disponibile");
+    await recoveryPage.getByRole("status").filter({hasText:"Motore 3D non disponibile"}).waitFor({timeout:30000});
+    await locator.waitFor({state:"detached"});
+    await recoveryPage.getByRole("navigation",{name:"Accedi agli ambienti Atlas"}).getByRole("link",{name:"Entra →"}).first().click();
+    await recoveryPage.waitForURL("**/curricolo/");
+    results.push({device:"recovery",constrainedViewport:"PASS",restart:"PASS",contextLoss:"PASS",curricolo:"PASS"});
+  } catch (error) {
+    const detail=error instanceof Error ? error.message : String(error);
+    failures.push({device:"recovery",error:detail});
+    results.push({device:"recovery",status:"FAIL",error:detail});
+    await recoveryPage.screenshot({path:evidence+"/recovery-failure.png"}).catch(()=>{});
+  } finally { await recovery.close(); }
   const reduced=await browser.newContext({reducedMotion:"reduce",viewport:{width:393,height:873}});
   const page=await reduced.newPage();
   try {
