@@ -12,48 +12,87 @@ permissions:
   contents: read
 
 jobs:
-  pilot:
+  materials:
+    name: C3.2A source resources
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
-    env:
-      BLENDER_VERSION: "4.2.23"
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
-      - name: Fetch official versioned Blender distribution and verify integrity
+        with:
+          persist-credentials: false
+      - name: Offline metadata contract
+        run: python3 scripts/atlas-gateway-c3/acquire-materials.py --selftest
+      - name: Restore provisional CC0 source bundle
+        id: materials-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-materials
+          key: atlas-c32-cc0-v1-${{ hashFiles('scripts/atlas-gateway-c3/acquire-materials.py') }}
+      - name: Acquire if absent and verify all source bytes
         run: |
           set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/atlas-c3" "$RUNNER_TEMP/atlas-blender"
-          cd "$RUNNER_TEMP/atlas-blender"
-          file="blender-$BLENDER_VERSION-linux-x64.tar.xz"
-          base="https://download.blender.org/release/Blender4.2"
-          curl --fail --show-error --silent --location --retry 3 --proto '=https' --proto-redir '=https' "$base/blender-$BLENDER_VERSION.sha256" -o official.sha256
-          awk -v f="$file" '$2==f || $2=="*"f {print $1 "  " f}' official.sha256 > expected.sha256
-          test "$(wc -l < expected.sha256)" -eq 1
-          grep -Eq '^[0-9a-fA-F]{64}  blender-' expected.sha256
-          curl --fail --show-error --silent --location --retry 3 --proto '=https' --proto-redir '=https' "$base/$file" -o "$file"
-          test "$(stat -c %s "$file")" -eq 350707672
-          test "$(cut -d ' ' -f1 expected.sha256)" = "bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404"
-          sha256sum --strict --check expected.sha256
-          cp expected.sha256 "$RUNNER_TEMP/atlas-c3/blender-distribution.sha256"
-          cp official.sha256 "$RUNNER_TEMP/atlas-c3/blender-official.sha256"
-          tar -xJf "$file"
-          bin="$PWD/blender-$BLENDER_VERSION-linux-x64/blender"
-          test -x "$bin"
-          "$bin" --version | tee "$RUNNER_TEMP/atlas-c3/blender-version.log"
-          echo "BLENDER_BIN=$bin" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/atlas-materials"
+          if [[ "${{ steps.materials-cache.outputs.cache-hit }}" != true ]]; then
+            python3 scripts/atlas-gateway-c3/acquire-materials.py "$RUNNER_TEMP/atlas-materials"
+          fi
+          python3 scripts/atlas-gateway-c3/acquire-materials.py --verify "$RUNNER_TEMP/atlas-materials"
+      - name: Save verified provisional sources
+        if: steps.materials-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: ${{ runner.temp }}/atlas-materials
+          key: ${{ steps.materials-cache.outputs.cache-primary-key }}
+      - name: Transfer verified source bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c32-source-bundle
+          path: ${{ runner.temp }}/atlas-materials/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Preserve source diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c32-source-diagnostics
+          path: ${{ runner.temp }}/atlas-materials/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  environment:
+    name: Qualified Blender environment and baseline
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore pinned Blender archive
+        id: blender-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify and bootstrap Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - name: Save verified Blender archive before rendering
+        if: steps.blender-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: ${{ steps.blender-cache.outputs.cache-primary-key }}
       - name: Preflight GLB exporter and actual Cycles denoising
         run: |
           set -euo pipefail
           "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/preflight.py -- "$RUNNER_TEMP/atlas-c3" 2>&1 | tee "$RUNNER_TEMP/atlas-c3/preflight.log"
-      - name: Build and render modular bay
+      - name: Build and render baseline bay
         run: |
           set -euo pipefail
           "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/bay.py -- "$RUNNER_TEMP/atlas-c3" 2>&1 | tee "$RUNNER_TEMP/atlas-c3/blender.log"
-      - name: Verify local model and evidence
+      - name: Verify baseline evidence
         run: |
           set -euo pipefail
           python3 scripts/atlas-gateway-c3/verify.py "$RUNNER_TEMP/atlas-c3" | tee "$RUNNER_TEMP/atlas-c3/verification.json"
-      - name: Preserve pilot evidence
+      - name: Preserve baseline evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -61,24 +100,50 @@ jobs:
           path: ${{ runner.temp }}/atlas-c3/
           if-no-files-found: ignore
           retention-days: 7
-      - name: C3.2A acquire seven verified local CC0 resources
+
+  production:
+    name: C3.2A textured production
+    needs: [materials, environment]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore pinned Blender archive
+        id: blender-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender bytes again
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - name: Download verified sources from same run
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-c32-source-bundle
+          path: ${{ runner.temp }}/atlas-c32/assets
+      - name: Reverify source bundle offline
+        run: python3 scripts/atlas-gateway-c3/acquire-materials.py --verify "$RUNNER_TEMP/atlas-c32/assets"
+      - name: Preflight production executable
         run: |
           set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/atlas-c32"
-          python3 scripts/atlas-gateway-c3/acquire-materials.py "$RUNNER_TEMP/atlas-c32/assets" | tee "$RUNNER_TEMP/atlas-c32/acquisition.log"
-      - name: C3.2A build textured and merged bay
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/preflight.py -- "$RUNNER_TEMP/atlas-c3" 2>&1 | tee "$RUNNER_TEMP/atlas-c3/preflight.log"
+      - name: Build textured and merged bay
         run: |
           set -euo pipefail
           "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/bay-textured.py -- "$RUNNER_TEMP/atlas-c32" 2>&1 | tee "$RUNNER_TEMP/atlas-c32/blender.log"
-      - name: C3.2A verify materials, mesh budget and self-contained GLB
+      - name: Verify materials, mesh budget and self-contained GLB
         run: |
           set -euo pipefail
           python3 scripts/atlas-gateway-c3/verify-textured.py "$RUNNER_TEMP/atlas-c32" | tee "$RUNNER_TEMP/atlas-c32/verification.json"
-      - name: Preserve C3.2A evidence and source assets
+      - name: Preserve production evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: atlas-gateway-c32-textured
-          path: ${{ runner.temp }}/atlas-c32/
+          path: |
+            ${{ runner.temp }}/atlas-c32/
+            ${{ runner.temp }}/atlas-c3/
           if-no-files-found: ignore
           retention-days: 7
