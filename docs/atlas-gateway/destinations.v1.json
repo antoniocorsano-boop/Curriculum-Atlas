@@ -18,13 +18,15 @@
       "state": "VERIFIED_ROUTE",
       "primaryPath": "/curricolo",
       "relatedPaths": [
-        "/esplora",
-        "/obiettivi",
-        "/raccordi"
+        "/esplora"
       ],
       "evidence": "src/app/curricolo/page.tsx",
       "authority": "Arena",
-      "preserveProvenance": true
+      "preserveProvenance": true,
+      "foundationOnlyPaths": [
+        "/obiettivi",
+        "/raccordi"
+      ]
     },
     {
       "id": "esperienze",
@@ -44,7 +46,11 @@
         "Percorsi"
       ],
       "publicationPolicy": "EXISTING_AUTHORIZED_CATALOG_ONLY",
-      "noLabLinks": true
+      "noLabLinks": true,
+      "verifiedPortfolioAtEvidenceHead": {
+        "registered": 2,
+        "runtimeAuthorized": 0
+      }
     },
     {
       "id": "studio",
