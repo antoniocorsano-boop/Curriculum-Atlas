@@ -40,6 +40,8 @@ jobs:
           fetch-depth: 0
       - name: Test deterministic mode selection
         run: python3 scripts/atlas-gateway-c3/smart-production.py --selftest
+      - name: Test cache integrity and negative cases
+        run: python3 scripts/atlas-gateway-c3/smart-base-cache.py --selftest
       - name: Resolve current candidate and mode
         id: selection
         env:
@@ -179,6 +181,14 @@ jobs:
         with:
           path: ${{ runner.temp }}/atlas-smart-base
           key: ${{ steps.base-key.outputs.key }}
+      - name: Check whether FULL can seed a new exact-key cache
+        if: needs.plan.outputs.mode == 'full'
+        id: full-cache-lookup
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-smart-base
+          key: ${{ steps.base-key.outputs.key }}
+          lookup-only: true
       - name: Verify and recover cached bay and AO
         if: steps.base-cache.outputs.cache-hit == 'true'
         run: python3 scripts/atlas-gateway-c3/smart-base-cache.py restore "$RUNNER_TEMP"
@@ -213,11 +223,14 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/atlas-gateway-c3/embed-ao.py "$RUNNER_TEMP/atlas-c32b"
-      - name: Verify complete base and prepare cache on a QUALIFY miss
-        if: needs.plan.outputs.mode == 'qualify' && steps.base-cache.outputs.cache-hit != 'true'
+      - name: Independently verify freshly rebuilt base
+        if: steps.base-cache.outputs.cache-hit != 'true'
+        run: python3 scripts/atlas-gateway-c3/smart-base-cache.py verify "$RUNNER_TEMP"
+      - name: Prepare verified cache after a cold rebuild
+        if: steps.base-cache.outputs.cache-hit != 'true' && steps.full-cache-lookup.outputs.cache-hit != 'true'
         run: python3 scripts/atlas-gateway-c3/smart-base-cache.py save "$RUNNER_TEMP"
       - name: Save exact-key verified base cache
-        if: needs.plan.outputs.mode == 'qualify' && steps.base-cache.outputs.cache-hit != 'true'
+        if: steps.base-cache.outputs.cache-hit != 'true' && steps.full-cache-lookup.outputs.cache-hit != 'true'
         uses: actions/cache/save@v5
         with:
           path: ${{ runner.temp }}/atlas-smart-base

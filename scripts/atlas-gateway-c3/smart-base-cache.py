@@ -33,14 +33,35 @@ def validate_cache(cache,key):
     assert set(receipt["files"])==expected()
     for n,r in receipt["files"].items():assert record(cache/n)==r,n
     assert {p.relative_to(cache).as_posix() for p in cache.rglob("*") if p.is_file()}==expected()|{"cache-manifest.json"}
+def selftest():
+    with tempfile.TemporaryDirectory() as tmp:
+        cache=Path(tmp);key="a"*64
+        for n in sorted(expected()):
+            p=cache/n;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(n.encode())
+        (cache/"cache-manifest.json").write_text(json.dumps({"schema":1,"key":key,"files":{n:record(cache/n) for n in sorted(expected())}}))
+        validate_cache(cache,key)
+        def rejects(fn):
+            try:fn()
+            except (AssertionError,FileNotFoundError,ValueError):return
+            raise AssertionError("negative cache test unexpectedly accepted")
+        rejects(lambda:validate_cache(cache,"b"*64))
+        target=cache/"atlas-c32/campata.blend";original=target.read_bytes()
+        target.write_bytes(b"corrupted");rejects(lambda:validate_cache(cache,key));target.write_bytes(original)
+        target.unlink();rejects(lambda:validate_cache(cache,key));target.write_bytes(original)
+        extra=cache/"unexpected.txt";extra.write_text("extra");rejects(lambda:validate_cache(cache,key));extra.unlink()
+        validate_cache(cache,key)
+        print("SP-02 cache integrity: 6/6 PASS (synthetic bytes; real Blender validation separate)")
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument("mode",choices=["key","restore","save"]);ap.add_argument("root",type=Path);args=ap.parse_args();root=args.root;cache=root/"atlas-smart-base";key=fingerprint(root)
+    if sys.argv[1:]==["--selftest"]:selftest();return
+    ap=argparse.ArgumentParser();ap.add_argument("mode",choices=["key","restore","save","verify"]);ap.add_argument("root",type=Path);args=ap.parse_args();root=args.root;cache=root/"atlas-smart-base";key=fingerprint(root)
     if args.mode=="key":
         print(key)
         if os.environ.get("GITHUB_OUTPUT"):
             with open(os.environ["GITHUB_OUTPUT"],"a") as f:f.write(f"key=atlas-smart-base-v1-{key}\n")
         return
-    if args.mode=="restore":
+    if args.mode=="verify":
+        inspect(root,root)
+    elif args.mode=="restore":
         validate_cache(cache,key)
         for n in sorted(expected()):
             q=root/n;q.parent.mkdir(parents=True,exist_ok=True);assert not q.exists(),q;shutil.copy2(cache/n,q)
