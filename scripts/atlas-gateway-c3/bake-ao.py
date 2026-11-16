@@ -22,6 +22,7 @@ second=uvs.new(name="AtlasAO",do_init=False);uvs.active_index=1
 bpy.ops.object.mode_set(mode="EDIT");bpy.ops.mesh.select_all(action="SELECT")
 bpy.ops.uv.smart_project(angle_limit=math.radians(66),island_margin=.003)
 bpy.ops.object.mode_set(mode="OBJECT")
+uvs=obj.data.uv_layers;second=uvs["AtlasAO"]
 # Raster test: strict triangle interiors at pixel centers, excludes shared boundaries.
 size=2048
 obj.data.calc_loop_triangles()
