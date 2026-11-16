@@ -1,5 +1,5 @@
 """Atlas C3.1: deterministic library bay study. Run with Blender --background --python-exit-code 1 --python this.py -- OUT."""
-import bpy, sys, math, random, json, hashlib
+import bpy, sys, math, random, json, hashlib, numpy
 from pathlib import Path
 from mathutils import Vector
 out = Path(sys.argv[sys.argv.index("--")+1]).resolve()
@@ -30,7 +30,12 @@ def box(name, loc, size, material, bevel=.015):
     o.data.materials.append(material)
     if bevel:
         mod=o.modifiers.new("Soft edges","BEVEL");mod.width=bevel;mod.segments=2
-        normal=o.modifiers.new("Weighted normals","WEIGHTED_NORMAL")
+        # Blender 4.0 requires Auto Smooth for weighted normals. Keep bevel-only
+        # geometry on versions that no longer expose this mesh property.
+        if hasattr(o.data, "use_auto_smooth"):
+            o.data.use_auto_smooth=True
+            o.data.auto_smooth_angle=math.radians(60)
+            normal=o.modifiers.new("Weighted normals","WEIGHTED_NORMAL")
     meshes.append(o);return o
 
 # Camera faces the recess from negative Y. All book fronts remain behind the canopy lip.
@@ -62,7 +67,7 @@ box("Plinth",(0,-.06,.08),(3.08,.65,.16),wood,.025)
 bpy.ops.object.select_all(action="DESELECT")
 for o in meshes:o.select_set(True)
 bpy.context.view_layer.objects.active=meshes[0]
-bpy.ops.export_scene.gltf(filepath=str(out/"campata.glb"),export_format="GLB",use_selection=True,export_apply=True)
+bpy.ops.export_scene.gltf(filepath=str(out/"campata.glb"),export_format="GLB",use_selection=True,export_apply=True,export_draco_mesh_compression_enable=False)
 box("Studio floor",(0,-2,-.09),(12,9,.16),stone,.01)
 def area(name, loc, target, power, color, size, shape="DISK"):
     data=bpy.data.lights.new(name,"AREA");data.energy=power;data.color=color;data.shape=shape;data.size=size
@@ -81,7 +86,7 @@ scene.render.resolution_x=720;scene.render.resolution_y=840;scene.render.resolut
 scene.render.image_settings.file_format="PNG";scene.render.filepath=str(out/"campata.png")
 bpy.ops.wm.save_as_mainfile(filepath=str(out/"campata.blend"))
 bpy.ops.render.render(write_still=True)
-receipt={"blender":bpy.app.version_string,"seed":118,"assetObjects":len(meshes)-1,"lightBake":False,"source":"procedural","studentAuthorized":False,"files":{}}
+receipt={"blender":bpy.app.version_string,"numpy":numpy.__version__,"seed":118,"assetObjects":len(meshes)-1,"lightBake":False,"source":"procedural","studentAuthorized":False,"files":{}}
 for name in ("campata.glb","campata.blend","campata.png"):
     p=out/name;receipt["files"][name]={"bytes":p.stat().st_size,"sha256":hashlib.sha256(p.read_bytes()).hexdigest()}
 (out/"manifest.json").write_text(json.dumps(receipt,indent=2)+"\n")
