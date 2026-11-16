@@ -10,7 +10,7 @@ const evidence = process.env.ATLAS_GATEWAY_EVIDENCE ?? ".atlas-gateway/evidence"
 mkdirSync(evidence,{recursive:true});
 const browser = await chromium.launch({headless:true,args:["--use-gl=angle","--use-angle=swiftshader","--enable-unsafe-swiftshader"]});
 const results = [];
-let activePage, activeName;
+const failures = [];
 async function assertLayout(page, frame, label) {
   const parent = await page.locator("iframe").boundingBox();
   const viewport = page.viewportSize();
@@ -23,8 +23,14 @@ async function assertLayout(page, frame, label) {
   }));
   assert.equal(controls.length,9,label+" comandi");
   for (const c of controls) assert(c.x>=-1 && c.y>=-1 && c.right<=c.vw+1 && c.bottom<=c.vh+1 && c.height>=43 && c.width>=40 && c.reachable,label+" comando non raggiungibile: "+JSON.stringify(c));
-  const noOverflow=await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth+1 && document.documentElement.scrollHeight <= innerHeight+1);
-  assert(noOverflow,label+" scorrimento esterno imprevisto");
+  const dimensions=await page.evaluate(()=>{
+    const root=document.documentElement, body=document.body, shell=document.querySelector(".atlas-gateway-immersive");
+    return {width:innerWidth,height:innerHeight,scrollWidth:root.scrollWidth,scrollHeight:root.scrollHeight,
+      bodyPaddingBottom:getComputedStyle(body).paddingBottom,shellHeight:shell?.getBoundingClientRect().height};
+  });
+  assert(dimensions.scrollWidth<=dimensions.width+1 && dimensions.scrollHeight<=dimensions.height+1
+    && dimensions.bodyPaddingBottom==="0px" && Math.abs(dimensions.shellHeight-dimensions.height)<=1,
+    label+" contratto dimensionale violato: "+JSON.stringify(dimensions));
   return parent;
 }
 // Poll from Node, not from an injected browser-side predicate. The sandbox CSP
@@ -63,8 +69,8 @@ try {
     const {name,...options}=device;
     const context = await browser.newContext(options);
     const page = await context.newPage();
-    activePage=page;activeName=name;
     const external = [];
+    try {
     await context.route("**/*",route=>{
       const url=route.request().url();
       if (/^https?:/.test(url) && new URL(url).origin!==expectedOrigin) {
@@ -116,23 +122,32 @@ try {
     await page.screenshot({path:evidence+"/"+name+"-esperienze.png",animations:"disabled"});
     assert.equal(external.length,0,"nessuna richiesta HTTP a origini terze");
     results.push({device:name,revision:initial.revision,drawCalls:initial.calls,panels:initial.panels,layout:"PASS",stableNotice:"PASS",carousel:"PASS",studio:"PASS",experiences:"PASS",externalRequests:external.length});
-    activePage=null;
-    await context.close();
+    } catch (error) {
+      const detail=error instanceof Error ? error.message : String(error);
+      failures.push({device:name,error:detail});
+      results.push({device:name,status:"FAIL",error:detail});
+      console.error(name+": "+detail);
+      await page.screenshot({path:evidence+"/"+name+"-failure.png",animations:"disabled"}).catch(()=>{});
+    } finally { await context.close(); }
   }
   const reduced=await browser.newContext({reducedMotion:"reduce",viewport:{width:393,height:873}});
   const page=await reduced.newPage();
+  try {
   await page.goto(baseURL+basePath+"/gateway/");
   await page.getByRole("status").filter({hasText:"movimento ridotto"}).waitFor();
   assert.equal(await page.locator("iframe").count(),0);
   await page.getByRole("navigation",{name:"Accedi agli ambienti Atlas"}).getByRole("link",{name:"Entra →"}).first().click();
   await page.waitForURL("**/curricolo/");
   results.push({device:"reduced-motion",fallback:"PASS",curricolo:"PASS"});
-  await reduced.close();
-} catch (error) {
-  if (activePage) await activePage.screenshot({path:evidence+"/"+activeName+"-failure.png",animations:"disabled"}).catch(()=>{});
-  throw error;
+  } catch (error) {
+    const detail=error instanceof Error ? error.message : String(error);
+    failures.push({device:"reduced-motion",error:detail});
+    results.push({device:"reduced-motion",status:"FAIL",error:detail});
+    await page.screenshot({path:evidence+"/reduced-motion-failure.png"}).catch(()=>{});
+  } finally { await reduced.close(); }
 } finally {
-  writeFileSync(evidence+"/results.json",JSON.stringify({results,studentAuthorized:false},null,2)+"\n");
+  writeFileSync(evidence+"/results.json",JSON.stringify({results,failures,studentAuthorized:false},null,2)+"\n");
   await browser.close();
 }
 console.log(JSON.stringify(results,null,2));
+assert.equal(failures.length,0,"Qualificazione incompleta: "+JSON.stringify(failures));
