@@ -209,7 +209,7 @@ jobs:
     name: C3.3A circular library architectural prototype
     needs: production
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
         with:
@@ -260,5 +260,22 @@ jobs:
         with:
           name: atlas-c33a2-refined
           path: ${{ runner.temp }}/atlas-c33-refined/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: C3.3A3 art-directed sky and architecture
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c33-art-directed"
+          python3 -m py_compile scripts/atlas-gateway-c3/library-art-directed.py
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/library-art-directed.py -- "$RUNNER_TEMP/atlas-c33-art-directed" 2>&1 | tee "$RUNNER_TEMP/atlas-c33-art-directed/library.log"
+      - name: Verify C3.3A3 offline contract
+        run: python3 scripts/atlas-gateway-c3/library-art-directed.py --verify "$RUNNER_TEMP/atlas-c33-art-directed"
+      - name: Preserve C3.3A3 actual renders and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c33a3-art-directed
+          path: ${{ runner.temp }}/atlas-c33-art-directed/
           if-no-files-found: ignore
           retention-days: 7
