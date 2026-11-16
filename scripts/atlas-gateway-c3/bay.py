@@ -81,12 +81,12 @@ world.node_tree.nodes["Background"].inputs[0].default_value=(.22,.26,.32,1)
 world.node_tree.nodes["Background"].inputs[1].default_value=.35
 bpy.ops.object.camera_add(location=(4.4,-8.2,2.65))
 camera=bpy.context.object;camera.rotation_euler=(Vector((0,0,1.72))-camera.location).to_track_quat("-Z","Y").to_euler();camera.data.lens=48;scene.camera=camera
-scene.render.engine="CYCLES";scene.cycles.device="CPU";scene.cycles.samples=24;scene.cycles.use_denoising=True
+scene.render.engine="CYCLES";scene.cycles.device="CPU";scene.cycles.samples=24;scene.cycles.use_denoising=True;scene.cycles.denoiser="OPENIMAGEDENOISE"
 scene.render.resolution_x=720;scene.render.resolution_y=840;scene.render.resolution_percentage=100
 scene.render.image_settings.file_format="PNG";scene.render.filepath=str(out/"campata.png")
 bpy.ops.wm.save_as_mainfile(filepath=str(out/"campata.blend"))
 bpy.ops.render.render(write_still=True)
-receipt={"blender":bpy.app.version_string,"numpy":numpy.__version__,"seed":118,"assetObjects":len(meshes)-1,"lightBake":False,"source":"procedural","studentAuthorized":False,"files":{}}
+receipt={"blender":bpy.app.version_string,"numpy":numpy.__version__,"seed":118,"assetObjects":len(meshes)-1,"lightBake":False,"denoiser":"OPENIMAGEDENOISE","source":"procedural","studentAuthorized":False,"files":{}}
 for name in ("campata.glb","campata.blend","campata.png"):
     p=out/name;receipt["files"][name]={"bytes":p.stat().st_size,"sha256":hashlib.sha256(p.read_bytes()).hexdigest()}
 (out/"manifest.json").write_text(json.dumps(receipt,indent=2)+"\n")
