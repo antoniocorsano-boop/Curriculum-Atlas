@@ -22,21 +22,22 @@ jobs:
           persist-credentials: false
       - name: Offline metadata contract
         run: python3 scripts/atlas-gateway-c3/acquire-materials.py --selftest
-      - name: Restore provisional CC0 source bundle
+      - name: Restore qualified CC0 source bundle
         id: materials-cache
         uses: actions/cache/restore@v5
         with:
           path: ${{ runner.temp }}/atlas-materials
-          key: atlas-c32-cc0-v1-${{ hashFiles('scripts/atlas-gateway-c3/acquire-materials.py') }}
+          key: atlas-c32-cc0-v1-fdaece268416cfe071dc33d72be9de529e4e713086b6d7708b68f1fa526d827c
       - name: Acquire if absent and verify all source bytes
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/atlas-materials"
           if [[ "${{ steps.materials-cache.outputs.cache-hit }}" != true ]]; then
-            python3 scripts/atlas-gateway-c3/acquire-materials.py "$RUNNER_TEMP/atlas-materials"
+            python3 scripts/atlas-gateway-c3/locked-materials.py recover "$RUNNER_TEMP/atlas-materials"
           fi
-          python3 scripts/atlas-gateway-c3/acquire-materials.py --verify "$RUNNER_TEMP/atlas-materials"
-      - name: Save verified provisional sources
+          python3 scripts/atlas-gateway-c3/locked-materials.py verify "$RUNNER_TEMP/atlas-materials"
+          python3 scripts/atlas-gateway-c3/locked-materials.py negative "$RUNNER_TEMP/atlas-materials"
+      - name: Save verified locked sources
         if: steps.materials-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v5
         with:
@@ -124,7 +125,7 @@ jobs:
           name: atlas-c32-source-bundle
           path: ${{ runner.temp }}/atlas-c32/assets
       - name: Reverify source bundle offline
-        run: python3 scripts/atlas-gateway-c3/acquire-materials.py --verify "$RUNNER_TEMP/atlas-c32/assets"
+        run: python3 scripts/atlas-gateway-c3/locked-materials.py verify "$RUNNER_TEMP/atlas-c32/assets"
       - name: Preflight production executable
         run: |
           set -euo pipefail
