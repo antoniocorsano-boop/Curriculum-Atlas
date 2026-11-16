@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { setTimeout as delay } from "node:timers/promises";
 import { chromium } from "playwright";
 
 const baseURL = process.env.ATLAS_GATEWAY_TEST_ORIGIN ?? "http://127.0.0.1:3000";
@@ -9,6 +10,30 @@ const evidence = process.env.ATLAS_GATEWAY_EVIDENCE ?? ".atlas-gateway/evidence"
 mkdirSync(evidence,{recursive:true});
 const browser = await chromium.launch({headless:true,args:["--use-gl=angle","--use-angle=swiftshader","--enable-unsafe-swiftshader"]});
 const results = [];
+// Poll from Node, not from an injected browser-side predicate. The sandbox CSP
+// deliberately rejects string evaluation inside the document.
+async function readSceneState(frame) {
+  return frame.evaluate(() => {
+    if (typeof THREE === "undefined" || typeof renderer === "undefined" || !renderer || !camera) return null;
+    return {
+      revision: THREE.REVISION,
+      calls: renderer.info.render.calls,
+      camera: camera.position.toArray(),
+      offset: carousel.offset,
+      panels: panelGroups.length,
+    };
+  });
+}
+async function waitScene(frame, predicate, label, timeout = 30000) {
+  const end = Date.now() + timeout;
+  let last = null;
+  while (Date.now() < end) {
+    last = await readSceneState(frame);
+    if (last && predicate(last)) return last;
+    await delay(150);
+  }
+  throw new Error(label + ": " + JSON.stringify(last));
+}
 try {
   for (const device of [
     {name:"desktop", viewport:{width:1440,height:1000}, deviceScaleFactor:1},
@@ -32,20 +57,19 @@ try {
     const handle=await frameElement.elementHandle();
     const frame=await handle.contentFrame();
     assert(frame,"iframe disponibile");
-    await frame.waitForFunction("typeof THREE !== 'undefined' && typeof renderer !== 'undefined' && renderer && renderer.info.render.calls > 0",null,{timeout:60000});
+    await waitScene(frame, state => state.calls > 0, "Primo rendering WebGL", 60000);
     await page.waitForFunction(()=>!document.querySelector("[role='status']")?.textContent?.includes("Preparazione della sala"),null,{timeout:60000});
     await frame.locator("#loader").waitFor({state:"hidden",timeout:60000});
-    const initial=await frame.evaluate("({revision:THREE.REVISION,calls:renderer.info.render.calls,camera:camera.position.toArray(),offset:carousel.offset,panels:panelGroups.length})");
+    const initial=await waitScene(frame, state => state.calls > 0, "Scena pronta");
     assert.equal(initial.revision,"128");
     assert.equal(initial.panels,3);
     assert(initial.calls>0);
     await page.screenshot({path:evidence+"/"+name+"-sala.png",animations:"disabled"});
     await frame.locator("#cycle-next").click();
-    await frame.waitForFunction("Math.abs(carousel.offset-1)<0.025",null,{timeout:30000});
-    const after=await frame.evaluate("({camera:camera.position.toArray(),offset:carousel.offset})");
+    const after=await waitScene(frame, state => Math.abs(state.offset - 1) < 0.025, "Assestamento portali");
     assert(initial.camera.every((v,i)=>Math.abs(v-after.camera[i])<0.03),"rotazione portali non altera la posizione camera");
     await frame.locator("#reset-view").click();
-    await frame.waitForFunction("Math.abs(carousel.offset)<0.025",null,{timeout:30000});
+    await waitScene(frame, state => Math.abs(state.offset) < 0.025, "Ripristino panoramica");
     await frame.locator('[data-atlas="studio"]').click();
     await page.getByRole("status").filter({hasText:"accesso professionale non ancora abilitato"}).waitFor({timeout:30000});
     assert(page.url().includes("/gateway"));
