@@ -7,7 +7,7 @@ Data: 16 novembre 2026.
 - Commit esatto AG-03/B: d4448be0e7a47bd050677df0272e0cb8dca64f1b; PR #104 in bozza.
 - Archivio dedicato: archive/atlas-gateway-ag03b-qualified. Non avanzare o riscrivere il ramo; lo SHA è il riferimento immutabile.
 - Sviluppo separato: feat/atlas-gateway-ag04, derivato dallo stesso SHA. Non modificare main, Home, distribuzione o PR #104 durante AG-04/A.
-- Qualificazione sul riferimento: 10/10 workflow PR completati con successo. WebGL locale: run 43825049343, artefatto 14206017238 (https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/43825049343/artifacts/14206017238). Il collegamento non equivale a conservazione permanente dei byte dell'artefatto; acquisirli prima della scadenza.
+- Qualificazione sul riferimento: 10/10 workflow PR completati con successo. WebGL locale: run 43825049343, artefatto 14206017238 (consultabile nella sezione Actions del repository Atlas mediante questi identificativi). Il riferimento non equivale a conservazione permanente dei byte dell'artefatto; acquisirli prima della scadenza.
 - La prova usa Chromium con WebGL software; non attesta qualità percettiva o prestazioni su hardware reale.
 - Riferimenti artistici originali: baseline/ATLAS-Biblioteca-3D.html e fonti/scene-threejs.html, mantenuti byte per byte; l'archivio locale AG-01 contiene anche i due riferimenti visivi, non tutti pubblicati nel repository. Recuperare i riferimenti e le schermate del collaudo per il confronto prima delle modifiche scenografiche.
 
