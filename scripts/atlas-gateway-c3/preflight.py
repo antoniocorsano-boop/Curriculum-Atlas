@@ -2,7 +2,9 @@
 import bpy, numpy, sys, os, json, struct, tempfile
 from pathlib import Path
 out=Path(sys.argv[sys.argv.index("--")+1]).resolve()
-assert bpy.app.version_string==os.environ["BLENDER_VERSION"], bpy.app.version_string
+expected=tuple(int(part) for part in os.environ["BLENDER_VERSION"].split("."))
+assert tuple(bpy.app.version)==expected, (bpy.app.version_string, expected)
+print("Verified Blender version:", bpy.app.version_string)
 bpy.ops.wm.read_factory_settings(use_empty=False)
 with tempfile.TemporaryDirectory() as d:
     p=Path(d)/"preflight.glb"
