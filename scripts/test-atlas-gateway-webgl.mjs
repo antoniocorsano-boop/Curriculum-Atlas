@@ -10,6 +10,23 @@ const evidence = process.env.ATLAS_GATEWAY_EVIDENCE ?? ".atlas-gateway/evidence"
 mkdirSync(evidence,{recursive:true});
 const browser = await chromium.launch({headless:true,args:["--use-gl=angle","--use-angle=swiftshader","--enable-unsafe-swiftshader"]});
 const results = [];
+let activePage, activeName;
+async function assertLayout(page, frame, label) {
+  const parent = await page.locator("iframe").boundingBox();
+  const viewport = page.viewportSize();
+  assert(parent && viewport && parent.x >= -1 && parent.y >= -1 && parent.x+parent.width <= viewport.width+1 && parent.y+parent.height <= viewport.height+1, label+" iframe fuori schermo: "+JSON.stringify(parent));
+  assert(parent.height >= 180, label+" scena troppo bassa");
+  const controls = await frame.locator("#atlas-quick button, #gesture-controls button").evaluateAll(elements => elements.map(el => {
+    const r=el.getBoundingClientRect();
+    const center=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
+    return {label:el.textContent, x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom,vw:innerWidth,vh:innerHeight,reachable:el.contains(center)};
+  }));
+  assert.equal(controls.length,9,label+" comandi");
+  for (const c of controls) assert(c.x>=-1 && c.y>=-1 && c.right<=c.vw+1 && c.bottom<=c.vh+1 && c.height>=43 && c.width>=40 && c.reachable,label+" comando non raggiungibile: "+JSON.stringify(c));
+  const noOverflow=await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth+1 && document.documentElement.scrollHeight <= innerHeight+1);
+  assert(noOverflow,label+" scorrimento esterno imprevisto");
+  return parent;
+}
 // Poll from Node, not from an injected browser-side predicate. The sandbox CSP
 // deliberately rejects string evaluation inside the document.
 async function readSceneState(frame) {
@@ -36,12 +53,17 @@ async function waitScene(frame, predicate, label, timeout = 30000) {
 }
 try {
   for (const device of [
+    {name:"small-phone", viewport:{width:320,height:568}, deviceScaleFactor:1, isMobile:true, hasTouch:true},
+    {name:"phone", viewport:{width:393,height:873}, deviceScaleFactor:1, isMobile:true, hasTouch:true},
+    {name:"phone-landscape", viewport:{width:873,height:393}, deviceScaleFactor:1, isMobile:true, hasTouch:true},
+    {name:"tablet", viewport:{width:768,height:1024}, deviceScaleFactor:1, isMobile:true, hasTouch:true},
     {name:"desktop", viewport:{width:1440,height:1000}, deviceScaleFactor:1},
-    {name:"mobile", viewport:{width:393,height:873}, deviceScaleFactor:1, isMobile:true, hasTouch:true}
+    {name:"large-screen", viewport:{width:1920,height:1080}, deviceScaleFactor:1}
   ]) {
     const {name,...options}=device;
     const context = await browser.newContext(options);
     const page = await context.newPage();
+    activePage=page;activeName=name;
     const external = [];
     await context.route("**/*",route=>{
       const url=route.request().url();
@@ -64,6 +86,7 @@ try {
     assert.equal(initial.revision,"128");
     assert.equal(initial.panels,3);
     assert(initial.calls>0);
+    const beforeNotice=await assertLayout(page,frame,name);
     await page.screenshot({path:evidence+"/"+name+"-sala.png",animations:"disabled"});
     await frame.locator("#cycle-next").click();
     const after=await waitScene(frame, state => Math.abs(state.offset - 1) < 0.025, "Assestamento portali");
@@ -73,6 +96,9 @@ try {
     await frame.locator('[data-atlas="studio"]').click();
     await page.getByRole("status").filter({hasText:"accesso professionale non ancora abilitato"}).waitFor({timeout:30000});
     assert(page.url().includes("/gateway"));
+    const afterNotice=await assertLayout(page,frame,name+" dopo messaggio Studio");
+    assert(Math.abs(beforeNotice.y-afterNotice.y)<1 && Math.abs(beforeNotice.height-afterNotice.height)<1,name+" la notifica sposta la sala");
+    await page.screenshot({path:evidence+"/"+name+"-studio.png",animations:"disabled"});
     await frame.locator('[data-atlas="esperienze"]').click();
     await page.waitForURL("**/esperienze/",{timeout:60000});
     await page.getByRole("heading",{name:"Esplora, scopri, comprendi."}).waitFor();
@@ -80,7 +106,8 @@ try {
     await page.getByRole("region",{name:"Risultati della ricerca"}).getByText("Non ci sono ancora esperienze autorizzate in questa sezione.").waitFor();
     await page.screenshot({path:evidence+"/"+name+"-esperienze.png",animations:"disabled"});
     assert.equal(external.length,0,"nessuna richiesta HTTP a origini terze");
-    results.push({device:name,revision:initial.revision,drawCalls:initial.calls,panels:initial.panels,carousel:"PASS",studio:"PASS",experiences:"PASS",externalRequests:external.length});
+    results.push({device:name,revision:initial.revision,drawCalls:initial.calls,panels:initial.panels,layout:"PASS",stableNotice:"PASS",carousel:"PASS",studio:"PASS",experiences:"PASS",externalRequests:external.length});
+    activePage=null;
     await context.close();
   }
   const reduced=await browser.newContext({reducedMotion:"reduce",viewport:{width:393,height:873}});
@@ -92,6 +119,9 @@ try {
   await page.waitForURL("**/curricolo/");
   results.push({device:"reduced-motion",fallback:"PASS",curricolo:"PASS"});
   await reduced.close();
+} catch (error) {
+  if (activePage) await activePage.screenshot({path:evidence+"/"+activeName+"-failure.png",animations:"disabled"}).catch(()=>{});
+  throw error;
 } finally {
   writeFileSync(evidence+"/results.json",JSON.stringify({results,studentAuthorized:false},null,2)+"\n");
   await browser.close();
