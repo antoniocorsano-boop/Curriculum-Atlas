@@ -530,3 +530,44 @@ jobs:
           path: ${{ runner.temp }}/atlas-c33-refine-portals/
           if-no-files-found: ignore
           retention-days: 7
+
+  refine-environment:
+    name: C3.3A5.2 refined sky and landscape
+    needs: production
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore pinned Blender archive
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-gateway-c32-textured
+          path: ${{ runner.temp }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-c32b-ao
+          path: ${{ runner.temp }}/atlas-c32b
+      - name: Produce refined sky and landscape from locked sources
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c33-refine-environment"
+          python3 -m py_compile scripts/atlas-gateway-c3/library-master-environment.py
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/library-master-environment.py -- "$RUNNER_TEMP/atlas-c33-refine-environment" 2>&1 | tee "$RUNNER_TEMP/atlas-c33-refine-environment/library.log"
+      - name: Verify sky, landscape and inherited geometry contract
+        run: python3 scripts/atlas-gateway-c3/library-master-environment.py --verify "$RUNNER_TEMP/atlas-c33-refine-environment"
+      - name: Preserve environment master and five actual renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c33a52-environment
+          path: ${{ runner.temp }}/atlas-c33-refine-environment/
+          if-no-files-found: ignore
+          retention-days: 7
