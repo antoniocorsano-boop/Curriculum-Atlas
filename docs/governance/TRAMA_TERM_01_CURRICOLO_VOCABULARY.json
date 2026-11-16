@@ -82,6 +82,11 @@
       "path": "scripts/sync-arena-curriculum.mjs",
       "contains": "input.curriculum",
       "reason": "The Arena v1 export keeps its published curriculum payload key; the sync adapter canonicalizes messages while preserving the wire field."
+    },
+    {
+      "path": "docs/atlas-gateway/fonti/scene-threejs.html",
+      "contains": ">Curriculum<",
+      "reason": "Due segnaposto della copia storica immutata AG-01; il preparatore della candidata li sostituisce con il termine canonico prima dell'esecuzione."
     }
   ]
 }
