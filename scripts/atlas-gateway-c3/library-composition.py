@@ -8,6 +8,7 @@ src=out.parent/"atlas-c32"/"campata.blend"
 ao=out.parent/"atlas-c32b"/"campata-ao.glb"
 source_manifest=json.loads((ao.parent/"ao-manifest.json").read_text())
 assert hashlib.sha256(ao.read_bytes()).hexdigest()==source_manifest["files"][ao.name]["sha256"]
+assert hashlib.sha256(src.read_bytes()).hexdigest()==json.loads((src.parent/"manifest.json").read_text())["files"][src.name]["sha256"]
 bpy.ops.wm.open_mainfile(filepath=str(src))
 scene=bpy.context.scene
 original=[o for o in scene.objects if o.type=="MESH" and o.name.startswith("Bay ")]
@@ -153,6 +154,9 @@ def merge_group(objects,prefix):
     return result
 shell=merge_group(shell,"Shell");details=merge_group(details,"Detail");scenery=merge_group(scenery,"Landscape")
 for obj in original:bpy.data.objects.remove(obj,do_unlink=True)
+instances=[o for o in scene.objects if o.type=="MESH" and o.name.startswith("Library bay ")]
+assert len(placements)==45 and len(instances)==495 and len({o.data.as_pointer() for o in instances})==11
+assert all(not o.hide_render for o in instances)
 # Export architecture separately; repeating bay data is not included in shell payload.
 bpy.ops.object.select_all(action="DESELECT")
 for obj in shell+details+scenery:obj.select_set(True)
