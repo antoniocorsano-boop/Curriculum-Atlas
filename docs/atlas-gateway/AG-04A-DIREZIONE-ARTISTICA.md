@@ -91,3 +91,28 @@ Blocchi assoluti: orizzonte errato; geometria evidentemente incoerente; identit�
 C3.3A2: commit 4bf26bd1b6ecdd52f5e41c3afd9a1cb68f63788b, 11/11 procedure PASS; run Blender 43902700194, artefatto atlas-c33a2-refined 14244351864, digest dichiarato da GitHub sha256:77768a9f628d7e42c2774ab31304e517bd7c9b8aee271edd8108bee990d16de5. Evidenze di insieme, verticale e dettaglio prodotte; la precedente verifica percettiva segnala vegetazione/terreno nella zona del cielo. Non qualificare il risultato artistico né presumere integrato il nuovo modello nel WebGL.
 Sequenza vincolante proposta: (1) diagnosi proiezione e orientamento panorama e verifica cielo; (2) revisione proporzioni di arco/anello e profondità campate; (3) campione materiali/luce e nuova tavola di tre render; (4) revisione con rubrica e chiusura dei blocchi; (5) bake AO delle varianti soltanto dopo approvazione della geometria; (6) assemblaggio WebGL isolato, sei formati, regressioni e confronto offline/browser; (7) collaudo fisico e revisione indipendente AG-05. Non avanzare al bake o all'assemblaggio se il riferimento artistico intermedio è respinto.
 I pesi, la tavolozza e le soglie sopra sono scelte progettuali candidate, non decisioni già approvate dall'utente. Nessun runtime, Home, ramo principale, autorizzazione o distribuzione modificati da DA2.
+
+
+## AG-04/DA3 — Obiettivo di eccellenza 100/100
+Decisione esplicita dell'utente, 16 novembre 2026: «Occorre raggiungere 100».
+Il requisito finale di accettazione artistica è 100/100, cioè livello 4/4 in ciascuno dei sei criteri DA2. La precedente soglia proposta di 80/100 è superata e non autorizza integrazione o distribuzione. I punteggi intermedi descrivono l'avanzamento, non autorizzano deroghe. Il massimo certifica il soddisfacimento documentato della rubrica, non una perfezione estetica universale.
+Nessuna attribuzione automatica, arrotondamento al massimo, compensazione, rimozione di criteri o modifica opportunistica dei pesi. Un criterio non verificato resta non verificato; nessun punteggio finale su sole immagini offline. Conservare i pesi DA2 come base operativa. Approvazione finale esplicita dell'utente e revisione separata dalla produzione; se i giudizi divergono, registrare il rilievo e risolverlo prima di qualificare. Restano tutti i blocchi assoluti e le invarianti di sicurezza, costo zero, privacy, accessibilità e prestazioni fisiche.
+
+### Evidenze obbligatorie per il livello 4/4
+| Criterio | Peso | Evidenza per 4/4 |
+| --- | ---: | --- |
+| Identità e fedeltà | 20 | Confronto affiancato con il riferimento approvato: atmosfera, gerarchia, ARENA integrata, ATLAS dominante, tre portali, nessuna cupoletta; scostamenti residui chiusi oppure espressamente approvati come adattamenti coerenti |
+| Architettura | 20 | Continuità costruttiva e proporzioni credibili in insieme, sezione, dettaglio; archi, cornici, parapetti e campate senza difetti percettibili; arredi coerenti senza ostacolare accessi |
+| Luce e paesaggio | 20 | Cielo naturale, orizzonte corretto, profondità esterna, luce zenitale e indiretta plausibile, ombre e riflessi coerenti; confronto in tre inquadrature e nel browser |
+| Materiali e dettagli | 15 | Pietra, legno, metallo, libri e pavimento leggibili alla scala d'uso; medaglione a filo, tipografia serif verificata; schede e licenze complete, resa coerente offline/WebGL |
+| Composizione multidispositivo | 15 | Sei formati effettivi e prova fisica: regia dedicata, leggibilità dei punti focali, nessuna sovrapposizione, taglio critico o regressione; movimento ridotto e alternativa HTML equivalenti |
+| Orientamento educativo | 10 | Tre accessi riconoscibili e funzionanti, Esperienze immediatamente raggiungibile, Studio protetto, navigazione da tastiera e tocco, nessun ostacolo scenografico e nessun accesso non autorizzato |
+
+### Roadmap di eccellenza (sequenza di lavoro, non nuove approvazioni)
+- C3.3A4 — composizione artistica complessiva: correggere fessura sopra arco, monumentalità e leggibilità ARENA; medaglione a filo con vera tipografia serif (licenza e impronta); pavimento, sedute e vegetazione curate; cielo luminoso e paesaggio profondo. Inserire rappresentazioni offline dei tre portali con dimensioni e ancore compatibili con i portali semantici esistenti. Non sostituire destinazioni con geometria decorativa.
+- C3.3A5 — rifinitura: campioni materiali, dettaglio arredi, luce, inquadrature, correzioni emerse dal confronto. Per autorizzare il lavoro tecnico successivo, chiudere tutti i rilievi dei primi quattro criteri in sede offline; tale gate intermedio non attribuisce 100/100 né certifica la resa web.
+- C3.3B — produzione delle tre varianti AO e assemblaggio WebGL isolato; confronto con Blender; preservare accessi, isolamento e budget. È una lavorazione di candidata e non l'integrazione in main.
+- C3.3C/D — regia nei sei formati, collaudo reale e revisione educativa/tecnica; rimuovere ogni regressione. Solo qui è valutabile la rubrica completa.
+- AG-05 — revisione finale indipendente, rapporto con evidenza puntuale per ogni criterio, decisione esplicita dell'utente. Se un criterio non raggiunge 4/4, mantenere la candidata non approvata e correggere. Integrazione e pubblicazione restano decisioni distinte.
+
+Baseline C3.3A3: 9c7750337ca945cbeec00fa07b171bf0e12a538c, 11/11 procedure PASS, artefatto 14249600059. Valutazione percettiva preliminare 47,5/100 (ricevuta PR #105, commento 6923250441), riferita al prototipo offline; non è un risultato finale né un parere indipendente. Conservare il riferimento e la candidata. Nessuna modifica runtime, autorizzazione, ramo principale o pubblicazione in DA3.
