@@ -36,3 +36,14 @@
 .atlas-gateway-immersive .atlas-gateway-portal a,.atlas-gateway-immersive .atlas-gateway-portal button{min-height:44px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:.75rem;line-height:1.1;overflow-wrap:anywhere}
 @media(max-width:600px){.atlas-gateway-immersive .atlas-gateway-heading{font-size:.75rem;max-width:34%}.atlas-gateway-immersive .atlas-gateway-header-actions{gap:.4rem;font-size:.72rem}.atlas-gateway-immersive .atlas-gateway-header-actions a,.atlas-gateway-immersive .atlas-gateway-toggle{max-width:106px;line-height:1.15}.atlas-gateway-immersive .atlas-gateway-header{gap:.25rem}}
 @media(max-height:480px) and (min-width:601px){.atlas-gateway-immersive{padding:2px 6px;gap:2px}.atlas-gateway-immersive .atlas-gateway-notice{height:1.25em;min-height:1.25em}.atlas-gateway-immersive .atlas-gateway-portal{display:flex;align-items:center;justify-content:center;gap:8px}.atlas-gateway-immersive .atlas-gateway-portal strong{font-size:.75rem}}
+
+/* Gateway owns its viewport; the ordinary Atlas shell reserves a mobile dock.
+   Keep the reset route-scoped, including the scrollable accessible alternative. */
+body:has(.atlas-gateway-shell){padding-bottom:0;min-width:0}
+html:has(.atlas-gateway-immersive),body:has(.atlas-gateway-immersive){height:100%;min-height:0;overflow:hidden;overscroll-behavior:none}
+.atlas-gateway-immersive{width:100%;max-width:100%;grid-template-columns:minmax(0,1fr);min-width:0;box-sizing:border-box}
+.atlas-gateway-immersive .atlas-gateway-header-actions{min-width:0;max-width:66%}
+.atlas-gateway-immersive .atlas-gateway-heading{min-width:0;overflow-wrap:anywhere}
+.atlas-gateway-immersive .atlas-gateway-portals,.atlas-gateway-immersive .atlas-gateway-portal{min-width:0}
+.atlas-gateway-immersive .atlas-gateway-notice{overflow-wrap:anywhere}
+@supports not (height:100dvh){.atlas-gateway-immersive{height:100vh}}
