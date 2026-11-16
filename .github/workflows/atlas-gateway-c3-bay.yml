@@ -1,0 +1,41 @@
+name: Atlas Gateway — C3.1 Blender bay
+
+on:
+  pull_request:
+    paths:
+      - "scripts/atlas-gateway-c3/**"
+      - "docs/atlas-gateway/AG-04C3-FILIERA-3D.md"
+      - ".github/workflows/atlas-gateway-c3-bay.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pilot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Blender from Ubuntu archive
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends blender
+          blender --version
+      - name: Build and render modular bay
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c3"
+          blender --background --python-exit-code 1 --python scripts/atlas-gateway-c3/bay.py -- "$RUNNER_TEMP/atlas-c3" 2>&1 | tee "$RUNNER_TEMP/atlas-c3/blender.log"
+      - name: Verify local model and evidence
+        run: |
+          set -euo pipefail
+          python3 scripts/atlas-gateway-c3/verify.py "$RUNNER_TEMP/atlas-c3" | tee "$RUNNER_TEMP/atlas-c3/verification.json"
+      - name: Preserve pilot evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-gateway-c3-bay
+          path: ${{ runner.temp }}/atlas-c3/
+          if-no-files-found: ignore
+          retention-days: 7
