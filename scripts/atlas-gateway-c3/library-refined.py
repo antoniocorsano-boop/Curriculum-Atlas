@@ -101,8 +101,9 @@ for variant in (1,2):
             p=matrix@v.co;row=int(math.floor((p.z-.31+.0001)/.74))
             assert 0<=row<4,(o.name,p.z)
             books=book_rows[row]
-            index=min(range(len(books)),key=lambda k:abs(p.x-(books[k][0]+books[k][1]/2)))
-            x,w,h=books[index];assert x-.004<=p.x<=x+w+.004,(o.name,p.x,x,w)
+            matches=[k for k,(x,w,h) in enumerate(books) if x-.003<=p.x<=x+w+.003]
+            assert len(matches)==1,(o.name,p.x,p.z,matches)
+            index=matches[0]
             p.z=change_z(variant,row,index,p.z);v.co=inverse@p
         data.update();variant_data[(variant,o.name)]=data
 # 45 placements: fixed structural data plus three shared book variants.
