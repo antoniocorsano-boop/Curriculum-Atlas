@@ -1,0 +1,19 @@
+.atlas-gateway-library{display:grid;gap:1rem;max-width:72rem;margin:auto}
+.atlas-gateway-search{display:grid;gap:.4rem;max-width:36rem;font-weight:600}
+.atlas-gateway-search input{padding:.8rem;border:1px solid var(--border-strong);border-radius:.6rem;background:white;color:var(--text-primary)}
+.atlas-gateway-filters{display:flex;gap:.5rem;flex-wrap:wrap}
+.atlas-gateway-filters button,.atlas-gateway-filters a,.atlas-gateway-action{display:inline-flex;align-items:center;padding:.65rem .9rem;border:1px solid var(--border-strong);border-radius:.6rem;background:white;color:var(--text-primary);min-height:44px;cursor:pointer}
+.atlas-gateway-filters button[aria-pressed=true]{background:var(--domain-atlas);color:white;border-color:var(--domain-atlas)}
+.atlas-gateway-results{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:1rem}
+.atlas-gateway-shell{min-height:100dvh;background:#0b1826;color:#f1f6fb;display:grid;gap:1rem;align-content:start;padding:clamp(1rem,3vw,2.5rem)}
+.atlas-gateway-shell h1{font-size:clamp(1.8rem,4vw,3.4rem);font-family:Georgia,serif;color:#f4d391;margin:0}
+.atlas-gateway-shell p{margin:.5rem 0;line-height:1.55}
+.atlas-gateway-shell a,.atlas-gateway-shell button{color:inherit;text-decoration:underline}
+.atlas-gateway-portals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.9rem}
+.atlas-gateway-portal{display:grid;gap:.65rem;padding:1.2rem;border:1px solid #ad9668;border-radius:.8rem;background:#17374b;text-align:left}
+.atlas-gateway-portal strong{font-size:1.2rem;color:#f4d391}
+.atlas-gateway-portal a,.atlas-gateway-portal button,.atlas-gateway-toggle{min-height:44px;text-align:left;cursor:pointer}
+.atlas-gateway-frame{width:100%;height:clamp(360px,72dvh,780px);border:1px solid #ad9668;border-radius:.8rem;background:#08131f}
+.atlas-gateway-shell :focus-visible,.atlas-gateway-library :focus-visible{outline:3px solid #e3ad47;outline-offset:4px}
+@media(max-width:650px){.atlas-gateway-portals{grid-template-columns:1fr}.atlas-gateway-frame{height:65dvh}}
+@media(prefers-reduced-motion:reduce){.atlas-gateway-shell *, .atlas-gateway-library *{scroll-behavior:auto;transition:none}}
