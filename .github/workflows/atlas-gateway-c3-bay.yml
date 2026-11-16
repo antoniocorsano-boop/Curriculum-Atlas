@@ -246,3 +246,19 @@ jobs:
           path: ${{ runner.temp }}/atlas-c33/
           if-no-files-found: ignore
           retention-days: 7
+
+      - name: C3.3A2 refined photographic exterior and varied shelves
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c33-refined"
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/library-refined.py -- "$RUNNER_TEMP/atlas-c33-refined" 2>&1 | tee "$RUNNER_TEMP/atlas-c33-refined/library.log"
+      - name: Verify refined architecture and variants
+        run: python3 scripts/atlas-gateway-c3/verify-library-refined.py "$RUNNER_TEMP/atlas-c33-refined"
+      - name: Preserve refined architecture and three real renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c33a2-refined
+          path: ${{ runner.temp }}/atlas-c33-refined/
+          if-no-files-found: ignore
+          retention-days: 7
