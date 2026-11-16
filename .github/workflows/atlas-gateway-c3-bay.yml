@@ -148,3 +148,52 @@ jobs:
             ${{ runner.temp }}/atlas-c3/
           if-no-files-found: ignore
           retention-days: 7
+
+      - name: C3.2B bake ambient occlusion in a second UV atlas
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c32b"
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/bake-ao.py -- "$RUNNER_TEMP/atlas-c32b" 2>&1 | tee "$RUNNER_TEMP/atlas-c32b/bake.log"
+      - name: C3.2B embed AO and verify GLB contract
+        run: |
+          set -euo pipefail
+          python3 scripts/atlas-gateway-c3/embed-ao.py "$RUNNER_TEMP/atlas-c32b"
+      - name: Preserve AO evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c32b-ao
+          path: ${{ runner.temp }}/atlas-c32b/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  ao-webgl:
+    name: C3.2B isolated Three.js AO comparison
+    needs: production
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-c32b-ao
+          path: ${{ runner.temp }}/atlas-c32b
+      - name: Compare AO disabled and enabled in local r128
+        run: node scripts/atlas-gateway-c3/test-ao-webgl.mjs "$RUNNER_TEMP/atlas-c32b" "$RUNNER_TEMP/atlas-c32b-webgl"
+      - name: Preserve actual browser screenshots and metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c32b-webgl
+          path: ${{ runner.temp }}/atlas-c32b-webgl/
+          if-no-files-found: ignore
+          retention-days: 7
