@@ -16,18 +16,32 @@ export function GatewayCandidate({ preparedScene }: { preparedScene: string | nu
 
   useEffect(() => {
     if (!preparedScene || !show3D) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setShow3D(false);
-      setNotice("Vista semplificata attiva per rispettare la preferenza di movimento ridotto.");
-      return;
-    }
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const constrained = window.matchMedia("(max-width: 319px), (max-height: 299px)");
+    const enforceViewport = () => {
+      if (reduced.matches || constrained.matches) {
+        setShow3D(false);
+        setNotice(reduced.matches
+          ? "Vista semplificata attiva per rispettare la preferenza di movimento ridotto."
+          : "Vista semplificata: lo spazio disponibile è insufficiente per usare la sala 3D in sicurezza.");
+        return false;
+      }
+      return true;
+    };
+    if (!enforceViewport()) return;
+    reduced.addEventListener("change", enforceViewport);
+    constrained.addEventListener("change", enforceViewport);
     const channel = Array.from(window.crypto.getRandomValues(new Uint8Array(24)), x => x.toString(16).padStart(2, "0")).join("");
     const html = preparedScene
       .replace("__ATLAS_PARENT_ORIGIN_JSON__", JSON.stringify(window.location.origin))
       .replace("__ATLAS_CHANNEL_JSON__", JSON.stringify(channel));
     setReady(false);
     setScene({ html, channel });
-    return () => setScene(null);
+    return () => {
+      reduced.removeEventListener("change", enforceViewport);
+      constrained.removeEventListener("change", enforceViewport);
+      setScene(null);
+    };
   }, [preparedScene, show3D]);
 
   useEffect(() => {
