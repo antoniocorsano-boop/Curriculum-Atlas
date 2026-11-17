@@ -180,10 +180,15 @@ def verify(out,fault=False):
     fault_sid="laboratori" if fault else None
     assert r["scenario"]==("fault-recovery" if fault else "baseline") and r["faultSid"]==fault_sid
     assert r["sceneBuilds"]==1 and r["sceneBefore"]==r["sceneAfter"] and r["sceneBefore"]["objects"]>490
-    assert r["policySha256"]==pd and r["identity"]==preview.identity(CANDIDATE)
+    assert r["policySha256"]==pd,("policy hash mismatch",r["policySha256"],pd)
+    expected_identity=preview.identity(CANDIDATE)
+    assert r["identity"]==expected_identity,("candidate identity mismatch",r["identity"],expected_identity)
     assert r["artQuality"]==art_quality.evaluate(r["artEvidence"])
     assert r["artQuality"]["status"]=="PASS" and len(r["artQuality"]["checks"])==13
-    assert r["experimentSourceSha256"]==preview.sha(transform(fault).encode()) and r["dependencyHashes"]==dependency_hashes()
+    expected_source=preview.sha(transform(fault).encode())
+    assert r["experimentSourceSha256"]==expected_source,("adaptive source mismatch",r["experimentSourceSha256"],expected_source)
+    expected_deps=dependency_hashes()
+    assert r["dependencyHashes"]==expected_deps,("dependency mismatch",[k for k in expected_deps if r["dependencyHashes"].get(k)!=expected_deps[k]])
     assert 1<=len(r["attempts"])<=p["maxAttempts"] and r["renderCount"]==2+2*len(r["attempts"])<=p["maxRenders"]
     names={f"background-{v}.png" for v in pm.VIEWS}|{f"attempt-{i}-{v}.png" for i in range(1,len(r["attempts"])+1) for v in pm.VIEWS}
     review_dims={} if fault else {"review-atrium.png":[1200,750],"review-vertical.png":[640,960],**{"detail-"+s+".png":[512,512] for s in pm.IDS}}
@@ -225,6 +230,11 @@ def resource_directory(out,resource_root=None):
     missing=[name for name in RESOURCE_FILES if not (root/name).is_file()]
     if missing:raise ValueError("Missing Blender input resources: "+", ".join(missing))
     return root
+def identity_probe():
+    plan,_,_=knowledge_composition.load()
+    result=adaptive_identity.solve(plan)
+    assert result["status"]=="PASS"
+    return {"identity":preview.identity(CANDIDATE),"adaptiveSourceSha256":preview.sha(transform(False).encode()),"dependencyHashes":dependency_hashes(),"geometry":adaptive_identity.evidence(result)}
 def produce(out,fault=False,*,resource_root=None):
     assert out.parent.is_dir() and not out.exists()
     root=resource_directory(out,resource_root)
