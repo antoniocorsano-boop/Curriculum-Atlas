@@ -1,6 +1,6 @@
 """P6: B04 in existing library, isolated editorial preview only.
 No web export, no canonical scene alteration, no student navigation."""
-import hashlib,json,math,sys,struct
+import hashlib,importlib.util,json,math,sys,struct
 from pathlib import Path
 import bpy
 HERE=Path(__file__).resolve().parent
@@ -8,7 +8,10 @@ ROOT=HERE.parents[1]
 LIB=ROOT/"scripts/atlas-gateway-c3"
 BOOK=ROOT/"scripts/atlas-storie-p2/render-blender.py"
 sys.path.insert(0,str(LIB))
-import smart_preview as pv
+spec=importlib.util.spec_from_file_location("atlas_smart_preview",LIB/"smart-preview.py")
+assert spec is not None and spec.loader is not None
+pv=importlib.util.module_from_spec(spec)
+spec.loader.exec_module(pv)
 def blob(p):
     b=p.read_bytes()
     return hashlib.sha1(b"blob "+str(len(b)).encode()+b"\x00"+b).hexdigest()
@@ -60,6 +63,7 @@ assert set(star_projection)=={"atrium","vertical"}
 (out/"storie-context-receipt.json").write_text(json.dumps({"status":"CONTEXT_PREVIEW_ONLY","source":"B04","sourceBlob":"92c4badfa8347348847d80142c3fd1bd13efb8f7","book":context_book_record,"starProjection":star_projection,"otherIdentitiesChanged":False,"navigationChanged":False,"webQualified":False,"artisticApproval":False,"publishable":False,"studentAuthorized":False},indent=2))
 '''
 compile(source,str(candidate),"exec")
+print("STORIE_CONTEXT_SOURCE_PREFLIGHT_PASS",flush=True)
 old=sys.argv
 try:
     sys.argv=[str(candidate),"--",str(out)]
