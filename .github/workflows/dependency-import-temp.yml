@@ -1,0 +1,35 @@
+name: Dependency recovery — import verified lockfile
+on:
+  push:
+    branches: [work/atlas-lock-promotion]
+permissions:
+  contents: write
+  actions: read
+jobs:
+  transfer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - name: Retrieve exact verified artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-verified-dependency-lock
+          run-id: 44061271282
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/atlas-lock-import
+      - name: Verify immutable source and commit only lockfile
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = refs/heads/work/atlas-lock-promotion
+          test "$(git hash-object package.json)" = 3b9760e756f9221e16b067936c5bf05ab8b12f57
+          src="$RUNNER_TEMP/atlas-lock-import/Curriculum-Atlas/Curriculum-Atlas/pnpm-lock.yaml"
+          echo "26d580b671f74b4acca4b0e984c0e848f96ad6624141fa4330fa8a84058157cb  $src" | sha256sum -c
+          test "$(git hash-object "$src")" = d3b66cdd7286596fc25900a20d49847fa2af4614
+          test ! -e pnpm-lock.yaml
+          cp "$src" pnpm-lock.yaml
+          git add -- pnpm-lock.yaml
+          test "$(git diff --cached --name-only)" = pnpm-lock.yaml
+          git -c user.name=github-actions -c user.email=41898282+github-actions[bot]@users.noreply.github.com commit -m "build(deps): preserve verified frozen dependency lock"
+          git push origin HEAD:refs/heads/work/atlas-lock-promotion
+          git rev-parse HEAD
