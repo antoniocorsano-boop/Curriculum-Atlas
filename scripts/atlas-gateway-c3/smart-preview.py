@@ -3,7 +3,7 @@ import argparse, ast, hashlib, json, struct, sys, tempfile, time
 from pathlib import Path
 
 HERE=Path(__file__).resolve().parent
-SUPPORTED="library-master-arch.py"
+SUPPORTED=("library-master-arch.py","library-master-material-study.py")
 VIEWS={"atrium":(600,375),"vertical":(320,480)}
 SAMPLES=12
 END='exec(compile(code,__file__,"exec"),globals())'
@@ -15,7 +15,7 @@ def once(code,old,new):
     return code.replace(old,new,1)
 
 def resolve(candidate):
-    assert candidate.name==SUPPORTED and candidate.parent==HERE and candidate.is_file() and not candidate.is_symlink()
+    assert candidate.name in SUPPORTED and candidate.parent==HERE and candidate.is_file() and not candidate.is_symlink()
     raw=candidate.read_text()
     # Execute only the trusted wrapper's existing source-lock/replacement logic.
     # The final exec of the reconstructed Blender generator is replaced by capture.
@@ -93,8 +93,10 @@ def produce(out,candidate):
     verify(out,candidate)
 
 def selftest():
-    candidate=HERE/SUPPORTED;source=resolve(candidate);preview=transform(source)
-    compile(preview,str(candidate),"exec")
+    for name in SUPPORTED:
+        candidate=HERE/name;source=resolve(candidate);preview=transform(source)
+        compile(preview,str(candidate),"exec")
+        if name=="library-master-material-study.py":assert "A5.4a micro relief" in preview and "material-study.json" in preview
     assert "scene.cycles.samples=12" in preview and "scene.render.resolution_percentage=50" in preview
     assert '["atrium","vertical"]' in preview
     assert 'receipt={' not in preview.split("\n")[-1] and "library-manifest.json" not in preview
@@ -107,7 +109,7 @@ def selftest():
 def main():
     args=sys.argv[sys.argv.index("--")+1:] if "--" in sys.argv else sys.argv[1:]
     if args==["--selftest"]:selftest();return
-    p=argparse.ArgumentParser();p.add_argument("mode",choices=["produce","verify"]);p.add_argument("out",type=Path);p.add_argument("candidate",choices=[SUPPORTED]);a=p.parse_args(args)
+    p=argparse.ArgumentParser();p.add_argument("mode",choices=["produce","verify"]);p.add_argument("out",type=Path);p.add_argument("candidate",choices=SUPPORTED);a=p.parse_args(args)
     {"produce":produce,"verify":verify}[a.mode](a.out.resolve(),HERE/a.candidate)
 
 if __name__=="__main__":main()
