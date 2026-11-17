@@ -865,7 +865,7 @@ jobs:
           exit 1
 
   photometric-preview:
-    name: SP-06.4 — Bounded photometric adaptation experiment
+    name: SP-07.0 — Photometric fault-recovery experiment
     needs: [production, plan]
     if: needs.plan.outputs.mode == 'fast' && needs.plan.outputs.artistic_stage == 'preview' && needs.plan.outputs.script == 'library-master-knowledge-stars.py'
     runs-on: ubuntu-24.04
@@ -892,13 +892,13 @@ jobs:
       - name: Build once, measure and adapt core materials in place
         run: |
           set -euo pipefail
-          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/photometric-preview.py -- produce "$RUNNER_TEMP/atlas-photometric-preview"
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/photometric-preview.py -- produce "$RUNNER_TEMP/atlas-photometric-preview" --fault
       - name: Verify evidence independently of Blender
-        run: python3 scripts/atlas-gateway-c3/photometric-preview.py verify "$RUNNER_TEMP/atlas-photometric-preview"
+        run: python3 scripts/atlas-gateway-c3/photometric-preview.py verify "$RUNNER_TEMP/atlas-photometric-preview" --fault
       - name: Preserve experimental evidence only
         uses: actions/upload-artifact@v4
         with:
-          name: atlas-photometric-preview-experiment
+          name: atlas-photometric-fault-recovery
           path: ${{ runner.temp }}/atlas-photometric-preview/
           if-no-files-found: error
           retention-days: 7
