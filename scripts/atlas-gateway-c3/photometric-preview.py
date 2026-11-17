@@ -124,12 +124,14 @@ def transform():
     ast.parse(code)
     assert "export_scene.gltf" not in code and "save_as_mainfile" not in code
     return code
+def dependency_hashes():
+    return {n:preview.sha((HERE/n).read_bytes()) for n in ("photometric-preview.py","photometry.py","photometric-policy.json","adaptive_identity.py","adaptive-identity.json","knowledge_composition.py","knowledge-composition.json","smart-preview.py","art_quality.py","art-direction.json")}
 def verify(out):
     r=json.loads((out/"photometric-receipt.json").read_text());p,pd=pm.policy()
     assert r["experimentOnly"] and not any(r[k] for k in ("qualified","publishable","studentAuthorized","visualAcceptance"))
     assert r["sceneBuilds"]==1 and r["sceneBefore"]==r["sceneAfter"] and r["sceneBefore"]["objects"]>490
     assert r["policySha256"]==pd and r["identity"]==preview.identity(CANDIDATE)
-    assert r["experimentSourceSha256"]==preview.sha(transform().encode())
+    assert r["experimentSourceSha256"]==preview.sha(transform().encode()) and r["dependencyHashes"]==dependency_hashes()
     assert 1<=len(r["attempts"])<=p["maxAttempts"] and r["renderCount"]==2+2*len(r["attempts"])<=p["maxRenders"]
     names={f"background-{v}.png" for v in pm.VIEWS}|{f"attempt-{i}-{v}.png" for i in range(1,len(r["attempts"])+1) for v in pm.VIEWS}
     assert set(x.name for x in out.iterdir())==names|{"photometric-receipt.json"} and set(r["images"])==names
@@ -166,7 +168,7 @@ def produce(out):
         out.mkdir();r=json.loads((scratch/"photometric-receipt.json").read_text())
         names=[q["file"] for q in r["renderTimes"]]
         for n in names:(out/n).write_bytes((scratch/n).read_bytes())
-        r.update({"identity":preview.identity(CANDIDATE),"experimentSourceSha256":preview.sha(code.encode()),"images":{n:preview.image_record(out/n) for n in names},"totalSeconds":time.monotonic()-started})
+        r.update({"identity":preview.identity(CANDIDATE),"experimentSourceSha256":preview.sha(code.encode()),"dependencyHashes":dependency_hashes(),"images":{n:preview.image_record(out/n) for n in names},"totalSeconds":time.monotonic()-started})
         (out/"photometric-receipt.json").write_text(json.dumps(r,indent=2)+"\n")
     verify(out)
 if __name__=="__main__":
