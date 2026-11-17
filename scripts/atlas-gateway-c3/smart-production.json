@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "active": {
-    "phase": "C3.3A5.4a",
-    "script": "library-master-material-study.py",
-    "artifact": "atlas-c33a54a-material-study",
+    "phase": "C3.3A5.4b",
+    "script": "library-master-vegetation-study.py",
+    "artifact": "atlas-c33a54b-vegetation-study",
     "historicalJob": null
   },
   "previewEnabled": true
