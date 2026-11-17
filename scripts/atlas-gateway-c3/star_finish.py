@@ -103,7 +103,7 @@ def export_proposal(path,objects,cores,shared,selected,merge_group):
         bpy.ops.object.select_all(action="DESELECT")
         for o in merged:o.select_set(True)
         bpy.context.view_layer.objects.active=merged[0]
-        bpy.ops.export_scene.gltf(filepath=str(path),export_format="GLB",use_selection=True,export_texcoords=False,export_draco_mesh_compression_enable=False)
+        bpy.ops.export_scene.gltf(filepath=str(path),export_format="GLB",use_selection=True,export_texcoords=False,export_vertex_color="MATERIAL",export_all_vertex_colors=False,export_draco_mesh_compression_enable=False)
         return verify_module(path,selected)
     finally:
         for o in list(bpy.context.scene.objects):
