@@ -4,7 +4,7 @@ from pathlib import Path
 HERE=Path(__file__).resolve().parent
 sys.path.insert(0,str(HERE))
 import photometry as pm
-import adaptive_identity,knowledge_composition
+import adaptive_identity,knowledge_composition,art_quality
 spec=importlib.util.spec_from_file_location("smart_preview",HERE/"smart-preview.py")
 preview=importlib.util.module_from_spec(spec);spec.loader.exec_module(preview)
 CANDIDATE=HERE/"library-master-knowledge-stars.py"
@@ -140,7 +140,7 @@ def transform(fault=False):
     anchor='    bpy.ops.render.render(write_still=True)\n'
     assert code.count(anchor)==1
     pos=code.index(anchor)
-    code=code[:pos]+'    _photo_cameras[name]=(cam,w,h)\n'+INJECT.replace('__FAULT_SID__',repr('laboratori' if fault else None))+'\n'
+    code=code[:pos]+'    _photo_cameras[name]=(cam,w,h)\n'+INJECT.replace('__FAULT_SID__',repr('laboratori' if fault else None))+'\n'+code[pos+len(anchor):]
     ast.parse(code)
     assert "export_scene.gltf" not in code and "save_as_mainfile" not in code
     return code
@@ -153,6 +153,8 @@ def verify(out,fault=False):
     assert r["scenario"]==("fault-recovery" if fault else "baseline") and r["faultSid"]==fault_sid
     assert r["sceneBuilds"]==1 and r["sceneBefore"]==r["sceneAfter"] and r["sceneBefore"]["objects"]>490
     assert r["policySha256"]==pd and r["identity"]==preview.identity(CANDIDATE)
+    assert r["artQuality"]==art_quality.evaluate(r["artEvidence"])
+    assert r["artQuality"]["status"]=="PASS" and len(r["artQuality"]["checks"])==13
     assert r["experimentSourceSha256"]==preview.sha(transform(fault).encode()) and r["dependencyHashes"]==dependency_hashes()
     assert 1<=len(r["attempts"])<=p["maxAttempts"] and r["renderCount"]==2+2*len(r["attempts"])<=p["maxRenders"]
     names={f"background-{v}.png" for v in pm.VIEWS}|{f"attempt-{i}-{v}.png" for i in range(1,len(r["attempts"])+1) for v in pm.VIEWS}
@@ -195,7 +197,9 @@ def produce(out,fault=False):
         out.mkdir();r=json.loads((scratch/"photometric-receipt.json").read_text())
         names=[q["file"] for q in r["renderTimes"]]
         for n in names:(out/n).write_bytes((scratch/n).read_bytes())
-        r.update({"identity":preview.identity(CANDIDATE),"experimentSourceSha256":preview.sha(code.encode()),"dependencyHashes":dependency_hashes(),"images":{n:preview.image_record(out/n) for n in names},"totalSeconds":time.monotonic()-started})
+        study=json.loads((scratch/"knowledge-stars-study.json").read_text())
+        evidence={k:study[k] for k in ("stars","projection","composition","connections","connectionProjection","identityStudy")}
+        r.update({"artEvidence":evidence,"artQuality":art_quality.evaluate(evidence),"identity":preview.identity(CANDIDATE),"experimentSourceSha256":preview.sha(code.encode()),"dependencyHashes":dependency_hashes(),"images":{n:preview.image_record(out/n) for n in names},"totalSeconds":time.monotonic()-started})
         (out/"photometric-receipt.json").write_text(json.dumps(r,indent=2)+"\n")
     verify(out,fault)
 if __name__=="__main__":
