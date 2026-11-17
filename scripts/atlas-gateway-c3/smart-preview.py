@@ -1,9 +1,11 @@
 """SP-03: isolated, explicitly non-qualifying previews of the source-locked active scene."""
 import argparse, ast, hashlib, json, struct, sys, tempfile, time
 from pathlib import Path
-import art_quality
 
 HERE=Path(__file__).resolve().parent
+# Blender --python does not guarantee the script directory on sys.path.
+sys.path.insert(0,str(HERE))
+import art_quality
 SUPPORTED=("library-master-arch.py","library-master-material-study.py","library-master-vegetation-study.py","library-master-atmosphere-study.py","library-master-knowledge-stars.py")
 VIEWS={"atrium":(600,375),"vertical":(320,480)}
 SAMPLES=12
