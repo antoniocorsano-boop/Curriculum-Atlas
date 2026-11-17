@@ -5,35 +5,7 @@ from knowledge_composition import project
 
 HERE=Path(__file__).resolve().parent
 POLICY=HERE/"adaptive-identity.json"
-def rect(x,z,w,h):
-    return [(x-w/2,z-h/2),(x+w/2,z-h/2),(x+w/2,z+h/2),(x-w/2,z+h/2)]
-def polygons(sid):
-    if sid=="storie":
-        return [[(-.49,-.27),(-.49,.32),(-.06,.18),(-.06,-.40)],[(.06,-.40),(.06,.18),(.49,.32),(.49,-.27)],rect(0,-.19,.08,.30)]
-    if sid=="laboratori":
-        return [rect(-.25,-.25,.36,.36),rect(.25,-.25,.36,.36),rect(0,.25,.36,.36),rect(0,-.25,.16,.12),[(-.23,-.10),(-.12,-.16),(.04,.09),(-.06,.16)],[(.23,-.10),(.12,-.16),(-.04,.09),(.06,.16)]]
-    if sid=="scoperte":
-        pts=[((.52 if j%2==0 else .19)*math.cos(j*math.pi/4),(.52 if j%2==0 else .19)*math.sin(j*math.pi/4)) for j in range(8)]
-        return [[(0,0),pts[j],pts[(j+1)%8]] for j in range(8)]
-    if sid=="percorsi":
-        return [rect(-.31,-.34,.36,.18),rect(-.13,-.19,.24,.23),rect(.04,-.08,.36,.18),rect(.22,.10,.20,.28),[(.02,.22),(.22,.49),(.42,.22)]]
-    raise ValueError(sid)
-
-def geometry(sid,scale,half):
-    verts=[];faces=[]
-    for idx,poly in enumerate(polygons(sid)):
-        # Orient each convex component consistently; extrude to a real 3D mesh.
-        if sum(a[0]*b[1]-b[0]*a[1] for a,b in zip(poly,poly[1:]+poly[:1]))<0:poly=poly[::-1]
-        n=len(poly);k=len(verts)
-        # Small depth staggering avoids coincident front/back faces at component joins.
-        depth=half*(1-.025*idx)
-        verts.extend((x*scale,dy,z*scale) for dy in (-depth,depth) for x,z in poly)
-        faces.extend((k,k+j,k+j+1) for j in range(1,n-1))
-        faces.extend((k+n,k+n+j+1,k+n+j) for j in range(1,n-1))
-        for j in range(n):
-            a=k+j;b=k+(j+1)%n
-            faces.extend(((a,a+n,b+n),(a,b+n,b)))
-    return verts,faces
+from star_sculpture import geometry,inspect
 
 def mask(camera,center,verts,faces,w,h):
     points=[project(camera,tuple(a+b for a,b in zip(center,v))) for v in verts]
@@ -60,10 +32,10 @@ def read_policy():
     assert p["schemaVersion"]==1 and p["phase"]=="C3.3A5.5a"
     assert p["ids"]==["storie","laboratori","scoperte","percorsi"]
     assert p["shapeKinds"]==["libro-aperto","moduli-connessi","rosa-di-orientamento","freccia-ascendente"]
-    assert p["scales"]==[.60,.72,.84,.96] and p["maxAttempts"]==4
-    assert p["halfThicknessM"]==.07 and p["maxCoreRadiusM"]==.64
+    assert p["scales"]==[.70,.82,.94,1.06] and p["maxAttempts"]==4
+    assert p["halfThicknessM"]==.11 and p["maxCoreRadiusM"]==.64 and p["minCoreRadiusM"]==.55
     assert p["normalizationPixels"]==32 and p["maxNormalizedIoU"]==.65
-    assert p["views"]=={"atrium":{"pixels":[600,375],"minWidth":20,"minHeight":16,"minArea":100},"vertical":{"pixels":[320,480],"minWidth":16,"minHeight":14,"minArea":90}}
+    assert p["views"]=={"atrium":{"pixels":[600,375],"minWidth":24,"minHeight":18,"minArea":180},"vertical":{"pixels":[320,480],"minWidth":18,"minHeight":16,"minArea":120}}
     assert p["resources"]=={"maxBlenderPreviews":1,"externalServices":False,"paidServices":False}
     return p,hashlib.sha256(raw).hexdigest()
 
@@ -74,10 +46,12 @@ def run(plan,p,max_attempts):
     for attempt in range(max_attempts):
         current=[scales[i] for i in indices]
         meshes=[geometry(sid,scale,p["halfThicknessM"]) for sid,scale in zip(ids,current)]
-        failed={sid:[] for sid in ids};metrics={};pairs={}
+        failed={sid:[] for sid in ids};metrics={};pairs={};sculptures={}
         for i,(sid,(v,f)) in enumerate(zip(ids,meshes)):
             extent=max(math.sqrt(sum(x*x for x in q)) for q in v)
-            if extent>min(p["maxCoreRadiusM"],layout[i][3]) or min(q[2]+layout[i][2] for q in v)<=6:
+            sculptures[sid]=inspect(sid,v,f)
+            if not sculptures[sid]["valid"]:failed[sid].append("sculpturalMesh")
+            if extent>min(p["maxCoreRadiusM"],layout[i][3]) or extent<p["minCoreRadiusM"] or min(q[2]+layout[i][2] for q in v)<=6:
                 failed[sid].append("coreEnvelope")
         for name,limits in p["views"].items():
             w,h=limits["pixels"];metrics[name]={};normalized=[]
@@ -93,7 +67,7 @@ def run(plan,p,max_attempts):
                 if iou>p["maxNormalizedIoU"]:
                     failed[ids[i]].append(name+"Similarity:"+ids[j]);failed[ids[j]].append(name+"Similarity:"+ids[i])
         failure_count=sum(len(v) for v in failed.values())
-        record={"attempt":attempt+1,"scales":dict(zip(ids,current)),"metrics":metrics,"normalizedIoU":pairs,"failed":failed,"status":"PASS" if failure_count==0 else "REVISE"}
+        record={"attempt":attempt+1,"scales":dict(zip(ids,current)),"metrics":metrics,"normalizedIoU":pairs,"sculptures":sculptures,"failed":failed,"status":"PASS" if failure_count==0 else "REVISE"}
         attempts.append(record)
         # Stable selection: minimum failed criteria, then earliest attempt.
         rank=(failure_count,attempt)
@@ -103,7 +77,7 @@ def run(plan,p,max_attempts):
         if next_indices==indices:break
         indices=next_indices
     record,meshes=best[1],best[2]
-    return {"status":"PASS" if best[0][0]==0 else "EXHAUSTED","attempts":attempts,"selectedAttempt":record["attempt"],"selectedScales":record["scales"],"shapeKinds":dict(zip(ids,p["shapeKinds"])),"meshes":{sid:{"vertices":[list(q) for q in v],"faces":[list(q) for q in f]} for sid,(v,f) in zip(ids,meshes)},"visualAcceptance":False,"qualified":False,"publishable":False}
+    return {"status":"PASS" if best[0][0]==0 else "EXHAUSTED","attempts":attempts,"selectedAttempt":record["attempt"],"selectedScales":record["scales"],"sculptureEvidence":record["sculptures"],"shapeKinds":dict(zip(ids,p["shapeKinds"])),"meshes":{sid:{"vertices":[list(q) for q in v],"faces":[list(q) for q in f]} for sid,(v,f) in zip(ids,meshes)},"visualAcceptance":False,"qualified":False,"publishable":False}
 
 def solve(plan):
     p,digest=read_policy();result=run(plan,p,p["maxAttempts"])
@@ -122,6 +96,8 @@ def selftest(plan):
     for old,new in zip(a["attempts"],a["attempts"][1:]):
         for sid in p["ids"]:
             if not old["failed"][sid]:assert new["scales"][sid]==old["scales"][sid]
+    assert all(q["valid"] for q in a["sculptureEvidence"].values())
+    assert a["selectedScales"]=={"storie":.94,"laboratori":1.06,"scoperte":1.06,"percorsi":.94}
     assert not a["visualAcceptance"] and not a["qualified"] and not a["publishable"]
     print("SP-06 adaptive selftest: 6/6 PASS")
     return a
