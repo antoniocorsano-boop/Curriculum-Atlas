@@ -18,9 +18,9 @@
     "base": {
       "storie": {
         "color": [
-          0.86,
-          0.48,
-          0.16
+          0.98,
+          0.74,
+          0.35
         ],
         "emission": 0.08,
         "roughness": 0.34,
@@ -98,6 +98,6 @@
       "metallic": 0.38
     }
   },
-  "scope": "Luminanza relativa dei codici RGB del PNG, campioni interni alle maschere proiettate, controfattuale senza i nuclei. Non è una misura WCAG, non misura riconoscimento semantico o contrasto di tutti i bordi; la scena canonica non viene modificata. SP-07.3: variazioni RGB nei colori per faccia; parametri PBR condivisi e invarianti per famiglia, nessun nuovo materiale durante l'adattamento canonico.",
+  "scope": "Luminanza relativa dei codici RGB del PNG, campioni interni alle maschere proiettate, controfattuale senza i nuclei. Non è una misura WCAG, non misura riconoscimento semantico o contrasto di tutti i bordi; la scena canonica non viene modificata. SP-07.3: variazioni RGB nei colori per faccia; parametri PBR condivisi e invarianti per famiglia, nessun nuovo materiale durante l'adattamento canonico. SP-07.4: consolidata la ricetta lightWarm di Storie selezionata nel collaudo fef3402; verifica su nuovi rilievi necessaria.",
   "externalServices": false
 }
