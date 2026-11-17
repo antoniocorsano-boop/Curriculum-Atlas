@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "phase": "C3.3A5.5a",
-  "intent": "Quattro forme di esperienza riconoscibili come elementi sospesi, con profondità reale e subordinazione ai portali.",
+  "intent": "Un'unica composizione spaziale di quattro forme di esperienza distinguibili, collegate simbolicamente al medesimo ambiente Esperienze Atlas; sospensione, profondità, leggibilità e gerarchia dei portali.",
   "reference": {
     "phase": "C3.3A5.4c",
     "commit": "50b528c2aa31e4c49daca0fbb2a4fffd869261bb",
@@ -36,9 +36,10 @@
       "profondità e sospensione percepita",
       "identità distinguibile dei quattro astri",
       "coerenza di materiali luce e atmosfera",
-      "composizione e leggibilità verticale"
+      "composizione e leggibilità verticale",
+      "leggibilità e subordinazione delle connessioni luminose"
     ]
   },
   "review": "Obbligatoria su immagini effettive; nessun punteggio automatico di qualità artistica.",
-  "scope": "Soglie iniziali proposte per questo studio, da calibrare sul riferimento e sui dispositivi; non standard universali."
+  "scope": "Soglie iniziali proposte per questo studio, da calibrare sul riferimento e sui dispositivi; non standard universali. La larghezza proiettata riguarda il volume di ingombro, non la silhouette effettiva; le connessioni sono controllate a campioni e non costituiscono una prova di collisione dinamica."
 }
