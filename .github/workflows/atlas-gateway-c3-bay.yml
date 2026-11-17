@@ -893,6 +893,46 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
+  stars-webgl:
+    name: SP-07.5 — isolated stars in local WebGL
+    needs: [plan, smart-preview]
+    if: needs.smart-preview.result == 'success' && needs.plan.outputs.artistic_stage == 'preview' && needs.plan.outputs.script == 'library-master-knowledge-stars.py'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Install existing application dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-unified-adaptive-preview
+          path: ${{ runner.temp }}/atlas-unified-preview
+      - name: Reverify exact proposal before browser tests
+        run: python3 scripts/atlas-gateway-c3/unified-preview.py verify "$RUNNER_TEMP/atlas-unified-preview"
+      - name: Inspect the selected GLB in six viewports
+        run: |
+          node --check scripts/atlas-gateway-c3/test-stars-webgl.mjs
+          node scripts/atlas-gateway-c3/test-stars-webgl.mjs "$RUNNER_TEMP/atlas-unified-preview" "$RUNNER_TEMP/atlas-stars-webgl"
+      - name: Preserve browser metrics and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-stars-webgl-isolated
+          path: ${{ runner.temp }}/atlas-stars-webgl/
+          if-no-files-found: warn
+          retention-days: 7
+
   artistic-acceptance:
     name: Smart Production — visual acceptance required
     needs: [plan, smart-preview]
