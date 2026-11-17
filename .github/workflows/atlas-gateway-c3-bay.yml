@@ -2,6 +2,7 @@ name: Atlas Gateway — C3.1 Blender bay
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
     paths:
       - "scripts/atlas-gateway-c3/**"
       - "docs/atlas-gateway/AG-04C3-FILIERA-3D.md"
@@ -34,11 +35,14 @@ jobs:
       artifact: ${{ steps.selection.outputs.artifact }}
       historical_job: ${{ steps.selection.outputs.historical_job }}
       preview_enabled: ${{ steps.selection.outputs.preview_enabled }}
+      artistic_stage: ${{ steps.selection.outputs.artistic_stage }}
     steps:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
           fetch-depth: 0
+      - name: Test composition quality and negative cases
+        run: python3 scripts/atlas-gateway-c3/art_quality.py
       - name: Test deterministic mode selection
         run: python3 scripts/atlas-gateway-c3/smart-production.py --selftest
       - name: Test cache integrity and negative cases
@@ -50,6 +54,7 @@ jobs:
         env:
           REQUESTED: ${{ inputs.mode || 'qualify' }}
           EVENT_NAME: ${{ github.event_name }}
+          PR_DRAFT: ${{ github.event.pull_request.draft }}
           BEFORE_SHA: ${{ github.event.before || '' }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: python3 scripts/atlas-gateway-c3/smart-production.py --requested "$REQUESTED" --event "$EVENT_NAME" --before "$BEFORE_SHA" --head "$HEAD_SHA"
@@ -829,3 +834,16 @@ jobs:
           path: ${{ runner.temp }}/atlas-fast-preview/
           if-no-files-found: error
           retention-days: 7
+
+
+  artistic-acceptance:
+    name: Smart Production — visual acceptance required
+    needs: [plan, smart-preview]
+    if: always() && needs.plan.result == 'success' && needs.plan.outputs.artistic_stage == 'preview'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Hold qualification until candidate-bound visual review
+        run: |
+          echo "::error::SP-05 PREVIEW ONLY — visual acceptance pending. Qualification intentionally blocked; inspect FAST evidence and revise or record accepted review."
+          exit 1
