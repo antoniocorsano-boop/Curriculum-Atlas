@@ -36,8 +36,8 @@ star_policy=(Path(__file__).resolve().parents[2]/"src/features/atlas-gateway/gat
 assert hashlib.sha1(b"blob "+str(len(star_policy)).encode()+b"\\x00"+star_policy).hexdigest()=="fe1d43c5622b1b7889ad9bb7c188373fddd9bebf"
 assert "Esplora storie, laboratori, scoperte e percorsi." in star_policy.decode()
 star_objects=[];star_records=[]
-star_gold=material("Knowledge star warm light",(.92,.53,.17),.28,.15,1.8)
-star_cool=material("Knowledge star cool light",(.30,.57,.78),.30,.12,1.5)
+star_gold=material("Knowledge star warm light",(.65,.32,.10),.36,.25,.65)
+star_cool=material("Knowledge star cool light",(.14,.37,.61),.38,.22,.55)
 star_orbit=material("Knowledge star satin orbit",(.79,.53,.23),.30,.65,.75)
 # SP-06: the very meshes tested in the projected silhouette cycle.
 def star_core(name,c,r,mat,seed):
