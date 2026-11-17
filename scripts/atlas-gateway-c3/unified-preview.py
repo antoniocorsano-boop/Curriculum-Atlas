@@ -17,15 +17,15 @@ def summary(out):
     p,_=photo.pm.policy()
     materials=r["selectedMaterials"]
     changed=[s for s in photo.pm.IDS if materials[s]!=photo.pm.recipe(p,s,"base")]
-    groups={json.dumps(q,sort_keys=True) for q in materials.values()}
-    # The shared orbit/trajectory material is separate; estimate groups, not measured GLB primitives.
-    groups_estimate=len(groups)+1
+    module=r["moduleExport"]
+    assert module["status"]=="PASS" and module["primitives"]==3
+    groups_estimate=module["primitives"]
     selected={n:pv.image_record(cycle/f"attempt-{r['selectedAttempt']}-{n}.png") for n in VIEWS}
     return {"schemaVersion":1,"status":"ADAPTIVE_PREVIEW_ONLY","result":r["status"],"qualified":False,"publishable":False,"studentAuthorized":False,"visualAcceptance":False,"canonicalReviewReceipt":False,
         "candidateIdentity":r["identity"],"adaptiveSourceSha256":r["experimentSourceSha256"],"unifiedAdapterSha256":pv.sha(Path(__file__).read_bytes()),"cycleReceiptSha256":pv.sha((cycle/"photometric-receipt.json").read_bytes()),
         "dependencyHashes":r["dependencyHashes"],"artQuality":r["artQuality"],"sceneBuilds":r["sceneBuilds"],"renderCount":r["renderCount"],"geometryAttempts":r["artEvidence"]["identityStudy"]["selectedAttempt"],
         "photometricAttempts":len(r["attempts"]),"selectedAttempt":r["selectedAttempt"],"selectedRecipes":r["selectedRecipes"],"selectedMaterials":materials,"changedFromCanonical":changed,
-        "estimatedMaterialGroups":groups_estimate,"withinCanonicalThreeGroupBudgetEstimate":groups_estimate<=3,"requiresCanonicalMaterialConsolidation":bool(changed),
+        "estimatedMaterialGroups":groups_estimate,"moduleExport":module,"withinCanonicalThreeGroupBudgetEstimate":groups_estimate<=3,"requiresCanonicalMaterialConsolidation":bool(changed),
         "selectedImages":selected,"reviewImages":r["reviewImages"],"reviewRenderCount":r["reviewRenderCount"],"totalRenderCount":r["renderCount"]+r["reviewRenderCount"],"seconds":r["totalSeconds"]}
 def verify(out):
     assert set(x.name for x in out.iterdir())=={"cycle","atrium.png","vertical.png","unified-receipt.json"}
@@ -35,7 +35,7 @@ def verify(out):
     for n in VIEWS:
         assert pv.image_record(out/(n+".png"))==r["selectedImages"][n]
     assert r["status"]=="ADAPTIVE_PREVIEW_ONLY" and not any(r[k] for k in ("qualified","publishable","studentAuthorized","visualAcceptance","canonicalReviewReceipt"))
-    print("SP-07.1 unified preview:",json.dumps({k:r[k] for k in ("result","sceneBuilds","renderCount","reviewRenderCount","totalRenderCount","geometryAttempts","photometricAttempts","selectedRecipes","changedFromCanonical","estimatedMaterialGroups","seconds")}),flush=True)
+    print("SP-07.1 unified preview:",json.dumps({k:r[k] for k in ("result","sceneBuilds","renderCount","reviewRenderCount","totalRenderCount","geometryAttempts","photometricAttempts","selectedRecipes","changedFromCanonical","estimatedMaterialGroups","moduleExport","seconds")}),flush=True)
 def produce(out):
     assert out.parent.is_dir() and not out.exists()
     root=photo.resource_directory(out)
