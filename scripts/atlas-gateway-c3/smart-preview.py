@@ -101,7 +101,7 @@ def produce(out,candidate):
         receipt={"status":"PREVIEW_ONLY","qualified":False,"studentAuthorized":False,"publishable":False,"identity":identity(candidate),"samples":SAMPLES,"resolutionPercent":50,"engine":"CYCLES","seconds":time.monotonic()-started,"files":files}
         if candidate.name=="library-master-knowledge-stars.py":
             study=json.loads((scratch/"knowledge-stars-study.json").read_text())
-            receipt["artEvidence"]={k:study[k] for k in ("stars","projection")}
+            receipt["artEvidence"]={k:study[k] for k in ("stars","projection","composition","connections","connectionProjection")}
             receipt["artQuality"]=art_quality.evaluate(receipt["artEvidence"])
         (out/"preview-receipt.json").write_text(json.dumps(receipt,indent=2)+"\n")
     verify(out,candidate)
