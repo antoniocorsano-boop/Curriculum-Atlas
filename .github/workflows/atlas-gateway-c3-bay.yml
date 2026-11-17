@@ -45,6 +45,16 @@ jobs:
         run: python3 scripts/atlas-gateway-c3/art_quality.py
       - name: Preflight alternative spatial compositions before Blender
         run: python3 scripts/atlas-gateway-c3/knowledge_composition.py
+      - name: Adapt identity silhouettes before Blender
+        run: python3 scripts/atlas-gateway-c3/adaptive_identity.py --out "$RUNNER_TEMP/atlas-adaptive/identity.json"
+      - name: Preserve adaptive cycle evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-adaptive-identity-evidence
+          path: ${{ runner.temp }}/atlas-adaptive/identity.json
+          if-no-files-found: error
+          retention-days: 7
       - name: Test deterministic mode selection
         run: python3 scripts/atlas-gateway-c3/smart-production.py --selftest
       - name: Test cache integrity and negative cases
