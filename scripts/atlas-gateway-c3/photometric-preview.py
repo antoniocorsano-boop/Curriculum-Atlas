@@ -184,10 +184,20 @@ def verify(out,fault=False):
     assert len(r["renderTimes"])==len(names) and {q["file"] for q in r["renderTimes"]}==names and all(q["seconds"]>0 for q in r["renderTimes"])
     assert r["totalSeconds"]>0
     print("SP-06.4 verified:",json.dumps({k:r[k] for k in ("status","sceneBuilds","renderCount","selectedAttempt","selectedRecipes","attempts","updates","renderTimes","totalSeconds")},separators=(",",":")),flush=True)
-def produce(out,fault=False):
+RESOURCE_FILES=("atlas-c32/campata.blend","atlas-c32/manifest.json","atlas-c32b/campata-ao.glb","atlas-c32b/ao-manifest.json")
+def resource_directory(out,resource_root=None):
+    # The legacy generator resolves inputs beside its temporary output directory.
+    # The evidence destination may be nested independently of those inputs.
+    root=(Path(resource_root) if resource_root is not None else out.parent).resolve()
+    if not root.is_dir():raise ValueError("Missing Blender resource directory: "+str(root))
+    missing=[name for name in RESOURCE_FILES if not (root/name).is_file()]
+    if missing:raise ValueError("Missing Blender input resources: "+", ".join(missing))
+    return root
+def produce(out,fault=False,*,resource_root=None):
     assert out.parent.is_dir() and not out.exists()
+    root=resource_directory(out,resource_root)
     started=time.monotonic();code=transform(fault)
-    with tempfile.TemporaryDirectory(prefix="atlas-photometry-",dir=out.parent) as scratch:
+    with tempfile.TemporaryDirectory(prefix="atlas-photometry-",dir=root) as scratch:
         old=sys.argv
         try:
             sys.argv=[str(CANDIDATE),"--",scratch]
