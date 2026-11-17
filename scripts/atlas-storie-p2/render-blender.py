@@ -38,9 +38,25 @@ def material(name,color,rough,has_uv=False):
     l.new(fine,bump.inputs["Height"]);l.new(bump.outputs["Normal"],bs.inputs["Normal"])
     if has_uv:
         tangent=n.new("ShaderNodeTangent");tangent.direction_type="UV_MAP";tangent.uv_map="BrushUV"
-        bs.inputs["Anisotropic IOR Level"].default_value=.32
+        # Blender v4.2.23 source declares "Anisotropic", not "Anisotropic IOR Level".
+        # Fail explicitly on any future interface drift; never silently disable the effect.
+        anisotropic=bs.inputs.get("Anisotropic")
+        if anisotropic is None:
+            raise RuntimeError("Unsupported Principled BSDF interface: "+str([i.name for i in bs.inputs]))
+        anisotropic.default_value=.32
         l.new(tangent.outputs["Tangent"],bs.inputs["Tangent"])
     return m
+
+# Exercise the actual pinned Blender node API before allocating meshes or rendering.
+# No fallback that silently drops anisotropy, UV tangents or roughness variation.
+probe=material("B03_API_preflight",(.45,.20,.065),.39,True)
+probe_bs=probe.node_tree.nodes.get("Principled BSDF")
+assert abs(probe_bs.inputs["Anisotropic"].default_value-.32)<1e-6
+assert all(probe_bs.inputs[key].is_linked for key in ("Tangent","Roughness","Normal"))
+print("PASS: B03 material preflight — Blender",bpy.app.version_string,
+      "Anisotropic=0.32; tangent, roughness and normal linked",flush=True)
+bpy.data.materials.remove(probe)
+
 def mesh(name,v,f,color,rough,uv=None):
     data=bpy.data.meshes.new(name);data.from_pydata(v.tolist(),[],f.tolist());data.update()
     bm=bmesh.new();bm.from_mesh(data);bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces))
