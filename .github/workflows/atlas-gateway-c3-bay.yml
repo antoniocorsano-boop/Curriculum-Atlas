@@ -283,7 +283,7 @@ jobs:
           node-version: 22
           package-manager-cache: false
       - name: Install existing application dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
       - name: Record browser toolchain versions

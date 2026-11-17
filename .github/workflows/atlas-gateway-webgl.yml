@@ -29,7 +29,7 @@ jobs:
           node-version: 22
           package-manager-cache: false
       - name: Install existing application dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
       - name: Verify portal contract
         run: node --experimental-strip-types --test scripts/test-atlas-gateway-ag03.mjs
       - name: Prepare and verify local engine and styles

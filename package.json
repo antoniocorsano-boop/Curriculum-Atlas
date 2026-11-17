@@ -60,5 +60,10 @@
     "playwright": "^1.55.0",
     "@playwright/test": "^1.55.0"
   },
-  "packageManager": "pnpm@10.17.1"
+  "packageManager": "pnpm@10.17.1",
+  "pnpm": {
+    "overrides": {
+      "csstype": "3.2.3"
+    }
+  }
 }
