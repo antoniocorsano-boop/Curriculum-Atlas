@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "phase": "C3.3A5.5a",
+  "purpose": "Identità visiva degli astri: silhouette distinte prima della produzione Blender.",
+  "ids": [
+    "storie",
+    "laboratori",
+    "scoperte",
+    "percorsi"
+  ],
+  "shapeKinds": [
+    "libro-aperto",
+    "moduli-connessi",
+    "rosa-di-orientamento",
+    "freccia-ascendente"
+  ],
+  "scales": [
+    0.6,
+    0.72,
+    0.84,
+    0.96
+  ],
+  "halfThicknessM": 0.07,
+  "maxCoreRadiusM": 0.64,
+  "views": {
+    "atrium": {
+      "pixels": [
+        600,
+        375
+      ],
+      "minWidth": 20,
+      "minHeight": 16,
+      "minArea": 100
+    },
+    "vertical": {
+      "pixels": [
+        320,
+        480
+      ],
+      "minWidth": 16,
+      "minHeight": 14,
+      "minArea": 90
+    }
+  },
+  "maxNormalizedIoU": 0.65,
+  "normalizationPixels": 32,
+  "maxAttempts": 4,
+  "scope": "Misure di maschere geometriche dei soli nuclei, non riconoscimento semantico umano o contrasto nel render. Soglie iniziali del pilota, fisse durante il ciclo; composizione, camere, portali, anelli e traiettorie bloccati.",
+  "resources": {
+    "maxBlenderPreviews": 1,
+    "externalServices": false,
+    "paidServices": false
+  }
+}
