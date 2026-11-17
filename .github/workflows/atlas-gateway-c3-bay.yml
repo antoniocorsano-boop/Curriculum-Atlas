@@ -856,6 +856,15 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Compare source and geometry identities before rendering
+        if: needs.plan.outputs.artistic_stage == 'preview' && needs.plan.outputs.script == 'library-master-knowledge-stars.py'
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-identity-probes"
+          python3 scripts/atlas-gateway-c3/unified-preview.py --identity-probe "$RUNNER_TEMP/atlas-identity-probes/system.json"
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/unified-preview.py -- --identity-probe "$RUNNER_TEMP/atlas-identity-probes/blender.json"
+          diff -u "$RUNNER_TEMP/atlas-identity-probes/system.json" "$RUNNER_TEMP/atlas-identity-probes/blender.json"
+          echo "SP-07.2 cross-runtime identity PASS before rendering"
       - name: Run unified adaptive draft preview in a single scene
         if: needs.plan.outputs.artistic_stage == 'preview' && needs.plan.outputs.script == 'library-master-knowledge-stars.py'
         run: |
@@ -871,6 +880,17 @@ jobs:
           name: atlas-unified-adaptive-preview
           path: ${{ runner.temp }}/atlas-unified-preview/
           if-no-files-found: error
+          retention-days: 7
+
+      - name: Preserve unverified diagnostic evidence after failure
+        if: failure() && needs.plan.outputs.artistic_stage == 'preview' && needs.plan.outputs.script == 'library-master-knowledge-stars.py'
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-unverified-diagnostics-not-for-acceptance
+          path: |
+            ${{ runner.temp }}/atlas-identity-probes/
+            ${{ runner.temp }}/atlas-unified-preview/
+          if-no-files-found: warn
           retention-days: 7
 
   artistic-acceptance:
