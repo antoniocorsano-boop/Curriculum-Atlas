@@ -97,9 +97,14 @@ def selftest(plan):
         for sid in p["ids"]:
             if not old["failed"][sid]:assert new["scales"][sid]==old["scales"][sid]
     assert all(q["valid"] for q in a["sculptureEvidence"].values())
+    for sid in p["ids"]:
+        q=a["meshes"][sid]
+        assert inspect(sid,q["vertices"],q["faces"])==a["sculptureEvidence"][sid]
+        assert not inspect(sid,q["vertices"],q["faces"][:-1])["valid"]
+        assert not inspect(sid,*geometry(sid,.70,p["halfThicknessM"]))["valid"]
     assert a["selectedScales"]=={"storie":.94,"laboratori":1.06,"scoperte":1.06,"percorsi":.94}
     assert not a["visualAcceptance"] and not a["qualified"] and not a["publishable"]
-    print("SP-06 adaptive selftest: 6/6 PASS")
+    print("SP-06/07.2 adaptive selftest: deterministic cycle, geometry and negative topology checks PASS")
     return a
 
 if __name__=="__main__":
