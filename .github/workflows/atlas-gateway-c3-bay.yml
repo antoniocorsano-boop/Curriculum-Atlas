@@ -9,9 +9,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: Production mode (FAST remains disabled until SP-03 qualification)
+        description: Production mode (FAST is an explicit non-qualifying preview)
         type: choice
-        options: [qualify, full]
+        options: [qualify, full, fast]
         default: qualify
 
 # Only superseded executions of the same pull request are cancelled.
@@ -33,6 +33,7 @@ jobs:
       script: ${{ steps.selection.outputs.script }}
       artifact: ${{ steps.selection.outputs.artifact }}
       historical_job: ${{ steps.selection.outputs.historical_job }}
+      preview_enabled: ${{ steps.selection.outputs.preview_enabled }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -42,6 +43,8 @@ jobs:
         run: python3 scripts/atlas-gateway-c3/smart-production.py --selftest
       - name: Test cache integrity and negative cases
         run: python3 scripts/atlas-gateway-c3/smart-base-cache.py --selftest
+      - name: Test preview adapter against locked candidate
+        run: python3 scripts/atlas-gateway-c3/smart-preview.py --selftest
       - name: Resolve current candidate and mode
         id: selection
         env:
@@ -174,8 +177,8 @@ jobs:
       - name: Compute exact base dependency fingerprint
         id: base-key
         run: python3 scripts/atlas-gateway-c3/smart-base-cache.py key "$RUNNER_TEMP"
-      - name: Restore verified base cache only for QUALIFY
-        if: needs.plan.outputs.mode == 'qualify'
+      - name: Restore verified base cache for QUALIFY or FAST
+        if: needs.plan.outputs.mode == 'qualify' || needs.plan.outputs.mode == 'fast'
         id: base-cache
         uses: actions/cache/restore@v5
         with:
@@ -739,6 +742,7 @@ jobs:
   smart-current:
     name: Smart Production — current candidate qualification
     needs: [production, plan]
+    if: needs.plan.outputs.mode != 'fast'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
@@ -781,5 +785,47 @@ jobs:
         with:
           name: ${{ needs.plan.outputs.artifact }}
           path: ${{ runner.temp }}/atlas-smart-current/
+          if-no-files-found: error
+          retention-days: 7
+
+
+  smart-preview:
+    name: Smart Production — FAST preview (not qualification)
+    needs: [production, plan]
+    if: needs.plan.outputs.preview_enabled == 'true' && (needs.plan.outputs.mode == 'fast' || needs.plan.outputs.mode == 'full')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CANDIDATE_SCRIPT: ${{ needs.plan.outputs.script }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore pinned Blender archive
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-gateway-c32-textured
+          path: ${{ runner.temp }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-c32b-ao
+          path: ${{ runner.temp }}/atlas-c32b
+      - name: Render two non-qualifying preview views
+        run: |
+          set -euo pipefail
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/smart-preview.py -- produce "$RUNNER_TEMP/atlas-fast-preview" "$CANDIDATE_SCRIPT"
+      - name: Independently verify preview-only evidence
+        run: python3 scripts/atlas-gateway-c3/smart-preview.py verify "$RUNNER_TEMP/atlas-fast-preview" "$CANDIDATE_SCRIPT"
+      - name: Preserve preview images and receipt only
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-fast-preview-not-qualified
+          path: ${{ runner.temp }}/atlas-fast-preview/
           if-no-files-found: error
           retention-days: 7
