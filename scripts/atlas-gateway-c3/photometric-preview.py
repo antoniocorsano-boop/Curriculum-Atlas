@@ -18,6 +18,7 @@ import time as _pt
 import hashlib as _ph
 import json as _pj
 _p,_pd=_pm.policy()
+_fault_sid=__FAULT_SID__
 _plan,_,_=_kc.load()
 _identity=_ai.solve(_plan)
 assert _identity["status"]=="PASS"
@@ -61,7 +62,22 @@ for sid,o in _core.items():
     original=o.data.materials[0]
     assert _same(_read(original),_pm.recipe(_p,sid,"base"))
     copy=original.copy();copy.name="SP06 photometric "+sid;o.data.materials[0]=copy
+def _set_fault(enabled):
+    if _fault_sid is None:return
+    m=_core[_fault_sid].data.materials[0];tree=m.node_tree
+    output=next(n for n in tree.nodes if n.type=="OUTPUT_MATERIAL" and n.is_active_output)
+    surface=output.inputs["Surface"];bs=tree.nodes.get("Principled BSDF")
+    for link in list(surface.links):tree.links.remove(link)
+    faulty=tree.nodes.get("SP07 injected transparent defect")
+    if enabled:
+        if faulty is None:
+            faulty=tree.nodes.new("ShaderNodeBsdfTransparent");faulty.name="SP07 injected transparent defect"
+        tree.links.new(faulty.outputs[0],surface)
+    else:
+        if faulty is not None:tree.nodes.remove(faulty)
+        tree.links.new(bs.outputs["BSDF"],surface)
 def _apply(sid,key):
+    if sid==_fault_sid:_set_fault(False)
     q=_pm.recipe(_p,sid,key);m=_core[sid].data.materials[0];bs=m.node_tree.nodes.get("Principled BSDF")
     bs.inputs["Base Color"].default_value=(*q["color"],1)
     bs.inputs["Emission Color"].default_value=(*q["color"],1)
@@ -83,11 +99,14 @@ for o in _core.values():o.hide_render=False
 bpy.context.view_layer.update()
 assert _fingerprint()==_before
 _current=dict.fromkeys(_pm.IDS,"base")
+_set_fault(True)
+bpy.context.view_layer.update()
 _attempts=[];_best=None;_updates=[]
 for _index in range(1,_p["maxAttempts"]+1):
     _render_pair("attempt-%d"%_index)
     _record=_pm.evaluate(out,_index,_p,_plan,_identity)
-    _record.update({"attempt":_index,"recipes":dict(_current)})
+    _record.update({"attempt":_index,"recipes":dict(_current),"injectedFault":_fault_sid if _index==1 else None})
+    if _fault_sid is not None and _index==1:assert _record["failed"][_fault_sid],"SP-07: injected defect not detected"
     _attempts.append(_record)
     if _best is None or _pm.ranking(_record,_p)<_pm.ranking(_best,_p):_best=_record
     if _record["status"]=="PASS" or _index==_p["maxAttempts"]:break
@@ -105,14 +124,15 @@ for _index in range(1,_p["maxAttempts"]+1):
 # Restore the best measured configuration, not necessarily the final trial.
 for s in _pm.IDS:
     if _current[s]!=_best["recipes"][s]:_apply(s,_best["recipes"][s])
+_set_fault(_fault_sid is not None and _best["attempt"]==1)
 bpy.context.view_layer.update()
 _after=_fingerprint();assert _after==_before
 assert all(_same(_read(_core[s].data.materials[0]),_pm.recipe(_p,s,_best["recipes"][s])) for s in _pm.IDS)
 assert len(_times)==2+2*len(_attempts)<=_p["maxRenders"]
-_photo_receipt={"status":"PASS" if _best["status"]=="PASS" else "EXHAUSTED","experimentOnly":True,"qualified":False,"publishable":False,"studentAuthorized":False,"visualAcceptance":False,"sceneBuilds":1,"renderCount":len(_times),"policySha256":_pd,"attempts":_attempts,"selectedAttempt":_best["attempt"],"selectedRecipes":_best["recipes"],"selectedMaterials":{s:_pm.recipe(_p,s,_best["recipes"][s]) for s in _pm.IDS},"updates":_updates,"renderTimes":_times,"sceneBefore":_before,"sceneAfter":_after}
+_photo_receipt={"status":"PASS" if _best["status"]=="PASS" else "EXHAUSTED","experimentOnly":True,"scenario":"fault-recovery" if _fault_sid else "baseline","faultSid":_fault_sid,"selectedFault":_best["injectedFault"],"qualified":False,"publishable":False,"studentAuthorized":False,"visualAcceptance":False,"sceneBuilds":1,"renderCount":len(_times),"policySha256":_pd,"attempts":_attempts,"selectedAttempt":_best["attempt"],"selectedRecipes":_best["recipes"],"selectedMaterials":{s:_pm.recipe(_p,s,_best["recipes"][s]) for s in _pm.IDS},"updates":_updates,"renderTimes":_times,"sceneBefore":_before,"sceneAfter":_after}
 (out/"photometric-receipt.json").write_text(_pj.dumps(_photo_receipt,indent=2)+"\n")
 '''
-def transform():
+def transform(fault=False):
     code=preview.transform(preview.resolve(CANDIDATE))
     code=preview.once(code,'star_objects=merge_group(star_objects,"Knowledge stars")\nassert len(star_objects)==3','# SP-06.4: editable local objects; no export.\nassert len(star_objects)>3')
     anchor='for i,(name,w,h,pos,target,lens) in enumerate(views):'
@@ -120,18 +140,20 @@ def transform():
     anchor='    bpy.ops.render.render(write_still=True)\n'
     assert code.count(anchor)==1
     pos=code.index(anchor)
-    code=code[:pos]+'    _photo_cameras[name]=(cam,w,h)\n'+INJECT+'\n'
+    code=code[:pos]+'    _photo_cameras[name]=(cam,w,h)\n'+INJECT.replace('__FAULT_SID__',repr('laboratori' if fault else None))+'\n'
     ast.parse(code)
     assert "export_scene.gltf" not in code and "save_as_mainfile" not in code
     return code
 def dependency_hashes():
     return {n:preview.sha((HERE/n).read_bytes()) for n in ("photometric-preview.py","photometry.py","photometric-policy.json","adaptive_identity.py","adaptive-identity.json","knowledge_composition.py","knowledge-composition.json","smart-preview.py","art_quality.py","art-direction.json")}
-def verify(out):
+def verify(out,fault=False):
     r=json.loads((out/"photometric-receipt.json").read_text());p,pd=pm.policy()
     assert r["experimentOnly"] and not any(r[k] for k in ("qualified","publishable","studentAuthorized","visualAcceptance"))
+    fault_sid="laboratori" if fault else None
+    assert r["scenario"]==("fault-recovery" if fault else "baseline") and r["faultSid"]==fault_sid
     assert r["sceneBuilds"]==1 and r["sceneBefore"]==r["sceneAfter"] and r["sceneBefore"]["objects"]>490
     assert r["policySha256"]==pd and r["identity"]==preview.identity(CANDIDATE)
-    assert r["experimentSourceSha256"]==preview.sha(transform().encode()) and r["dependencyHashes"]==dependency_hashes()
+    assert r["experimentSourceSha256"]==preview.sha(transform(fault).encode()) and r["dependencyHashes"]==dependency_hashes()
     assert 1<=len(r["attempts"])<=p["maxAttempts"] and r["renderCount"]==2+2*len(r["attempts"])<=p["maxRenders"]
     names={f"background-{v}.png" for v in pm.VIEWS}|{f"attempt-{i}-{v}.png" for i in range(1,len(r["attempts"])+1) for v in pm.VIEWS}
     assert set(x.name for x in out.iterdir())==names|{"photometric-receipt.json"} and set(r["images"])==names
@@ -139,7 +161,7 @@ def verify(out):
     plan,_,_=knowledge_composition.load();result=adaptive_identity.solve(plan);current=dict.fromkeys(pm.IDS,"base")
     assert result["status"]=="PASS"
     for i,record in enumerate(r["attempts"],1):
-        expected=pm.evaluate(out,i,p,plan,result);expected.update({"attempt":i,"recipes":current})
+        expected=pm.evaluate(out,i,p,plan,result);expected.update({"attempt":i,"recipes":current,"injectedFault":fault_sid if i==1 else None})
         assert record==expected
         if i<len(r["attempts"]):
             assert record["status"]=="REVISE"
@@ -149,15 +171,20 @@ def verify(out):
     last=r["attempts"][-1];assert last["status"]=="PASS" or len(r["attempts"])==p["maxAttempts"] or pm.advance(current,last,p)==current
     assert len(r["updates"])==len(r["attempts"])-1
     best=min(r["attempts"],key=lambda q:pm.ranking(q,p))
-    assert r["selectedAttempt"]==best["attempt"] and r["selectedRecipes"]==best["recipes"]
+    assert r["selectedAttempt"]==best["attempt"] and r["selectedRecipes"]==best["recipes"] and r["selectedFault"]==best["injectedFault"]
+    if fault:
+        assert r["attempts"][0]["failed"][fault_sid] and len(r["attempts"])>=2
+        assert fault_sid in r["updates"][0]["changed"]
+        assert all(s in r["attempts"][0]["failed"] and r["attempts"][0]["failed"][s] for s in r["updates"][0]["changed"])
+        # A successfully executed experiment can exhaust its budget; never auto-promote.
     assert r["status"]==("PASS" if best["status"]=="PASS" else "EXHAUSTED")
     assert r["selectedMaterials"]=={s:pm.recipe(p,s,best["recipes"][s]) for s in pm.IDS}
     assert len(r["renderTimes"])==len(names) and {q["file"] for q in r["renderTimes"]}==names and all(q["seconds"]>0 for q in r["renderTimes"])
     assert r["totalSeconds"]>0
     print("SP-06.4 verified:",json.dumps({k:r[k] for k in ("status","sceneBuilds","renderCount","selectedAttempt","selectedRecipes","attempts","updates","renderTimes","totalSeconds")},separators=(",",":")),flush=True)
-def produce(out):
+def produce(out,fault=False):
     assert out.parent.is_dir() and not out.exists()
-    started=time.monotonic();code=transform()
+    started=time.monotonic();code=transform(fault)
     with tempfile.TemporaryDirectory(prefix="atlas-photometry-",dir=out.parent) as scratch:
         old=sys.argv
         try:
@@ -170,11 +197,11 @@ def produce(out):
         for n in names:(out/n).write_bytes((scratch/n).read_bytes())
         r.update({"identity":preview.identity(CANDIDATE),"experimentSourceSha256":preview.sha(code.encode()),"dependencyHashes":dependency_hashes(),"images":{n:preview.image_record(out/n) for n in names},"totalSeconds":time.monotonic()-started})
         (out/"photometric-receipt.json").write_text(json.dumps(r,indent=2)+"\n")
-    verify(out)
+    verify(out,fault)
 if __name__=="__main__":
     args=sys.argv[sys.argv.index("--")+1:] if "--" in sys.argv else sys.argv[1:]
     if args==["--selftest"]:
-        pm.selftest();compile(transform(),str(CANDIDATE),"exec");print("SP-06.4 adapter compile PASS")
+        pm.selftest();compile(transform(),str(CANDIDATE),"exec");compile(transform(True),str(CANDIDATE),"exec");print("SP-07 baseline and fault adapters compile PASS")
     else:
-        assert len(args)==2 and args[0] in ("produce","verify")
-        {"produce":produce,"verify":verify}[args[0]](Path(args[1]).resolve())
+        assert len(args) in (2,3) and args[0] in ("produce","verify") and (len(args)==2 or args[2]=="--fault")
+        {"produce":produce,"verify":verify}[args[0]](Path(args[1]).resolve(),len(args)==3)
