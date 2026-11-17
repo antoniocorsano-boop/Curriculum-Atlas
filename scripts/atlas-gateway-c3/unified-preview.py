@@ -48,7 +48,11 @@ def produce(out):
     verify(out)
 if __name__=="__main__":
     args=sys.argv[sys.argv.index("--")+1:] if "--" in sys.argv else sys.argv[1:]
-    if args==["--selftest"]:
+    if len(args)==2 and args[0]=="--identity-probe":
+        path=Path(args[1]);assert not path.exists()
+        path.write_text(json.dumps(photo.identity_probe(),sort_keys=True,indent=2)+"\n")
+        print("SP-07.2 identity probe written",flush=True)
+    elif args==["--selftest"]:
         compile(photo.transform(False),str(photo.CANDIDATE),"exec")
         # Reproduce the nested layout that previously failed before Blender loaded.
         with tempfile.TemporaryDirectory() as td:
