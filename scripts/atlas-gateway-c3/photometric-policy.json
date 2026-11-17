@@ -18,43 +18,43 @@
     "base": {
       "storie": {
         "color": [
-          0.92,
-          0.53,
-          0.17
+          0.65,
+          0.32,
+          0.1
         ],
-        "emission": 1.8,
-        "roughness": 0.28,
-        "metallic": 0.15
+        "emission": 0.65,
+        "roughness": 0.36,
+        "metallic": 0.25
       },
       "laboratori": {
         "color": [
-          0.3,
-          0.57,
-          0.78
+          0.14,
+          0.37,
+          0.61
         ],
-        "emission": 1.5,
-        "roughness": 0.3,
-        "metallic": 0.12
+        "emission": 0.55,
+        "roughness": 0.38,
+        "metallic": 0.22
       },
       "scoperte": {
         "color": [
-          0.92,
-          0.53,
-          0.17
+          0.65,
+          0.32,
+          0.1
         ],
-        "emission": 1.8,
-        "roughness": 0.28,
-        "metallic": 0.15
+        "emission": 0.65,
+        "roughness": 0.36,
+        "metallic": 0.25
       },
       "percorsi": {
         "color": [
-          0.3,
-          0.57,
-          0.78
+          0.14,
+          0.37,
+          0.61
         ],
-        "emission": 1.5,
-        "roughness": 0.3,
-        "metallic": 0.12
+        "emission": 0.55,
+        "roughness": 0.38,
+        "metallic": 0.22
       }
     },
     "darkWarm": {
