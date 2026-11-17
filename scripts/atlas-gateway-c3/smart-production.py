@@ -4,6 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 DIR="scripts/atlas-gateway-c3/"
 CONFIG=DIR+"smart-production.json"
+PREVIEW_SCRIPTS={"library-master-arch.py","library-master-material-study.py"}
 HISTORICAL={"library-composition","master-architecture","master-materials","master-scenography","master-lighting","master-portals","refine-portals","refine-environment","refine-cupola","refine-arch"}
 def validate(data):
     assert data["schemaVersion"]==1 and type(data["previewEnabled"]) is bool
@@ -12,11 +13,11 @@ def validate(data):
     assert re.fullmatch(r"library-master-[a-z0-9-]+\.py",a["script"])
     assert re.fullmatch(r"atlas-[a-z0-9-]+",a["artifact"])
     assert a["historicalJob"] is None or a["historicalJob"] in HISTORICAL
-    assert not data["previewEnabled"] or a["script"]=="library-master-arch.py"
+    assert not data["previewEnabled"] or a["script"] in PREVIEW_SCRIPTS
     return a
 def choose(requested,changes,active,event,preview_enabled=False):
     if requested=="fast":
-        if event!="workflow_dispatch" or not preview_enabled or active["script"]!="library-master-arch.py":raise ValueError("FAST requires explicit dispatch and supported preview adapter")
+        if event!="workflow_dispatch" or not preview_enabled or active["script"] not in PREVIEW_SCRIPTS:raise ValueError("FAST requires explicit dispatch and supported preview adapter")
         return "fast","explicit non-qualifying artistic preview"
     if requested=="full":return "full","explicit full request"
     if event=="workflow_dispatch":return "qualify","explicit current-candidate qualification"
