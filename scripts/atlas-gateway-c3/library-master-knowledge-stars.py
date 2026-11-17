@@ -23,7 +23,7 @@ def parent_source(verify):
 STARS="""
 # A5.5a: independent sculptural constellation, no animated or clickable behavior.
 # Semantics are the four experience forms in the source-locked gateway policy,
-# not disciplines, not approved curricular edges and not four new portals.
+# Non sono discipline, relazioni del curricolo approvate o nuovi portali.
 star_policy=(Path(__file__).resolve().parents[2]/"src/features/atlas-gateway/gateway-policy.ts").read_bytes()
 assert hashlib.sha1(b"blob "+str(len(star_policy)).encode()+b"\\x00"+star_policy).hexdigest()=="fe1d43c5622b1b7889ad9bb7c188373fddd9bebf"
 assert "Esplora storie, laboratori, scoperte e percorsi." in star_policy.decode()
@@ -119,7 +119,7 @@ def guard_star_projection(name):
 """
 RECEIPT="""
 assert set(star_projection)=={"atrium","vertical","portrait-focus"}
-star_study={"phase":"C3.3A5.5a","parent":"C3.3A5.4c","parentBlob":"edca5a6a9d6a97871068bbcfb5a1b9c41a3d28dc","policyBlob":"fe1d43c5622b1b7889ad9bb7c188373fddd9bebf","semantics":"symbolic experience forms, not curricular relations","stars":star_records,"projection":star_projection,"architectureChanged":False,"camerasChanged":False,"navigationChanged":False,"newLightSources":0,"connectionsProduced":False,"interactive":False,"browserQualified":False,"artisticApproval":False,"studentAuthorized":False}
+star_study={"phase":"C3.3A5.5a","parent":"C3.3A5.4c","parentBlob":"edca5a6a9d6a97871068bbcfb5a1b9c41a3d28dc","policyBlob":"fe1d43c5622b1b7889ad9bb7c188373fddd9bebf","semantics":"forme simboliche di esperienza, non relazioni del curricolo","stars":star_records,"projection":star_projection,"architectureChanged":False,"camerasChanged":False,"navigationChanged":False,"newLightSources":0,"connectionsProduced":False,"interactive":False,"browserQualified":False,"artisticApproval":False,"studentAuthorized":False}
 (out/"knowledge-stars-study.json").write_text(json.dumps(star_study,indent=2)+"\\n")
 """
 if len(sys.argv)>1 and sys.argv[1]=="--verify":
