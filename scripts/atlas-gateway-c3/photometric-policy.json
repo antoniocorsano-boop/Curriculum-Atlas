@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "phase": "C3.3A5.5a",
+  "views": [
+    "atrium",
+    "vertical"
+  ],
+  "maxAttempts": 3,
+  "maxRenders": 8,
+  "minimumSamples": 20,
+  "minMedianDelta": 0.16,
+  "minCoverage": 0.65,
+  "coverageDelta": 0.1,
+  "maxClippedFraction": 0.15,
+  "clipCode": 250,
+  "brightBackground": 0.45,
+  "recipes": {
+    "base": {
+      "storie": {
+        "color": [
+          0.92,
+          0.53,
+          0.17
+        ],
+        "emission": 1.8,
+        "roughness": 0.28,
+        "metallic": 0.15
+      },
+      "laboratori": {
+        "color": [
+          0.3,
+          0.57,
+          0.78
+        ],
+        "emission": 1.5,
+        "roughness": 0.3,
+        "metallic": 0.12
+      },
+      "scoperte": {
+        "color": [
+          0.92,
+          0.53,
+          0.17
+        ],
+        "emission": 1.8,
+        "roughness": 0.28,
+        "metallic": 0.15
+      },
+      "percorsi": {
+        "color": [
+          0.3,
+          0.57,
+          0.78
+        ],
+        "emission": 1.5,
+        "roughness": 0.3,
+        "metallic": 0.12
+      }
+    },
+    "darkWarm": {
+      "color": [
+        0.3,
+        0.075,
+        0.018
+      ],
+      "emission": 0.08,
+      "roughness": 0.52,
+      "metallic": 0.25
+    },
+    "darkCool": {
+      "color": [
+        0.024,
+        0.09,
+        0.21
+      ],
+      "emission": 0.1,
+      "roughness": 0.5,
+      "metallic": 0.2
+    },
+    "lightWarm": {
+      "color": [
+        0.9,
+        0.4,
+        0.055
+      ],
+      "emission": 1,
+      "roughness": 0.42,
+      "metallic": 0.1
+    },
+    "lightCool": {
+      "color": [
+        0.08,
+        0.39,
+        0.85
+      ],
+      "emission": 1,
+      "roughness": 0.42,
+      "metallic": 0.1
+    }
+  },
+  "scope": "Luminanza relativa dei codici RGB del PNG, campioni interni alle maschere proiettate, controfattuale senza i nuclei. Non è una misura WCAG, non misura riconoscimento semantico o contrasto di tutti i bordi; la scena canonica non viene modificata.",
+  "externalServices": false
+}
