@@ -103,6 +103,28 @@ def selftest(plan):
         assert not inspect(sid,q["vertices"],q["faces"][:-1])["valid"]
         assert not inspect(sid,*geometry(sid,.70,p["halfThicknessM"]))["valid"]
     assert a["selectedScales"]=={"storie":.94,"laboratori":1.06,"scoperte":1.06,"percorsi":.94}
+    # SP-07.4: exact outer-ring preservation and unchanged projected mask.
+    from star_sculpture import sculpture
+    for i,sid in enumerate(p["ids"]):
+        scale=a["selectedScales"][sid];half=p["halfThicknessM"]
+        old_v,old_f=geometry(sid,scale,half,relief=False)
+        new_v,new_f=geometry(sid,scale,half)
+        offset_old=offset_new=0
+        for poly,*_ in sculpture(sid):
+            n=len(poly)
+            assert old_v[offset_old:offset_old+4*n]==new_v[offset_new:offset_new+4*n]
+            offset_old+=4*n;offset_new+=5*n+1
+        assert offset_old==len(old_v) and offset_new==len(new_v)
+        center=plan["layouts"][plan["selected"]][i][:3]
+        for view,limits in p["views"].items():
+            w,h=limits["pixels"]
+            assert mask(plan["cameras"][view],center,old_v,old_f,w,h)==mask(plan["cameras"][view],center,new_v,new_f,w,h),(sid,view,"silhouette changed")
+        for view in ("portrait-focus",):
+            assert mask(plan["cameras"][view],center,old_v,old_f,640,960)==mask(plan["cameras"][view],center,new_v,new_f,640,960),(sid,view,"silhouette changed")
+        damaged=list(new_v);n=len(sculpture(sid)[0][0]);x,y,z=damaged[4*n];damaged[4*n]=(x,y+.012,z)
+        assert not inspect(sid,damaged,new_f)["valid"],(sid,"relief tamper accepted")
+    print("SP-07.4 exact exterior rings, three projected silhouettes and negative relief checks: PASS")
+
     assert not a["visualAcceptance"] and not a["qualified"] and not a["publishable"]
     print("SP-06/07.2 adaptive selftest: deterministic cycle, geometry and negative topology checks PASS")
     return a
