@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "active": {
-    "phase": "C3.3A5.4c",
-    "script": "library-master-atmosphere-study.py",
-    "artifact": "atlas-c33a54c-atmosphere-study",
+    "phase": "C3.3A5.5a",
+    "script": "library-master-knowledge-stars.py",
+    "artifact": "atlas-c33a55a-knowledge-stars",
     "historicalJob": null
   },
   "previewEnabled": true
