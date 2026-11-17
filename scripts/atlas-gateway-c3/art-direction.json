@@ -37,9 +37,21 @@
       "identità distinguibile dei quattro astri",
       "coerenza di materiali luce e atmosfera",
       "composizione e leggibilità verticale",
-      "leggibilità e subordinazione delle connessioni luminose"
-    ]
+      "leggibilità e subordinazione delle connessioni luminose",
+      "Storie: libro aperto, pagine e piega leggibili",
+      "Laboratori: tre moduli assemblati e connessi",
+      "Scoperte: rosa radiale e centro riconoscibili",
+      "Percorsi: progressione ascendente e direzione",
+      "qualità scultorea: smussi, spessore, finitura e luce controllata"
+    ],
+    "minimumByCriterion": {
+      "Storie: libro aperto, pagine e piega leggibili": 4,
+      "Laboratori: tre moduli assemblati e connessi": 4,
+      "Scoperte: rosa radiale e centro riconoscibili": 4,
+      "Percorsi: progressione ascendente e direzione": 4,
+      "qualità scultorea: smussi, spessore, finitura e luce controllata": 4
+    }
   },
-  "review": "Obbligatoria su immagini effettive; nessun punteggio automatico di qualità artistica.",
+  "review": "Obbligatoria sulle due immagini contestuali a risoluzione piena e sui quattro dettagli ravvicinati; nessun punteggio automatico di qualità artistica. Per i cinque criteri scultorei specifici è richiesto 4/4, non la sola adeguatezza.",
   "scope": "Soglie iniziali proposte per questo studio, da calibrare sul riferimento e sui dispositivi; non standard universali. La larghezza proiettata riguarda il volume di ingombro, non la silhouette effettiva; le connessioni sono controllate a campioni e non costituiscono una prova di collisione dinamica."
 }
