@@ -52,15 +52,11 @@ def _fingerprint():
                 mats.append([m.name,[(k,list(p.inputs[k].default_value) if k in ("Base Color","Emission Color") else float(p.inputs[k].default_value)) for k in ("Base Color","Emission Color","Emission Strength","Metallic","Roughness")]])
     h.update(_pj.dumps(mats,sort_keys=True).encode())
     return {"sha256":h.hexdigest(),"objects":len(records),"uniqueMeshes":len(meshes),"materials":len(mats)}
-def _read(mat):
-    bs=mat.node_tree.nodes.get("Principled BSDF")
-    return {"color":list(bs.inputs["Base Color"].default_value)[:3],"emission":float(bs.inputs["Emission Strength"].default_value),"roughness":float(bs.inputs["Roughness"].default_value),"metallic":float(bs.inputs["Metallic"].default_value)}
-def _same(a,b):
-    return all(abs(x-y)<1e-5 for x,y in zip(a["color"],b["color"])) and all(abs(a[k]-b[k])<1e-5 for k in ("emission","roughness","metallic"))
+import star_finish as _sf
 _before=_fingerprint()
 for sid,o in _core.items():
     original=o.data.materials[0]
-    assert _same(_read(original),_pm.recipe(_p,sid,"base"))
+    assert _sf.check(o,sid,_pm.recipe(_p,sid,"base"))
     copy=original.copy();copy.name="SP06 photometric "+sid;o.data.materials[0]=copy
 def _set_fault(enabled):
     if _fault_sid is None:return
@@ -78,13 +74,9 @@ def _set_fault(enabled):
         tree.links.new(bs.outputs["BSDF"],surface)
 def _apply(sid,key):
     if sid==_fault_sid:_set_fault(False)
-    q=_pm.recipe(_p,sid,key);m=_core[sid].data.materials[0];bs=m.node_tree.nodes.get("Principled BSDF")
-    bs.inputs["Base Color"].default_value=(*q["color"],1)
-    bs.inputs["Emission Color"].default_value=(*q["color"],1)
-    bs.inputs["Emission Strength"].default_value=q["emission"]
-    bs.inputs["Roughness"].default_value=q["roughness"]
-    bs.inputs["Metallic"].default_value=q["metallic"]
-    assert _same(_read(m),q)
+    q=_pm.recipe(_p,sid,key)
+    _sf.apply(_core[sid],sid,q)
+    assert _sf.check(_core[sid],sid,q)
 _times=[]
 def _render_pair(prefix):
     for name in _pm.VIEWS:
@@ -118,7 +110,7 @@ for _index in range(1,_p["maxAttempts"]+1):
     for s in _changed:_apply(s,_next[s])
     bpy.context.view_layer.update()
     _updates.append({"fromAttempt":_index,"changed":_changed,"seconds":_pt.monotonic()-t})
-    assert all(_same(_read(_core[s].data.materials[0]),_pm.recipe(_p,s,_next[s])) for s in _pm.IDS)
+    assert all(_sf.check(_core[s],s,_pm.recipe(_p,s,_next[s])) for s in _pm.IDS)
     assert _fingerprint()==_before
     _current=_next
 # Restore the best measured configuration, not necessarily the final trial.
@@ -127,7 +119,7 @@ for s in _pm.IDS:
 _set_fault(_fault_sid is not None and _best["attempt"]==1)
 bpy.context.view_layer.update()
 _after=_fingerprint();assert _after==_before
-assert all(_same(_read(_core[s].data.materials[0]),_pm.recipe(_p,s,_best["recipes"][s])) for s in _pm.IDS)
+assert all(_sf.check(_core[s],s,_pm.recipe(_p,s,_best["recipes"][s])) for s in _pm.IDS)
 assert len(_times)==2+2*len(_attempts)<=_p["maxRenders"]
 # SP-07.2: six bounded, non-qualifying review images of the selected state.
 _review_times=[]
@@ -157,7 +149,11 @@ if _fault_sid is None:
     scene.camera,scene.render.resolution_x,scene.render.resolution_y,scene.render.resolution_percentage,scene.render.filepath,scene.cycles.samples=_saved
     bpy.context.view_layer.update()
     assert _fingerprint()==_before and len(_review_times)==6
-_photo_receipt={"status":"PASS" if _best["status"]=="PASS" else "EXHAUSTED","experimentOnly":True,"scenario":"fault-recovery" if _fault_sid else "baseline","faultSid":_fault_sid,"selectedFault":_best["injectedFault"],"qualified":False,"publishable":False,"studentAuthorized":False,"visualAcceptance":False,"sceneBuilds":1,"renderCount":len(_times),"policySha256":_pd,"attempts":_attempts,"selectedAttempt":_best["attempt"],"selectedRecipes":_best["recipes"],"selectedMaterials":{s:_pm.recipe(_p,s,_best["recipes"][s]) for s in _pm.IDS},"updates":_updates,"renderTimes":_times,"reviewRenderTimes":_review_times,"reviewRenderCount":len(_review_times),"sceneBefore":_before,"sceneAfter":_after}
+_module=None
+if _fault_sid is None:
+    _module=_sf.export_proposal(out/"proposal-stars.glb",star_objects,_core,{"warm":star_gold,"cool":star_cool},{s:_pm.recipe(_p,s,_best["recipes"][s]) for s in _pm.IDS},merge_group)
+    assert _fingerprint()==_before
+_photo_receipt={"moduleExport":_module,"status":"PASS" if _best["status"]=="PASS" else "EXHAUSTED","experimentOnly":True,"scenario":"fault-recovery" if _fault_sid else "baseline","faultSid":_fault_sid,"selectedFault":_best["injectedFault"],"qualified":False,"publishable":False,"studentAuthorized":False,"visualAcceptance":False,"sceneBuilds":1,"renderCount":len(_times),"policySha256":_pd,"attempts":_attempts,"selectedAttempt":_best["attempt"],"selectedRecipes":_best["recipes"],"selectedMaterials":{s:_pm.recipe(_p,s,_best["recipes"][s]) for s in _pm.IDS},"updates":_updates,"renderTimes":_times,"reviewRenderTimes":_review_times,"reviewRenderCount":len(_review_times),"sceneBefore":_before,"sceneAfter":_after}
 (out/"photometric-receipt.json").write_text(_pj.dumps(_photo_receipt,indent=2)+"\n")
 '''
 def transform(fault=False):
@@ -173,7 +169,7 @@ def transform(fault=False):
     assert "export_scene.gltf" not in code and "save_as_mainfile" not in code
     return code
 def dependency_hashes():
-    return {n:preview.sha((HERE/n).read_bytes()) for n in ("photometric-preview.py","photometry.py","photometric-policy.json","star_sculpture.py","adaptive_identity.py","adaptive-identity.json","knowledge_composition.py","knowledge-composition.json","smart-preview.py","art_quality.py","art-direction.json")}
+    return {n:preview.sha((HERE/n).read_bytes()) for n in ("photometric-preview.py","photometry.py","photometric-policy.json","star_sculpture.py","star_finish.py","adaptive_identity.py","adaptive-identity.json","knowledge_composition.py","knowledge-composition.json","smart-preview.py","art_quality.py","art-direction.json")}
 def verify(out,fault=False):
     r=json.loads((out/"photometric-receipt.json").read_text());p,pd=pm.policy()
     assert r["experimentOnly"] and not any(r[k] for k in ("qualified","publishable","studentAuthorized","visualAcceptance"))
@@ -192,7 +188,8 @@ def verify(out,fault=False):
     assert 1<=len(r["attempts"])<=p["maxAttempts"] and r["renderCount"]==2+2*len(r["attempts"])<=p["maxRenders"]
     names={f"background-{v}.png" for v in pm.VIEWS}|{f"attempt-{i}-{v}.png" for i in range(1,len(r["attempts"])+1) for v in pm.VIEWS}
     review_dims={} if fault else {"review-atrium.png":[1200,750],"review-vertical.png":[640,960],**{"detail-"+s+".png":[512,512] for s in pm.IDS}}
-    assert set(x.name for x in out.iterdir())==names|set(review_dims)|{"photometric-receipt.json"} and set(r["images"])==names and set(r["reviewImages"])==set(review_dims)
+    module_names=set() if fault else {"proposal-stars.glb"}
+    assert set(x.name for x in out.iterdir())==names|set(review_dims)|module_names|{"photometric-receipt.json"} and set(r["images"])==names and set(r["reviewImages"])==set(review_dims)
     assert r["reviewRenderCount"]==len(review_dims)==len(r["reviewRenderTimes"]) and r["renderCount"]+r["reviewRenderCount"]<=14
     assert {q["file"]:q["dimensions"] for q in r["reviewRenderTimes"]}==review_dims and all(q["seconds"]>0 for q in r["reviewRenderTimes"])
     for n in names:assert preview.image_record(out/n)==r["images"][n]
@@ -218,6 +215,8 @@ def verify(out,fault=False):
         # A successfully executed experiment can exhaust its budget; never auto-promote.
     assert r["status"]==("PASS" if best["status"]=="PASS" else "EXHAUSTED")
     assert r["selectedMaterials"]=={s:pm.recipe(p,s,best["recipes"][s]) for s in pm.IDS}
+    import star_finish
+    assert r["moduleExport"]==(None if fault else star_finish.verify_module(out/"proposal-stars.glb",r["selectedMaterials"]))
     assert len(r["renderTimes"])==len(names) and {q["file"] for q in r["renderTimes"]}==names and all(q["seconds"]>0 for q in r["renderTimes"])
     assert r["totalSeconds"]>0
     print("SP-06.4 verified:",json.dumps({k:r[k] for k in ("status","sceneBuilds","renderCount","selectedAttempt","selectedRecipes","attempts","updates","renderTimes","totalSeconds")},separators=(",",":")),flush=True)
@@ -259,11 +258,11 @@ def produce(out,fault=False,*,resource_root=None):
             (diagnostic/"diagnostic.json").write_text(json.dumps({"status":"UNVERIFIED_PARTIAL_FAILURE","qualified":False,"publishable":False,"studentAuthorized":False,"visualAcceptance":False,"images":images},indent=2)+"\n")
             raise
         finally:sys.argv=old
-        scratch=Path(scratch);assert not list(scratch.glob("*.glb")) and not list(scratch.glob("*.blend"))
+        scratch=Path(scratch);assert {p.name for p in scratch.glob("*.glb")}==(set() if fault else {"proposal-stars.glb"}) and not list(scratch.glob("*.blend"))
         out.mkdir();r=json.loads((scratch/"photometric-receipt.json").read_text())
         names=[q["file"] for q in r["renderTimes"]]
         review_names=[q["file"] for q in r["reviewRenderTimes"]]
-        for n in names+review_names:(out/n).write_bytes((scratch/n).read_bytes())
+        for n in names+review_names+([] if fault else ["proposal-stars.glb"]):(out/n).write_bytes((scratch/n).read_bytes())
         study=json.loads((scratch/"knowledge-stars-study.json").read_text())
         evidence={k:study[k] for k in ("stars","projection","composition","connections","connectionProjection","identityStudy")}
         r.update({"artEvidence":evidence,"artQuality":art_quality.evaluate(evidence),"identity":preview.identity(CANDIDATE),"experimentSourceSha256":preview.sha(code.encode()),"dependencyHashes":dependency_hashes(),"images":{n:preview.image_record(out/n) for n in names},"reviewImages":{n:preview.image_record(out/n) for n in review_names},"totalSeconds":time.monotonic()-started})
