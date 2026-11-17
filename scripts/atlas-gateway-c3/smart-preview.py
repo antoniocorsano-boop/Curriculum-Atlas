@@ -1,6 +1,7 @@
 """SP-03: isolated, explicitly non-qualifying previews of the source-locked active scene."""
 import argparse, ast, hashlib, json, struct, sys, tempfile, time
 from pathlib import Path
+import art_quality
 
 HERE=Path(__file__).resolve().parent
 SUPPORTED=("library-master-arch.py","library-master-material-study.py","library-master-vegetation-study.py","library-master-atmosphere-study.py","library-master-knowledge-stars.py")
@@ -73,6 +74,9 @@ def verify(out,candidate):
     for n,dims in VIEWS.items():
         p=out/(n+".png");assert p.is_file() and not p.is_symlink()
         r=image_record(p);assert r==receipt["files"][n] and r["dimensions"]==list(dims)
+    if candidate.name=="library-master-knowledge-stars.py":
+        assert receipt["artQuality"]==art_quality.evaluate(receipt["artEvidence"])
+        print("SP-05 artistic metrics:",json.dumps(receipt["artQuality"]),flush=True)
     print("SP-03 preview evidence verified; NOT QUALIFIED",flush=True)
 
 def produce(out,candidate):
@@ -93,6 +97,10 @@ def produce(out,candidate):
             p=out/(n+".png");p.write_bytes((scratch/p.name).read_bytes())
             files[n]=image_record(p);assert files[n]["dimensions"]==list(dims)
         receipt={"status":"PREVIEW_ONLY","qualified":False,"studentAuthorized":False,"publishable":False,"identity":identity(candidate),"samples":SAMPLES,"resolutionPercent":50,"engine":"CYCLES","seconds":time.monotonic()-started,"files":files}
+        if candidate.name=="library-master-knowledge-stars.py":
+            study=json.loads((scratch/"knowledge-stars-study.json").read_text())
+            receipt["artEvidence"]={k:study[k] for k in ("stars","projection")}
+            receipt["artQuality"]=art_quality.evaluate(receipt["artEvidence"])
         (out/"preview-receipt.json").write_text(json.dumps(receipt,indent=2)+"\n")
     verify(out,candidate)
 
