@@ -1,7 +1,7 @@
 """SP-07.3: glTF-native finish palette, actual COLOR_0 and three-primitive validation."""
 import hashlib,json,struct
 from pathlib import Path
-from star_sculpture import sculpture
+from star_sculpture import face_roles
 ATTR="Atlas finish"
 IDS=("storie","laboratori","scoperte","percorsi")
 FAMILY={"storie":"warm","scoperte":"warm","laboratori":"cool","percorsi":"cool"}
@@ -12,16 +12,19 @@ COMPONENTS={"storie":(.64,.64,1.18,1.18,.82),"laboratori":(.70,.70,.70,1.06,1.13
 def face_colors(sid,base):
     assert len(base)==3 and all(0<=x<=1 for x in base)
     out=[]
-    for component,(poly,*_) in enumerate(sculpture(sid)):
-        n=len(poly);factor=COMPONENTS[sid][component]
-        def color(f):
-            # Fine satin bevel accents, darker recessed returns. No procedural shader
-            # or nonportable material channels; these colors survive glTF export.
-            return tuple(round(min(.98,max(.002,x*factor*f)),6) for x in base)+(1.,)
-        out.extend([color(1.0)]*(n-2))
-        out.extend([color(.72)]*(n-2))
-        for band in (1.23,.83,1.07):
-            out.extend([color(band)]*(2*n))
+    for component,role,j in face_roles(sid):
+        factor=COMPONENTS[sid][component]
+        # Directional contrast supports the actual recessed rims and crests;
+        # pair adjacent rim triangles so that triangulation does not become decoration.
+        if role=="rim":
+            f=(.76,.86,.92,.83)[(j//2)%4]
+        elif role=="crest":
+            if sid=="storie":f=(1.06,1.03,.97,.94)[j%4]
+            elif sid=="laboratori":f=1.02 if component>=3 else .93
+            elif sid=="scoperte":f=(1.19,1.02,.87,.96)[j%4]
+            else:f=(1.09,.99,.93,1.02)[j%4]
+        else:f={"back":.72,"band0":1.23,"band1":.83,"band2":1.07}[role]
+        out.append(tuple(round(min(.98,max(.002,x*factor*f)),6) for x in base)+(1.,))
     return out
 def make_material(material,family):
     q=SCALARS[family]
