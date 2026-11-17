@@ -3,7 +3,7 @@ import argparse, ast, hashlib, json, struct, sys, tempfile, time
 from pathlib import Path
 
 HERE=Path(__file__).resolve().parent
-SUPPORTED=("library-master-arch.py","library-master-material-study.py","library-master-vegetation-study.py")
+SUPPORTED=("library-master-arch.py","library-master-material-study.py","library-master-vegetation-study.py","library-master-atmosphere-study.py")
 VIEWS={"atrium":(600,375),"vertical":(320,480)}
 SAMPLES=12
 END='exec(compile(code,__file__,"exec"),globals())'
@@ -96,8 +96,9 @@ def selftest():
     for name in SUPPORTED:
         candidate=HERE/name;source=resolve(candidate);preview=transform(source)
         compile(preview,str(candidate),"exec")
-        if name in ("library-master-material-study.py","library-master-vegetation-study.py"):assert "A5.4a micro relief" in preview and "material-study.json" in preview
-        if name=="library-master-vegetation-study.py":assert "Cypress layered crown" in preview and "Olive folded foliage" in preview and "vegetation-study.json" in preview
+        if name in ("library-master-material-study.py","library-master-vegetation-study.py","library-master-atmosphere-study.py"):assert "A5.4a micro relief" in preview and "material-study.json" in preview
+        if name in ("library-master-vegetation-study.py","library-master-atmosphere-study.py"):assert "Cypress layered crown" in preview and "Olive folded foliage" in preview and "vegetation-study.json" in preview
+        if name=="library-master-atmosphere-study.py":assert "Arena patinated bronze" in preview and "atmosphere-study.json" in preview
     assert "scene.cycles.samples=12" in preview and "scene.render.resolution_percentage=50" in preview
     assert '["atrium","vertical"]' in preview
     assert 'receipt={' not in preview.split("\n")[-1] and "library-manifest.json" not in preview
