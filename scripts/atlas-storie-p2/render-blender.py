@@ -21,7 +21,7 @@ def material(name,color,rough):
     coords=n.new("ShaderNodeTexCoord"); stretch=n.new("ShaderNodeVectorMath"); stretch.operation="MULTIPLY"
     stretch.inputs[1].default_value=(1.2,8.0,1.2)
     l.new(coords.outputs["Generated"],stretch.inputs[0]);l.new(stretch.outputs[0],tex.inputs["Vector"])
-    bump=n.new("ShaderNodeBump");bump.inputs["Strength"].default_value=.12;bump.inputs["Distance"].default_value=.0015
+    bump=n.new("ShaderNodeBump");bump.inputs["Strength"].default_value=.18;bump.inputs["Distance"].default_value=.0018
     l.new(tex.outputs["Fac"],bump.inputs["Height"]);l.new(bump.outputs["Normal"],bs.inputs["Normal"])
     return m
 def mesh(name,v,f,color,rough):
@@ -38,7 +38,7 @@ def sheet(side,layer,cover=False):
     u,v=np.meshgrid(np.linspace(0,1,nu),np.linspace(-1,1,nv),indexing="ij")
     length=1.19 if cover else 1.12-.019*layer
     width=.72 if cover else .665-.010*layer
-    x=side*(.055+length*u*(1-.065*v*v)+.025*u*u*v)
+    x=side*(.035+length*u*(1-.065*v*v)+.025*u*u*v)
     y=width*v*(1-.035*u*u)+.035*u*u*(side*.3+v)
     if cover:
         z=-.15+.16*np.sin(np.pi*u*.88)+.10*u*u+.025*v*v
@@ -60,37 +60,40 @@ def sheet(side,layer,cover=False):
     for a,b in zip(edge,edge[1:]+edge[:1]):f.extend([(a,a+n,b+n),(a,b+n,b)])
     f=np.array(f)
     if side<0:f=f[:,::-1]
-    color=(.34,.155,.065) if cover else (.58+.035*layer,.31+.039*layer,.115+.023*layer)
-    mesh(f"Storie_{side}_{'cover' if cover else layer}",pts,f,color,.42 if cover else .34)
+    color=(.26,.103,.037) if cover else (.41+.025*layer,.175+.022*layer,.052+.012*layer)
+    mesh(f"Storie_{side}_{'cover' if cover else layer}",pts,f,color,.45 if cover else .39)
 for s in [-1,1]:
     sheet(s,0,True)
     for j in range(6):sheet(s,j)
-n,m=64,32;ang=np.linspace(0,2*np.pi,n,endpoint=False);yy=np.linspace(-.743,.743,m)
+n,m=64,32;ang=np.linspace(0,2*np.pi,n,endpoint=False);yy=np.linspace(-.695,.695,m)
 v=[]
 for y in yy:
-    taper=.90+.10*np.cos(np.pi*y/.743/2)
-    for a in ang:v.append([.14*np.cos(a)*taper,y,-.095+.17*np.sin(a)*taper])
-v.extend([[0,yy[0],-.095],[0,yy[-1],-.095]])
+    taper=.87+.13*np.cos(np.pi*y/.695/2)
+    # Rounded binding section, recessed behind the page ends rather than a protruding roller.
+    for a in ang:
+        c,s=math.cos(a),math.sin(a)
+        v.append([.098*math.copysign(abs(c)**.65,c)*taper,y,.035+.28*math.copysign(abs(s)**.65,s)*taper])
+v.extend([[0,yy[0],.035],[0,yy[-1],.035]])
 f=[]
 for j in range(m-1):
     for i in range(n):
         a=j*n+i;b=j*n+(i+1)%n;c=b+n;d=a+n;f.extend([(a,b,c),(a,c,d)])
 for i in range(n):f.extend([(m*n,(i+1)%n,i),(m*n+1,(m-1)*n+i,(m-1)*n+(i+1)%n)])
-mesh("Storie_spine",np.array(v),np.array(f),(.29,.115,.042),.42)
+mesh("Storie_spine",np.array(v),np.array(f),(.20,.075,.026),.46)
 assert len(parts)==15 and sum(len(o.data.polygons) for o in parts)==105568
 # One bounded CPU studio render set, no environment file or ground plane.
 world=bpy.data.worlds.new("Studio");scene.world=world;world.use_nodes=True
 world.node_tree.nodes.get("Background").inputs[0].default_value=(.22,.22,.22,1)
-world.node_tree.nodes.get("Background").inputs[1].default_value=.65
+world.node_tree.nodes.get("Background").inputs[1].default_value=.43
 target=Vector((0,0,.22))
 def aim(o,p):o.rotation_euler=(p-o.location).to_track_quat("-Z","Y").to_euler()
 def area(name,loc,power,size):
     d=bpy.data.lights.new(name,"AREA");d.energy=power;d.shape="DISK";d.size=size
     o=bpy.data.objects.new(name,d);scene.collection.objects.link(o);o.location=loc;aim(o,target)
-area("Softbox",(-3,-4,5),1250,4)
-area("Fill",(4,-1,3),850,3)
-area("Rim",(-.5,4,5),1650,3)
-area("Top",(0,0,6),500,3)
+area("Softbox",(-3,-4,5),1000,4)
+area("Fill",(4,-1,3),680,3)
+area("Rim",(-.5,4,5),1320,3)
+area("Top",(0,0,6),400,3)
 d=bpy.data.cameras.new("Camera");d.type="ORTHO";d.ortho_scale=3.1
 cam=bpy.data.objects.new("Camera",d);scene.collection.objects.link(cam);scene.camera=cam
 cam.location=(2.9,-5.7,4.3);aim(cam,target)
@@ -99,6 +102,7 @@ scene.cycles.use_denoising=True
 scene.render.resolution_x=1024;scene.render.resolution_y=1024;scene.render.resolution_percentage=100
 scene.render.film_transparent=True;scene.render.image_settings.file_format="PNG";scene.render.image_settings.color_mode="RGBA"
 scene.view_settings.view_transform="AgX"
+scene.view_settings.exposure=-.30
 # Preserve master and separate mesh-only interchange file.
 bpy.ops.wm.save_as_mainfile(filepath=str(out/"storie-preview.blend"))
 bpy.ops.object.select_all(action="DESELECT")
