@@ -1,0 +1,47 @@
+name: Dependency recovery — generate and verify lockfile
+on:
+  push:
+    branches: [work/atlas-dependency-recovery]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  resolve:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve dependency graph without executing install scripts
+        run: |
+          set -euo pipefail
+          pnpm --version
+          npm view csstype@3.2.3 version dist.integrity --json
+          pnpm install --lockfile-only --ignore-scripts --no-frozen-lockfile
+          test -s pnpm-lock.yaml
+          grep -F 'csstype@3.2.3' pnpm-lock.yaml
+          if grep -F 'csstype@3.2.4' pnpm-lock.yaml; then exit 1; fi
+          sha256sum pnpm-lock.yaml > "$RUNNER_TEMP/atlas-lock.sha256"
+      - name: Verify frozen dependency resolution and actual installation
+        run: |
+          set -euo pipefail
+          pnpm install --frozen-lockfile
+          sha256sum -c "$RUNNER_TEMP/atlas-lock.sha256"
+          pnpm exec tsc --noEmit
+      - name: Preserve generated lockfile and checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-verified-dependency-lock
+          path: |
+            pnpm-lock.yaml
+            ${{ runner.temp }}/atlas-lock.sha256
+          if-no-files-found: error
+          retention-days: 7
