@@ -81,6 +81,24 @@ def require_review(identity,phase):
     assert set(proposal["reviewImages"])==set(dims)
     assert all(proposal["reviewImages"][n]["dimensions"]==dim and re.fullmatch(r"[0-9a-f]{64}",proposal["reviewImages"][n]["sha256"]) and proposal["reviewImages"][n]["bytes"]>1000 for n,dim in dims.items())
     assert set(review["observations"])==set(dims) and all(isinstance(v,str) and v.strip() for v in review["observations"].values())
+    # The isolated browser receipt must describe the same exact proposal module.
+    browser=r["browserReview"];brec=browser["receipt"]
+    assert type(browser["artifactId"]) is int and browser["artifactId"]>0
+    assert brec["status"]=="PASS" and brec["scope"]=="ISOLATED_MODULE_ONLY" and brec["engine"]=="r128"
+    assert brec["candidateIdentity"]==identity and brec["moduleSha256"]==module["sha256"] and brec["changedFromCanonical"]==[]
+    assert re.fullmatch(r"[0-9a-f]{64}",brec["proposalReceiptSha256"])
+    assert brec["softwareRenderer"] is True and not brec["failures"]
+    assert all(brec[k] is False for k in ("fullGatewayQualified","artisticApproval","publishable","studentAuthorized"))
+    expected_devices={"small-phone":(320,568),"phone":(393,873),"landscape":(873,393),"tablet":(768,1024),"desktop":(1440,1000),"large-screen":(1920,1080)}
+    assert len(brec["results"])==6 and {q["device"]:(q["width"],q["height"]) for q in brec["results"]}==expected_devices
+    for q in brec["results"]:
+        assert q["drawCalls"]==3 and q["vertices"]==module["vertices"] and q["externalRequests"]==q["errors"]==0
+        assert q["rotation"] is True and q["keyboardReset"] is True
+        assert set(q["colorEffect"])==set(b["objective"]["requiredIds"]) and min(q["colorEffect"].values())>=20
+        assert len(q["images"])==2 and all(re.fullmatch(r"[0-9a-f]{64}",f["sha256"]) for f in q["images"])
+    assert len(brec["details"])==4 and {q["id"] for q in brec["details"]}==set(b["objective"]["requiredIds"])
+    assert all(re.fullmatch(r"[0-9a-f]{64}",q["sha256"]) for q in brec["details"])
+    assert isinstance(browser["observations"],str) and browser["observations"].strip()
     assert isinstance(r["observations"],str) and r["observations"].strip()
     return r
 
