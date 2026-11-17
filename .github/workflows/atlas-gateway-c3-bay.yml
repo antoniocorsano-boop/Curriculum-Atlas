@@ -61,6 +61,8 @@ jobs:
         run: python3 scripts/atlas-gateway-c3/smart-base-cache.py --selftest
       - name: Test preview adapter against locked candidate
         run: python3 scripts/atlas-gateway-c3/smart-preview.py --selftest
+      - name: Test incremental reuse adapter
+        run: python3 scripts/atlas-gateway-c3/incremental-preview.py --selftest
       - name: Resolve current candidate and mode
         id: selection
         env:
@@ -859,3 +861,42 @@ jobs:
         run: |
           echo "::error::SP-05 PREVIEW ONLY — visual acceptance pending. Qualification intentionally blocked; inspect FAST evidence and revise or record accepted review."
           exit 1
+
+  incremental-preview:
+    name: SP-06.3 — In-memory local mesh replacement experiment
+    needs: [production, plan]
+    if: needs.plan.outputs.mode == 'fast' && needs.plan.outputs.artistic_stage == 'preview' && needs.plan.outputs.script == 'library-master-knowledge-stars.py'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore pinned Blender archive
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-gateway-c32-textured
+          path: ${{ runner.temp }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-c32b-ao
+          path: ${{ runner.temp }}/atlas-c32b
+      - name: Build scene once, render before and after local mesh replacement
+        run: |
+          set -euo pipefail
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/incremental-preview.py -- produce "$RUNNER_TEMP/atlas-incremental-preview"
+      - name: Verify evidence independently of Blender
+        run: python3 scripts/atlas-gateway-c3/incremental-preview.py verify "$RUNNER_TEMP/atlas-incremental-preview"
+      - name: Preserve experimental evidence only
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-incremental-preview-experiment
+          path: ${{ runner.temp }}/atlas-incremental-preview/
+          if-no-files-found: error
+          retention-days: 7
