@@ -116,6 +116,10 @@ def selftest():
     rec["metrics"]={v:{s:{"backgroundMedian":.7} for s in IDS} for v in VIEWS}
     n=advance(current,rec,p)
     assert n=={**current,"scoperte":"darkWarm"} and advance(n,rec,p)["scoperte"]=="lightWarm"
+    rec["failed"]={s:[] for s in IDS};rec["failed"]["percorsi"]=["vertical:contrast"]
+    rec["metrics"]={v:{s:{"backgroundMedian":.3} for s in IDS} for v in VIEWS}
+    n=advance(current,rec,p)
+    assert n=={**current,"percorsi":"darkCool"} and advance(n,rec,p)["percorsi"]=="darkCool"
     # Exercise every PNG scanline filter, CRC, RGB/RGBA and the vertical flip.
     import tempfile
     def chunk(k,v):
