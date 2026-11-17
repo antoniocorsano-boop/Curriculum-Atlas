@@ -21,11 +21,13 @@ def polygons(sid):
 
 def geometry(sid,scale,half):
     verts=[];faces=[]
-    for poly in polygons(sid):
+    for idx,poly in enumerate(polygons(sid)):
         # Orient each convex component consistently; extrude to a real 3D mesh.
         if sum(a[0]*b[1]-b[0]*a[1] for a,b in zip(poly,poly[1:]+poly[:1]))<0:poly=poly[::-1]
         n=len(poly);k=len(verts)
-        verts.extend((x*scale,dy,z*scale) for dy in (-half,half) for x,z in poly)
+        # Small depth staggering avoids coincident front/back faces at component joins.
+        depth=half*(1-.025*idx)
+        verts.extend((x*scale,dy,z*scale) for dy in (-depth,depth) for x,z in poly)
         faces.extend((k,k+j,k+j+1) for j in range(1,n-1))
         faces.extend((k+n,k+n+j+1,k+n+j) for j in range(1,n-1))
         for j in range(n):
@@ -128,7 +130,10 @@ if __name__=="__main__":
     import argparse
     from knowledge_composition import load
     ap=argparse.ArgumentParser();ap.add_argument("--out",type=Path,required=True);args=ap.parse_args()
-    plan,_,_=load();result=selftest(plan)
+    plan,_,_=load();result=solve(plan)
     args.out.parent.mkdir(parents=True,exist_ok=True)
     args.out.write_text(json.dumps(evidence(result),indent=2)+"\n")
+    # Preserve best candidate and diagnostic evidence before failing closed.
+    assert result["status"]=="PASS","SP-06: bounded search exhausted; evidence retained"
+    assert selftest(plan)==result
     print("SP-06 adaptive evidence:",json.dumps(evidence(result),separators=(",",":")))
