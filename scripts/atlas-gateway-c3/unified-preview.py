@@ -2,7 +2,7 @@
 
 Do not impersonate a canonical SP-05 receipt or authorize qualification.
 """
-import importlib.util,json,sys
+import importlib.util,json,sys,tempfile
 from pathlib import Path
 HERE=Path(__file__).resolve().parent
 sys.path.insert(0,str(HERE))
@@ -38,8 +38,9 @@ def verify(out):
     print("SP-07.1 unified preview:",json.dumps({k:r[k] for k in ("result","sceneBuilds","renderCount","geometryAttempts","photometricAttempts","selectedRecipes","changedFromCanonical","estimatedMaterialGroups","seconds")}),flush=True)
 def produce(out):
     assert out.parent.is_dir() and not out.exists()
+    root=photo.resource_directory(out)
     out.mkdir()
-    photo.produce(out/"cycle",False)
+    photo.produce(out/"cycle",False,resource_root=root)
     r=summary(out)
     for n in VIEWS:
         (out/(n+".png")).write_bytes((out/"cycle"/f"attempt-{r['selectedAttempt']}-{n}.png").read_bytes())
@@ -49,7 +50,23 @@ if __name__=="__main__":
     args=sys.argv[sys.argv.index("--")+1:] if "--" in sys.argv else sys.argv[1:]
     if args==["--selftest"]:
         compile(photo.transform(False),str(photo.CANDIDATE),"exec")
-        print("SP-07.1 unified adapter compile PASS; real Blender evidence separate")
+        # Reproduce the nested layout that previously failed before Blender loaded.
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td);dest=root/"atlas-unified-preview";dest.mkdir();cycle=dest/"cycle"
+            for name in photo.RESOURCE_FILES:
+                f=root/name;f.parent.mkdir(parents=True,exist_ok=True);f.write_bytes(b"fixture")
+            assert photo.resource_directory(dest)==root
+            assert photo.resource_directory(cycle,root)==root
+            try:photo.resource_directory(cycle)
+            except ValueError as e:assert "Missing Blender input resources" in str(e)
+            else:raise AssertionError("Nested evidence destination accepted as input root")
+            with tempfile.TemporaryDirectory(prefix="atlas-photometry-",dir=photo.resource_directory(cycle,root)) as scratch:
+                assert Path(scratch).parent==root
+            (root/"atlas-c32b/ao-manifest.json").unlink()
+            try:photo.resource_directory(cycle,root)
+            except ValueError as e:assert "atlas-c32b/ao-manifest.json" in str(e)
+            else:raise AssertionError("Missing manifest accepted")
+        print("SP-07.1 unified adapter compile and resource-path regression PASS; real Blender evidence separate")
     else:
         assert len(args)==2 and args[0] in ("produce","verify")
         {"produce":produce,"verify":verify}[args[0]](Path(args[1]).resolve())
