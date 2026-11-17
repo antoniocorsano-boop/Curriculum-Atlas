@@ -2,6 +2,11 @@
 import hashlib,sys
 from pathlib import Path
 base=Path(__file__).resolve().parent
+sys.path.insert(0,str(base))
+import knowledge_composition
+plan,alternatives,plan_digest=knowledge_composition.load()
+selected=plan["selected"]
+composition={"id":selected,"planSha256":plan_digest,"layout":plan["layouts"][selected],"hub":plan["hub"],"hubRadius":plan["hubRadius"],"connectionRadius":plan["connectionRadius"],"paths":alternatives[selected]["paths"],"semantics":plan["semantics"]}
 PARENT="library-master-atmosphere-study.py"
 PARENT_BLOB="edca5a6a9d6a97871068bbcfb5a1b9c41a3d28dc"
 END='exec(compile(code,'+'__file__,"exec"),globals())'
@@ -21,7 +26,8 @@ def parent_source(verify):
     finally:sys.argv=old
 
 STARS="""
-# A5.5a: independent sculptural constellation, no animated or clickable behavior.
+# A5.5a: unified spatial constellation, no animated or clickable behavior.
+composition=__COMPOSITION_LITERAL__
 # Semantics are the four experience forms in the source-locked gateway policy,
 # Non sono discipline, relazioni del curricolo approvate o nuovi portali.
 star_policy=(Path(__file__).resolve().parents[2]/"src/features/atlas-gateway/gateway-policy.ts").read_bytes()
@@ -30,10 +36,10 @@ assert "Esplora storie, laboratori, scoperte e percorsi." in star_policy.decode(
 star_objects=[];star_records=[]
 star_gold=material("Knowledge star warm light",(.92,.53,.17),.28,.15,1.8)
 star_cool=material("Knowledge star cool light",(.30,.57,.78),.30,.12,1.5)
-star_orbit=material("Knowledge star satin orbit",(.72,.47,.19),.31,.72,.22)
+star_orbit=material("Knowledge star satin orbit",(.79,.53,.23),.30,.65,.75)
 # Folded, faceted core: an original sculptural rather than literal astronomical model.
 def star_core(name,c,r,mat,seed):
-    rng=random.Random(seed);v=[];f=[];n=12
+    rng=random.Random(seed);v=[];f=[];n=(8,4,12,6)[seed-5500]
     v.append(tuple(c+Vector((0,0,r))))
     for k in range(1,6):
         theta=pi*k/6
@@ -48,6 +54,8 @@ def star_core(name,c,r,mat,seed):
             a=1+k*n+j;b=1+k*n+(j+1)%n
             f.extend(((a,a+n,b+n),(a,b+n,b)))
     for j in range(n):f.append((len(v)-1,1+4*n+(j+1)%n,1+4*n+j))
+    scale=((1.0,.82,1.18),(1.16,.86,.90),(1.,1.,1.),(.84,.76,1.30))[seed-5500]
+    v=[tuple(c[i]+(p[i]-c[i])*scale[i] for i in range(3)) for p in v]
     return mesh(name,v,f,mat,star_objects)
 def orbit(name,c,normal,r,minor):
     axis=Vector(normal).normalized();u=axis.cross(Vector((0,0,1)))
@@ -64,22 +72,52 @@ def orbit(name,c,normal,r,minor):
     for f in o.data.polygons:f.use_smooth=True
     return o
 star_specs=[
-    ("storie","Storie",(-2.40,3.60,7.10),.23,star_gold,[(.15,-.95,.30)],"Narrazione e interpretazione"),
-    ("laboratori","Laboratori",(-.85,4.00,6.60),.27,star_cool,[(.45,-.80,.39),(-.65,-.62,.43)],"Sperimentazione e costruzione"),
-    ("scoperte","Scoperte",(.85,4.00,6.60),.25,star_gold,[(.10,-.72,.68),(.80,-.55,.24)],"Osservazione e indagine"),
-    ("percorsi","Percorsi",(2.40,3.60,7.10),.23,star_cool,[(-.15,-.95,.30)],"Organizzazione e approfondimento"),
+    ("storie","Storie",.35,star_gold,[(.15,-.95,.30)],"Narrazione e interpretazione"),
+    ("laboratori","Laboratori",.39,star_cool,[(.45,-.80,.39),(-.65,-.62,.43)],"Sperimentazione e costruzione"),
+    ("scoperte","Scoperte",.40,star_gold,[(.10,-.72,.68),(.80,-.55,.24)],"Osservazione e indagine"),
+    ("percorsi","Percorsi",.34,star_cool,[(-.15,-.95,.30)],"Organizzazione e approfondimento"),
 ]
-for idx,(sid,label,pos,r,mat,normals,meaning) in enumerate(star_specs):
+for idx,(sid,label,r,mat,normals,meaning) in enumerate(star_specs):
+    x,y,z,rb=composition["layout"][idx];pos=(x,y,z)
     c=Vector(pos);start=len(star_objects)
     star_core("Knowledge core "+sid,c,r,mat,5500+idx)
-    for i,n in enumerate(normals):orbit("Knowledge orbit "+sid+" "+str(i),c,n,.39+i*.055,.012)
+    for i,n in enumerate(normals):orbit("Knowledge orbit "+sid+" "+str(i),c,n,rb-(.09 if len(normals)==2 else .025)+i*.065,.016)
     bpy.context.view_layer.update()
     vertices=[o.matrix_world@v.co for o in star_objects[start:] for v in o.data.vertices]
     extent=max((v-c).length for v in vertices)
-    assert extent<=.47 and min(v.z for v in vertices)>6.0
-    star_records.append({"id":sid,"label":label,"meaning":meaning,"portalId":"esperienze","positionBlender":list(pos),"radiusBound":.47,"measuredRadius":extent,"rings":len(normals),"interactive":False,"href":None})
+    assert extent<=rb and min(v.z for v in vertices)>6.0
+    star_records.append({"id":sid,"label":label,"meaning":meaning,"portalId":"esperienze","positionBlender":list(pos),"radiusBound":rb,"measuredRadius":extent,"rings":len(normals),"interactive":False,"href":None})
 assert len(star_records)==4 and sum(q["rings"] for q in star_records)==6
 assert all((Vector(a["positionBlender"])-Vector(b["positionBlender"])).length>=1.3 for i,a in enumerate(star_records) for b in star_records[:i])
+# Four symbolic trajectories converge on a shared experience emblem; no invented
+# discipline relations or independent navigation. Use the existing orbit material.
+def luminous_path(name,points,r):
+    pts=[Vector(p) for p in points];verts=[];faces=[];sides=8
+    for i,p in enumerate(pts):
+        tangent=(pts[min(i+1,len(pts)-1)]-pts[max(i-1,0)]).normalized()
+        u=tangent.cross(Vector((0,0,1)))
+        if u.length<.01:u=tangent.cross(Vector((0,1,0)))
+        u.normalize();v=tangent.cross(u)
+        for j in range(sides):
+            a=2*pi*j/sides;verts.append(tuple(p+r*(cos(a)*u+sin(a)*v)))
+    for i in range(len(pts)-1):
+        for j in range(sides):
+            a=i*sides+j;b=i*sides+(j+1)%sides
+            faces.append((a,b,b+sides,a+sides))
+    faces.extend((tuple(reversed(range(sides))),tuple((len(pts)-1)*sides+j for j in range(sides))))
+    obj=mesh(name,verts,faces,star_orbit,star_objects)
+    for f in obj.data.polygons:f.use_smooth=True
+    return obj
+connection_records=[]
+for q,points in zip(star_records,composition["paths"]):
+    obj=luminous_path("Knowledge trajectory "+q["id"],points,.019)
+    bpy.context.view_layer.update()
+    assert min((obj.matrix_world@v.co).z for v in obj.data.vertices)>5.0
+    connection_records.append({"from":q["id"],"to":"esperienze","samples":len(points),"radius":.019,"interactive":False})
+hub=Vector(composition["hub"])
+orbit("Knowledge common emblem outer",hub,(0,-1,.20),.22,.014)
+orbit("Knowledge common emblem inner",hub,(0,-1,.20),.12,.010)
+assert len(connection_records)==4
 # Do not merge stars into shell or decor. Three shared materials, independent GLB.
 star_objects=merge_group(star_objects,"Knowledge stars")
 assert len(star_objects)==3
@@ -94,6 +132,7 @@ PROJECTION="""
 from bpy_extras.object_utils import world_to_camera_view
 import itertools
 star_projection={}
+connection_projection={}
 def project_box(bounds):
     points=[world_to_camera_view(scene,scene.camera,Vector(p)) for p in itertools.product((bounds[0],bounds[1]),(bounds[2],bounds[3]),(bounds[4],bounds[5]))]
     assert all(p.z>0 for p in points)
@@ -116,10 +155,24 @@ def guard_star_projection(name):
         assert not any(overlaps(box,b) for b in boxes),(name,q["id"],box)
         boxes.append(box)
     star_projection[name]={"stars":boxes,"arena":sign_box,"portals":portal_boxes}
+    x,y,z=composition["hub"];r=composition["hubRadius"]
+    hub_box=project_box([x-r,x+r,y-r,y+r,z-r,z+r])
+    assert min(hub_box)>=.015 and max(hub_box)<=.985
+    protected=[sign_box,*portal_boxes]
+    assert not any(overlaps(hub_box,b) for b in protected+boxes),(name,"hub",hub_box)
+    counts=[]
+    for i,points in enumerate(composition["paths"]):
+        r=composition["connectionRadius"]
+        for x,y,z in points:
+            b=project_box([x-r,x+r,y-r,y+r,z-r,z+r])
+            assert min(b)>=.015 and max(b)<=.985
+            assert not any(overlaps(b,p) for p in protected+[p for j,p in enumerate(boxes) if j!=i]),(name,i,b)
+        counts.append(len(points))
+    connection_projection[name]={"hub":hub_box,"pathSampleCounts":counts,"protectedClear":True}
 """
 RECEIPT="""
 assert set(star_projection)=={"atrium","vertical","portrait-focus"}
-star_study={"phase":"C3.3A5.5a","parent":"C3.3A5.4c","parentBlob":"edca5a6a9d6a97871068bbcfb5a1b9c41a3d28dc","policyBlob":"fe1d43c5622b1b7889ad9bb7c188373fddd9bebf","semantics":"forme simboliche di esperienza, non relazioni del curricolo","stars":star_records,"projection":star_projection,"architectureChanged":False,"camerasChanged":False,"navigationChanged":False,"newLightSources":0,"connectionsProduced":False,"interactive":False,"browserQualified":False,"artisticApproval":False,"studentAuthorized":False}
+star_study={"phase":"C3.3A5.5a","parent":"C3.3A5.4c","parentBlob":"edca5a6a9d6a97871068bbcfb5a1b9c41a3d28dc","policyBlob":"fe1d43c5622b1b7889ad9bb7c188373fddd9bebf","semantics":"forme simboliche di esperienza, non relazioni del curricolo","stars":star_records,"projection":star_projection,"architectureChanged":False,"camerasChanged":False,"navigationChanged":False,"newLightSources":0,"connectionsProduced":True,"composition":{"id":composition["id"],"planSha256":composition["planSha256"],"semantics":composition["semantics"]},"connections":connection_records,"connectionProjection":connection_projection,"interactive":False,"browserQualified":False,"artisticApproval":False,"studentAuthorized":False}
 (out/"knowledge-stars-study.json").write_text(json.dumps(star_study,indent=2)+"\\n")
 """
 if len(sys.argv)>1 and sys.argv[1]=="--verify":
@@ -130,10 +183,15 @@ if len(sys.argv)>1 and sys.argv[1]=="--verify":
     code=once(code,'(p/"library-verification.json").write_text', '''stars=json.loads((p/"knowledge-stars-study.json").read_text())
 assert stars["phase"]==m["phase"] and stars["parent"]=="C3.3A5.4c" and stars["parentBlob"]=="edca5a6a9d6a97871068bbcfb5a1b9c41a3d28dc"
 assert stars["policyBlob"]==m["portalPolicyBlob"] and m["knowledgeStars"] is True
-assert all(stars[k] is False for k in ("architectureChanged","camerasChanged","navigationChanged","connectionsProduced","interactive","browserQualified","artisticApproval","studentAuthorized"))
+assert all(stars[k] is False for k in ("architectureChanged","camerasChanged","navigationChanged","interactive","browserQualified","artisticApproval","studentAuthorized"))
+assert stars["connectionsProduced"] is True and stars["composition"]["id"]=="A"
+assert len(stars["connections"])==4 and [q["from"] for q in stars["connections"]]==[q["id"] for q in stars["stars"]]
+assert all(q["to"]=="esperienze" and q["samples"]==49 and q["interactive"] is False for q in stars["connections"])
+assert set(stars["connectionProjection"])=={"atrium","vertical","portrait-focus"}
+assert all(q["protectedClear"] is True and q["pathSampleCounts"]==[49]*4 for q in stars["connectionProjection"].values())
 assert stars["newLightSources"]==0
 assert [q["id"] for q in stars["stars"]]==["storie","laboratori","scoperte","percorsi"]
-assert all(q["portalId"]=="esperienze" and q["interactive"] is False and q["href"] is None and 0<q["measuredRadius"]<=.47 for q in stars["stars"])
+assert all(q["portalId"]=="esperienze" and q["interactive"] is False and q["href"] is None and 0<q["measuredRadius"]<=q["radiusBound"]<=.71 for q in stars["stars"])
 assert sum(q["rings"] for q in stars["stars"])==6
 assert set(stars["projection"])=={"atrium","vertical","portrait-focus"}
 def overlap(a,b,margin=.004):
@@ -152,12 +210,12 @@ kv=sum(kd["accessors"][q["attributes"]["POSITION"]]["count"] for mesh in kd["mes
 assert kp==3 and kv<=18000 and len(kb)<=1024*1024,(kp,kv,len(kb))
 assert not any("Knowledge stars" in q.get("name","") for data in (d,sd,pd,cd) for q in data["nodes"])
 assert len([q for q in kd["nodes"] if q.get("name","").startswith("Knowledge stars ")])==3
-receipt.update({"knowledgeStars":4,"starRings":6,"starPrimitives":kp,"starVertices":kv,"starBytes":len(kb),"starProjectionViews":3,"connectionsProduced":False})
+receipt.update({"knowledgeStars":4,"starRings":6,"starPrimitives":kp,"starVertices":kv,"starBytes":len(kb),"starProjectionViews":3,"connectionsProduced":True,"symbolicTrajectories":4})
 (p/"library-verification.json").write_text''')
     sys.argv=[sys.argv[0],sys.argv[2]]
 else:
     code=parent_source(False)
-    code=once(code,'world=bpy.data.worlds.new("Locked photographic daylight")',STARS+'\nworld=bpy.data.worlds.new("Locked photographic daylight")')
+    code=once(code,'world=bpy.data.worlds.new("Locked photographic daylight")',STARS.replace("__COMPOSITION_LITERAL__",repr(composition))+'\nworld=bpy.data.worlds.new("Locked photographic daylight")')
     code=once(code,'for i,(name,w,h,pos,target,lens) in enumerate(views):',PROJECTION+'\nfor i,(name,w,h,pos,target,lens) in enumerate(views):')
     code=once(code,'    if i==0:bpy.ops.wm.save_as_mainfile(filepath=str(out/"library.blend"))','    guard_star_projection(name)\n    if i==0:bpy.ops.wm.save_as_mainfile(filepath=str(out/"library.blend"))')
     code=once(code,'receipt={"phase":"C3.3A5.4c"',RECEIPT+'\nreceipt={"phase":"C3.3A5.5a","knowledgeStars":True')
