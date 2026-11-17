@@ -244,6 +244,20 @@ def produce(out,fault=False,*,resource_root=None):
         try:
             sys.argv=[str(CANDIDATE),"--",scratch]
             exec(compile(code,str(CANDIDATE),"exec"),{"__file__":str(CANDIDATE),"__name__":"__atlas_photometry__"})
+        except Exception:
+            # Preserve only expected preview images, even if scene execution fails.
+            # No normal receipt is issued and the workflow remains failed.
+            diagnostic=out.parent/"partial-cycle-diagnostics"
+            diagnostic.mkdir(exist_ok=False)
+            permitted={f"background-{v}.png" for v in pm.VIEWS}|{f"attempt-{i}-{v}.png" for i in range(1,4) for v in pm.VIEWS}|{"review-atrium.png","review-vertical.png",*{"detail-"+s+".png" for s in pm.IDS}}
+            images={}
+            for n in sorted(permitted):
+                src=Path(scratch)/n
+                if src.is_file() and not src.is_symlink():
+                    (diagnostic/n).write_bytes(src.read_bytes())
+                    images[n]={"bytes":src.stat().st_size,"sha256":preview.sha(src.read_bytes())}
+            (diagnostic/"diagnostic.json").write_text(json.dumps({"status":"UNVERIFIED_PARTIAL_FAILURE","qualified":False,"publishable":False,"studentAuthorized":False,"visualAcceptance":False,"images":images},indent=2)+"\n")
+            raise
         finally:sys.argv=old
         scratch=Path(scratch);assert not list(scratch.glob("*.glb")) and not list(scratch.glob("*.blend"))
         out.mkdir();r=json.loads((scratch/"photometric-receipt.json").read_text())
