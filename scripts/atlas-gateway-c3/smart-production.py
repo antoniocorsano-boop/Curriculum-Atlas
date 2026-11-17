@@ -6,14 +6,18 @@ DIR="scripts/atlas-gateway-c3/"
 CONFIG=DIR+"smart-production.json"
 HISTORICAL={"library-composition","master-architecture","master-materials","master-scenography","master-lighting","master-portals","refine-portals","refine-environment","refine-cupola","refine-arch"}
 def validate(data):
-    assert data["schemaVersion"]==1 and data["previewEnabled"] is False
+    assert data["schemaVersion"]==1 and type(data["previewEnabled"]) is bool
     a=data["active"]
     assert re.fullmatch(r"C3\.3A[0-9][A-Za-z0-9.]*",a["phase"])
     assert re.fullmatch(r"library-master-[a-z0-9-]+\.py",a["script"])
     assert re.fullmatch(r"atlas-[a-z0-9-]+",a["artifact"])
     assert a["historicalJob"] is None or a["historicalJob"] in HISTORICAL
+    assert not data["previewEnabled"] or a["script"]=="library-master-arch.py"
     return a
-def choose(requested,changes,active,event):
+def choose(requested,changes,active,event,preview_enabled=False):
+    if requested=="fast":
+        if event!="workflow_dispatch" or not preview_enabled or active["script"]!="library-master-arch.py":raise ValueError("FAST requires explicit dispatch and supported preview adapter")
+        return "fast","explicit non-qualifying artistic preview"
     if requested=="full":return "full","explicit full request"
     if event=="workflow_dispatch":return "qualify","explicit current-candidate qualification"
     if changes is None:return "full","change range unavailable"
@@ -44,13 +48,21 @@ def selftest():
     ]:
         assert choose(requested,paths,a,event)[0]==want,(requested,paths,event)
     print("SP-01 selection: 10/10 PASS")
+    assert choose("fast",None,a,"workflow_dispatch",True)[0]=="fast"
+    for candidate,event,enabled in [(a,"pull_request",True),(a,"workflow_dispatch",False),({"script":"library-master-cupola.py"},"workflow_dispatch",True)]:
+        try:choose("fast",None,candidate,event,enabled)
+        except ValueError:pass
+        else:raise AssertionError("invalid FAST accepted")
+    assert choose("qualify",[DIR+a["script"]],a,"pull_request",True)[0]=="qualify"
+    assert choose("qualify",[DIR+"smart-preview.py"],a,"pull_request",True)[0]=="full"
+    print("SP-03 mode isolation: 6/6 PASS")
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument("--selftest",action="store_true");ap.add_argument("--requested",choices=["qualify","full"],default="qualify");ap.add_argument("--event",default="pull_request");ap.add_argument("--before",default="");ap.add_argument("--head",default="");args=ap.parse_args()
+    ap=argparse.ArgumentParser();ap.add_argument("--selftest",action="store_true");ap.add_argument("--requested",choices=["qualify","full","fast"],default="qualify");ap.add_argument("--event",default="pull_request");ap.add_argument("--before",default="");ap.add_argument("--head",default="");args=ap.parse_args()
     if args.selftest:selftest();return
-    a=validate(json.loads((ROOT/CONFIG).read_text()))
+    config=json.loads((ROOT/CONFIG).read_text());a=validate(config)
     script=ROOT/DIR/a["script"];assert script.is_file() and not script.is_symlink()
-    mode,reason=choose(args.requested,changed(args.before,args.head),a,args.event)
-    result={"mode":mode,"phase":a["phase"],"script":a["script"],"artifact":a["artifact"],"historical_job":a["historicalJob"] or "none","reason":reason}
+    mode,reason=choose(args.requested,changed(args.before,args.head),a,args.event,config["previewEnabled"])
+    result={"mode":mode,"phase":a["phase"],"script":a["script"],"artifact":a["artifact"],"historical_job":a["historicalJob"] or "none","reason":reason,"preview_enabled":str(config["previewEnabled"]).lower()}
     print(json.dumps(result,indent=2))
     if os.environ.get("GITHUB_OUTPUT"):
         with open(os.environ["GITHUB_OUTPUT"],"a") as f:
