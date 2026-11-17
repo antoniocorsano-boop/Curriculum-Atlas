@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 DIR="scripts/atlas-gateway-c3/"
 CONFIG=DIR+"smart-production.json"
-PREVIEW_SCRIPTS={"library-master-arch.py","library-master-material-study.py","library-master-vegetation-study.py"}
+PREVIEW_SCRIPTS={"library-master-arch.py","library-master-material-study.py","library-master-vegetation-study.py","library-master-atmosphere-study.py"}
 HISTORICAL={"library-composition","master-architecture","master-materials","master-scenography","master-lighting","master-portals","refine-portals","refine-environment","refine-cupola","refine-arch"}
 def validate(data):
     assert data["schemaVersion"]==1 and type(data["previewEnabled"]) is bool
