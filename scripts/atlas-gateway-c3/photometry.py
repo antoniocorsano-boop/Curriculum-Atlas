@@ -98,5 +98,29 @@ def selftest():
     rec={"failed":dict.fromkeys(IDS,[]),"metrics":{v:{s:{"backgroundMedian":.7} for s in IDS} for v in VIEWS}}
     rec["failed"]["storie"]=["atrium:contrast"];n=advance(current,rec,p)
     assert n=={**current,"storie":"darkWarm"} and advance(n,rec,p)["storie"]=="lightWarm"
-    print("SP-06.4 photometric policy: 4/4 PASS (synthetic)")
+    # Exercise every PNG scanline filter, CRC, RGB/RGBA and the vertical flip.
+    import tempfile
+    def chunk(k,v):
+        return struct.pack(">I",len(v))+k+v+struct.pack(">I",zlib.crc32(k+v)&0xffffffff)
+    w,h=320,480
+    with tempfile.TemporaryDirectory() as td:
+        for channels in (3,4):
+            rows=[];prior=bytes(w*channels)
+            def paeth(a,b,c):
+                q=a+b-c;d=[abs(q-t) for t in (a,b,c)]
+                return (a,b,c)[d.index(min(d))]
+            for y in range(h):
+                row=bytes((x+3*y)%256 for x in range(w*channels));mode=y%5
+                enc=bytearray()
+                for i,value in enumerate(row):
+                    a=row[i-channels] if i>=channels else 0;b=prior[i];c=prior[i-channels] if i>=channels else 0
+                    pred=(0,a,b,(a+b)//2,paeth(a,b,c))[mode]
+                    enc.append((value-pred)&255)
+                rows.append(bytes([mode])+enc);prior=row
+            path=Path(td)/"fixture.png"
+            path.write_bytes(b"\x89PNG\r\n\x1a\n"+chunk(b"IHDR",struct.pack(">IIBBBBB",w,h,8,2 if channels==3 else 6,0,0,0))+chunk(b"IDAT",zlib.compress(b"".join(rows)))+chunk(b"IEND",b""))
+            pw,ph,read=png(path);assert (pw,ph)==(w,h)
+            for y in (0,1,2,3,4,479):
+                assert read(13,y)==tuple((13*channels+i+3*(h-1-y))%256 for i in range(3))
+    print("SP-06.4 photometric policy: 6/6 PASS (synthetic, including both PNG formats)")
 if __name__=="__main__":selftest()
