@@ -34,7 +34,7 @@ jobs:
           set -euo pipefail
           for entry in '14338430297 f7acaf9750ebc4477acf5ac57f6047b0dfdb8415d7a501716c2bb45953e0eed2 textured' '14337736394 6cdfeefd10d90e1fe3b0a195ebb16aa914c80d8dab27aa26f056171a562d20fb ao'; do
             read -r id digest label <<< "$entry"
-            curl --fail --silent --show-error --location --max-time 120 -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/repos/antoniocorsano-boop/Curriculum-Atlas/actions/artifacts/$id/zip" -o "$RUNNER_TEMP/$label.zip"
+            curl --fail --silent --show-error --location --max-time 120 -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" -o "$RUNNER_TEMP/$label.zip"
             echo "$digest  $RUNNER_TEMP/$label.zip" | sha256sum -c -
           done
           python3 - <<'PY'
