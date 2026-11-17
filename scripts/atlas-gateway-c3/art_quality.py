@@ -70,6 +70,11 @@ def require_review(identity,phase):
     assert type(review["artifactId"]) is int and review["artifactId"]>0
     assert proposal["candidateIdentity"]==identity and proposal["status"]=="ADAPTIVE_PREVIEW_ONLY" and proposal["result"]=="PASS"
     assert proposal["changedFromCanonical"]==[] and proposal["estimatedMaterialGroups"]==3
+    module=proposal["moduleExport"]
+    assert module["status"]=="PASS" and module["primitives"]==3 and module["vertices"]<=18000 and module["bytes"]<=b["objective"]["maxModuleBytes"]
+    assert module["externalResources"]==0 and not module["qualified"] and not module["browserQualified"]
+    assert re.fullmatch(r"[0-9a-f]{64}",module["sha256"]) and set(module["groups"])=={"warm","cool","orbit"}
+    assert all(module["groups"][family]["paletteColors"]>=5 for family in ("warm","cool"))
     assert proposal["artQuality"]==e["artQuality"] and proposal["artQuality"]["briefSha256"]==digest
     assert all(not proposal[k] for k in ("qualified","publishable","studentAuthorized","visualAcceptance","canonicalReviewReceipt"))
     dims={"review-atrium.png":[1200,750],"review-vertical.png":[640,960],**{"detail-"+s+".png":[512,512] for s in b["objective"]["requiredIds"]}}
