@@ -3,10 +3,12 @@ import hashlib,sys
 from pathlib import Path
 base=Path(__file__).resolve().parent
 sys.path.insert(0,str(base))
-import knowledge_composition
+import knowledge_composition,adaptive_identity
 plan,alternatives,plan_digest=knowledge_composition.load()
+adaptive=adaptive_identity.solve(plan)
+assert adaptive["status"]=="PASS","SP-06: exhausted adaptive identity budget"
 selected=plan["selected"]
-composition={"id":selected,"planSha256":plan_digest,"layout":plan["layouts"][selected],"hub":plan["hub"],"hubRadius":plan["hubRadius"],"connectionRadius":plan["connectionRadius"],"paths":alternatives[selected]["paths"],"semantics":plan["semantics"]}
+composition={"id":selected,"planSha256":plan_digest,"layout":plan["layouts"][selected],"hub":plan["hub"],"hubRadius":plan["hubRadius"],"connectionRadius":plan["connectionRadius"],"paths":alternatives[selected]["paths"],"semantics":plan["semantics"],"identityMeshes":adaptive["meshes"],"identityEvidence":adaptive_identity.evidence(adaptive)}
 PARENT="library-master-atmosphere-study.py"
 PARENT_BLOB="edca5a6a9d6a97871068bbcfb5a1b9c41a3d28dc"
 END='exec(compile(code,'+'__file__,"exec"),globals())'
@@ -37,26 +39,12 @@ star_objects=[];star_records=[]
 star_gold=material("Knowledge star warm light",(.92,.53,.17),.28,.15,1.8)
 star_cool=material("Knowledge star cool light",(.30,.57,.78),.30,.12,1.5)
 star_orbit=material("Knowledge star satin orbit",(.79,.53,.23),.30,.65,.75)
-# Folded, faceted core: an original sculptural rather than literal astronomical model.
+# SP-06: the very meshes tested in the projected silhouette cycle.
 def star_core(name,c,r,mat,seed):
-    rng=random.Random(seed);v=[];f=[];n=(8,4,12,6)[seed-5500]
-    v.append(tuple(c+Vector((0,0,r))))
-    for k in range(1,6):
-        theta=pi*k/6
-        for j in range(n):
-            a=2*pi*j/n+(k%2)*pi/n
-            rr=r*(1+rng.uniform(-.065,.065))
-            v.append(tuple(c+rr*Vector((sin(theta)*cos(a),sin(theta)*sin(a),cos(theta)))))
-    v.append(tuple(c+Vector((0,0,-r))))
-    for j in range(n):f.append((0,1+j,1+(j+1)%n))
-    for k in range(4):
-        for j in range(n):
-            a=1+k*n+j;b=1+k*n+(j+1)%n
-            f.extend(((a,a+n,b+n),(a,b+n,b)))
-    for j in range(n):f.append((len(v)-1,1+4*n+(j+1)%n,1+4*n+j))
-    scale=((1.0,.82,1.18),(1.16,.86,.90),(1.,1.,1.),(.84,.76,1.30))[seed-5500]
-    v=[tuple(c[i]+(p[i]-c[i])*scale[i] for i in range(3)) for p in v]
-    return mesh(name,v,f,mat,star_objects)
+    sid=composition["identityEvidence"]["shapeKinds"]
+    key=("storie","laboratori","scoperte","percorsi")[seed-5500]
+    q=composition["identityMeshes"][key]
+    return mesh(name,[tuple(c+Vector(p)) for p in q["vertices"]],q["faces"],mat,star_objects)
 def orbit(name,c,normal,r,minor):
     axis=Vector(normal).normalized();u=axis.cross(Vector((0,0,1)))
     if u.length<.01:u=axis.cross(Vector((1,0,0)))
@@ -86,7 +74,7 @@ for idx,(sid,label,r,mat,normals,meaning) in enumerate(star_specs):
     vertices=[o.matrix_world@v.co for o in star_objects[start:] for v in o.data.vertices]
     extent=max((v-c).length for v in vertices)
     assert extent<=rb and min(v.z for v in vertices)>6.0
-    star_records.append({"id":sid,"label":label,"meaning":meaning,"portalId":"esperienze","positionBlender":list(pos),"radiusBound":rb,"measuredRadius":extent,"rings":len(normals),"interactive":False,"href":None})
+    star_records.append({"id":sid,"label":label,"meaning":meaning,"portalId":"esperienze","positionBlender":list(pos),"radiusBound":rb,"measuredRadius":extent,"identityKind":composition["identityEvidence"]["shapeKinds"][sid],"identityScale":composition["identityEvidence"]["selectedScales"][sid],"rings":len(normals),"interactive":False,"href":None})
 assert len(star_records)==4 and sum(q["rings"] for q in star_records)==6
 assert all((Vector(a["positionBlender"])-Vector(b["positionBlender"])).length>=1.3 for i,a in enumerate(star_records) for b in star_records[:i])
 # Four symbolic trajectories converge on a shared experience emblem; no invented
@@ -172,7 +160,7 @@ def guard_star_projection(name):
 """
 RECEIPT="""
 assert set(star_projection)=={"atrium","vertical","portrait-focus"}
-star_study={"phase":"C3.3A5.5a","parent":"C3.3A5.4c","parentBlob":"edca5a6a9d6a97871068bbcfb5a1b9c41a3d28dc","policyBlob":"fe1d43c5622b1b7889ad9bb7c188373fddd9bebf","semantics":"forme simboliche di esperienza, non relazioni del curricolo","stars":star_records,"projection":star_projection,"architectureChanged":False,"camerasChanged":False,"navigationChanged":False,"newLightSources":0,"connectionsProduced":True,"composition":{"id":composition["id"],"planSha256":composition["planSha256"],"semantics":composition["semantics"]},"connections":connection_records,"connectionProjection":connection_projection,"interactive":False,"browserQualified":False,"artisticApproval":False,"studentAuthorized":False}
+star_study={"phase":"C3.3A5.5a","parent":"C3.3A5.4c","parentBlob":"edca5a6a9d6a97871068bbcfb5a1b9c41a3d28dc","policyBlob":"fe1d43c5622b1b7889ad9bb7c188373fddd9bebf","semantics":"forme simboliche di esperienza, non relazioni del curricolo","stars":star_records,"projection":star_projection,"architectureChanged":False,"camerasChanged":False,"navigationChanged":False,"newLightSources":0,"connectionsProduced":True,"composition":{"id":composition["id"],"planSha256":composition["planSha256"],"semantics":composition["semantics"]},"connections":connection_records,"connectionProjection":connection_projection,"identityStudy":composition["identityEvidence"],"interactive":False,"browserQualified":False,"artisticApproval":False,"studentAuthorized":False}
 (out/"knowledge-stars-study.json").write_text(json.dumps(star_study,indent=2)+"\\n")
 """
 if len(sys.argv)>1 and sys.argv[1]=="--verify":
@@ -185,6 +173,11 @@ assert stars["phase"]==m["phase"] and stars["parent"]=="C3.3A5.4c" and stars["pa
 assert stars["policyBlob"]==m["portalPolicyBlob"] and m["knowledgeStars"] is True
 assert all(stars[k] is False for k in ("architectureChanged","camerasChanged","navigationChanged","interactive","browserQualified","artisticApproval","studentAuthorized"))
 assert stars["connectionsProduced"] is True and stars["composition"]["id"]=="A"
+from adaptive_identity import solve,evidence
+from knowledge_composition import load
+ap,_,_=load();expected_identity=evidence(solve(ap))
+assert stars["identityStudy"]==expected_identity and expected_identity["status"]=="PASS"
+assert all(q["identityKind"]==expected_identity["shapeKinds"][q["id"]] and q["identityScale"]==expected_identity["selectedScales"][q["id"]] for q in stars["stars"])
 assert len(stars["connections"])==4 and [q["from"] for q in stars["connections"]]==[q["id"] for q in stars["stars"]]
 assert all(q["to"]=="esperienze" and q["samples"]==49 and q["interactive"] is False for q in stars["connections"])
 assert set(stars["connectionProjection"])=={"atrium","vertical","portrait-focus"}
@@ -210,7 +203,7 @@ kv=sum(kd["accessors"][q["attributes"]["POSITION"]]["count"] for mesh in kd["mes
 assert kp==3 and kv<=18000 and len(kb)<=1024*1024,(kp,kv,len(kb))
 assert not any("Knowledge stars" in q.get("name","") for data in (d,sd,pd,cd) for q in data["nodes"])
 assert len([q for q in kd["nodes"] if q.get("name","").startswith("Knowledge stars ")])==3
-receipt.update({"knowledgeStars":4,"starRings":6,"starPrimitives":kp,"starVertices":kv,"starBytes":len(kb),"starProjectionViews":3,"connectionsProduced":True,"symbolicTrajectories":4})
+receipt.update({"knowledgeStars":4,"starRings":6,"starPrimitives":kp,"starVertices":kv,"starBytes":len(kb),"starProjectionViews":3,"connectionsProduced":True,"symbolicTrajectories":4,"adaptiveIdentityAttempts":stars["identityStudy"]["selectedAttempt"]})
 (p/"library-verification.json").write_text''')
     sys.argv=[sys.argv[0],sys.argv[2]]
 else:
