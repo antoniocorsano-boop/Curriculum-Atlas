@@ -3,7 +3,7 @@ import argparse, ast, hashlib, json, struct, sys, tempfile, time
 from pathlib import Path
 
 HERE=Path(__file__).resolve().parent
-SUPPORTED=("library-master-arch.py","library-master-material-study.py","library-master-vegetation-study.py","library-master-atmosphere-study.py")
+SUPPORTED=("library-master-arch.py","library-master-material-study.py","library-master-vegetation-study.py","library-master-atmosphere-study.py","library-master-knowledge-stars.py")
 VIEWS={"atrium":(600,375),"vertical":(320,480)}
 SAMPLES=12
 END='exec(compile(code,__file__,"exec"),globals())'
@@ -35,13 +35,17 @@ def transform(code):
         'views=[v for v in views if v[0] in ("atrium","vertical")]\nassert [v[0] for v in views]==["atrium","vertical"]\nfor i,(name,w,h,pos,target,lens) in enumerate(views):')
     code=once(code,"scene.render.resolution_percentage=100","scene.render.resolution_percentage=50")
     code=once(code,'    if i==0:bpy.ops.wm.save_as_mainfile(filepath=str(out/"library.blend"))\n',"")
-    # Exactly four top-level GLB exports in this candidate. Preview never exports them.
+    # Four legacy exports; A5.5a has a fifth, explicitly isolated star module.
+    stars="library-knowledge-stars.glb" in code
+    if stars:
+        code=once(code,'assert set(star_projection)=={"atrium","vertical","portrait-focus"}','assert set(star_projection)=={"atrium","vertical"}')
+    # Preview never exports any GLB.
     lines=code.splitlines(keepends=True);tree=ast.parse(code);exports=[]
     for node in tree.body:
         if isinstance(node,ast.Expr) and isinstance(node.value,ast.Call) and ast.unparse(node.value.func)=="bpy.ops.export_scene.gltf":
             assert node.lineno==node.end_lineno
             exports.append(node.lineno)
-    assert len(exports)==4
+    assert len(exports)==(5 if stars else 4)
     for n in exports:lines[n-1]="pass  # preview: no GLB export\n"
     code="".join(lines)
     # Stop before the qualification receipt; only images will leave scratch.
@@ -96,9 +100,10 @@ def selftest():
     for name in SUPPORTED:
         candidate=HERE/name;source=resolve(candidate);preview=transform(source)
         compile(preview,str(candidate),"exec")
-        if name in ("library-master-material-study.py","library-master-vegetation-study.py","library-master-atmosphere-study.py"):assert "A5.4a micro relief" in preview and "material-study.json" in preview
-        if name in ("library-master-vegetation-study.py","library-master-atmosphere-study.py"):assert "Cypress layered crown" in preview and "Olive folded foliage" in preview and "vegetation-study.json" in preview
-        if name=="library-master-atmosphere-study.py":assert "Arena patinated bronze" in preview and "atmosphere-study.json" in preview
+        if name in ("library-master-material-study.py","library-master-vegetation-study.py","library-master-atmosphere-study.py","library-master-knowledge-stars.py"):assert "A5.4a micro relief" in preview and "material-study.json" in preview
+        if name in ("library-master-vegetation-study.py","library-master-atmosphere-study.py","library-master-knowledge-stars.py"):assert "Cypress layered crown" in preview and "Olive folded foliage" in preview and "vegetation-study.json" in preview
+        if name in ("library-master-atmosphere-study.py","library-master-knowledge-stars.py"):assert "Arena patinated bronze" in preview and "atmosphere-study.json" in preview
+        if name=="library-master-knowledge-stars.py":assert "Knowledge core " in preview and 'assert set(star_projection)=={"atrium","vertical"}' in preview and "knowledge-stars-study.json" in preview
     assert "scene.cycles.samples=12" in preview and "scene.render.resolution_percentage=50" in preview
     assert '["atrium","vertical"]' in preview
     assert 'receipt={' not in preview.split("\n")[-1] and "library-manifest.json" not in preview
