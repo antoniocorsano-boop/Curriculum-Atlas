@@ -65,6 +65,8 @@ jobs:
         run: python3 scripts/atlas-gateway-c3/incremental-preview.py --selftest
       - name: Test photometric adaptation and evidence adapter
         run: python3 scripts/atlas-gateway-c3/photometric-preview.py --selftest
+      - name: Test unified draft preview adapter
+        run: python3 scripts/atlas-gateway-c3/unified-preview.py --selftest
       - name: Resolve current candidate and mode
         id: selection
         env:
@@ -838,12 +840,15 @@ jobs:
           name: atlas-c32b-ao
           path: ${{ runner.temp }}/atlas-c32b
       - name: Render two non-qualifying preview views
+        if: needs.plan.outputs.artistic_stage != 'preview' || needs.plan.outputs.script != 'library-master-knowledge-stars.py'
         run: |
           set -euo pipefail
           "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/smart-preview.py -- produce "$RUNNER_TEMP/atlas-fast-preview" "$CANDIDATE_SCRIPT"
       - name: Independently verify preview-only evidence
+        if: needs.plan.outputs.artistic_stage != 'preview' || needs.plan.outputs.script != 'library-master-knowledge-stars.py'
         run: python3 scripts/atlas-gateway-c3/smart-preview.py verify "$RUNNER_TEMP/atlas-fast-preview" "$CANDIDATE_SCRIPT"
       - name: Preserve preview images and receipt only
+        if: needs.plan.outputs.artistic_stage != 'preview' || needs.plan.outputs.script != 'library-master-knowledge-stars.py'
         uses: actions/upload-artifact@v4
         with:
           name: atlas-fast-preview-not-qualified
@@ -851,6 +856,22 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      - name: Run unified adaptive draft preview in a single scene
+        if: needs.plan.outputs.artistic_stage == 'preview' && needs.plan.outputs.script == 'library-master-knowledge-stars.py'
+        run: |
+          set -euo pipefail
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/unified-preview.py -- produce "$RUNNER_TEMP/atlas-unified-preview"
+      - name: Independently verify selected adaptive evidence
+        if: needs.plan.outputs.artistic_stage == 'preview' && needs.plan.outputs.script == 'library-master-knowledge-stars.py'
+        run: python3 scripts/atlas-gateway-c3/unified-preview.py verify "$RUNNER_TEMP/atlas-unified-preview"
+      - name: Preserve unified draft proposal and all attempts
+        if: needs.plan.outputs.artistic_stage == 'preview' && needs.plan.outputs.script == 'library-master-knowledge-stars.py'
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-unified-adaptive-preview
+          path: ${{ runner.temp }}/atlas-unified-preview/
+          if-no-files-found: error
+          retention-days: 7
 
   artistic-acceptance:
     name: Smart Production — visual acceptance required
@@ -864,41 +885,3 @@ jobs:
           echo "::error::SP-05 PREVIEW ONLY — visual acceptance pending. Qualification intentionally blocked; inspect FAST evidence and revise or record accepted review."
           exit 1
 
-  photometric-preview:
-    name: SP-07.0 — Photometric fault-recovery experiment
-    needs: [production, plan]
-    if: needs.plan.outputs.mode == 'fast' && needs.plan.outputs.artistic_stage == 'preview' && needs.plan.outputs.script == 'library-master-knowledge-stars.py'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-      - name: Restore pinned Blender archive
-        uses: actions/cache/restore@v5
-        with:
-          path: ${{ runner.temp }}/atlas-blender-cache
-          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
-      - name: Verify Blender
-        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
-      - uses: actions/download-artifact@v4
-        with:
-          name: atlas-gateway-c32-textured
-          path: ${{ runner.temp }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: atlas-c32b-ao
-          path: ${{ runner.temp }}/atlas-c32b
-      - name: Build once, measure and adapt core materials in place
-        run: |
-          set -euo pipefail
-          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/photometric-preview.py -- produce "$RUNNER_TEMP/atlas-photometric-preview" --fault
-      - name: Verify evidence independently of Blender
-        run: python3 scripts/atlas-gateway-c3/photometric-preview.py verify "$RUNNER_TEMP/atlas-photometric-preview" --fault
-      - name: Preserve experimental evidence only
-        uses: actions/upload-artifact@v4
-        with:
-          name: atlas-photometric-fault-recovery
-          path: ${{ runner.temp }}/atlas-photometric-preview/
-          if-no-files-found: error
-          retention-days: 7
