@@ -88,7 +88,11 @@ def advance(current,record,p):
         bright=statistics.mean(record["metrics"][v][sid]["backgroundMedian"] for v in VIEWS)>=p["brightBackground"]
         first=("dark" if bright else "light")+family
         second=("light" if bright else "dark")+family
-        new[sid]=first if current[sid]=="base" else second if current[sid]==first else current[sid]
+        # Skip equivalent recipes after consolidation (e.g. Storie base=lightWarm).
+        order=["base",first,second]
+        start=order.index(current[sid])
+        used=[recipe(p,sid,k) for k in order[:start+1]]
+        new[sid]=next((k for k in order[start+1:] if recipe(p,sid,k) not in used),current[sid])
     return new
 def ranking(record,p):
     # Count violations first, then aggregate magnitude, then earliest attempt.
@@ -105,7 +109,13 @@ def selftest():
     current=dict.fromkeys(IDS,"base")
     rec={"failed":dict.fromkeys(IDS,[]),"metrics":{v:{s:{"backgroundMedian":.7} for s in IDS} for v in VIEWS}}
     rec["failed"]["storie"]=["atrium:contrast"];n=advance(current,rec,p)
-    assert n=={**current,"storie":"darkWarm"} and advance(n,rec,p)["storie"]=="lightWarm"
+    assert n=={**current,"storie":"darkWarm"} and advance(n,rec,p)["storie"]=="darkWarm"
+    rec["metrics"]={v:{s:{"backgroundMedian":.3} for s in IDS} for v in VIEWS}
+    assert advance(current,rec,p)["storie"]=="darkWarm"
+    rec["failed"]={s:[] for s in IDS};rec["failed"]["scoperte"]=["atrium:contrast"]
+    rec["metrics"]={v:{s:{"backgroundMedian":.7} for s in IDS} for v in VIEWS}
+    n=advance(current,rec,p)
+    assert n=={**current,"scoperte":"darkWarm"} and advance(n,rec,p)["scoperte"]=="lightWarm"
     # Exercise every PNG scanline filter, CRC, RGB/RGBA and the vertical flip.
     import tempfile
     def chunk(k,v):
