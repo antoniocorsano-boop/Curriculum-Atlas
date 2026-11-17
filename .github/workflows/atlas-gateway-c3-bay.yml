@@ -43,6 +43,8 @@ jobs:
           fetch-depth: 0
       - name: Test composition quality and negative cases
         run: python3 scripts/atlas-gateway-c3/art_quality.py
+      - name: Preflight alternative spatial compositions before Blender
+        run: python3 scripts/atlas-gateway-c3/knowledge_composition.py
       - name: Test deterministic mode selection
         run: python3 scripts/atlas-gateway-c3/smart-production.py --selftest
       - name: Test cache integrity and negative cases
