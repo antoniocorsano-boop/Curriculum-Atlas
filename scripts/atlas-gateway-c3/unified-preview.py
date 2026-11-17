@@ -26,16 +26,16 @@ def summary(out):
         "dependencyHashes":r["dependencyHashes"],"artQuality":r["artQuality"],"sceneBuilds":r["sceneBuilds"],"renderCount":r["renderCount"],"geometryAttempts":r["artEvidence"]["identityStudy"]["selectedAttempt"],
         "photometricAttempts":len(r["attempts"]),"selectedAttempt":r["selectedAttempt"],"selectedRecipes":r["selectedRecipes"],"selectedMaterials":materials,"changedFromCanonical":changed,
         "estimatedMaterialGroups":groups_estimate,"withinCanonicalThreeGroupBudgetEstimate":groups_estimate<=3,"requiresCanonicalMaterialConsolidation":bool(changed),
-        "selectedImages":selected,"seconds":r["totalSeconds"]}
+        "selectedImages":selected,"reviewImages":r["reviewImages"],"reviewRenderCount":r["reviewRenderCount"],"totalRenderCount":r["renderCount"]+r["reviewRenderCount"],"seconds":r["totalSeconds"]}
 def verify(out):
     assert set(x.name for x in out.iterdir())=={"cycle","atrium.png","vertical.png","unified-receipt.json"}
     photo.verify(out/"cycle",False)
     r=json.loads((out/"unified-receipt.json").read_text())
-    assert r==summary(out) and r["sceneBuilds"]==1
+    assert r==summary(out) and r["sceneBuilds"]==1 and r["reviewRenderCount"]==6 and r["totalRenderCount"]<=14
     for n in VIEWS:
         assert pv.image_record(out/(n+".png"))==r["selectedImages"][n]
     assert r["status"]=="ADAPTIVE_PREVIEW_ONLY" and not any(r[k] for k in ("qualified","publishable","studentAuthorized","visualAcceptance","canonicalReviewReceipt"))
-    print("SP-07.1 unified preview:",json.dumps({k:r[k] for k in ("result","sceneBuilds","renderCount","geometryAttempts","photometricAttempts","selectedRecipes","changedFromCanonical","estimatedMaterialGroups","seconds")}),flush=True)
+    print("SP-07.1 unified preview:",json.dumps({k:r[k] for k in ("result","sceneBuilds","renderCount","reviewRenderCount","totalRenderCount","geometryAttempts","photometricAttempts","selectedRecipes","changedFromCanonical","estimatedMaterialGroups","seconds")}),flush=True)
 def produce(out):
     assert out.parent.is_dir() and not out.exists()
     root=photo.resource_directory(out)
