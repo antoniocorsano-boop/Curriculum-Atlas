@@ -935,7 +935,7 @@ jobs:
 
   artistic-acceptance:
     name: Smart Production — visual acceptance required
-    needs: [plan, smart-preview]
+    needs: [plan, smart-preview, stars-webgl]
     if: always() && needs.plan.result == 'success' && needs.plan.outputs.artistic_stage == 'preview'
     runs-on: ubuntu-24.04
     timeout-minutes: 2
