@@ -18,7 +18,7 @@ def sculpture(sid):
         return [(bar(a,b,.13),.70,.08,0,.18),(bar(a,c,.13),.70,.08,0,.18),(bar(b,c,.13),.70,.08,0,.18),*((rect(x,z,.34,.34,.065),1.30,-.025,0,.22) for x,z in (a,b,c))]
     if sid=="scoperte":
         blade=[(-.13,.10),(-.17,.20),(0,.56),(.17,.20),(.13,.10)]
-        return [*(([(x*math.cos(t)-z*math.sin(t),x*math.sin(t)+z*math.cos(t)) for x,z in blade],1.05,0,0,.22) for t in (0,math.pi/2,math.pi,3*math.pi/2)),(rect(0,0,.33,.33,.075),1.45,-.035,0,.24)]
+        return [*(([(a*x-b*z,b*x+a*z) for x,z in blade],1.05,0,0,.22) for a,b in ((1,0),(0,1),(-1,0),(0,-1))),(rect(0,0,.33,.33,.075),1.45,-.035,0,.24)]
     if sid=="percorsi":
         return [(rect(-.30,-.34,.43,.18,.04),1.10,.045,0,.18),(rect(-.12,-.22,.18,.30,.035),1.10,.025,0,.18),(rect(.02,-.085,.40,.18,.04),1.16,.005,0,.18),(rect(.21,.09,.19,.35,.035),1.20,-.015,0,.18),([(-.04,.22),(.21,.54),(.46,.22)],1.38,-.035,0,.19)]
     raise ValueError(sid)
@@ -33,7 +33,8 @@ def geometry(sid,scale,half):
         for dy,shrink in ((-depth,bevel),(-depth+edge,0),(depth-edge,0),(depth,bevel)):
             for x,z in poly:
                 xx=x+(cx-x)*shrink;zz=z+(cz-z)*shrink
-                verts.append((xx*scale,offset+dy+slope*xx,zz*scale))
+                # Canonical nanometre grid; eliminate libm/last-bit variations and signed zero.
+                verts.append(tuple(round(v,9) or 0.0 for v in (xx*scale,offset+dy+slope*xx,zz*scale)))
         faces.extend((k,k+j,k+j+1) for j in range(1,n-1))
         faces.extend((k+3*n,k+3*n+j+1,k+3*n+j) for j in range(1,n-1))
         for band in range(3):
