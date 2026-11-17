@@ -42,6 +42,13 @@ def evaluate(study):
         connections=study["connections"];cp=study["connectionProjection"]
         checks["symbolicConnections"]=[q["from"] for q in connections]==o["requiredIds"] and all(q["to"]=="esperienze" and q["interactive"] is False and q["samples"]==plan["segments"]+1 for q in connections)
         checks["connectionClearance"]=all(cp[name]["protectedClear"] is True and cp[name]["pathSampleCounts"]==[plan["segments"]+1]*4 for name in ("atrium","vertical"))
+    if "identityStudy" in study:
+        from adaptive_identity import solve,evidence
+        from knowledge_composition import PLAN
+        plan=json.loads(PLAN.read_text())
+        expected=evidence(solve(plan))
+        checks["adaptiveIdentity"]=study["identityStudy"]==expected and expected["status"]=="PASS"
+        checks["identityGeometry"]=all(s.get("identityKind")==expected["shapeKinds"][s["id"]] and s.get("identityScale")==expected["selectedScales"][s["id"]] for s in stars)
     return {"briefSha256":digest,"status":"PASS" if all(checks.values()) else "REVISE","checks":checks,"depthSpreadM":depth,"projectedWidths":widths}
 
 def require_review(identity,phase):
@@ -53,7 +60,7 @@ def require_review(identity,phase):
     assert e["status"]=="PREVIEW_ONLY" and e["qualified"] is False and e["publishable"] is False and e["studentAuthorized"] is False
     assert e["identity"]==identity and e["artQuality"]==evaluate(e["artEvidence"])
     assert e["artQuality"]["status"]=="PASS" and e["artQuality"]["briefSha256"]==digest
-    assert all(e["artQuality"]["checks"].get(k) is True for k in ("compositionIdentity","compositionGeometry","symbolicConnections","connectionClearance"))
+    assert all(e["artQuality"]["checks"].get(k) is True for k in ("compositionIdentity","compositionGeometry","symbolicConnections","connectionClearance","adaptiveIdentity","identityGeometry"))
     assert set(e["files"])=={"atrium","vertical"}
     assert all(re.fullmatch(r"[0-9a-f]{64}",q["sha256"]) for q in e["files"].values())
     scores=r["scores"];criteria=b["visualRubric"]["criteria"]
