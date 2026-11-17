@@ -48,9 +48,9 @@
       },
       "percorsi": {
         "color": [
-          0.22,
-          0.49,
-          0.78
+          0.42,
+          0.74,
+          0.98
         ],
         "emission": 0.1,
         "roughness": 0.32,
@@ -98,6 +98,6 @@
       "metallic": 0.38
     }
   },
-  "scope": "Luminanza relativa dei codici RGB del PNG, campioni interni alle maschere proiettate, controfattuale senza i nuclei. Non è una misura WCAG, non misura riconoscimento semantico o contrasto di tutti i bordi; la scena canonica non viene modificata. SP-07.3: variazioni RGB nei colori per faccia; parametri PBR condivisi e invarianti per famiglia, nessun nuovo materiale durante l'adattamento canonico. SP-07.4: consolidata la ricetta lightWarm di Storie selezionata nel collaudo fef3402; verifica su nuovi rilievi necessaria.",
+  "scope": "Luminanza relativa dei codici RGB del PNG, campioni interni alle maschere proiettate, controfattuale senza i nuclei. Non è una misura WCAG, non misura riconoscimento semantico o contrasto di tutti i bordi; la scena canonica non viene modificata. SP-07.3: variazioni RGB nei colori per faccia; parametri PBR condivisi e invarianti per famiglia, nessun nuovo materiale durante l'adattamento canonico. SP-07.4: consolidata la ricetta lightWarm di Storie selezionata nel collaudo fef3402; verifica su nuovi rilievi necessaria. SP-07.5: consolidata la ricetta lightCool di Percorsi selezionata nel collaudo e3e8179; richiesta nuova evidenza canonica.",
   "externalServices": false
 }
