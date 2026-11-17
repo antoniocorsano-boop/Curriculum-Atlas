@@ -121,7 +121,7 @@ assert len(star_objects)==3
 bpy.ops.object.select_all(action="DESELECT")
 for obj in star_objects:obj.select_set(True)
 bpy.context.view_layer.objects.active=star_objects[0]
-bpy.ops.export_scene.gltf(filepath=str(out/"library-knowledge-stars.glb"),export_format="GLB",use_selection=True,export_texcoords=False,export_draco_mesh_compression_enable=False)
+bpy.ops.export_scene.gltf(filepath=str(out/"library-knowledge-stars.glb"),export_format="GLB",use_selection=True,export_texcoords=False,export_vertex_color="MATERIAL",export_all_vertex_colors=False,export_draco_mesh_compression_enable=False)
 """
 PROJECTION="""
 # Independent geometric projection guard for the existing frontal cameras.
