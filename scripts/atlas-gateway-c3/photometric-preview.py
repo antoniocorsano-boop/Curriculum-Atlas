@@ -129,7 +129,35 @@ bpy.context.view_layer.update()
 _after=_fingerprint();assert _after==_before
 assert all(_same(_read(_core[s].data.materials[0]),_pm.recipe(_p,s,_best["recipes"][s])) for s in _pm.IDS)
 assert len(_times)==2+2*len(_attempts)<=_p["maxRenders"]
-_photo_receipt={"status":"PASS" if _best["status"]=="PASS" else "EXHAUSTED","experimentOnly":True,"scenario":"fault-recovery" if _fault_sid else "baseline","faultSid":_fault_sid,"selectedFault":_best["injectedFault"],"qualified":False,"publishable":False,"studentAuthorized":False,"visualAcceptance":False,"sceneBuilds":1,"renderCount":len(_times),"policySha256":_pd,"attempts":_attempts,"selectedAttempt":_best["attempt"],"selectedRecipes":_best["recipes"],"selectedMaterials":{s:_pm.recipe(_p,s,_best["recipes"][s]) for s in _pm.IDS},"updates":_updates,"renderTimes":_times,"sceneBefore":_before,"sceneAfter":_after}
+# SP-07.2: six bounded, non-qualifying review images of the selected state.
+_review_times=[]
+if _fault_sid is None:
+    _saved=(scene.camera,scene.render.resolution_x,scene.render.resolution_y,scene.render.resolution_percentage,scene.render.filepath,scene.cycles.samples)
+    scene.render.resolution_percentage=100;scene.cycles.samples=32
+    def _review_render(name,cam,w,h):
+        scene.camera=cam;scene.render.resolution_x=w;scene.render.resolution_y=h
+        scene.render.filepath=str(out/(name+".png"))
+        t=_pt.monotonic();bpy.ops.render.render(write_still=True)
+        _review_times.append({"file":name+".png","seconds":_pt.monotonic()-t,"dimensions":[w,h]})
+    for _name in _pm.VIEWS:
+        _cam,_w,_h=_photo_cameras[_name]
+        _review_render("review-"+_name,_cam,_w,_h)
+    for _sid in _pm.IDS:
+        _center=Vector(next(q["positionBlender"] for q in star_records if q["id"]==_sid))
+        _direction=(_photo_cameras["atrium"][0].location-_center).normalized()
+        # Near the principal sight line, modest lateral offset reveals relief.
+        _direction=(_direction+Vector((.12,0,.04))).normalized()
+        _data=bpy.data.cameras.new("SP072 review "+_sid)
+        _camera=bpy.data.objects.new("SP072 review "+_sid,_data);scene.collection.objects.link(_camera)
+        _camera.location=_center+3.3*_direction
+        _camera.rotation_euler=(_center-_camera.location).to_track_quat("-Z","Y").to_euler()
+        _data.lens=55;_data.clip_end=150
+        _review_render("detail-"+_sid,_camera,512,512)
+        scene.camera=_saved[0];bpy.data.objects.remove(_camera,do_unlink=True);bpy.data.cameras.remove(_data)
+    scene.camera,scene.render.resolution_x,scene.render.resolution_y,scene.render.resolution_percentage,scene.render.filepath,scene.cycles.samples=_saved
+    bpy.context.view_layer.update()
+    assert _fingerprint()==_before and len(_review_times)==6
+_photo_receipt={"status":"PASS" if _best["status"]=="PASS" else "EXHAUSTED","experimentOnly":True,"scenario":"fault-recovery" if _fault_sid else "baseline","faultSid":_fault_sid,"selectedFault":_best["injectedFault"],"qualified":False,"publishable":False,"studentAuthorized":False,"visualAcceptance":False,"sceneBuilds":1,"renderCount":len(_times),"policySha256":_pd,"attempts":_attempts,"selectedAttempt":_best["attempt"],"selectedRecipes":_best["recipes"],"selectedMaterials":{s:_pm.recipe(_p,s,_best["recipes"][s]) for s in _pm.IDS},"updates":_updates,"renderTimes":_times,"reviewRenderTimes":_review_times,"reviewRenderCount":len(_review_times),"sceneBefore":_before,"sceneAfter":_after}
 (out/"photometric-receipt.json").write_text(_pj.dumps(_photo_receipt,indent=2)+"\n")
 '''
 def transform(fault=False):
@@ -145,7 +173,7 @@ def transform(fault=False):
     assert "export_scene.gltf" not in code and "save_as_mainfile" not in code
     return code
 def dependency_hashes():
-    return {n:preview.sha((HERE/n).read_bytes()) for n in ("photometric-preview.py","photometry.py","photometric-policy.json","adaptive_identity.py","adaptive-identity.json","knowledge_composition.py","knowledge-composition.json","smart-preview.py","art_quality.py","art-direction.json")}
+    return {n:preview.sha((HERE/n).read_bytes()) for n in ("photometric-preview.py","photometry.py","photometric-policy.json","star_sculpture.py","adaptive_identity.py","adaptive-identity.json","knowledge_composition.py","knowledge-composition.json","smart-preview.py","art_quality.py","art-direction.json")}
 def verify(out,fault=False):
     r=json.loads((out/"photometric-receipt.json").read_text());p,pd=pm.policy()
     assert r["experimentOnly"] and not any(r[k] for k in ("qualified","publishable","studentAuthorized","visualAcceptance"))
@@ -158,8 +186,12 @@ def verify(out,fault=False):
     assert r["experimentSourceSha256"]==preview.sha(transform(fault).encode()) and r["dependencyHashes"]==dependency_hashes()
     assert 1<=len(r["attempts"])<=p["maxAttempts"] and r["renderCount"]==2+2*len(r["attempts"])<=p["maxRenders"]
     names={f"background-{v}.png" for v in pm.VIEWS}|{f"attempt-{i}-{v}.png" for i in range(1,len(r["attempts"])+1) for v in pm.VIEWS}
-    assert set(x.name for x in out.iterdir())==names|{"photometric-receipt.json"} and set(r["images"])==names
+    review_dims={} if fault else {"review-atrium.png":[1200,750],"review-vertical.png":[640,960],**{"detail-"+s+".png":[512,512] for s in pm.IDS}}
+    assert set(x.name for x in out.iterdir())==names|set(review_dims)|{"photometric-receipt.json"} and set(r["images"])==names and set(r["reviewImages"])==set(review_dims)
+    assert r["reviewRenderCount"]==len(review_dims)==len(r["reviewRenderTimes"]) and r["renderCount"]+r["reviewRenderCount"]<=14
+    assert {q["file"]:q["dimensions"] for q in r["reviewRenderTimes"]}==review_dims and all(q["seconds"]>0 for q in r["reviewRenderTimes"])
     for n in names:assert preview.image_record(out/n)==r["images"][n]
+    for n,dims in review_dims.items():assert preview.image_record(out/n)==r["reviewImages"][n] and r["reviewImages"][n]["dimensions"]==dims
     plan,_,_=knowledge_composition.load();result=adaptive_identity.solve(plan);current=dict.fromkeys(pm.IDS,"base")
     assert result["status"]=="PASS"
     for i,record in enumerate(r["attempts"],1):
@@ -206,10 +238,11 @@ def produce(out,fault=False,*,resource_root=None):
         scratch=Path(scratch);assert not list(scratch.glob("*.glb")) and not list(scratch.glob("*.blend"))
         out.mkdir();r=json.loads((scratch/"photometric-receipt.json").read_text())
         names=[q["file"] for q in r["renderTimes"]]
-        for n in names:(out/n).write_bytes((scratch/n).read_bytes())
+        review_names=[q["file"] for q in r["reviewRenderTimes"]]
+        for n in names+review_names:(out/n).write_bytes((scratch/n).read_bytes())
         study=json.loads((scratch/"knowledge-stars-study.json").read_text())
         evidence={k:study[k] for k in ("stars","projection","composition","connections","connectionProjection","identityStudy")}
-        r.update({"artEvidence":evidence,"artQuality":art_quality.evaluate(evidence),"identity":preview.identity(CANDIDATE),"experimentSourceSha256":preview.sha(code.encode()),"dependencyHashes":dependency_hashes(),"images":{n:preview.image_record(out/n) for n in names},"totalSeconds":time.monotonic()-started})
+        r.update({"artEvidence":evidence,"artQuality":art_quality.evaluate(evidence),"identity":preview.identity(CANDIDATE),"experimentSourceSha256":preview.sha(code.encode()),"dependencyHashes":dependency_hashes(),"images":{n:preview.image_record(out/n) for n in names},"reviewImages":{n:preview.image_record(out/n) for n in review_names},"totalSeconds":time.monotonic()-started})
         (out/"photometric-receipt.json").write_text(json.dumps(r,indent=2)+"\n")
     verify(out,fault)
 if __name__=="__main__":
