@@ -15,12 +15,12 @@
     "freccia-ascendente"
   ],
   "scales": [
-    0.6,
-    0.72,
-    0.84,
-    0.96
+    0.7,
+    0.82,
+    0.94,
+    1.06
   ],
-  "halfThicknessM": 0.07,
+  "halfThicknessM": 0.11,
   "maxCoreRadiusM": 0.64,
   "views": {
     "atrium": {
@@ -28,27 +28,28 @@
         600,
         375
       ],
-      "minWidth": 20,
-      "minHeight": 16,
-      "minArea": 100
+      "minWidth": 24,
+      "minHeight": 18,
+      "minArea": 180
     },
     "vertical": {
       "pixels": [
         320,
         480
       ],
-      "minWidth": 16,
-      "minHeight": 14,
-      "minArea": 90
+      "minWidth": 18,
+      "minHeight": 16,
+      "minArea": 120
     }
   },
   "maxNormalizedIoU": 0.65,
   "normalizationPixels": 32,
   "maxAttempts": 4,
-  "scope": "Misure di maschere geometriche dei soli nuclei, non riconoscimento semantico umano o contrasto nel render. Soglie iniziali del pilota, fisse durante il ciclo; composizione, camere, portali, anelli e traiettorie bloccati.",
+  "scope": "Silhouette dei nuclei scultorei; componenti chiusi orientati, triangoli validi, spessore e volume con ingombro bloccato. Non dimostra riconoscimento umano né assenza di intersezioni tra componenti assemblati. Posizioni, camere principali, portali, anelli e traiettorie immutati.",
   "resources": {
     "maxBlenderPreviews": 1,
     "externalServices": false,
     "paidServices": false
-  }
+  },
+  "minCoreRadiusM": 0.55
 }
