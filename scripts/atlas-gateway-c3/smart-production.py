@@ -1,5 +1,6 @@
 """SP-01: select a conservative production mode and exactly one active candidate."""
-import argparse,json,os,re,subprocess
+import argparse,json,os,re,subprocess,importlib.util
+import art_quality
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 DIR="scripts/atlas-gateway-c3/"
@@ -8,14 +9,22 @@ PREVIEW_SCRIPTS={"library-master-arch.py","library-master-material-study.py","li
 HISTORICAL={"library-composition","master-architecture","master-materials","master-scenography","master-lighting","master-portals","refine-portals","refine-environment","refine-cupola","refine-arch"}
 def validate(data):
     assert data["schemaVersion"]==1 and type(data["previewEnabled"]) is bool
+    assert data["artisticStage"] in ("preview","accepted")
     a=data["active"]
     assert re.fullmatch(r"C3\.3A[0-9][A-Za-z0-9.]*",a["phase"])
     assert re.fullmatch(r"library-master-[a-z0-9-]+\.py",a["script"])
     assert re.fullmatch(r"atlas-[a-z0-9-]+",a["artifact"])
     assert a["historicalJob"] is None or a["historicalJob"] in HISTORICAL
     assert not data["previewEnabled"] or a["script"] in PREVIEW_SCRIPTS
+    if a["script"]=="library-master-knowledge-stars.py":
+        assert a["phase"]==art_quality.brief()[0]["phase"] and data["previewEnabled"]
+    else:assert data["artisticStage"]=="accepted"
     return a
-def choose(requested,changes,active,event,preview_enabled=False):
+def choose(requested,changes,active,event,preview_enabled=False,stage="accepted",draft=False):
+    if stage=="preview":
+        if requested=="full" or event!="pull_request" or not draft or not preview_enabled or active["script"]!="library-master-knowledge-stars.py":
+            raise ValueError("SP-05: artistic preview is restricted to a draft PR; qualification requires accepted review")
+        return "fast","SP-05 artistic study: no qualification before visual acceptance"
     if requested=="fast":
         if event!="workflow_dispatch" or not preview_enabled or active["script"] not in PREVIEW_SCRIPTS:raise ValueError("FAST requires explicit dispatch and supported preview adapter")
         return "fast","explicit non-qualifying artistic preview"
@@ -57,13 +66,24 @@ def selftest():
     assert choose("qualify",[DIR+a["script"]],a,"pull_request",True)[0]=="qualify"
     assert choose("qualify",[DIR+"smart-preview.py"],a,"pull_request",True)[0]=="full"
     print("SP-03 mode isolation: 6/6 PASS")
+    star={"script":"library-master-knowledge-stars.py"}
+    assert choose("qualify",None,star,"pull_request",True,"preview",True)[0]=="fast"
+    for requested,event,draft in (("full","pull_request",True),("qualify","pull_request",False),("fast","workflow_dispatch",True)):
+        try:choose(requested,None,star,event,True,"preview",draft)
+        except ValueError:pass
+        else:raise AssertionError("unapproved production accepted")
+    print("SP-05 stage isolation: 4/4 PASS")
 def main():
     ap=argparse.ArgumentParser();ap.add_argument("--selftest",action="store_true");ap.add_argument("--requested",choices=["qualify","full","fast"],default="qualify");ap.add_argument("--event",default="pull_request");ap.add_argument("--before",default="");ap.add_argument("--head",default="");args=ap.parse_args()
     if args.selftest:selftest();return
     config=json.loads((ROOT/CONFIG).read_text());a=validate(config)
     script=ROOT/DIR/a["script"];assert script.is_file() and not script.is_symlink()
-    mode,reason=choose(args.requested,changed(args.before,args.head),a,args.event,config["previewEnabled"])
-    result={"mode":mode,"phase":a["phase"],"script":a["script"],"artifact":a["artifact"],"historical_job":a["historicalJob"] or "none","reason":reason,"preview_enabled":str(config["previewEnabled"]).lower()}
+    stage=config["artisticStage"]
+    if stage=="accepted" and a["script"]=="library-master-knowledge-stars.py":
+        spec=importlib.util.spec_from_file_location("smart_preview",ROOT/DIR/"smart-preview.py");module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        art_quality.require_review(module.identity(script),a["phase"])
+    mode,reason=choose(args.requested,changed(args.before,args.head),a,args.event,config["previewEnabled"],stage,os.environ.get("PR_DRAFT")=="true")
+    result={"mode":mode,"phase":a["phase"],"script":a["script"],"artifact":a["artifact"],"historical_job":a["historicalJob"] or "none","reason":reason,"preview_enabled":str(config["previewEnabled"]).lower(),"artistic_stage":stage}
     print(json.dumps(result,indent=2))
     if os.environ.get("GITHUB_OUTPUT"):
         with open(os.environ["GITHUB_OUTPUT"],"a") as f:
