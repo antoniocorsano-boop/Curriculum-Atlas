@@ -1,0 +1,74 @@
+name: Atlas — Storie P2 isolated Blender preview
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "scripts/atlas-storie-p2/**"
+      - ".github/workflows/atlas-storie-p2-preview.yml"
+permissions:
+  contents: read
+concurrency:
+  group: atlas-storie-p2-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  preview:
+    if: github.event.pull_request.head.ref == 'work/storie-p2-blender-preview' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore existing pinned Blender archive
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify existing Atlas Blender toolchain
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - name: Render isolated Storie preview and export editable master
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/storie-p2"
+          python3 -m py_compile scripts/atlas-storie-p2/render-blender.py
+          "$BLENDER_BIN" --background --factory-startup --threads 4 --python-exit-code 1 --python scripts/atlas-storie-p2/render-blender.py -- "$RUNNER_TEMP/storie-p2" 2>&1 | tee "$RUNNER_TEMP/storie-p2/render.log"
+      - name: Verify preview evidence, file integrity and GLB framing
+        run: |
+          python3 - <<'PY'
+          import os, json, struct, hashlib
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"storie-p2"
+          e=json.loads((p/"evidence.json").read_text())
+          assert e["status"]=="PREVIEW_NOT_APPROVED" and e["blender"].startswith("4.2.23")
+          assert e["components"]==15 and e["triangles"]==105568 and e["cpuOnly"]
+          for flag in ("referenceLocked","humanApproved","imageInference","publicationAuthorized","runtimeQualified"):
+              assert e[flag] is False
+          assert set(e["files"])=={"storie-preview.blend","storie-preview.glb","storie-obliqua.png","storie-frontale.png"}
+          for name,row in e["files"].items():
+              data=(p/name).read_bytes()
+              assert len(data)==row["bytes"] and hashlib.sha256(data).hexdigest()==row["sha256"]
+          for name in ("storie-obliqua.png","storie-frontale.png"):
+              png=(p/name).read_bytes()
+              assert png[:8]==b"\x89PNG\r\n\x1a\n" and struct.unpack(">II",png[16:24])==(1024,1024) and png[25]==6
+          glb=(p/"storie-preview.glb").read_bytes()
+          magic,version,length=struct.unpack_from("<4sII",glb)
+          assert magic==b"glTF" and version==2 and length==len(glb)
+          size,kind=struct.unpack_from("<I4s",glb,12); assert kind==b"JSON"
+          d=json.loads(glb[20:20+size])
+          assert len(d["meshes"])==15 and not d.get("cameras")
+          assert all("uri" not in b for b in d.get("buffers",[])+d.get("images",[]))
+          assert not d.get("extensions",{}).get("KHR_lights_punctual")
+          assert sum(d["accessors"][pr["indices"]]["count"]//3 for m in d["meshes"] for pr in m["primitives"])==105568
+          print("PASS: isolated preview evidence; artistic acceptance and runtime qualification remain false")
+          PY
+      - name: Preserve actual preview and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-storie-p2-blender-preview
+          path: |
+            ${{ runner.temp }}/storie-p2/
+            ${{ runner.temp }}/atlas-c3/blender-version.log
+            ${{ runner.temp }}/atlas-c3/blender-distribution.sha256
+          if-no-files-found: ignore
+          retention-days: 7
