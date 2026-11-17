@@ -27,6 +27,7 @@ def parent_source(verify):
 EXTERIOR="""
 # A5.4b: overlapping irregular tapered lobes, same two material groups.
 exterior_records=[]
+cypress_tip=material("Cypress sunlit foliage",(.15,.225,.075),.82)
 def crown_tree(x,y,h):
     z0=exterior_height(x,y) if y>=31 else -.18
     rng=random.Random(5402+int((x+100)*100)+int(y*100))
@@ -56,7 +57,12 @@ def crown_tree(x,y,h):
         offset=h*(.061*(1-.53*t))
         lobe(x+offset*cos(a),y+offset*sin(a),low,high,h*rng.uniform(.038,.061)*(1-.35*t),7 if near else 5,8 if near else 6,(.04*cos(a),.04*sin(a)))
     obj=mesh("Cypress layered crown",verts,faces,foliage,scenery)
-    for poly in obj.data.polygons:poly.use_smooth=True
+    obj.data.materials.append(cypress_tip)
+    for poly in obj.data.polygons:
+        poly.use_smooth=True
+        # Broad sunlit sprays rather than noisy random face colors.
+        z=(poly.center.z-z0)/h
+        if sin(poly.center.x*4.0+poly.center.y*2.0+z*15.0)>.45:poly.material_index=1
     exterior_records.append({"x":x,"y":y,"height":h,"near":near,"lobes":1+sprays,"vertices":len(verts),"faces":len(faces)})
 """
 
@@ -129,6 +135,7 @@ assert all(q["lobes"]==(13 if q["near"] else 6) and q["vertices"]>0 and q["faces
 assert all(q["leaves"]==1320 and q["branches"]==10 and q["twigs"]==60 and q["foliageVertices"]==9240 and q["foliageTriangles"]==7920 for q in inside)
 assert {(q["x"],q["y"]) for q in inside}=={(-6.0,3.45),(6.0,3.45)}
 assert any(q.get("name")=="Landscape Olive green" for q in d["nodes"])
+assert any(q.get("name")=="Cypress sunlit foliage" for q in d["materials"])
 assert all(any(q.get("name")==name for q in sd["nodes"]) for name in ("Scenography Olive leaf light","Scenography Olive leaf shadow"))
 receipt.update({"vegetationRefinement":True,"exteriorTrees":34,"interiorTrees":2,"interiorLeaves":2640,"exteriorCrownLobes":sum(q["lobes"] for q in ex)})
 (p/"library-verification.json").write_text''')
@@ -137,6 +144,8 @@ else:
     code=parent_source(False)
     code=between(code,"def crown_tree(x,y,h):","near_trees=",EXTERIOR)
     code=between(code,"def planter(x,y):","def seat(x,y,side):",INTERIOR)
+    code=once(code,'leaf_light=material("Olive leaf light",(.13,.23,.07),.69)','leaf_light=material("Olive leaf light",(.18,.27,.115),.68)')
+    code=once(code,'leaf_dark=material("Olive leaf shadow",(.045,.11,.028),.78)','leaf_dark=material("Olive leaf shadow",(.065,.13,.052),.79)')
     code=once(code,"# A4.5 — original offline architectural signage, never independent navigation.",RECEIPT+"\n# A4.5 — original offline architectural signage, never independent navigation.")
     code=once(code,'receipt={"phase":"C3.3A5.4a"','receipt={"phase":"C3.3A5.4b","vegetationRefinement":True')
     code=once(code,'"arch-detail.png","material-study.json"):','"arch-detail.png","material-study.json","vegetation-study.json"):')
