@@ -16,6 +16,14 @@ def policy():
     for q in [*p["recipes"]["base"].values(),*(p["recipes"][k] for k in ("darkWarm","darkCool","lightWarm","lightCool"))]:
         assert set(q)=={"color","emission","roughness","metallic"} and len(q["color"])==3
         assert all(0<=v<=1 for v in q["color"]) and 0<=q["emission"]<=1.8 and 0<=q["roughness"]<=1 and 0<=q["metallic"]<=1
+    from star_finish import FAMILY,SCALARS,face_colors
+    for sid in IDS:
+        family=FAMILY[sid]
+        for key in ("base","dark"+family.title(),"light"+family.title()):
+            q=recipe(p,sid,key)
+            assert all(q[k]==v for k,v in SCALARS[family].items())
+            colors=face_colors(sid,q["color"])
+            assert len(colors)>100 and len(set(colors))>=5
     return p,hashlib.sha256(raw).hexdigest()
 
 def png(path):
