@@ -4,7 +4,7 @@ from pathlib import Path
 base=Path(__file__).resolve().parent
 PARENT="library-master-arch.py"
 PARENT_BLOB="de6d9bdd6a73528eca1e49d228af61738d2335da"
-END='exec(compile(code,__file__,"exec"),globals())'
+END='exec(compile(code,'+'__file__,"exec"),globals())'
 PHASE="C3.3A5.4a"
 def once(code,old,new):
     assert code.count(old)==1,old[:120]
