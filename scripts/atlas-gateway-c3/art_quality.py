@@ -64,7 +64,18 @@ def require_review(identity,phase):
     assert set(e["files"])=={"atrium","vertical"}
     assert all(re.fullmatch(r"[0-9a-f]{64}",q["sha256"]) for q in e["files"].values())
     scores=r["scores"];criteria=b["visualRubric"]["criteria"]
-    assert set(scores)==set(criteria) and all(type(v) is int and b["visualRubric"]["minimumEach"]<=v<=4 for v in scores.values())
+    assert set(scores)==set(criteria) and all(type(v) is int and b["visualRubric"].get("minimumByCriterion",{}).get(k,b["visualRubric"]["minimumEach"])<=v<=4 for k,v in scores.items())
+    # A distinct high-resolution sculptural evidence package is mandatory.
+    review=r["sculptureReview"];proposal=review["proposalReceipt"]
+    assert type(review["artifactId"]) is int and review["artifactId"]>0
+    assert proposal["candidateIdentity"]==identity and proposal["status"]=="ADAPTIVE_PREVIEW_ONLY" and proposal["result"]=="PASS"
+    assert proposal["changedFromCanonical"]==[] and proposal["estimatedMaterialGroups"]==3
+    assert proposal["artQuality"]==e["artQuality"] and proposal["artQuality"]["briefSha256"]==digest
+    assert all(not proposal[k] for k in ("qualified","publishable","studentAuthorized","visualAcceptance","canonicalReviewReceipt"))
+    dims={"review-atrium.png":[1200,750],"review-vertical.png":[640,960],**{"detail-"+s+".png":[512,512] for s in b["objective"]["requiredIds"]}}
+    assert set(proposal["reviewImages"])==set(dims)
+    assert all(proposal["reviewImages"][n]["dimensions"]==dim and re.fullmatch(r"[0-9a-f]{64}",proposal["reviewImages"][n]["sha256"]) and proposal["reviewImages"][n]["bytes"]>1000 for n,dim in dims.items())
+    assert set(review["observations"])==set(dims) and all(isinstance(v,str) and v.strip() for v in review["observations"].values())
     assert isinstance(r["observations"],str) and r["observations"].strip()
     return r
 
