@@ -3,12 +3,14 @@ import hashlib,sys
 from pathlib import Path
 base=Path(__file__).resolve().parent
 sys.path.insert(0,str(base))
-import knowledge_composition,adaptive_identity
+import knowledge_composition,adaptive_identity,star_finish,photometry
 plan,alternatives,plan_digest=knowledge_composition.load()
 adaptive=adaptive_identity.solve(plan)
 assert adaptive["status"]=="PASS","SP-06: exhausted adaptive identity budget"
 selected=plan["selected"]
 composition={"id":selected,"planSha256":plan_digest,"layout":plan["layouts"][selected],"hub":plan["hub"],"hubRadius":plan["hubRadius"],"connectionRadius":plan["connectionRadius"],"paths":alternatives[selected]["paths"],"semantics":plan["semantics"],"identityMeshes":adaptive["meshes"],"identityEvidence":adaptive_identity.evidence(adaptive)}
+composition["finishSourceSha256"]=hashlib.sha256((base/"star_finish.py").read_bytes()).hexdigest()
+composition["finishPolicySha256"]=photometry.policy()[1]
 PARENT="library-master-atmosphere-study.py"
 PARENT_BLOB="edca5a6a9d6a97871068bbcfb5a1b9c41a3d28dc"
 END='exec(compile(code,'+'__file__,"exec"),globals())'
@@ -36,15 +38,22 @@ star_policy=(Path(__file__).resolve().parents[2]/"src/features/atlas-gateway/gat
 assert hashlib.sha1(b"blob "+str(len(star_policy)).encode()+b"\\x00"+star_policy).hexdigest()=="fe1d43c5622b1b7889ad9bb7c188373fddd9bebf"
 assert "Esplora storie, laboratori, scoperte e percorsi." in star_policy.decode()
 star_objects=[];star_records=[]
-star_gold=material("Knowledge star warm light",(.65,.32,.10),.36,.25,.65)
-star_cool=material("Knowledge star cool light",(.14,.37,.61),.38,.22,.55)
-star_orbit=material("Knowledge star satin orbit",(.79,.53,.23),.30,.65,.75)
+import star_finish as sf,photometry as finish_pm
+finish_policy,finish_digest=finish_pm.policy()
+assert finish_digest==composition["finishPolicySha256"]
+assert hashlib.sha256((Path(__file__).resolve().parent/"star_finish.py").read_bytes()).hexdigest()==composition["finishSourceSha256"]
+star_gold=sf.make_material(material,"warm")
+star_cool=sf.make_material(material,"cool")
+star_orbit=material("Knowledge star satin orbit",(.52,.31,.10),.30,.74,.12)
 # SP-06: the very meshes tested in the projected silhouette cycle.
 def star_core(name,c,r,mat,seed):
     sid=composition["identityEvidence"]["shapeKinds"]
     key=("storie","laboratori","scoperte","percorsi")[seed-5500]
     q=composition["identityMeshes"][key]
-    return mesh(name,[tuple(c+Vector(p)) for p in q["vertices"]],q["faces"],mat,star_objects)
+    obj=mesh(name,[tuple(c+Vector(p)) for p in q["vertices"]],q["faces"],mat,star_objects)
+    recipe=finish_pm.recipe(finish_policy,key,"base")
+    sf.apply(obj,key,recipe);assert sf.check(obj,key,recipe)
+    return obj
 def orbit(name,c,normal,r,minor):
     axis=Vector(normal).normalized();u=axis.cross(Vector((0,0,1)))
     if u.length<.01:u=axis.cross(Vector((1,0,0)))
@@ -201,9 +210,13 @@ assert not kd.get("extensionsRequired") and all("uri" not in q for k in ("buffer
 kp=sum(len(q["primitives"]) for q in kd["meshes"])
 kv=sum(kd["accessors"][q["attributes"]["POSITION"]]["count"] for mesh in kd["meshes"] for q in mesh["primitives"])
 assert kp==3 and kv<=18000 and len(kb)<=1024*1024,(kp,kv,len(kb))
+import star_finish as sf,photometry as finish_pm
+finish_policy,_=finish_pm.policy()
+finish_export=sf.verify_module(p/"library-knowledge-stars.glb",{s:finish_pm.recipe(finish_policy,s,"base") for s in sf.IDS})
+assert finish_export["status"]=="PASS"
 assert not any("Knowledge stars" in q.get("name","") for data in (d,sd,pd,cd) for q in data["nodes"])
 assert len([q for q in kd["nodes"] if q.get("name","").startswith("Knowledge stars ")])==3
-receipt.update({"knowledgeStars":4,"starRings":6,"starPrimitives":kp,"starVertices":kv,"starBytes":len(kb),"starProjectionViews":3,"connectionsProduced":True,"symbolicTrajectories":4,"adaptiveIdentityAttempts":stars["identityStudy"]["selectedAttempt"]})
+receipt.update({"knowledgeStars":4,"starRings":6,"starPrimitives":kp,"starVertices":kv,"starBytes":len(kb),"starFinishExport":finish_export,"starProjectionViews":3,"connectionsProduced":True,"symbolicTrajectories":4,"adaptiveIdentityAttempts":stars["identityStudy"]["selectedAttempt"]})
 (p/"library-verification.json").write_text''')
     sys.argv=[sys.argv[0],sys.argv[2]]
 else:
