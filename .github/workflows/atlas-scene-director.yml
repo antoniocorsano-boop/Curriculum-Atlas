@@ -81,10 +81,17 @@ jobs:
           with urllib.request.urlopen(req,timeout=45) as f:
               release=json.load(f)
           assert release["tag_name"]==v and not release["draft"] and not release["prerelease"]
-          name="gaffer-"+v+"-linux.tar.gz"
-          assets=[a for a in release["assets"] if a["name"]==name]
-          assert len(assets)==1, "Exact Linux asset missing"
+          # Select only the official stable release Linux x86-64 binary.
+          # Record the entire published manifest before selection for diagnosis.
+          p=pathlib.Path(os.environ["ATLAS_ENGINE_EVIDENCE"])
+          manifest=[{k:a.get(k) for k in ("id","name","size","digest","browser_download_url")} for a in release["assets"]]
+          (p/"upstream-manifest.json").write_text(json.dumps(manifest,indent=2))
+          print("Published assets:",[a["name"] for a in manifest])
+          pattern=r"gaffer[-_]"+re.escape(v)+r"[-_][a-zA-Z0-9_.-]*linux[a-zA-Z0-9_.-]*\.tar\.(?:gz|xz|bz2)"
+          assets=[a for a in release["assets"] if re.fullmatch(pattern,a["name"],re.I) and not re.search(r"arm|aarch64|debug|symbols|source",a["name"],re.I)]
+          assert len(assets)==1, "Expected exactly one official Linux binary; inspect upstream-manifest.json"
           a=assets[0]
+          name=a["name"]
           assert a["browser_download_url"]=="https://github.com/GafferHQ/gaffer/releases/download/"+v+"/"+name
           assert 0<a["size"]<=2_500_000_000, "Archive exceeds bounded budget"
           assert re.fullmatch(r"sha256:[0-9a-f]{64}",a.get("digest") or ""), "No published SHA256; fail closed"
@@ -95,7 +102,7 @@ jobs:
           digest=$(python3 -c 'import json,os; print(json.load(open(os.environ["ATLAS_ENGINE_EVIDENCE"]+"/upstream-lock.json"))["digest"].split(":")[1])')
           curl --proto '=https' --proto-redir '=https' --fail --location --retry 2 --max-time 300 --max-filesize 2500000000 "$url" -o "$RUNNER_TEMP/gaffer.tar.gz"
           echo "$digest  $RUNNER_TEMP/gaffer.tar.gz" | sha256sum -c -
-          tar -xzf "$RUNNER_TEMP/gaffer.tar.gz" -C "$RUNNER_TEMP/gaffer" --strip-components=1 --no-same-owner
+          tar -xf "$RUNNER_TEMP/gaffer.tar.gz" -C "$RUNNER_TEMP/gaffer" --strip-components=1 --no-same-owner
           test -x "$RUNNER_TEMP/gaffer/bin/gaffer"
       - name: Render reference, variant and restored state on CPU
         shell: bash
