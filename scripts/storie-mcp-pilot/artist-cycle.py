@@ -124,7 +124,7 @@ async def run():
                 assert len(blocks)==1 and blocks[0].type=="text",blocks
                 s=blocks[0].text
                 assert s.startswith("Code executed successfully:"),s
-                line=[x for x in s.splitlines() if x.startswith("VF3D_JSON=")]
+                line=[x for x in s.removeprefix("Code executed successfully:").strip().splitlines() if x.startswith("VF3D_JSON=")]
                 assert len(line)==1,s
                 return json.loads(line[0].split("=",1)[1])
             async def screenshot(name):
