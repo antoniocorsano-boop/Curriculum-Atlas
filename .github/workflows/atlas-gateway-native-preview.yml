@@ -5,6 +5,7 @@ on:
     paths:
       - "scripts/build-atlas-gateway-native.mjs"
       - "scripts/test-atlas-gateway-native.mjs"
+      - "scripts/test-atlas-gateway-native-preflight.mjs"
       - "scripts/atlas-gateway-integration/native-preview-runtime.js"
       - "src/features/atlas-gateway/**"
       - "src/app/gateway/**"
@@ -14,7 +15,7 @@ permissions:
   contents: read
   actions: read
 concurrency:
-  group: atlas-native-navigable-preview
+  group: atlas-native-navigable-preview-${{ github.event.pull_request.head.ref }}
   cancel-in-progress: true
 jobs:
   qualify-native-gateway:
@@ -76,6 +77,9 @@ jobs:
           echo "ATLAS_GATEWAY_NATIVE_MANIFEST_SHA256=$(sha256sum "$RUNNER_TEMP/native-gateway/native-manifest.json" | cut -d' ' -f1)" >> "$GITHUB_ENV"
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
+      - name: Preflight exact native scene and teardown before application build
+        run: |
+          node --experimental-strip-types scripts/test-atlas-gateway-native-preflight.mjs "$RUNNER_TEMP/native-gateway" "$RUNNER_TEMP/native-gateway/evidence/preflight"
       - name: Build local native Gateway candidate
         run: pnpm build
       - name: Exercise actual route, portals, isolated assets and fallbacks
