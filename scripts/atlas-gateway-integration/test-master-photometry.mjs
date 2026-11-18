@@ -212,6 +212,7 @@ try{
         scene.traverse(o=>{if(!o.isMesh)return;const mats=Array.isArray(o.material)?o.material:[o.material];o.castShadow=mats.every(m=>!m.transparent&&m.opacity===1);o.receiveShadow=true;});
         renderer.shadowMap.needsUpdate=true;
       }
+      for(const m of allMaterials)m.needsUpdate=true;
       const warmup=capture(),rendered=capture();
       if(rendered.calls!==restored.calls||rendered.triangles!==restored.triangles)throw Error("Steady draw/triangle budget changed");
       const again=capture();if(diff(rendered.b,again.b).pixels!==0)throw Error("Static photometry changed pixels");
