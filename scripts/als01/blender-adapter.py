@@ -8,7 +8,7 @@ from bpy_extras.object_utils import world_to_camera_view
 
 def make_points(scene,sample):
     optics=sample["optics"];limits=sample["limits"]
-    assert optics["revision"]=="ALS-01-R2" and sample["paused"] is True
+    assert optics["revision"]=="ALS-01-R3" and sample["paused"] is True
     assert len(sample["points"])==18 and len(sample["anchors"])==4
     result=[]
     for p in sample["points"]:
