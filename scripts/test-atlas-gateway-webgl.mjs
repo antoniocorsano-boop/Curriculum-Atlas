@@ -16,12 +16,17 @@ async function assertLayout(page, frame, label) {
   const viewport = page.viewportSize();
   assert(parent && viewport && parent.x >= -1 && parent.y >= -1 && parent.x+parent.width <= viewport.width+1 && parent.y+parent.height <= viewport.height+1, label+" iframe fuori schermo: "+JSON.stringify(parent));
   assert(parent.height >= 180, label+" scena troppo bassa");
-  const controls = await frame.locator("#atlas-quick button, #gesture-controls button").evaluateAll(elements => elements.map(el => {
+  const controls = await frame.locator("#gesture-controls button").evaluateAll(elements => elements.map(el => {
     const r=el.getBoundingClientRect();
     const center=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
     return {label:el.textContent, x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom,vw:innerWidth,vh:innerHeight,reachable:el.contains(center)};
   }));
-  assert.equal(controls.length,9,label+" comandi");
+  assert.equal(controls.length,6,label+" comandi di movimento");
+  assert.equal(await frame.locator("#atlas-quick").isVisible(),false,label+" navigazione duplicata");
+  assert.equal(await frame.locator("#hero-footer").isVisible(),false,label+" medaglione non coperto dal testo");
+  const direct=await page.locator(".atlas-gateway-direct").evaluateAll(els=>els.map(el=>{const r=el.getBoundingClientRect();return {id:el.dataset.portal,x:r.x,y:r.y,w:r.width,h:r.height,right:r.right,bottom:r.bottom,reachable:el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}}));
+  assert.deepEqual(direct.map(c=>c.id),["curricolo","esperienze","studio"],label+" destinazioni");
+  for(const c of direct)assert(c.x>=-1&&c.y>=-1&&c.right<=viewport.width+1&&c.bottom<=viewport.height+1&&c.w>=40&&c.h>=43&&c.reachable,label+" destinazione non raggiungibile "+JSON.stringify(c));
   for (const c of controls) assert(c.x>=-1 && c.y>=-1 && c.right<=c.vw+1 && c.bottom<=c.vh+1 && c.height>=43 && c.width>=40 && c.reachable,label+" comando non raggiungibile: "+JSON.stringify(c));
   const dimensions=await page.evaluate(()=>{
     const root=document.documentElement, body=document.body, shell=document.querySelector(".atlas-gateway-immersive");
@@ -99,7 +104,10 @@ try {
     assert(initial.camera.every((v,i)=>Math.abs(v-after.camera[i])<0.03),"rotazione portali non altera la posizione camera");
     await frame.locator("#reset-view").click();
     await waitScene(frame, state => Math.abs(state.offset) < 0.025, "Ripristino panoramica");
-    await frame.locator('[data-atlas="studio"]').click();
+    // Click the real semantic 3D object, rather than the removed duplicate toolbar.
+    const point=await frame.evaluate(()=>{scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);const p=panelGroups[2].getWorldPosition(new THREE.Vector3()).project(camera);const x=(p.x+1)*innerWidth/2,y=(1-p.y)*innerHeight/2;return {x,y,hit:hitPanel(x,y)}});
+    assert.equal(point.hit,2,name+" hit test Studio");
+    await frame.locator("canvas").click({position:{x:point.x,y:point.y}});
     await page.getByRole("status").filter({hasText:"accesso professionale non ancora abilitato"}).waitFor({timeout:30000});
     assert(page.url().includes("/gateway"));
     const afterNotice=await assertLayout(page,frame,name+" dopo messaggio Studio");
@@ -114,7 +122,7 @@ try {
       await waitScene(frame, state => state.calls > 0, "Ritorno verticale");
       await assertLayout(page,frame,"telefono tornato verticale");
     }
-    await frame.locator('[data-atlas="esperienze"]').click();
+    await page.locator('.atlas-gateway-direct[data-portal="esperienze"]').click();
     await page.waitForURL("**/esperienze/",{timeout:60000});
     await page.getByRole("heading",{name:"Esplora, scopri, comprendi."}).waitFor();
     await page.getByRole("button",{name:"Laboratori",exact:true}).click();

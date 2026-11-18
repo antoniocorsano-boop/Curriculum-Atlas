@@ -28,7 +28,7 @@ jobs:
           node-version: 22
           package-manager-cache: false
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
       - name: Experience contracts
         run: pnpm test:experience:contracts
       - name: Experience grammar registry

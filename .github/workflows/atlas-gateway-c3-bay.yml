@@ -1,0 +1,947 @@
+name: Atlas Gateway — C3.1 Blender bay
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
+    paths:
+      - "scripts/atlas-gateway-c3/**"
+      - "docs/atlas-gateway/AG-04C3-FILIERA-3D.md"
+      - ".github/workflows/atlas-gateway-c3-bay.yml"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Production mode (FAST is an explicit non-qualifying preview)
+        type: choice
+        options: [qualify, full, fast]
+        default: qualify
+
+# Only superseded executions of the same pull request are cancelled.
+concurrency:
+  group: atlas-gateway-c3-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    name: Smart Production — select mode and current candidate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      mode: ${{ steps.selection.outputs.mode }}
+      phase: ${{ steps.selection.outputs.phase }}
+      script: ${{ steps.selection.outputs.script }}
+      artifact: ${{ steps.selection.outputs.artifact }}
+      historical_job: ${{ steps.selection.outputs.historical_job }}
+      preview_enabled: ${{ steps.selection.outputs.preview_enabled }}
+      artistic_stage: ${{ steps.selection.outputs.artistic_stage }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Test composition quality and negative cases
+        run: python3 scripts/atlas-gateway-c3/art_quality.py
+      - name: Preflight alternative spatial compositions before Blender
+        run: python3 scripts/atlas-gateway-c3/knowledge_composition.py
+      - name: Adapt identity silhouettes before Blender
+        run: python3 scripts/atlas-gateway-c3/adaptive_identity.py --out "$RUNNER_TEMP/atlas-adaptive/identity.json"
+      - name: Preserve adaptive cycle evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-adaptive-identity-evidence
+          path: ${{ runner.temp }}/atlas-adaptive/identity.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Test deterministic mode selection
+        run: python3 scripts/atlas-gateway-c3/smart-production.py --selftest
+      - name: Test cache integrity and negative cases
+        run: python3 scripts/atlas-gateway-c3/smart-base-cache.py --selftest
+      - name: Test preview adapter against locked candidate
+        run: python3 scripts/atlas-gateway-c3/smart-preview.py --selftest
+      - name: Test incremental reuse adapter
+        run: python3 scripts/atlas-gateway-c3/incremental-preview.py --selftest
+      - name: Test photometric adaptation and evidence adapter
+        run: python3 scripts/atlas-gateway-c3/photometric-preview.py --selftest
+      - name: Test unified draft preview adapter
+        run: python3 scripts/atlas-gateway-c3/unified-preview.py --selftest
+      - name: Resolve current candidate and mode
+        id: selection
+        env:
+          REQUESTED: ${{ inputs.mode || 'qualify' }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_DRAFT: ${{ github.event.pull_request.draft }}
+          BEFORE_SHA: ${{ github.event.before || '' }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python3 scripts/atlas-gateway-c3/smart-production.py --requested "$REQUESTED" --event "$EVENT_NAME" --before "$BEFORE_SHA" --head "$HEAD_SHA"
+
+  materials:
+    name: C3.2A source resources
+    needs: plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Offline metadata contract
+        run: python3 scripts/atlas-gateway-c3/acquire-materials.py --selftest
+      - name: Restore qualified CC0 source bundle
+        id: materials-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-materials
+          key: atlas-c32-cc0-v1-fdaece268416cfe071dc33d72be9de529e4e713086b6d7708b68f1fa526d827c
+      - name: Acquire if absent and verify all source bytes
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-materials"
+          if [[ "${{ steps.materials-cache.outputs.cache-hit }}" != true ]]; then
+            python3 scripts/atlas-gateway-c3/locked-materials.py recover "$RUNNER_TEMP/atlas-materials"
+          fi
+          python3 scripts/atlas-gateway-c3/locked-materials.py verify "$RUNNER_TEMP/atlas-materials"
+          python3 scripts/atlas-gateway-c3/locked-materials.py negative "$RUNNER_TEMP/atlas-materials"
+      - name: Save verified locked sources
+        if: steps.materials-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: ${{ runner.temp }}/atlas-materials
+          key: ${{ steps.materials-cache.outputs.cache-primary-key }}
+      - name: Transfer verified source bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c32-source-bundle
+          path: ${{ runner.temp }}/atlas-materials/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Preserve source diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c32-source-diagnostics
+          path: ${{ runner.temp }}/atlas-materials/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  environment:
+    name: Qualified Blender environment and baseline
+    needs: plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore pinned Blender archive
+        id: blender-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify and bootstrap Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - name: Save verified Blender archive before rendering
+        if: steps.blender-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: ${{ steps.blender-cache.outputs.cache-primary-key }}
+      - name: Preflight GLB exporter and actual Cycles denoising
+        run: |
+          set -euo pipefail
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/preflight.py -- "$RUNNER_TEMP/atlas-c3" 2>&1 | tee "$RUNNER_TEMP/atlas-c3/preflight.log"
+      - name: Build and render baseline bay
+        run: |
+          set -euo pipefail
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/bay.py -- "$RUNNER_TEMP/atlas-c3" 2>&1 | tee "$RUNNER_TEMP/atlas-c3/blender.log"
+      - name: Verify baseline evidence
+        run: |
+          set -euo pipefail
+          python3 scripts/atlas-gateway-c3/verify.py "$RUNNER_TEMP/atlas-c3" | tee "$RUNNER_TEMP/atlas-c3/verification.json"
+      - name: Preserve baseline evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-gateway-c3-bay
+          path: ${{ runner.temp }}/atlas-c3/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  production:
+    name: C3.2A textured production
+    needs: [materials, environment, plan]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore pinned Blender archive
+        id: blender-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender bytes again
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - name: Download verified sources from same run
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-c32-source-bundle
+          path: ${{ runner.temp }}/atlas-c32/assets
+      - name: Reverify source bundle offline
+        run: python3 scripts/atlas-gateway-c3/locked-materials.py verify "$RUNNER_TEMP/atlas-c32/assets"
+      - name: Preflight production executable
+        run: |
+          set -euo pipefail
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/preflight.py -- "$RUNNER_TEMP/atlas-c3" 2>&1 | tee "$RUNNER_TEMP/atlas-c3/preflight.log"
+      - name: Compute exact base dependency fingerprint
+        id: base-key
+        run: python3 scripts/atlas-gateway-c3/smart-base-cache.py key "$RUNNER_TEMP"
+      - name: Restore verified base cache for QUALIFY or FAST
+        if: needs.plan.outputs.mode == 'qualify' || needs.plan.outputs.mode == 'fast'
+        id: base-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-smart-base
+          key: ${{ steps.base-key.outputs.key }}
+      - name: Check whether FULL can seed a new exact-key cache
+        if: needs.plan.outputs.mode == 'full'
+        id: full-cache-lookup
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-smart-base
+          key: ${{ steps.base-key.outputs.key }}
+          lookup-only: true
+      - name: Verify and recover cached bay and AO
+        if: steps.base-cache.outputs.cache-hit == 'true'
+        run: python3 scripts/atlas-gateway-c3/smart-base-cache.py restore "$RUNNER_TEMP"
+      - name: Build textured and merged bay
+        if: steps.base-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/bay-textured.py -- "$RUNNER_TEMP/atlas-c32" 2>&1 | tee "$RUNNER_TEMP/atlas-c32/blender.log"
+      - name: Verify materials, mesh budget and self-contained GLB
+        run: |
+          set -euo pipefail
+          python3 scripts/atlas-gateway-c3/verify-textured.py "$RUNNER_TEMP/atlas-c32" | tee "$RUNNER_TEMP/atlas-c32/verification.json"
+      - name: Preserve production evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-gateway-c32-textured
+          path: |
+            ${{ runner.temp }}/atlas-c32/
+            ${{ runner.temp }}/atlas-c3/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: C3.2B bake ambient occlusion in a second UV atlas
+        if: steps.base-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c32b"
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/bake-ao.py -- "$RUNNER_TEMP/atlas-c32b" 2>&1 | tee "$RUNNER_TEMP/atlas-c32b/bake.log"
+      - name: C3.2B embed AO and verify GLB contract
+        if: steps.base-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          python3 scripts/atlas-gateway-c3/embed-ao.py "$RUNNER_TEMP/atlas-c32b"
+      - name: Independently verify freshly rebuilt base
+        if: steps.base-cache.outputs.cache-hit != 'true'
+        run: python3 scripts/atlas-gateway-c3/smart-base-cache.py verify "$RUNNER_TEMP"
+      - name: Prepare verified cache after a cold rebuild
+        if: steps.base-cache.outputs.cache-hit != 'true' && steps.full-cache-lookup.outputs.cache-hit != 'true'
+        run: python3 scripts/atlas-gateway-c3/smart-base-cache.py save "$RUNNER_TEMP"
+      - name: Save exact-key verified base cache
+        if: steps.base-cache.outputs.cache-hit != 'true' && steps.full-cache-lookup.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: ${{ runner.temp }}/atlas-smart-base
+          key: ${{ steps.base-key.outputs.key }}
+      - name: Preserve AO evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c32b-ao
+          path: ${{ runner.temp }}/atlas-c32b/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  ao-webgl:
+    name: C3.2B isolated Three.js AO comparison
+    needs: production
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Install existing application dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Record browser toolchain versions
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c32b-webgl"
+          { node --version; pnpm --version; pnpm exec playwright --version; } | tee "$RUNNER_TEMP/atlas-c32b-webgl/toolchain.log"
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-c32b-ao
+          path: ${{ runner.temp }}/atlas-c32b
+      - name: Compare AO disabled and enabled in local r128
+        run: node scripts/atlas-gateway-c3/test-ao-webgl.mjs "$RUNNER_TEMP/atlas-c32b" "$RUNNER_TEMP/atlas-c32b-webgl"
+      - name: Preserve actual browser screenshots and metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c32b-webgl
+          path: ${{ runner.temp }}/atlas-c32b-webgl/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  library-composition:
+    name: C3.3A circular library architectural prototype
+    needs: [production, plan]
+    if: needs.plan.outputs.mode == 'full' && needs.plan.outputs.historical_job != 'library-composition'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore pinned Blender archive
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - name: Download verified baseline production
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-gateway-c32-textured
+          path: ${{ runner.temp }}
+      - name: Download verified AO module
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-c32b-ao
+          path: ${{ runner.temp }}/atlas-c32b
+      - name: Compose and render circular library
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c33"
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/library-composition.py -- "$RUNNER_TEMP/atlas-c33" 2>&1 | tee "$RUNNER_TEMP/atlas-c33/library.log"
+      - name: Verify architecture and shared module contract
+        run: python3 scripts/atlas-gateway-c3/verify-library.py "$RUNNER_TEMP/atlas-c33"
+      - name: Preserve architecture and three real renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c33a-library
+          path: ${{ runner.temp }}/atlas-c33/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: C3.3A2 refined photographic exterior and varied shelves
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c33-refined"
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/library-refined.py -- "$RUNNER_TEMP/atlas-c33-refined" 2>&1 | tee "$RUNNER_TEMP/atlas-c33-refined/library.log"
+      - name: Verify refined architecture and variants
+        run: python3 scripts/atlas-gateway-c3/verify-library-refined.py "$RUNNER_TEMP/atlas-c33-refined"
+      - name: Preserve refined architecture and three real renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c33a2-refined
+          path: ${{ runner.temp }}/atlas-c33-refined/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: C3.3A3 art-directed sky and architecture
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c33-art-directed"
+          python3 -m py_compile scripts/atlas-gateway-c3/library-art-directed.py
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/library-art-directed.py -- "$RUNNER_TEMP/atlas-c33-art-directed" 2>&1 | tee "$RUNNER_TEMP/atlas-c33-art-directed/library.log"
+      - name: Verify C3.3A3 offline contract
+        run: python3 scripts/atlas-gateway-c3/library-art-directed.py --verify "$RUNNER_TEMP/atlas-c33-art-directed"
+      - name: Preserve C3.3A3 actual renders and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c33a3-art-directed
+          path: ${{ runner.temp }}/atlas-c33-art-directed/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  master-architecture:
+    name: C3.3A4.1 architectural master
+    needs: [production, plan]
+    if: needs.plan.outputs.mode == 'full' && needs.plan.outputs.historical_job != 'master-architecture'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore pinned Blender archive
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-gateway-c32-textured
+          path: ${{ runner.temp }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-c32b-ao
+          path: ${{ runner.temp }}/atlas-c32b
+      - name: Produce architectural master from locked sources
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c33-master-architecture"
+          python3 -m py_compile scripts/atlas-gateway-c3/library-master-architecture.py
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/library-master-architecture.py -- "$RUNNER_TEMP/atlas-c33-master-architecture" 2>&1 | tee "$RUNNER_TEMP/atlas-c33-master-architecture/library.log"
+      - name: Verify offline architecture contract
+        run: python3 scripts/atlas-gateway-c3/library-master-architecture.py --verify "$RUNNER_TEMP/atlas-c33-master-architecture"
+      - name: Preserve master architecture and actual renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c33a41-architecture
+          path: ${{ runner.temp }}/atlas-c33-master-architecture/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  master-materials:
+    name: C3.3A4.2 material and typography master
+    needs: [production, plan]
+    if: needs.plan.outputs.mode == 'full' && needs.plan.outputs.historical_job != 'master-materials'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore pinned Blender archive
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-gateway-c32-textured
+          path: ${{ runner.temp }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-c32b-ao
+          path: ${{ runner.temp }}/atlas-c32b
+      - name: Produce material and typography study from locked sources
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c33-master-materials"
+          python3 -m py_compile scripts/atlas-gateway-c3/library-master-materials.py
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/library-master-materials.py -- "$RUNNER_TEMP/atlas-c33-master-materials" 2>&1 | tee "$RUNNER_TEMP/atlas-c33-master-materials/library.log"
+      - name: Verify offline materials and typography contract
+        run: python3 scripts/atlas-gateway-c3/library-master-materials.py --verify "$RUNNER_TEMP/atlas-c33-master-materials"
+      - name: Preserve master materials and actual renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c33a42-materials
+          path: ${{ runner.temp }}/atlas-c33-master-materials/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  master-scenography:
+    name: C3.3A4.3 cultural scenography master
+    needs: [production, plan]
+    if: needs.plan.outputs.mode == 'full' && needs.plan.outputs.historical_job != 'master-scenography'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore pinned Blender archive
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-gateway-c32-textured
+          path: ${{ runner.temp }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-c32b-ao
+          path: ${{ runner.temp }}/atlas-c32b
+      - name: Produce original scenography from locked sources
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c33-master-scenography"
+          python3 -m py_compile scripts/atlas-gateway-c3/library-master-scenography.py
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/library-master-scenography.py -- "$RUNNER_TEMP/atlas-c33-master-scenography" 2>&1 | tee "$RUNNER_TEMP/atlas-c33-master-scenography/library.log"
+      - name: Verify offline scenography and spatial clearance contract
+        run: python3 scripts/atlas-gateway-c3/library-master-scenography.py --verify "$RUNNER_TEMP/atlas-c33-master-scenography"
+      - name: Preserve scenography master and actual renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c33a43-scenography
+          path: ${{ runner.temp }}/atlas-c33-master-scenography/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  master-lighting:
+    name: C3.3A4.4 lighting and atmosphere master
+    needs: [production, plan]
+    if: needs.plan.outputs.mode == 'full' && needs.plan.outputs.historical_job != 'master-lighting'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore pinned Blender archive
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-gateway-c32-textured
+          path: ${{ runner.temp }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-c32b-ao
+          path: ${{ runner.temp }}/atlas-c32b
+      - name: Produce directional lighting and atmosphere from locked sources
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c33-master-lighting"
+          python3 -m py_compile scripts/atlas-gateway-c3/library-master-lighting.py
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/library-master-lighting.py -- "$RUNNER_TEMP/atlas-c33-master-lighting" 2>&1 | tee "$RUNNER_TEMP/atlas-c33-master-lighting/library.log"
+      - name: Verify offline lighting and landscape contract
+        run: python3 scripts/atlas-gateway-c3/library-master-lighting.py --verify "$RUNNER_TEMP/atlas-c33-master-lighting"
+      - name: Preserve lighting master and actual renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c33a44-lighting
+          path: ${{ runner.temp }}/atlas-c33-master-lighting/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  master-portals:
+    name: C3.3A4.5 semantic portal signage master
+    needs: [production, plan]
+    if: needs.plan.outputs.mode == 'full' && needs.plan.outputs.historical_job != 'master-portals'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore pinned Blender archive
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-gateway-c32-textured
+          path: ${{ runner.temp }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-c32b-ao
+          path: ${{ runner.temp }}/atlas-c32b
+      - name: Produce offline portal signage from locked sources
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c33-master-portals"
+          python3 -m py_compile scripts/atlas-gateway-c3/library-master-portals.py
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/library-master-portals.py -- "$RUNNER_TEMP/atlas-c33-master-portals" 2>&1 | tee "$RUNNER_TEMP/atlas-c33-master-portals/library.log"
+      - name: Verify offline portal signage and footprint contract
+        run: python3 scripts/atlas-gateway-c3/library-master-portals.py --verify "$RUNNER_TEMP/atlas-c33-master-portals"
+      - name: Preserve portal master and four actual renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c33a45-portals
+          path: ${{ runner.temp }}/atlas-c33-master-portals/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  refine-portals:
+    name: C3.3A5.1 refined portal composition
+    needs: [production, plan]
+    if: needs.plan.outputs.mode == 'full' && needs.plan.outputs.historical_job != 'refine-portals'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore pinned Blender archive
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-gateway-c32-textured
+          path: ${{ runner.temp }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-c32b-ao
+          path: ${{ runner.temp }}/atlas-c32b
+      - name: Produce refined portal composition from locked sources
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c33-refine-portals"
+          python3 -m py_compile scripts/atlas-gateway-c3/library-master-refinement.py
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/library-master-refinement.py -- "$RUNNER_TEMP/atlas-c33-refine-portals" 2>&1 | tee "$RUNNER_TEMP/atlas-c33-refine-portals/library.log"
+      - name: Verify refined portal composition and footprint contract
+        run: python3 scripts/atlas-gateway-c3/library-master-refinement.py --verify "$RUNNER_TEMP/atlas-c33-refine-portals"
+      - name: Preserve refined master and five actual renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c33a51-refinement
+          path: ${{ runner.temp }}/atlas-c33-refine-portals/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  refine-environment:
+    name: C3.3A5.2 refined sky and landscape
+    needs: [production, plan]
+    if: needs.plan.outputs.mode == 'full' && needs.plan.outputs.historical_job != 'refine-environment'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore pinned Blender archive
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-gateway-c32-textured
+          path: ${{ runner.temp }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-c32b-ao
+          path: ${{ runner.temp }}/atlas-c32b
+      - name: Produce refined sky and landscape from locked sources
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c33-refine-environment"
+          python3 -m py_compile scripts/atlas-gateway-c3/library-master-environment.py
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/library-master-environment.py -- "$RUNNER_TEMP/atlas-c33-refine-environment" 2>&1 | tee "$RUNNER_TEMP/atlas-c33-refine-environment/library.log"
+      - name: Verify sky, landscape and inherited geometry contract
+        run: python3 scripts/atlas-gateway-c3/library-master-environment.py --verify "$RUNNER_TEMP/atlas-c33-refine-environment"
+      - name: Preserve environment master and five actual renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c33a52-environment
+          path: ${{ runner.temp }}/atlas-c33-refine-environment/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  refine-cupola:
+    name: C3.3A5.3a light glass cupola
+    needs: [production, plan]
+    if: needs.plan.outputs.mode == 'full' && needs.plan.outputs.historical_job != 'refine-cupola'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore pinned Blender archive
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-gateway-c32-textured
+          path: ${{ runner.temp }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-c32b-ao
+          path: ${{ runner.temp }}/atlas-c32b
+      - name: Produce light glass cupola from locked sources
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c33-refine-cupola"
+          python3 -m py_compile scripts/atlas-gateway-c3/library-master-cupola.py
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/library-master-cupola.py -- "$RUNNER_TEMP/atlas-c33-refine-cupola" 2>&1 | tee "$RUNNER_TEMP/atlas-c33-refine-cupola/library.log"
+      - name: Verify cupola geometry, glazing and inherited contracts
+        run: python3 scripts/atlas-gateway-c3/library-master-cupola.py --verify "$RUNNER_TEMP/atlas-c33-refine-cupola"
+      - name: Preserve cupola master and six actual renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c33a53a-cupola
+          path: ${{ runner.temp }}/atlas-c33-refine-cupola/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  refine-arch:
+    name: C3.3A5.3b refined original rear arch
+    needs: [production, plan]
+    if: needs.plan.outputs.mode == 'full' && needs.plan.outputs.historical_job != 'refine-arch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore pinned Blender archive
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-gateway-c32-textured
+          path: ${{ runner.temp }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-c32b-ao
+          path: ${{ runner.temp }}/atlas-c32b
+      - name: Produce refined original arch from locked sources
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-c33-refine-arch"
+          python3 -m py_compile scripts/atlas-gateway-c3/library-master-arch.py
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/library-master-arch.py -- "$RUNNER_TEMP/atlas-c33-refine-arch" 2>&1 | tee "$RUNNER_TEMP/atlas-c33-refine-arch/library.log"
+      - name: Verify original arch clearance and inherited contracts
+        run: python3 scripts/atlas-gateway-c3/library-master-arch.py --verify "$RUNNER_TEMP/atlas-c33-refine-arch"
+      - name: Preserve arch master and seven actual renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-c33a53b-arch
+          path: ${{ runner.temp }}/atlas-c33-refine-arch/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  smart-current:
+    name: Smart Production — current candidate qualification
+    needs: [production, plan]
+    if: needs.plan.outputs.mode != 'fast'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CANDIDATE_SCRIPT: ${{ needs.plan.outputs.script }}
+      CANDIDATE_PHASE: ${{ needs.plan.outputs.phase }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore pinned Blender archive
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-gateway-c32-textured
+          path: ${{ runner.temp }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-c32b-ao
+          path: ${{ runner.temp }}/atlas-c32b
+      - name: Produce current candidate
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-smart-current"
+          script="scripts/atlas-gateway-c3/$CANDIDATE_SCRIPT"
+          python3 -m py_compile "$script"
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python "$script" -- "$RUNNER_TEMP/atlas-smart-current" 2>&1 | tee "$RUNNER_TEMP/atlas-smart-current/library.log"
+      - name: Verify full current candidate contract
+        run: |
+          set -euo pipefail
+          python3 "scripts/atlas-gateway-c3/$CANDIDATE_SCRIPT" --verify "$RUNNER_TEMP/atlas-smart-current"
+          python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"atlas-smart-current"; m=json.loads((p/"library-verification.json").read_text()); assert m["phase"]==os.environ["CANDIDATE_PHASE"] and m["status"]=="PASS"'
+      - name: Preserve current candidate and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.plan.outputs.artifact }}
+          path: ${{ runner.temp }}/atlas-smart-current/
+          if-no-files-found: error
+          retention-days: 7
+
+
+  smart-preview:
+    name: Smart Production — FAST preview (not qualification)
+    needs: [production, plan]
+    if: needs.plan.outputs.preview_enabled == 'true' && (needs.plan.outputs.mode == 'fast' || needs.plan.outputs.mode == 'full')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CANDIDATE_SCRIPT: ${{ needs.plan.outputs.script }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Restore pinned Blender archive
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-gateway-c32-textured
+          path: ${{ runner.temp }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-c32b-ao
+          path: ${{ runner.temp }}/atlas-c32b
+      - name: Render two non-qualifying preview views
+        if: needs.plan.outputs.artistic_stage != 'preview' || needs.plan.outputs.script != 'library-master-knowledge-stars.py'
+        run: |
+          set -euo pipefail
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/smart-preview.py -- produce "$RUNNER_TEMP/atlas-fast-preview" "$CANDIDATE_SCRIPT"
+      - name: Independently verify preview-only evidence
+        if: needs.plan.outputs.artistic_stage != 'preview' || needs.plan.outputs.script != 'library-master-knowledge-stars.py'
+        run: python3 scripts/atlas-gateway-c3/smart-preview.py verify "$RUNNER_TEMP/atlas-fast-preview" "$CANDIDATE_SCRIPT"
+      - name: Preserve preview images and receipt only
+        if: needs.plan.outputs.artistic_stage != 'preview' || needs.plan.outputs.script != 'library-master-knowledge-stars.py'
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-fast-preview-not-qualified
+          path: ${{ runner.temp }}/atlas-fast-preview/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Compare source and geometry identities before rendering
+        if: needs.plan.outputs.artistic_stage == 'preview' && needs.plan.outputs.script == 'library-master-knowledge-stars.py'
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-identity-probes"
+          python3 scripts/atlas-gateway-c3/unified-preview.py --identity-probe "$RUNNER_TEMP/atlas-identity-probes/system.json"
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/unified-preview.py -- --identity-probe "$RUNNER_TEMP/atlas-identity-probes/blender.json"
+          diff -u "$RUNNER_TEMP/atlas-identity-probes/system.json" "$RUNNER_TEMP/atlas-identity-probes/blender.json"
+          echo "SP-07.2 cross-runtime identity PASS before rendering"
+      - name: Run unified adaptive draft preview in a single scene
+        if: needs.plan.outputs.artistic_stage == 'preview' && needs.plan.outputs.script == 'library-master-knowledge-stars.py'
+        run: |
+          set -euo pipefail
+          "$BLENDER_BIN" --background --factory-startup --python-exit-code 1 --python scripts/atlas-gateway-c3/unified-preview.py -- produce "$RUNNER_TEMP/atlas-unified-preview"
+      - name: Independently verify selected adaptive evidence
+        if: needs.plan.outputs.artistic_stage == 'preview' && needs.plan.outputs.script == 'library-master-knowledge-stars.py'
+        run: python3 scripts/atlas-gateway-c3/unified-preview.py verify "$RUNNER_TEMP/atlas-unified-preview"
+      - name: Preserve unified draft proposal and all attempts
+        if: needs.plan.outputs.artistic_stage == 'preview' && needs.plan.outputs.script == 'library-master-knowledge-stars.py'
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-unified-adaptive-preview
+          path: ${{ runner.temp }}/atlas-unified-preview/
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Preserve unverified diagnostic evidence after failure
+        if: failure() && needs.plan.outputs.artistic_stage == 'preview' && needs.plan.outputs.script == 'library-master-knowledge-stars.py'
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-unverified-diagnostics-not-for-acceptance
+          path: |
+            ${{ runner.temp }}/atlas-identity-probes/
+            ${{ runner.temp }}/atlas-unified-preview/
+          if-no-files-found: warn
+          retention-days: 7
+
+  stars-webgl:
+    name: SP-07.5 — isolated stars in local WebGL
+    needs: [plan, smart-preview]
+    if: needs.smart-preview.result == 'success' && needs.plan.outputs.artistic_stage == 'preview' && needs.plan.outputs.script == 'library-master-knowledge-stars.py'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Install existing application dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-unified-adaptive-preview
+          path: ${{ runner.temp }}/atlas-unified-preview
+      - name: Reverify exact proposal before browser tests
+        run: python3 scripts/atlas-gateway-c3/unified-preview.py verify "$RUNNER_TEMP/atlas-unified-preview"
+      - name: Inspect the selected GLB in six viewports
+        run: |
+          node --check scripts/atlas-gateway-c3/test-stars-webgl.mjs
+          node scripts/atlas-gateway-c3/test-stars-webgl.mjs "$RUNNER_TEMP/atlas-unified-preview" "$RUNNER_TEMP/atlas-stars-webgl"
+      - name: Preserve browser metrics and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-stars-webgl-isolated
+          path: ${{ runner.temp }}/atlas-stars-webgl/
+          if-no-files-found: warn
+          retention-days: 7
+
+  artistic-acceptance:
+    name: Smart Production — visual acceptance required
+    needs: [plan, smart-preview, stars-webgl]
+    if: always() && needs.plan.result == 'success' && needs.plan.outputs.artistic_stage == 'preview'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Hold qualification until candidate-bound visual review
+        run: |
+          echo "::error::SP-05 PREVIEW ONLY — visual acceptance pending. Qualification intentionally blocked; inspect FAST evidence and revise or record accepted review."
+          exit 1
+

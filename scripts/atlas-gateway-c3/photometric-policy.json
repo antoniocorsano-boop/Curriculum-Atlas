@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "phase": "C3.3A5.5a",
+  "views": [
+    "atrium",
+    "vertical"
+  ],
+  "maxAttempts": 3,
+  "maxRenders": 8,
+  "minimumSamples": 20,
+  "minMedianDelta": 0.16,
+  "minCoverage": 0.65,
+  "coverageDelta": 0.1,
+  "maxClippedFraction": 0.15,
+  "clipCode": 250,
+  "brightBackground": 0.45,
+  "recipes": {
+    "base": {
+      "storie": {
+        "color": [
+          0.98,
+          0.74,
+          0.35
+        ],
+        "emission": 0.08,
+        "roughness": 0.34,
+        "metallic": 0.64
+      },
+      "laboratori": {
+        "color": [
+          0.024,
+          0.09,
+          0.21
+        ],
+        "emission": 0.1,
+        "roughness": 0.32,
+        "metallic": 0.38
+      },
+      "scoperte": {
+        "color": [
+          0.3,
+          0.075,
+          0.018
+        ],
+        "emission": 0.08,
+        "roughness": 0.34,
+        "metallic": 0.64
+      },
+      "percorsi": {
+        "color": [
+          0.42,
+          0.74,
+          0.98
+        ],
+        "emission": 0.1,
+        "roughness": 0.32,
+        "metallic": 0.38
+      }
+    },
+    "darkWarm": {
+      "color": [
+        0.15,
+        0.038,
+        0.009
+      ],
+      "emission": 0.08,
+      "roughness": 0.34,
+      "metallic": 0.64
+    },
+    "darkCool": {
+      "color": [
+        0.012,
+        0.045,
+        0.105
+      ],
+      "emission": 0.1,
+      "roughness": 0.32,
+      "metallic": 0.38
+    },
+    "lightWarm": {
+      "color": [
+        0.98,
+        0.74,
+        0.35
+      ],
+      "emission": 0.08,
+      "roughness": 0.34,
+      "metallic": 0.64
+    },
+    "lightCool": {
+      "color": [
+        0.42,
+        0.74,
+        0.98
+      ],
+      "emission": 0.1,
+      "roughness": 0.32,
+      "metallic": 0.38
+    }
+  },
+  "scope": "Luminanza relativa dei codici RGB del PNG, campioni interni alle maschere proiettate, controfattuale senza i nuclei. Non è una misura WCAG, non misura riconoscimento semantico o contrasto di tutti i bordi; la scena canonica non viene modificata. SP-07.3: variazioni RGB nei colori per faccia; parametri PBR condivisi e invarianti per famiglia, nessun nuovo materiale durante l'adattamento canonico. SP-07.4: consolidata la ricetta lightWarm di Storie selezionata nel collaudo fef3402; verifica su nuovi rilievi necessaria. SP-07.5: consolidata la ricetta lightCool di Percorsi selezionata nel collaudo e3e8179; richiesta nuova evidenza canonica.",
+  "externalServices": false
+}
