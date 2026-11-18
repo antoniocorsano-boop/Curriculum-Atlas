@@ -1,10 +1,11 @@
-name: Atlas — Storie B03 MCP artistic pilot C1
+name: Atlas — Storie B03 MCP artistic pilot C2
 on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
       - ".github/workflows/atlas-storie-mcp-artistic-pilot.yml"
       - "scripts/storie-mcp-pilot/**"
+      - "scripts/storie-mcp-pilot-c2/**"
 permissions:
   contents: read
   actions: read
@@ -20,7 +21,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-          sparse-checkout: scripts/storie-mcp-pilot
+          sparse-checkout: |
+            scripts/storie-mcp-pilot
+            scripts/storie-mcp-pilot-c2
       - name: Check display and isolated temporary workspace
         run: |
           set -euo pipefail
@@ -143,31 +146,36 @@ jobs:
           print(json.dumps(evidence,indent=2))
           assert not hits, hits
           PY
-      - name: Acquire exact frozen B03 master from the qualified Atlas artifact
+      - name: Acquire exact frozen C1 master and original comparison renders
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP/vf3d-l0"
-          mkdir -p b03-input
+          mkdir -p c1-input
           curl --fail --silent --show-error --location --max-time 120 \
-            -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/14358154709/zip" -o b03.zip
-          printf '%s  %s\n' 678d6580571efac6cabb9b62aa147e2ba917ec919c7b05803a9943573266d7cd b03.zip | sha256sum --strict --check
+            -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/14398359259/zip" -o c1.zip
+          printf '%s  %s\n' 194bed838e1d31a145bda7c297d1d58720636d5ce69f18b1473dfe7eca0df83b c1.zip | sha256sum --strict --check
           python3 - <<'PY'
           import hashlib,json,pathlib,zipfile
-          with zipfile.ZipFile("b03.zip") as z:
-              e=json.loads(z.read("storie-p2/evidence.json"))
-              assert e["revision"]=="B03" and e["components"]==15 and e["triangles"]==105568
-              for name,meta in e["files"].items():
-                  raw=z.read("storie-p2/"+name)
+          root=pathlib.Path("c1-input")
+          with zipfile.ZipFile("c1.zip") as z:
+              e=json.loads(z.read("bridge/artistic-evidence.json"))
+              assert e["status"]=="ARTIST_DIRECTED_CANDIDATE_REVIEW_REQUIRED"
+              assert e["cycle"]==1 and e["maxCycles"]==2 and e["sameBlenderProcess"]
+              assert e["masterSha256"]=="b3f343002bb84612672620d139be5b23e4a6dfc39c654367796146950847677f"
+              assert e["referenceSha256"]=="949d7fa1e5a0c2d4a276cb19c427932ebf00ae3b215f5b3890b2be196f05822b"
+              assert e["candidate"]["sha256"]=="0db616058cf38a8747699fbb6f00fd502b3a8663305d685ac92611f15b18f662"
+              assert not any(e[k] for k in ("autonomousAgentQualified","artisticApproval","publicationAuthorized"))
+              for name,meta in [("storie-B03-mcp-C1.blend",e["candidate"]),*e["images"].items()]:
+                  assert name in ("storie-B03-mcp-C1.blend","baseline-obliqua.png","baseline-frontale.png","candidate-obliqua.png","candidate-frontale.png")
+                  raw=z.read("bridge/"+name)
                   assert len(raw)==meta["bytes"] and hashlib.sha256(raw).hexdigest()==meta["sha256"]
-                  if name=="storie-preview.blend":
-                      assert meta["sha256"]=="b3f343002bb84612672620d139be5b23e4a6dfc39c654367796146950847677f"
-                      pathlib.Path("b03-input",name).write_bytes(raw)
-              pathlib.Path("b03-input/receipt.json").write_text(json.dumps(e,indent=2))
+                  (root/name).write_bytes(raw)
+              (root/"receipt.json").write_text(json.dumps(e,indent=2))
           PY
-          chmod a-w b03-input/storie-preview.blend b03-input/receipt.json
-      - name: Execute one artist-directed cycle through original MCP in isolated Blender
+          chmod a-w c1-input/*
+      - name: Execute final C2 artist-directed correction through original MCP
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP/vf3d-l0"
@@ -223,7 +231,7 @@ jobs:
               return None
           bpy.app.timers.register(startup, first_interval=1.0)
           PY
-          cp "$GITHUB_WORKSPACE/scripts/storie-mcp-pilot/artist-cycle.py" bridge/artist-cycle.py
+          cp "$GITHUB_WORKSPACE/scripts/storie-mcp-pilot-c2/artist-cycle.py" bridge/artist-cycle.py
           cat > bridge/client.py <<'PY'
           import json, os, pathlib, socket
           assert os.getuid()!=0
@@ -297,7 +305,7 @@ jobs:
           [[ "$ready" = 1 ]] || { stage D2_DISPLAY_TIMEOUT; cat /work/xvfb.log; exit 22; }
           stage D2_DISPLAY_PASS
           stage D3_BLENDER_START
-          /opt/blender/blender --factory-startup --disable-autoexec --threads 4 --python-exit-code 1 /input/storie-preview.blend --python /work/start.py > /work/bridge.log 2>&1 &
+          /opt/blender/blender --factory-startup --disable-autoexec --threads 4 --python-exit-code 1 /input/storie-B03-mcp-C1.blend --python /work/start.py > /work/bridge.log 2>&1 &
           bpid=$!
           for i in $(seq 1 35); do
             kill -0 "$bpid" || { stage D3_BLENDER_EXITED; tail -80 /work/bridge.log; exit 31; }
@@ -330,7 +338,34 @@ jobs:
           kill "$bpid" 2>/dev/null || true
           wait "$bpid" 2>/dev/null || true
           bpid=
-          timeout 45s /opt/blender/blender --background --factory-startup --disable-autoexec --threads 4 --python-exit-code 1 /work/storie-B03-mcp-C1.blend --python-expr 'import bpy,json,pathlib; objects=[o for o in bpy.context.scene.objects if o.type=="MESH"]; assert len(objects)==15 and sum(len(o.data.polygons) for o in objects)==105568; assert abs(bpy.data.materials["Storie_1_5"].node_tree.nodes.get("Principled BSDF").inputs["Metallic"].default_value-.96)<1e-5; pathlib.Path("/work/reopen.json").write_text(json.dumps({"status":"PASS","components":len(objects),"triangles":sum(len(o.data.polygons) for o in objects)}))' > /work/reopen.log 2>&1
+          cat > /work/reopen.py <<'PY'
+          import bpy, bmesh, hashlib, json, pathlib, struct
+          root=pathlib.Path("/work")
+          e=json.loads((root/"artistic-evidence.json").read_text())
+          meshes=sorted((o for o in bpy.context.scene.objects if o.type=="MESH"),key=lambda x:x.name)
+          geo=[]
+          for o in meshes:
+              h=hashlib.sha256()
+              for v in o.data.vertices:h.update(struct.pack("<3d",*v.co))
+              for f in o.data.polygons:
+                  h.update(struct.pack("<I",len(f.vertices)))
+                  for i in f.vertices:h.update(struct.pack("<I",i))
+              geo.append([o.name,len(o.data.vertices),len(o.data.polygons),h.hexdigest(),[list(r) for r in o.matrix_world],[m.name for m in o.data.materials]])
+              bm=bmesh.new()
+              try:
+                  bm.from_mesh(o.data)
+                  assert all(x.is_manifold for x in bm.edges) and bm.calc_volume(signed=True)>0
+              finally:bm.free()
+          digest=hashlib.sha256(json.dumps(geo,sort_keys=True,separators=(",",":")).encode()).hexdigest()
+          assert len(meshes)==15 and sum(len(o.data.polygons) for o in meshes)==105568
+          assert digest==e["after"]["geometry"]
+          for side in (-1,1):
+              for k in range(6):
+                  m=bpy.data.materials[f"Storie_{side}_{k}"]
+                  assert abs(m.node_tree.nodes.get("Principled BSDF").inputs["Metallic"].default_value-(.92 if k==5 else .78+.025*k))<1e-5
+          (root/"reopen.json").write_text(json.dumps({"status":"PASS","components":len(meshes),"triangles":sum(len(o.data.polygons) for o in meshes),"geometry":digest}))
+          PY
+          timeout 45s /opt/blender/blender --background --factory-startup --disable-autoexec --threads 4 --python-exit-code 1 /work/storie-B03-mcp-C2.blend --python /work/reopen.py > /work/reopen.log 2>&1
           stage D6_REOPEN_PASS
           SH
           # No host network, ports, credentials, GPU devices, socket or privileged container.
@@ -343,7 +378,7 @@ jobs:
             --mount "type=bind,src=$PWD/blender-4.2.23-linux-x64,dst=/opt/blender,readonly" \
             --mount "type=bind,src=$PWD/bridge,dst=/work" \
             --mount "type=bind,src=$PWD/mcp-input,dst=/deps,readonly" \
-            --mount "type=bind,src=$PWD/b03-input,dst=/input,readonly" \
+            --mount "type=bind,src=$PWD/c1-input,dst=/input,readonly" \
             --workdir /work vf3d-local-probe:single \
             /usr/bin/env -i PATH=/usr/bin:/bin HOME=/work/home XDG_RUNTIME_DIR=/work/runtime LIBGL_ALWAYS_SOFTWARE=1 \
             /bin/bash /work/run.sh
@@ -389,23 +424,28 @@ jobs:
           root=pathlib.Path("bridge")
           e=json.loads((root/"artistic-evidence.json").read_text())
           assert e["status"]=="ARTIST_DIRECTED_CANDIDATE_REVIEW_REQUIRED"
-          assert e["sameBlenderProcess"] and e["cycle"]==1 and e["maxCycles"]==2
+          assert e["sameBlenderProcess"] and e["cycle"]==2 and e["maxCycles"]==2
           assert not any(e[k] for k in ("autonomousAgentQualified","artisticApproval","publicationAuthorized"))
-          assert e["before"]["geometry"]==e["after"]["geometry"] and e["before"]["light"]==e["after"]["light"]
+          assert e["before"]["geometry"]!=e["after"]["geometry"] and e["before"]["light"]==e["after"]["light"]
+          assert e["actualRenderTransportVerified"] and not e["viewportIsPrimaryEvidence"]
+          assert len(e["bindingChanges"])==13 and all(0<x["maxDisplacement"]<=.045 for x in e["bindingChanges"])
           assert json.loads((root/"reopen.json").read_text())["status"]=="PASS"
           assert json.loads((root/"isolation-smoke.json").read_text())["status"]=="PASS"
           for n,m in e["images"].items():
               assert hashlib.sha256((root/n).read_bytes()).hexdigest()==m["sha256"]
-          assert hashlib.sha256(pathlib.Path("b03-input/storie-preview.blend").read_bytes()).hexdigest()==e["masterSha256"]
-          assert hashlib.sha256((root/"storie-B03-mcp-C1.blend").read_bytes()).hexdigest()==e["candidate"]["sha256"]
+          assert hashlib.sha256(pathlib.Path("c1-input/storie-B03-mcp-C1.blend").read_bytes()).hexdigest()==e["inputC1Sha256"]
+          assert hashlib.sha256((root/"storie-B03-mcp-C2.blend").read_bytes()).hexdigest()==e["candidate"]["sha256"]
+          for view in ("obliqua","frontale"):
+              m=e["images"]["candidate-"+view+".png"]
+              assert m["mcpRenderTransportVerified"] and hashlib.sha256((root/("mcp-render-"+view+".png")).read_bytes()).hexdigest()==m["sha256"]
           PY
       - name: Preserve candidate and exact comparison evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: atlas-storie-b03-mcp-C1
+          name: atlas-storie-b03-mcp-C2
           path: |
-            ${{ runner.temp }}/vf3d-l0/b03-input/receipt.json
+            ${{ runner.temp }}/vf3d-l0/c1-input/receipt.json
             ${{ runner.temp }}/vf3d-l0/mcp-input/audit.json
             ${{ runner.temp }}/vf3d-l0/mcp-input/profile-evidence.json
             ${{ runner.temp }}/vf3d-l0/bridge/isolation-config.json
@@ -422,6 +462,8 @@ jobs:
             ${{ runner.temp }}/vf3d-l0/bridge/baseline-*.png
             ${{ runner.temp }}/vf3d-l0/bridge/candidate-*.png
             ${{ runner.temp }}/vf3d-l0/bridge/viewport-*.png
-            ${{ runner.temp }}/vf3d-l0/bridge/storie-B03-mcp-C1.blend
+            ${{ runner.temp }}/vf3d-l0/bridge/mcp-render-*.png
+            ${{ runner.temp }}/vf3d-l0/c1-input/baseline-*.png
+            ${{ runner.temp }}/vf3d-l0/bridge/storie-B03-mcp-C2.blend
           if-no-files-found: ignore
           retention-days: 7
