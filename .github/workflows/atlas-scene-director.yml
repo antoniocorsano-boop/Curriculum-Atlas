@@ -161,8 +161,9 @@ jobs:
           mkdir -p "$RUNNER_TEMP/engine01-master" "$RUNNER_TEMP/engine01-sample"
           printf 'ATLAS_ENGINE_SAMPLE=%s\n' "$RUNNER_TEMP/engine01-sample" >> "$GITHUB_ENV"
           p="$RUNNER_TEMP/engine01-master"
-          curl --fail --silent --show-error --location --retry 3 --retry-delay 2 --max-time 120 --remove-on-error -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/14444143410/zip" -o "$p/master.zip"
-          printf '%s  %s\n' c7154de191cb6d25890a2881f470f6d6eeba74b2dcab897842f4753403e685c6 "$p/master.zip" | sha256sum --strict --check
+          curl --fail --silent --show-error --location --retry 3 --retry-delay 2 --max-time 120 -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/14444143410/zip" -o "$p/master.zip.part"
+          printf '%s  %s\n' c7154de191cb6d25890a2881f470f6d6eeba74b2dcab897842f4753403e685c6 "$p/master.zip.part" | sha256sum --strict --check
+          mv "$p/master.zip.part" "$p/master.zip"
           unzip -p "$p/master.zip" Atlas-Scene-Master.blend > "$p/Atlas-Scene-Master.blend"
           printf '%s  %s\n' f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab "$p/Atlas-Scene-Master.blend" | sha256sum --strict --check
           chmod a-w "$p/Atlas-Scene-Master.blend"
