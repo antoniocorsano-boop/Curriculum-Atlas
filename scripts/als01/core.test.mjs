@@ -1,11 +1,20 @@
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {PROFILES,LIMITS,STATES,atlasAnchors,sample,validateAnchors,blenderToThree} from "./core.mjs";
+import {PROFILES,LIMITS,STATES,atlasAnchors,sample,validateAnchors,blenderToThree,OPTICS} from "./core.mjs";
 const composition=JSON.parse(readFileSync(new URL("../atlas-gateway-c3/knowledge-composition.json",import.meta.url)));
 const anchors=atlasAnchors(composition);
 assert.deepEqual(anchors.map(a=>a.profile),["memoria","processo","orientamento","direzione"]);
 assert.equal(sample(anchors).length,18);
 assert.equal(Object.keys(PROFILES).length,5);
+assert.equal(OPTICS.revision,"ALS-01-R3");
+assert.deepEqual([OPTICS.minDiameterPx,OPTICS.maxDiameterPx,OPTICS.diameterScale,OPTICS.haloInner,OPTICS.haloOuter,OPTICS.haloWeight],[5,11,2,.12,1,.42]);
+assert.deepEqual([OPTICS.coreInner,OPTICS.coreOuter],[.24,.72]);
+// R3 increases the core footprint only. Peak alpha is unchanged.
+const smooth=(a,b,x)=>{const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t)};
+const curve=(a,b,x)=>Math.max(1-smooth(a,b,x),(1-smooth(OPTICS.haloInner,OPTICS.haloOuter,x))*OPTICS.haloWeight);
+for(let i=0;i<=100;i++){const x=i/100;const r3=curve(OPTICS.coreInner,OPTICS.coreOuter,x);assert.ok(r3>=curve(.18,.64,x)-1e-12&&r3<=1);}
+assert.equal(curve(OPTICS.coreInner,OPTICS.coreOuter,0),1);
+assert.equal(curve(OPTICS.coreInner,OPTICS.coreOuter,1),0);
 for(const p of Object.values(PROFILES)){
   assert.ok(p.count<=LIMITS.maxPointsPerAnchor&&p.period>=LIMITS.minPeriodSec&&p.amplitude<=LIMITS.maxAmplitude);
   assert.equal(p.angles.length,p.count);
