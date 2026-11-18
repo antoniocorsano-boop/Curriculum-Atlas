@@ -1,0 +1,23 @@
+name: Atlas Scene Package - ASP-01
+on:
+  pull_request:
+    paths:
+      - 'ops/atlas-scene-package/**'
+      - 'scripts/verify-asp01.py'
+      - 'docs/atlas-gateway/ASP-01.md'
+      - '.github/workflows/atlas-scene-package.yml'
+permissions:
+  contents: read
+jobs:
+  validate-archive-index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate index and append-only history against base
+        env:
+          ASP_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python3 scripts/verify-asp01.py "$ASP_BASE_SHA"
