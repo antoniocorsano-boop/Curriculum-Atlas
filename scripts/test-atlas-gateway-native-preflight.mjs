@@ -66,14 +66,14 @@ const server=createServer((req,res)=>{
  else{res.writeHead(404);return res.end();}
  res.writeHead(200,{"Content-Type":type,"Content-Length":bytes.length,"Cache-Control":"no-store"});res.end(bytes);
 });
-let browser,report={status:"FAIL",scope:"exact-native-sandbox-preflight",sceneSha256:receipt.sceneSha256,manifestSha256:receipt.manifestSha256,profile:receipt.profile,external:[],errors:[],diagnostics:[],studentAuthorized:false,publishable:false};
+let browser,page,report={status:"FAIL",scope:"exact-native-sandbox-preflight",sceneSha256:receipt.sceneSha256,manifestSha256:receipt.manifestSha256,profile:receipt.profile,external:[],errors:[],diagnostics:[],studentAuthorized:false,publishable:false};
 try{
  await new Promise(r=>server.listen(0,"127.0.0.1",r));
  const origin="http://127.0.0.1:"+server.address().port;
  browser=await chromium.launch({headless:true,args:["--use-gl=angle","--use-angle=swiftshader","--enable-unsafe-swiftshader"]});
  const context=await browser.newContext({viewport:{width:900,height:700},deviceScaleFactor:1});
  await context.route("**/*",route=>{const u=new URL(route.request().url());if(/^https?:$/.test(u.protocol)&&u.origin!==origin){report.external.push(u.href);return route.abort()}return route.continue()});
- const page=await context.newPage();
+ page=await context.newPage();
  page.on("pageerror",e=>report.errors.push(e.message));
  page.on("console",m=>{const t=m.text();if(m.type()==="error"||t.startsWith("ATLAS_"))report.diagnostics.push(t)});
  await page.goto(origin,{waitUntil:"domcontentloaded"});
@@ -98,7 +98,16 @@ try{
  assert.equal(report.diagnostics.filter(t=>/ATLAS_CSP|ATLAS_NATIVE_FAILURE|Content Security Policy/i.test(t)).length,0,JSON.stringify(report.diagnostics));
  await page.screenshot({path:join(out,"native-preflight.png")});
  report.status="PASS";
-}catch(e){report.failure=String(e);process.exitCode=1;}
+}catch(e){
+ report.failure=String(e);process.exitCode=1;
+ if(page){
+  report.startup??=await page.evaluate(()=>window.nativePreflight??null).catch(()=>null);
+  const el=await page.locator("iframe").elementHandle({timeout:2000}).catch(()=>null);
+  const frame=el?await el.contentFrame().catch(()=>null):null;
+  if(frame)report.lastPhase=await frame.evaluate(()=>typeof nativePhase==="undefined"?"script-not-started":nativePhase).catch(()=>null);
+  await page.screenshot({path:join(out,"native-preflight-failure.png"),timeout:5000}).catch(()=>{});
+ }
+}
 finally{
  await browser?.close();
  if(server.listening)await new Promise(r=>server.close(r));
