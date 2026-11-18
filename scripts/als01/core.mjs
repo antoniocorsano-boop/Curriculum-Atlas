@@ -1,8 +1,8 @@
 // ALS-01 v1: renderer-independent light profiles and deterministic sampling.
 // Coordinates are local to an object's anchor, in Blender XYZ (Z up).
 export const VERSION=1;
-// Optical revision R2: larger readable core and softer local halo, same intensity and timing.
-export const OPTICS=Object.freeze({revision:"ALS-01-R2",minDiameterPx:5,maxDiameterPx:11,diameterScale:2,coreInner:.18,coreOuter:.64,haloInner:.12,haloOuter:1,haloWeight:.42});
+// Optical revision R3: widen only the core response; R2 halo, diameter and timing are unchanged.
+export const OPTICS=Object.freeze({revision:"ALS-01-R3",minDiameterPx:5,maxDiameterPx:11,diameterScale:2,coreInner:.24,coreOuter:.72,haloInner:.12,haloOuter:1,haloWeight:.42});
 export const LIMITS=Object.freeze({maxPointsPerAnchor:7,maxPointsTotal:64,minPeriodSec:3.5,maxAmplitude:.10,maxRadiusFraction:.96,maxOpacity:.42});
 const p=(color,count,period,amplitude,opacity,angles)=>Object.freeze({color:Object.freeze(color),count,period,amplitude,opacity,angles:Object.freeze(angles)});
 export const PROFILES=Object.freeze({
