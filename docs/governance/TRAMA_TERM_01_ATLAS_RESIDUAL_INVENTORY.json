@@ -267,6 +267,12 @@
       "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas/",
       "category": "historical-evidence",
       "reason": "Riferimenti immutabili ai repository e alle prove; nessun lessico di dominio."
+    },
+    {
+      "path": "scripts/scene-intelligence.py",
+      "contains": "antoniocorsano-boop/Curriculum-Atlas",
+      "reason": "Identificativo tecnico esatto della fonte nei riferimenti ASI-01; nessuna modifica al lessico di dominio.",
+      "category": "historical-evidence"
     }
   ]
 }
