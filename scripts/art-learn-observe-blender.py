@@ -55,7 +55,29 @@ require(Path(bpy.data.filepath).resolve()==source,"unexpected source")
 before=sha(source)
 s=bpy.context.scene
 require(s.camera and s.camera.type=="CAMERA","no active camera")
-require(not bpy.data.libraries,"external linked libraries not qualified")
+# Reference archives may contain linked .blend libraries. They are only
+# accepted inside the previously checksum-verified extracted source tree.
+# Atlas retains the original no-linked-library invariant.
+root=source.parent
+def inside(path):
+    p=Path(path).resolve()
+    require(p.is_relative_to(root),"dependency escapes source archive: "+str(p))
+    require(p.is_file(),"dependency missing: "+str(p))
+    return p
+def tree_hashes():
+    return {p.relative_to(root).as_posix():sha(p) for p in sorted(root.rglob("*")) if p.is_file()}
+source_tree=tree_hashes() if mode=="reference" else None
+libraries=[]
+if mode=="atlas":
+    require(not bpy.data.libraries,"Atlas external linked libraries not qualified")
+else:
+    for lib in bpy.data.libraries:
+        path=inside(bpy.path.abspath(lib.filepath,library=getattr(lib,"parent",None)))
+        require(path.suffix.lower()==".blend","unexpected linked file type")
+        rel=path.relative_to(root).as_posix()
+        require(rel in source_tree,"library not in reference inventory")
+        libraries.append({"name":lib.name,"path":rel,"sha256":source_tree[rel]})
+    libraries.sort(key=lambda x:x["path"])
 camera=s.camera
 lights=[]
 for o in sorted(s.objects,key=lambda x:x.name):
@@ -73,6 +95,9 @@ for i in sorted(bpy.data.images,key=lambda i:i.name):
     # File references must be local to the extracted archive or packed; never fetch remote resources.
     packed=bool(i.packed_file)
     local=bool(path and Path(path).is_file())
+    if mode=="reference" and i.source=="FILE" and not packed and local:
+        path=inside(path)
+        require(path.relative_to(root).as_posix() in source_tree,"image not in reference inventory")
     images.append({"name":i.name,"source":i.source,"size":list(i.size),"colorspace":i.colorspace_settings.name,"packed":packed,"localAvailable":local,"relativePath":i.filepath if i.filepath.startswith("//") else None})
 missing=[i["name"] for i in images if i["source"]=="FILE" and not i["packed"] and not i["localAvailable"]]
 camera_rec={"name":camera.name,"matrix":[value(r) for r in camera.matrix_world],"parameters":props(camera.data,["type","lens","sensor_width","sensor_height","sensor_fit","angle_x","angle_y","shift_x","shift_y","clip_start","clip_end"]),"dof":props(camera.data.dof,["use_dof","focus_distance","aperture_fstop","aperture_blades","aperture_rotation","aperture_ratio"])}
@@ -81,7 +106,7 @@ types=Counter(o.type for o in s.objects)
 mesh_objects=[o for o in s.objects if o.type=="MESH"]
 material_usage=Counter(slot.material.name for o in mesh_objects for slot in o.material_slots if slot.material)
 world={"name":s.world.name,"color":value(s.world.color),"graph":graph(s.world.node_tree) if s.world.use_nodes else None} if s.world else None
-report={"schema":"atlas.art-learning.observation/v1","status":"OBSERVED","mode":mode,"revision":os.environ["ATLAS_EXACT_HEAD"],"sourceSha256":before,"blenderVersion":bpy.app.version_string,"scene":s.name,"camera":camera_rec,"lights":lights,"materials":materials,"materialUsage":dict(material_usage),"images":images,"missingImages":missing,"world":world,"compositor":graph(s.node_tree) if s.use_nodes else None,"render":{"settings":props(s.render,["engine","resolution_x","resolution_y","resolution_percentage","film_transparent","pixel_aspect_x","pixel_aspect_y"]),"cycles":props(s.cycles,["samples","use_denoising","max_bounces","diffuse_bounces","glossy_bounces","transmission_bounces","volume_bounces","transparent_max_bounces","seed","use_adaptive_sampling"]),"color":props(s.view_settings,["view_transform","look","exposure","gamma"]),"display":props(s.display_settings,["display_device"])},"geometry":{"objectTypes":dict(types),"meshObjects":len(mesh_objects),"uniqueMeshes":len({o.data.as_pointer() for o in mesh_objects}),"baseVertices":sum(len(o.data.vertices) for o in mesh_objects),"baseFaces":sum(len(o.data.polygons) for o in mesh_objects),"modifierTypes":dict(Counter(m.type for o in mesh_objects for m in o.modifiers))},"masterModified":False,"artisticApproval":False,"publishable":False,"studentAuthorized":False}
+report={"schema":"atlas.art-learning.observation/v1","status":"OBSERVED","mode":mode,"revision":os.environ["ATLAS_EXACT_HEAD"],"sourceSha256":before,"blenderVersion":bpy.app.version_string,"scene":s.name,"camera":camera_rec,"lights":lights,"linkedLibraries":libraries,"materials":materials,"materialUsage":dict(material_usage),"images":images,"missingImages":missing,"world":world,"compositor":graph(s.node_tree) if s.use_nodes else None,"render":{"settings":props(s.render,["engine","resolution_x","resolution_y","resolution_percentage","film_transparent","pixel_aspect_x","pixel_aspect_y"]),"cycles":props(s.cycles,["samples","use_denoising","max_bounces","diffuse_bounces","glossy_bounces","transmission_bounces","volume_bounces","transparent_max_bounces","seed","use_adaptive_sampling"]),"color":props(s.view_settings,["view_transform","look","exposure","gamma"]),"display":props(s.display_settings,["display_device"])},"geometry":{"objectTypes":dict(types),"meshObjects":len(mesh_objects),"uniqueMeshes":len({o.data.as_pointer() for o in mesh_objects}),"baseVertices":sum(len(o.data.vertices) for o in mesh_objects),"baseFaces":sum(len(o.data.polygons) for o in mesh_objects),"modifierTypes":dict(Counter(m.type for o in mesh_objects for m in o.modifiers))},"masterModified":False,"artisticApproval":False,"publishable":False,"studentAuthorized":False}
 write("observation.json",report)
 require(not missing,"missing image resources: "+str(missing))
 # One controlled experiment in the reference scene only. The Atlas scene is observed and left intact.
@@ -118,6 +143,10 @@ if mode=="reference":
     report["experiment"]={"object":light.name,"type":light.data.type,"parameter":"hide_render","baseline":base,"candidate":True,"restored":bool(light.hide_render),"changedPixels":changed,"pixelCount":len(a),"meanAbsoluteRGBDelta":float(delta.mean()),"rollbackMeanAbsoluteRGBDelta":float(rollback.mean()),"imageHashes":{"reference.png":ha,"light-ablation.png":hb,"restored.png":hc},"interpretation":"Demonstrates causal contribution of this light in this source scene, not a portable numerical recipe or aesthetic preference."}
     require(light.hide_render==base,"parameter rollback")
 require(sha(source)==before,"source bytes changed")
+if mode=="reference":
+    require(tree_hashes()==source_tree,"reference archive resource bytes changed")
+    report["sourceResourceCount"]=len(source_tree)
+    report["sourceResourcesUnchanged"]=True
 report["status"]="PASS_OBSERVATION_AND_ABLATION" if mode=="reference" else "PASS_OBSERVATION_ONLY"
 report["sourceUnchanged"]=True
 write("observation.json",report)
