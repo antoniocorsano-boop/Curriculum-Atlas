@@ -34,8 +34,9 @@ async function inspect(page,device){
    const baseline=capture(),calls=renderer.info.render.calls,triangles=renderer.info.render.triangles;
    function effect(o){o.visible=false;const b=capture();o.visible=true;let count=0;for(let i=0;i<b.length;i+=4)if(Math.abs(b[i]-baseline[i])+Math.abs(b[i+1]-baseline[i+1])+Math.abs(b[i+2]-baseline[i+2])>12)count++;return count}
    const cupola=effect(groupMap.cupola),stars=effect(starGroup),lights=effect(als.object);capture();
-   return {revision:THREE.REVISION,stats,calls,triangles,meshes,vertices,points:als.object.geometry.attributes.position.count,cupola,stars,lights,sky:!!scene.background,centers,hits,controls,motion};
+   return {revision:THREE.REVISION,stats,calls,triangles,meshes,vertices,points:als.object.geometry.attributes.position.count,cupola,stars,lights,sky:!!scene.background,centers,hits,controls,motion,decoded:nativeDecoded,phase:nativePhase};
  });
+ assert.equal(m.phase,"ready");assert.deepEqual(Object.keys(m.decoded),["shell","scenography","cupola","portals","bays","stars"]);assert(m.decoded.shell.images>0&&m.decoded.shell.textures>0);assert(Object.values(m.decoded).every(d=>d.decoder==="TextureLoader"));
  assert.equal(m.revision,"128");assert.equal(m.meshes,3);assert.equal(m.vertices,9956);assert.equal(m.points,18);
  assert.equal(m.stats.total,495);assert(m.stats.culled>0);assert(m.triangles<1101794);assert(m.calls>0&&m.calls<=100);
  assert(m.cupola>0&&m.stars>0&&m.lights>0&&m.sky);assert(m.centers.every(c=>c.inFrame),JSON.stringify(m.centers));assert(m.hits.every(h=>h.hit===h.id),JSON.stringify(m.hits));assert(m.controls.every(c=>c.h>=44&&c.reachable));assert.equal(m.motion,false);
@@ -51,14 +52,15 @@ async function inspect(page,device){
 try{
  for(const device of [{name:"compact",viewport:{width:320,height:568},isMobile:true,hasTouch:true},{name:"phone",viewport:{width:393,height:873},isMobile:true,hasTouch:true},{name:"landscape",viewport:{width:873,height:393},isMobile:true,hasTouch:true},{name:"tablet",viewport:{width:768,height:1024},isMobile:true,hasTouch:true},{name:"desktop",viewport:{width:1440,height:1000}},{name:"large",viewport:{width:1920,height:1080}}]){
   const {name,...opts}=device,context=await browser.newContext({...opts,deviceScaleFactor:1}),page=await context.newPage();
-  const external=[],assets=[],errors=[];
+  const external=[],assets=[],errors=[],diagnostics=[];
   page.on("pageerror",e=>errors.push(e.message));
+  page.on("console",m=>{const t=m.text();if(m.type()==="error"||t.startsWith("ATLAS_NATIVE_"))diagnostics.push(t);});
   await context.route("**/*",route=>{const u=new URL(route.request().url());if(/^https?:$/.test(u.protocol)&&u.origin!==origin){external.push(u.href);return route.abort()}if(u.pathname.startsWith("/atlas-gateway-native/"))assets.push(u.pathname);return route.continue()});
   try{
    await page.goto(origin+"/gateway/",{waitUntil:"domcontentloaded"});
    const {frame,m}=await inspect(page,name);
    assert.deepEqual(assets.slice().sort(),expectedFiles);
-   assert.equal(external.length,0);assert.equal(errors.length,0,JSON.stringify(errors));
+   assert.equal(external.length,0);assert.equal(errors.length,0,JSON.stringify(errors));assert.equal(diagnostics.filter(t=>/ATLAS_CSP|ATLAS_NATIVE_FAILURE|Content Security Policy/i.test(t)).length,0,JSON.stringify(diagnostics));
    const studio=m.hits.find(h=>h.id==="studio");await frame.locator("canvas").click({position:{x:studio.x,y:studio.y}});
    await page.getByRole("status").filter({hasText:"accesso professionale non ancora abilitato"}).waitFor({timeout:15000});
    const esperienze=m.hits.find(h=>h.id==="esperienze");await frame.locator("canvas").click({position:{x:esperienze.x,y:esperienze.y}});
@@ -67,8 +69,8 @@ try{
    await page.getByRole("button",{name:"Laboratori",exact:true}).click();
    await page.getByRole("region",{name:"Risultati della ricerca"}).getByText("Non ci sono ancora esperienze autorizzate in questa sezione.").waitFor();
    assert.equal(external.length,0);
-   results.push({device:name,...m,assets:assets.length,external:external.length,portal:"PASS"});
-  }catch(e){failures.push({device:name,error:String(e),errors,external,assets});await page.screenshot({path:out+"/"+name+"-failure.png"}).catch(()=>{});}
+   results.push({device:name,...m,assets:assets.length,external:external.length,portal:"PASS",diagnostics});
+  }catch(e){const notice=await page.locator(".atlas-gateway-notice").textContent({timeout:3000}).catch(()=>null);failures.push({device:name,error:String(e),errors,external,assets,notice,diagnostics});await page.screenshot({path:out+"/"+name+"-failure.png"}).catch(()=>{});}
   finally{await context.close()}
  }
  // Integrity rejection exercises the real parent fallback, not a mocked
