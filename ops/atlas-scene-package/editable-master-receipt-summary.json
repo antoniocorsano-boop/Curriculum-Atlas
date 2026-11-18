@@ -1,0 +1,105 @@
+{
+  "schema": "atlas.asp01.editable-master-evidence/v1",
+  "sourceCommit": "ce5ecaefd11d77a21cbb509243ae5685b4944ef0",
+  "run": 44343241989,
+  "artifact": {
+    "id": 14444143410,
+    "bytes": 10996932,
+    "sha256": "c7154de191cb6d25890a2881f470f6d6eeba74b2dcab897842f4753403e685c6"
+  },
+  "file": {
+    "name": "Atlas-Scene-Master.blend",
+    "bytes": 9579316,
+    "sha256": "f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab"
+  },
+  "collections": [
+    {
+      "name": "01 Architettura",
+      "objects": 7,
+      "meshes": 7,
+      "uniqueMeshes": 7
+    },
+    {
+      "name": "02 Campate condivise",
+      "objects": 495,
+      "meshes": 495,
+      "uniqueMeshes": 25
+    },
+    {
+      "name": "03 Cupola",
+      "objects": 2,
+      "meshes": 2,
+      "uniqueMeshes": 2
+    },
+    {
+      "name": "04 Scenografia e paesaggio",
+      "objects": 15,
+      "meshes": 15,
+      "uniqueMeshes": 15
+    },
+    {
+      "name": "05 Portali",
+      "objects": 5,
+      "meshes": 5,
+      "uniqueMeshes": 5
+    },
+    {
+      "name": "06 Astri R2",
+      "objects": 3,
+      "meshes": 3,
+      "uniqueMeshes": 3
+    },
+    {
+      "name": "07 ALS-01 R4",
+      "objects": 18,
+      "meshes": 18,
+      "uniqueMeshes": 18
+    },
+    {
+      "name": "08 Luci",
+      "objects": 47,
+      "meshes": 0,
+      "uniqueMeshes": 0
+    },
+    {
+      "name": "09 Regia visiva",
+      "objects": 7,
+      "meshes": 0,
+      "uniqueMeshes": 0
+    },
+    {
+      "name": "10 Riferimenti non visibili",
+      "objects": 3,
+      "meshes": 3,
+      "uniqueMeshes": 3
+    }
+  ],
+  "cameraIds": [
+    "atrium",
+    "vertical",
+    "detail",
+    "portals",
+    "portrait-focus",
+    "cupola-detail",
+    "arch-detail"
+  ],
+  "packedImageCount": 9,
+  "als": {
+    "points": 18,
+    "activeCamera": "atrium",
+    "otherViewsRequireAdapter": true
+  },
+  "sourceTransformsPreserved": true,
+  "externalLibraries": 0,
+  "externalFonts": 0,
+  "independentReopenRender": {
+    "status": "PASS",
+    "width": 1200,
+    "height": 750,
+    "imageSha256": "bbe3a1930cea6b5241e97665320cec541bd0c271f31192d6d4178b6b744fe8e2"
+  },
+  "artisticApproval": false,
+  "browserQualified": false,
+  "studentAuthorized": false,
+  "publishable": false
+}
