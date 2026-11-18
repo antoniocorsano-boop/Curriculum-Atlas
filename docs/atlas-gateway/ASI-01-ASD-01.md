@@ -74,3 +74,13 @@ Criteri di riuscita obbligatori:
 5. Confronti, errori, provenienza, costi e decisioni sono conservati e consultabili; nessun dato personale o profilazione.
 
 La sequenza operativa prioritaria è: completare il collaudo della biblioteca; qualificare osservazione L2 e applicazione reversibile su una copia del master; dimostrare una scena e un secondo mondo. Solo allora estendere l'interfaccia di ideazione e i domini parametrici. Non accumulare infrastruttura non dimostrata. I dieci test P1 e i due piani (run 44346093780, artefatto 14444669398 conservato) provano il pianificatore, non l'effettiva usabilità creativa o il riuso tra mondi.
+
+## ASI-L2 / ASD-P2 — Prima prova effettiva sul master Blender
+
+La prova usa il master Blender portabile già qualificato (artefatto 14444143410, SHA-256 del file f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab). Il manifest di collegamento dichiara identità della scena, camera, collezione ALS e numero atteso di oggetti. Il pianificatore P1 genera la variazione `astral.visible=false`; l'adattatore verifica la corrispondenza tra valori osservati e stato di riferimento prima di applicarla in memoria alla copia di lavoro. Il file originale è in sola lettura, non viene risalvato.
+
+L'osservazione legge direttamente da Blender gli oggetti, le trasformazioni, le appartenenze a collezioni, le dimensioni delle mesh, i riferimenti ai materiali, i nodi e i loro ingressi, luci, camere e immagini. Non è un'ispezione completa di tutti i possibili dati Blender (per esempio non sono ancora campionati i vertici di ogni mesh o tutti i nodi del mondo). L'adattatore è ancora legato alla biblioteca e supporta una sola variazione isolata; non è un interprete generico o un sistema di regia in produzione.
+
+Tre rendering 720×450, con le medesime impostazioni temporanee di prova: riferimento, variante senza ALS, ripristino. Il confronto verifica una differenza visiva osservabile nella variante, equivalenza dello stato osservato e scostamento visivo minimo nel ripristino, e identità SHA-256 dell'originale. Le sole differenze strutturali ammesse riguardano la proprietà `hide_render` dei 18 oggetti ALS e il valore parametrico derivato. Le impostazioni di rendering sono ripristinate. Nessuna nuova spesa, pubblicazione, applicazione alla scena WebGL o autorizzazione studenti.
+
+Il criterio di completamento resta il PASS della prova effettiva, con immagini, inventari, piano, ricevuta e revisione dei risultati. Non dichiarare qualificato il riuso tra mondi: prima occorrono un secondo collegamento indipendente e un esperimento sulla scena corrispondente. Il rilievo di navigazione della biblioteca (#115) resta distinto, aperto e non viene alterato da questa PR.
