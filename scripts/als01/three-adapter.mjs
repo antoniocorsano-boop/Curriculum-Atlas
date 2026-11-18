@@ -1,6 +1,6 @@
 // ALS-01 adapter for a supplied Three.js r128+ namespace. No network, assets,
 // extra light sources, postprocessing, event handlers, or autonomous animation.
-import {sample,blenderToThree,validateAnchors,OPTICS} from "./core.mjs";
+import {sample,blenderToThree,validateAnchors,OPTICS,resolveOptics} from "./core.mjs";
 export function createAstralLights(THREE,anchors){
   validateAnchors(anchors);
   // Snapshot topology and anchor coordinates; callers cannot mutate the allocated buffers.
@@ -15,15 +15,15 @@ export function createAstralLights(THREE,anchors){
   initial.forEach((p,i)=>{positions.set(blenderToThree(p.position),3*i);colors.set(p.color,3*i);opacity[i]=p.opacity;radius[i]=p.radius});
   geometry.computeBoundingSphere();
   const material=new THREE.ShaderMaterial({
-    uniforms:{viewportHeight:{value:480}},
+    uniforms:{viewportHeight:{value:480},minDiameter:{value:5},maxDiameter:{value:11},diameterScale:{value:2}},
     vertexShader:`
       attribute vec3 tint; attribute float alpha; attribute float worldRadius;
-      uniform float viewportHeight; varying vec3 vTint; varying float vAlpha;
+      uniform float viewportHeight; uniform float minDiameter; uniform float maxDiameter; uniform float diameterScale; varying vec3 vTint; varying float vAlpha;
       void main(){
         vec4 mv=modelViewMatrix*vec4(position,1.);
         gl_Position=projectionMatrix*mv;
         float diameter=worldRadius*viewportHeight*projectionMatrix[1][1]/max(.1,-mv.z);
-        gl_PointSize=clamp(diameter*${OPTICS.diameterScale.toFixed(2)},${OPTICS.minDiameterPx.toFixed(2)},${OPTICS.maxDiameterPx.toFixed(2)});
+        gl_PointSize=clamp(diameter*diameterScale,minDiameter,maxDiameter);
         vTint=tint;vAlpha=alpha;
       }`,
     fragmentShader:`
@@ -42,10 +42,14 @@ export function createAstralLights(THREE,anchors){
   object.name="ALS-01 decorative astral points";object.userData.decorative=true;
   object.raycast=()=>{}; // cannot steal a portal hit
   let disposed=false;
-  function update(seconds,{viewportHeight=480,reducedMotion=false,paused=false}={}){
+  function update(seconds,{viewportWidth=640,viewportHeight=480,backdrop="dark",pixelRatio=1,reducedMotion=false,paused=false}={}){
     if(disposed)throw Error("ALS-01 disposed");
-    if(!Number.isFinite(viewportHeight)||viewportHeight<=0)throw RangeError("viewport");
-    material.uniforms.viewportHeight.value=viewportHeight;
+    if(!Number.isFinite(pixelRatio)||pixelRatio<=0||pixelRatio>4)throw RangeError("pixel ratio");
+    const o=resolveOptics({width:viewportWidth,height:viewportHeight,backdrop});
+    material.uniforms.viewportHeight.value=viewportHeight*pixelRatio;
+    material.uniforms.minDiameter.value=o.minDiameterPx*pixelRatio;
+    material.uniforms.maxDiameter.value=o.maxDiameterPx*pixelRatio;
+    material.uniforms.diameterScale.value=o.diameterScale;
     sample(anchors,seconds,{reducedMotion,paused}).forEach((p,i)=>{opacity[i]=p.opacity});
     geometry.attributes.alpha.needsUpdate=true;
   }
