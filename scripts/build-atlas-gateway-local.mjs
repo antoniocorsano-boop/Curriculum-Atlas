@@ -5,6 +5,7 @@ import { execFileSync } from "node:child_process";
 import { hash } from "node:crypto";
 import { createRequire } from "node:module";
 import tailwind from "@tailwindcss/postcss";
+import {integrateGateway} from "./integrate-atlas-gateway-scene.mjs";
 
 const require = createRequire(import.meta.url);
 const postcss = createRequire(require.resolve("@tailwindcss/postcss"))("postcss");
@@ -43,8 +44,16 @@ try {
   if (tailwindMeta.license !== "MIT") throw Error("Licenza CSS non verificata");
   writeFileSync(join(out,"TAILWIND-LICENSE.txt"),tailwindLicense);
   execFileSync(process.execPath,["scripts/prepare-atlas-gateway-scene.mjs",threePath,sha(engine),cssPath,sha(cssBytes),scene],{stdio:"inherit"});
+  let integration=null;
+  const candidatePath=process.env.ATLAS_GATEWAY_R2_GLB;
+  if(candidatePath){
+    const loader=extract("examples/js/loaders/GLTFLoader.js");
+    if(gitBlob(loader)!=="cfa518ede1b0893f1da14347d78fcd19355f3686")throw Error("Unverified local GLTFLoader");
+    const result=integrateGateway(readFileSync(scene,"utf8"),readFileSync(candidatePath),loader.toString("utf8"));
+    writeFileSync(scene,result.scene);integration={...result.identity,loaderGitBlob:gitBlob(loader)};
+  }
   const sceneSha = sha(readFileSync(scene));
-  const manifest = {schemaVersion:"atlas.gateway.local-bundle/v1",three:{version,license:"MIT",upstreamTag:"r128",gitBlob:expected.engine,sha256:sha(engine),npmIntegrity:info.integrity},tailwind:{version:tailwindMeta.version,license:"MIT",sha256:sha(cssBytes)},scene:{sha256:sceneSha},studentAuthorized:false};
+  const manifest = {schemaVersion:"atlas.gateway.local-bundle/v1",three:{version,license:"MIT",upstreamTag:"r128",gitBlob:expected.engine,sha256:sha(engine),npmIntegrity:info.integrity},tailwind:{version:tailwindMeta.version,license:"MIT",sha256:sha(cssBytes)},scene:{sha256:sceneSha},...(integration?{integration}:{}),studentAuthorized:false};
   writeFileSync(join(out,"manifest.json"),JSON.stringify(manifest,null,2)+"\n");
   console.log(JSON.stringify(manifest,null,2));
 } finally { rmSync(temp,{recursive:true,force:true}); }
