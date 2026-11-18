@@ -5,6 +5,10 @@ on:
     paths:
       - ".github/workflows/atlas-four-stars-art-final.yml"
       - "scripts/atlas-gateway-c3/art-final-four-stars.py"
+      - "scripts/art-final-r2/**"
+concurrency:
+  group: atlas-art-final-production
+  cancel-in-progress: true
 permissions:
   contents: read
   actions: read
@@ -21,7 +25,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ runner.temp }}/atlas-blender-cache
-          key: atlas-blender-4.2.23-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
       - name: Verify Blender distribution
         run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
       - name: Retrieve exact archived C2 and FAST module
@@ -50,5 +54,107 @@ jobs:
         with:
           name: atlas-art-final-four-stars
           path: ${{ runner.temp }}/art-final-four-stars/
+          if-no-files-found: warn
+          retention-days: 7
+
+  compare-r2:
+    needs: isolated-candidate
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.head.ref == 'work/atlas-four-stars-art-final' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify and bootstrap existing Blender distribution
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-art-final-four-stars
+          path: ${{ runner.temp }}/art-final-four-stars
+      - name: Recover exact R1 and previous architecture resources
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          mkdir -p context-input atlas-c32b
+          fetch() {
+            curl --fail --silent --show-error --location --max-time 120 -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$1/zip" -o "$2"
+            printf '%s  %s\n' "$3" "$2" | sha256sum --strict --check
+          }
+          fetch 14415377937 context-input/stars.zip bb262c412eb36df358992857d4cdbd38b61968c156b06f5b92f5edd26b4094e2
+          fetch 14413232678 context-input/base.zip ecc9522d03d802668343bf87a387fa4b5e353fa40b2e4f266e18e9ab25d6383a
+          fetch 14413407240 context-input/ao.zip 47f68653f6d50b703b6f9834b3a5d0c17951f9b577d427564272cecd059baae4
+          unzip -p context-input/stars.zip four-stars.glb > context-input/four-stars.glb
+          echo 'ba06a87e4a885e26bbdcede1ceb52fa57f988750ca1aae2e96f3fb4a57465e71  context-input/four-stars.glb' | sha256sum --strict --check
+          unzip -q context-input/base.zip 'atlas-c32/*' -d .
+          unzip -q context-input/ao.zip -d atlas-c32b
+      - name: Render canonical and sculptural stars in same scene
+        run: |
+          set -euo pipefail
+          "$BLENDER_BIN" --background --factory-startup --disable-autoexec --python-exit-code 1 --python scripts/art-final-r2/compare.py -- "$RUNNER_TEMP/art-final-four-stars/four-stars.glb" "$RUNNER_TEMP/context-input/four-stars.glb" "$RUNNER_TEMP/art-final-context"
+      - name: Verify comparison evidence
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])/"art-final-context"
+          r=json.loads((root/"art-final-context-receipt.json").read_text())
+          assert r["status"]=="CONTEXT_COMPARISON_ONLY" and r["renderCount"]==4 and r["sameScene"]
+          p=root.parent/"art-final-four-stars"
+          q=json.loads((p/"receipt.json").read_text())
+          assert r["moduleSha256"]==q["moduleSha256"]==hashlib.sha256((p/"four-stars.glb").read_bytes()).hexdigest()
+          assert r["baselineModuleSha256"]=="ba06a87e4a885e26bbdcede1ceb52fa57f988750ca1aae2e96f3fb4a57465e71"
+          assert not any(r[k] for k in ("architectureChanged","camerasChanged","lightingChanged","navigationChanged","artisticApproval","runtimeQualified","studentAuthorized","publishable"))
+          for name,meta in r["files"].items():
+              b=(root/name).read_bytes()
+              assert len(b)==meta["bytes"] and hashlib.sha256(b).hexdigest()==meta["sha256"]
+          PY
+      - name: Preserve contextual comparison
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-final-r2-context
+          path: ${{ runner.temp }}/art-final-context/
+          if-no-files-found: warn
+          retention-days: 7
+
+  webgl-r2:
+    needs: isolated-candidate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Install existing application dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - uses: actions/download-artifact@v4
+        with:
+          name: atlas-art-final-four-stars
+          path: ${{ runner.temp }}/art-final-four-stars
+      - name: Inspect exact R2 GLB in six viewports
+        run: |
+          node --check scripts/art-final-r2/test-webgl.mjs
+          node scripts/art-final-r2/test-webgl.mjs "$RUNNER_TEMP/art-final-four-stars" "$RUNNER_TEMP/art-final-r2-webgl"
+      - name: Preserve browser metrics and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-final-r2-webgl
+          path: ${{ runner.temp }}/art-final-r2-webgl/
           if-no-files-found: warn
           retention-days: 7
