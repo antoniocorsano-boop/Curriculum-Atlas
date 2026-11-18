@@ -1,8 +1,8 @@
 // ALS-01 v1: renderer-independent light profiles and deterministic sampling.
 // Coordinates are local to an object's anchor, in Blender XYZ (Z up).
 export const VERSION=1;
-// Optical revision R3: widen only the core response; R2 halo, diameter and timing are unchanged.
-export const OPTICS=Object.freeze({revision:"ALS-01-R3",minDiameterPx:5,maxDiameterPx:11,diameterScale:2,coreInner:.24,coreOuter:.72,haloInner:.12,haloOuter:1,haloWeight:.42});
+// R4 preserves R3 optical shape, adapting only the bounded screen-space footprint.
+export const OPTICS=Object.freeze({revision:"ALS-01-R4",minDiameterPx:5,maxDiameterPx:11,diameterScale:2,coreInner:.24,coreOuter:.72,haloInner:.12,haloOuter:1,haloWeight:.42});
 export const LIMITS=Object.freeze({maxPointsPerAnchor:7,maxPointsTotal:64,minPeriodSec:3.5,maxAmplitude:.10,maxRadiusFraction:.96,maxOpacity:.42});
 const p=(color,count,period,amplitude,opacity,angles)=>Object.freeze({color:Object.freeze(color),count,period,amplitude,opacity,angles:Object.freeze(angles)});
 export const PROFILES=Object.freeze({
@@ -15,6 +15,19 @@ export const PROFILES=Object.freeze({
 export const STATES=Object.freeze({idle:1,focus:1.12,active:1.15,quiet:.68});
 const finite=x=>typeof x==="number"&&Number.isFinite(x);
 function invariant(ok,msg){if(!ok)throw new RangeError(msg)}
+// Scene-author declared contrast class, never sampled continuously from pixels.
+// Short-side interpolation avoids oversizing a landscape phone.
+export const BACKDROPS=Object.freeze({dark:0,mixed:.5,light:1});
+export function resolveOptics({width=640,height=480,backdrop="dark"}={}){
+  invariant(finite(width)&&width>0&&finite(height)&&height>0,"invalid viewport");
+  invariant(Object.hasOwn(BACKDROPS,backdrop),"invalid backdrop");
+  const t=Math.max(0,Math.min(1,(Math.min(width,height)-600)/400));
+  const c=BACKDROPS[backdrop];
+  return {revision:OPTICS.revision,width,height,backdrop,
+    minDiameterPx:OPTICS.minDiameterPx+2.5*t+.75*c,
+    maxDiameterPx:OPTICS.maxDiameterPx+2*t+c,
+    diameterScale:OPTICS.diameterScale+.35*t+.15*c};
+}
 export function validateAnchor(a){
   invariant(a&&typeof a.id==="string"&&/^[a-z0-9_-]{1,64}$/.test(a.id),"invalid anchor id");
   invariant(Object.hasOwn(PROFILES,a.profile),"invalid profile");
