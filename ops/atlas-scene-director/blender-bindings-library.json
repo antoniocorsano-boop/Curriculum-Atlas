@@ -27,7 +27,7 @@
     "parameter": "astral.visible",
     "value": false,
     "scope": "one reversible isolated visual experiment",
-    "resolutionPercent": 40
+    "resolutionPercent": 60
   },
   "studentAuthorized": false,
   "publishable": false
