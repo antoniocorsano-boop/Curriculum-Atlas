@@ -1,14 +1,27 @@
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {PROFILES,LIMITS,STATES,atlasAnchors,sample,validateAnchors,blenderToThree,OPTICS} from "./core.mjs";
+import {PROFILES,LIMITS,STATES,atlasAnchors,sample,validateAnchors,blenderToThree,OPTICS,resolveOptics} from "./core.mjs";
 const composition=JSON.parse(readFileSync(new URL("../atlas-gateway-c3/knowledge-composition.json",import.meta.url)));
 const anchors=atlasAnchors(composition);
 assert.deepEqual(anchors.map(a=>a.profile),["memoria","processo","orientamento","direzione"]);
 assert.equal(sample(anchors).length,18);
 assert.equal(Object.keys(PROFILES).length,5);
-assert.equal(OPTICS.revision,"ALS-01-R3");
+assert.equal(OPTICS.revision,"ALS-01-R4");
 assert.deepEqual([OPTICS.minDiameterPx,OPTICS.maxDiameterPx,OPTICS.diameterScale,OPTICS.haloInner,OPTICS.haloOuter,OPTICS.haloWeight],[5,11,2,.12,1,.42]);
 assert.deepEqual([OPTICS.coreInner,OPTICS.coreOuter],[.24,.72]);
+const phone=resolveOptics({width:320,height:568}),landscape=resolveOptics({width:568,height:320});
+assert.equal(phone.minDiameterPx,5);assert.equal(phone.maxDiameterPx,11);
+assert.equal(landscape.minDiameterPx,phone.minDiameterPx);
+const desk=resolveOptics({width:1440,height:1000}),light=resolveOptics({width:1440,height:1000,backdrop:"light"});
+assert.equal(desk.minDiameterPx,7.5);assert.equal(desk.maxDiameterPx,13);
+assert.equal(light.minDiameterPx,8.25);assert.equal(light.maxDiameterPx,14);
+for(const backdrop of ["dark","mixed","light"])for(let w=240;w<=2400;w+=20){
+ const o=resolveOptics({width:w,height:1080,backdrop});
+ assert.ok(o.minDiameterPx>=5&&o.maxDiameterPx<=14&&o.diameterScale>=2&&o.diameterScale<=2.5);
+ assert.deepEqual(o,resolveOptics({width:w,height:1080,backdrop}));
+}
+assert.throws(()=>resolveOptics({width:0,height:480}));
+assert.throws(()=>resolveOptics({backdrop:"auto"}));
 // R3 increases the core footprint only. Peak alpha is unchanged.
 const smooth=(a,b,x)=>{const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t)};
 const curve=(a,b,x)=>Math.max(1-smooth(a,b,x),(1-smooth(OPTICS.haloInner,OPTICS.haloOuter,x))*OPTICS.haloWeight);
