@@ -174,6 +174,60 @@ print(json.dumps(m["make_plan"](c,r,q)))`],{encoding:"utf8"}));
  report.sceneObservation.status="PASS";
  assert.deepEqual(report.external,[]);assert.deepEqual(report.errors,[]);
  await page.screenshot({path:join(out,"asi-l2-webgl-restored.png")});
+ // ART-100 / LIGHT-01: bracket the existing lighting baseline using the
+ // same ASD P1 planner. This is an isolated comparison, not artistic approval.
+ const artPlans=JSON.parse(execFileSync("python3",["-c",`import runpy,json
+m=runpy.run_path("scripts/scene-director.py")
+c,r=m["load_sources"]()
+variants={"chiaroscuro":{"lighting.exposure":0.78,"lighting.skyFill":0.14,"lighting.sun":1.18,"lighting.frontFill":0.10},"warm-open":{"lighting.exposure":0.90,"lighting.skyFill":0.27,"lighting.sun":1.10,"lighting.frontFill":0.20}}
+print(json.dumps({k:m["make_plan"](c,r,m["request_for"](c,r,"webgl",v,False,False)) for k,v in variants.items()}))`],{encoding:"utf8"}));
+ report.art100={status:"PENDING",scope:"LIGHT-01 isolated comparison only",plans:artPlans,artisticApproval:false,publishable:false};
+ report.art100.result=await frame.evaluate(plans=>{
+   const require=(x,msg)=>{if(!x)throw Error("ART-100 "+msg)};
+   require(ready&&!closing&&!failed&&!motion&&!down&&!document.hidden,"scene not static");
+   const gl=renderer.getContext(),w=gl.drawingBufferWidth,h=gl.drawingBufferHeight;
+   const lights=scene.children.filter(o=>o.isLight),hemi=lights.find(o=>o.isHemisphereLight),dirs=lights.filter(o=>o.isDirectionalLight);
+   require(hemi&&dirs.length===2,"light inventory");
+   const keys=["lighting.exposure","lighting.skyFill","lighting.sun","lighting.frontFill"];
+   const read=()=>({"lighting.exposure":renderer.toneMappingExposure,"lighting.skyFill":hemi.intensity,"lighting.sun":dirs[0].intensity,"lighting.frontFill":dirs[1].intensity});
+   function write(v){renderer.toneMappingExposure=v[keys[0]];hemi.intensity=v[keys[1]];dirs[0].intensity=v[keys[2]];dirs[1].intensity=v[keys[3]]}
+   const base=read(), cameraState=()=>JSON.stringify([angle,tilt,distance,camera.position.toArray(),camera.quaternion.toArray(),camera.projectionMatrix.toArray(),motion,als.object.geometry.attributes.position.count]);
+   const fixed=cameraState();
+   function capture(){
+     render();const b=new Uint8Array(w*h*4);gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,b);
+     require(!gl.isContextLost()&&gl.getError()===gl.NO_ERROR,"capture");
+     return {pixels:b,image:canvas.toDataURL("image/png")};
+   }
+   function metrics(b){
+     const histogram=Array(16).fill(0);let sum=0,dark=0,bright=0;
+     for(let i=0;i<b.length;i+=4){const y=.2126*b[i]+.7152*b[i+1]+.0722*b[i+2];sum+=y;histogram[Math.min(15,Math.floor(y/16))]++;if(y<24)dark++;if(y>245)bright++}
+     return {meanDisplayLuma:sum/(w*h),darkPixels:dark,brightPixels:bright,histogram,total:w*h};
+   }
+   function diff(a,b){let changed=0,max=0;for(let i=0;i<a.length;i+=4){const d=Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2]);if(d>12)changed++;max=Math.max(max,d)}return {changed,max,threshold:12}}
+   const reference=capture(),results={},images={reference:reference.image};
+   for(const [id,p] of Object.entries(plans)){
+     require(p.schema==="atlas.asd.plan/v1"&&p.target==="webgl"&&p.mode==="PLAN_ONLY"&&p.status==="DEPENDENCY_REQUIRED"&&p.rendererWriteAuthorized===false&&p.artisticApproval===false&&p.studentAuthorized===false&&p.publishable===false,"plan boundary");
+     require(p.changes.length===4&&p.changes.every(x=>keys.includes(x.id)&&x.before===base[x.id]&&typeof x.after==="number"&&Number.isFinite(x.after)),"change set");
+     require(p.candidate["astral.motion"]===false&&p.candidate["camera.orbit"]===angle&&p.candidate["camera.tilt"]===tilt&&p.candidate["camera.distance"]===distance,"protected camera");
+     const ranges=[[.65,1],[.12,.35],[.75,1.3],[.08,.28]];
+     require(keys.every((k,i)=>p.rollback[k]===base[k]&&p.candidate[k]>=ranges[i][0]&&p.candidate[k]<=ranges[i][1]),"bounds");
+     let variant,observed,restored;
+     try{write(p.candidate);variant=capture();observed=read();require(keys.every(k=>observed[k]===p.candidate[k]),"candidate values");require(cameraState()===fixed,"protected state")}
+     finally{write(base);restored=capture()}
+     require(keys.every(k=>read()[k]===base[k])&&cameraState()===fixed,"restore state");
+     const visual=diff(reference.pixels,variant.pixels),rollbackVisual=diff(reference.pixels,restored.pixels);
+     require(visual.changed>100&&rollbackVisual.max===0,"visual effect/rollback");
+     results[id]={observed,metrics:metrics(variant.pixels),visual,rollbackVisual};
+     images[id]=variant.image;images[id+"-restored"]=restored.image;
+   }
+   return {baseline:base,reference:metrics(reference.pixels),results,images,viewport:[w,h]};
+ },artPlans);
+ for(const [id,data] of Object.entries(report.art100.result.images)){
+   assert(data.startsWith("data:image/png;base64,"));
+   writeFileSync(join(out,"art100-light01-"+id+".png"),Buffer.from(data.slice("data:image/png;base64,".length),"base64"));
+ }
+ delete report.art100.result.images;
+ report.art100.status="PASS_COMPARISON_ONLY";
  // Exercise the real runtime's lifecycle with a live ALS adapter, not a mock.
  // Instrument actual calls, then reproduce late events and repeated closure.
  report.lifecycle=await frame.evaluate(()=>{
