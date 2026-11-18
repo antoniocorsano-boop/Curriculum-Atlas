@@ -36,3 +36,7 @@ La prima versione raccoglie 14 archivi originali, 47 componenti selezionati, 66 
 Il profilo runtime resta P1-spatial; M1/M2 sono qualificati in isolamento, non ancora integrati. La navigazione ha raggiunto 5/6 percorsi completi e l'intervento sulla chiusura è in riqualificazione al momento della fotografia. Nessuna modifica al runtime o al master artistico in questa PR.
 
 ASP-01 è proposto come modello riutilizzabile per TRAMA, ma non è ancora adottato negli altri repository.
+
+## Requisito di chiusura TRAMA-DE-01
+
+Indirizzo approvato il 18 novembre 2026, decisione TRAMA-ADR-023 ([PR centrale #346](https://github.com/antoniocorsano-boop/trama-ecosistema/pull/346)). Dalla voce ASP-H016 il registro richiede contesto, alternative, scelta, motivazione, vincoli, evidenze e attività residue. Una dichiarazione completed/qualified/closed richiede criteri di accettazione collegati a evidenze PASS e nessuna verifica obbligatoria residua. I primi quindici record rimangono fotografia storica immutata. Il controllo non sostituisce l'esame delle evidenze o l'approvazione umana, né rende obbligatorio lo stato di GitHub prima dell'integrazione e configurazione dei controlli richiesti. La nuova evidenza 14442822953 è conservata separatamente dal pacchetto 1.0.0-draft.1, senza alterarlo.
