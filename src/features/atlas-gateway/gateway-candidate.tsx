@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { PORTALS, readSceneMessage, resolvePortal } from "./gateway-policy";
+import { nativeRequest, verifiedNativeBytes, type NativeManifest } from "./native-asset-policy";
 import "./gateway.css";
 
-export function GatewayCandidate({ preparedScene }: { preparedScene: string | null }) {
+export function GatewayCandidate({ preparedScene, nativeManifest = null }: { preparedScene: string | null; nativeManifest?: NativeManifest | null }) {
   const router = useRouter();
   const iframe = useRef<HTMLIFrameElement>(null);
   const [scene, setScene] = useState<{ html: string; channel: string } | null>(null);
@@ -46,12 +47,36 @@ export function GatewayCandidate({ preparedScene }: { preparedScene: string | nu
 
   useEffect(() => {
     if (!scene) return;
+    const assetController = new AbortController();
+    const delivered = new Set<string>();
+    const pending = new Set<string>();
     const timer = window.setTimeout(() => {
       setShow3D(false);
       setNotice("La scena 3D non risponde. Gli accessi restano disponibili.");
-    }, 20000);
+    }, nativeManifest ? 60000 : 20000);
     const receive = (event: MessageEvent) => {
       if (event.source !== iframe.current?.contentWindow || event.origin !== "null") return;
+      if (nativeManifest) {
+        const asset = nativeRequest(event.data, scene.channel, nativeManifest);
+        if (asset) {
+          if (delivered.has(asset.id) || pending.has(asset.id)) return;
+          pending.add(asset.id);
+          const target = iframe.current?.contentWindow;
+          void verifiedNativeBytes(asset, assetController.signal).then(bytes => {
+            if (assetController.signal.aborted || !target || target !== iframe.current?.contentWindow) return;
+            delivered.add(asset.id);
+            // Opaque sandbox has no usable target origin. Source window and
+            // channel were checked above; these are non-personal art assets.
+            target.postMessage({type:"atlas-native-asset",channel:scene.channel,id:asset.id,bytes},"*",[bytes]);
+          }).catch(() => {
+            if (assetController.signal.aborted) return;
+            window.clearTimeout(timer);
+            setShow3D(false);
+            setNotice("Risorsa della sala 3D non disponibile o non integra. Usa gli accessi della sala.");
+          }).finally(() => pending.delete(asset.id));
+          return;
+        }
+      }
       const message = readSceneMessage(event.data, scene.channel);
       if (!message) return;
       if (message.type === "atlas-3d-ready") {
@@ -70,9 +95,10 @@ export function GatewayCandidate({ preparedScene }: { preparedScene: string | nu
     window.addEventListener("message", receive);
     return () => {
       window.clearTimeout(timer);
+      assetController.abort();
       window.removeEventListener("message", receive);
     };
-  }, [scene, router]);
+  }, [scene, router, nativeManifest]);
 
   const immersive = Boolean(preparedScene && show3D);
   return (
