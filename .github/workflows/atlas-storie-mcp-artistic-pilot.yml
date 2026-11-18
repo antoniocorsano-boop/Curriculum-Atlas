@@ -1,0 +1,427 @@
+name: Atlas — Storie B03 MCP artistic pilot C1
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/atlas-storie-mcp-artistic-pilot.yml"
+      - "scripts/storie-mcp-pilot/**"
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-storie-mcp-artistic-c1
+  cancel-in-progress: true
+jobs:
+  live-prerequisite:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.head.ref == 'work/storie-b03-mcp-artistic-pilot' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts/storie-mcp-pilot
+      - name: Check display and isolated temporary workspace
+        run: |
+          set -euo pipefail
+          command -v Xvfb
+          command -v xvfb-run
+          command -v xauth
+          mkdir -p "$RUNNER_TEMP/vf3d-l0/home"
+          printf 'DISPLAY_PREREQUISITES_PRESENT\n'
+      - name: Acquire and verify previously qualified Blender distribution
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/vf3d-l0"
+          file=blender-4.2.23-linux-x64.tar.xz
+          digest=bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+          # Reuse the public distribution sources qualified by Atlas.
+          valid() {
+            [[ -f "$1" && ! -L "$1" ]] &&
+            [[ "$(stat -c %s "$1")" = 350707672 ]] &&
+            printf '%s  %s\n' "$digest" "$1" | sha256sum --strict --check
+          }
+          source=
+          for base in https://download.blender.org/release/Blender4.2 https://mirror.clarkson.edu/blender/release/Blender4.2 https://mirror.dotsrc.org/blender/release/Blender4.2; do
+            echo "Trying approved distribution source: $base"
+            rm -f "$file.part"
+            if curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --connect-timeout 15 --max-time 120 --output "$file.part" "$base/$file"; then
+              if valid "$file.part"; then
+                mv "$file.part" "$file"
+                source="$base"
+                break
+              fi
+              echo "Rejected archive: size or digest mismatch"
+            fi
+            rm -f "$file.part"
+          done
+          [[ -n "$source" ]] || { echo "BLOCKED: all approved distribution sources failed; no execution"; exit 1; }
+          valid "$file"
+          echo "Verified distribution source: $source"
+          tar -xJf "$file"
+          ./blender-4.2.23-linux-x64/blender --version
+      - name: Verify software graphics runtime
+        run: |
+          set -euo pipefail
+          # Ubuntu distribution packages only; no driver or GPU provider change.
+          if ! ldconfig -p | grep -F 'libEGL.so.1' >/dev/null; then
+            sudo apt-get update -q
+            sudo apt-get install -y --no-install-recommends libegl1 libegl-mesa0 libgl1-mesa-dri libglx-mesa0
+          fi
+          ldconfig -p | grep -E 'libEGL.so.1|libGLX_mesa.so.0|libGL.so.1'
+          ldconfig -p | grep -F 'libEGL.so.1' >/dev/null
+          mkdir -p "$RUNNER_TEMP/vf3d-l0/xdg-runtime"
+          chmod 700 "$RUNNER_TEMP/vf3d-l0/xdg-runtime"
+          dpkg-query -W libegl1 libegl-mesa0 libgl1-mesa-dri libglx-mesa0
+      - name: Audit frozen MCP dependencies before any installation
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/vf3d-l0"
+          mkdir -p mcp-input/wheels mcp-input/source
+          cp "$GITHUB_WORKSPACE/scripts/storie-mcp-pilot/requirements.lock" mcp-input/upstream-requirements.lock
+          # Native Blender image transport returns PNG bytes; Pillow is not installed in this source-only profile.
+          grep -v '^pillow==' mcp-input/upstream-requirements.lock > mcp-input/requirements.lock
+          test "$(wc -l < mcp-input/upstream-requirements.lock)" = 36
+          test "$(wc -l < mcp-input/requirements.lock)" = 35
+          python3 - <<'PY'
+          import datetime, json, pathlib, re, urllib.request
+          root=pathlib.Path("mcp-input")
+          entries=[]
+          for line in (root/"requirements.lock").read_text().splitlines():
+              m=re.fullmatch(r"([a-z0-9-]+)==([^ ]+) --hash=sha256:([0-9a-f]{64})",line)
+              assert m, line
+              name, version, digest=m.groups()
+              entries.append({"name":name,"version":version,"sha256":digest})
+          assert len(entries)==35 and len({x["name"] for x in entries})==35
+          assert all(x["name"]!="pillow" for x in entries)
+          queries=[{"package":{"name":x["name"],"ecosystem":"PyPI"},"version":x["version"]} for x in entries]
+          req=urllib.request.Request("https://api.osv.dev/v1/querybatch",
+              data=json.dumps({"queries":queries}).encode(),
+              headers={"Content-Type":"application/json"},method="POST")
+          with urllib.request.urlopen(req,timeout=45) as response:
+              results=json.load(response)["results"]
+          assert len(results)==len(entries) and all(isinstance(x,dict) for x in results)
+          findings=[]
+          for item,result in zip(entries,results):
+              assert set(result)<= {"vulns"}
+              for v in result.get("vulns",[]):
+                  findings.append({"package":item["name"],"version":item["version"],"id":v["id"]})
+          evidence={"status":"PASS_NO_OSV_FINDINGS" if not findings else "STOP_KNOWN_ADVISORIES",
+                    "checkedAt":datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                    "source":"https://api.osv.dev/v1/querybatch","packages":entries,"findings":findings,
+                    "excludedFromNativeBlenderProfile":["pillow"],
+                    "scope":"PyPI package advisories only; not a full security certification"}
+          (root/"audit.json").write_text(json.dumps(evidence,indent=2))
+          print(json.dumps({"status":evidence["status"],"checked":len(entries),"findings":findings},indent=2))
+          if findings: raise SystemExit("STOP: advisory review required before execution")
+          PY
+          env -i PATH=/usr/bin:/bin HOME="$PWD" PIP_CONFIG_FILE=/dev/null \
+            /usr/bin/python3 -m pip --isolated --disable-pip-version-check download --no-cache-dir \
+            --index-url https://pypi.org/simple --only-binary=:all: --require-hashes \
+            --dest mcp-input/wheels -r mcp-input/requirements.lock
+          git init -q mcp-upstream
+          git -C mcp-upstream -c credential.helper= fetch --depth=1 https://github.com/QwenLM/Qwen-MM-Plugins.git refs/tags/qwen-mm-plugins-blender-v1.2.0
+          test "$(git -C mcp-upstream rev-parse 'FETCH_HEAD^{commit}')" = 33a54695774020e5da2d6b1ed13119d4014f848f
+          git -C mcp-upstream archive FETCH_HEAD src | tar -x -C mcp-input/source
+          test "$(git hash-object mcp-input/source/src/mcp_framework.py)" = 071fa7b3617fc57bd2a47c3ea7d66971a4e7bf81
+          test "$(git hash-object mcp-input/source/src/capabilities/blender/qwen_mm_plugins_blender/vendor/addon.py)" = 77ec1f85083b39030c12e94e188a7c5a70229744
+          test "$(git hash-object mcp-input/source/src/capabilities/blender/qwen_mm_plugins_blender/tools/get_viewport_screenshot.py)" = 8b04c9bbfe835c0ca0f384c0c5b3f0462d6e3992
+          python3 - <<'PY'
+          import ast, json, pathlib
+          src=pathlib.Path("mcp-input/source/src")
+          files=list((src/"capabilities/blender/qwen_mm_plugins_blender").rglob("*.py"))
+          files += [src/"mcp_framework.py",*(src/"shared"/n for n in ("__init__.py","env.py","content.py","native_mode.py","applaunch.py","syscmd.py"))]
+          hits=[]
+          for p in files:
+              for n in ast.walk(ast.parse(p.read_text())):
+                  names=[a.name for a in n.names] if isinstance(n,ast.Import) else [n.module or ""] if isinstance(n,ast.ImportFrom) else []
+                  if any(x.split(".")[0] in ("PIL","pillow") for x in names):
+                      hits.append(str(p))
+          evidence={"profile":"native Blender source-only","sourceFilesChecked":len(files),"directPillowImports":hits,
+                    "scope":"static import check; runtime proof required"}
+          pathlib.Path("mcp-input/profile-evidence.json").write_text(json.dumps(evidence,indent=2))
+          print(json.dumps(evidence,indent=2))
+          assert not hits, hits
+          PY
+      - name: Acquire exact frozen B03 master from the qualified Atlas artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/vf3d-l0"
+          mkdir -p b03-input
+          curl --fail --silent --show-error --location --max-time 120 \
+            -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/14358154709/zip" -o b03.zip
+          printf '%s  %s\n' 678d6580571efac6cabb9b62aa147e2ba917ec919c7b05803a9943573266d7cd b03.zip | sha256sum --strict --check
+          python3 - <<'PY'
+          import hashlib,json,pathlib,zipfile
+          with zipfile.ZipFile("b03.zip") as z:
+              e=json.loads(z.read("storie-p2/evidence.json"))
+              assert e["revision"]=="B03" and e["components"]==15 and e["triangles"]==105568
+              for name,meta in e["files"].items():
+                  raw=z.read("storie-p2/"+name)
+                  assert len(raw)==meta["bytes"] and hashlib.sha256(raw).hexdigest()==meta["sha256"]
+                  if name=="storie-preview.blend":
+                      assert meta["sha256"]=="b3f343002bb84612672620d139be5b23e4a6dfc39c654367796146950847677f"
+                      pathlib.Path("b03-input",name).write_bytes(raw)
+              pathlib.Path("b03-input/receipt.json").write_text(json.dumps(e,indent=2))
+          PY
+          chmod a-w b03-input/storie-preview.blend b03-input/receipt.json
+      - name: Execute one artist-directed cycle through original MCP in isolated Blender
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/vf3d-l0"
+          mkdir -p bridge/home bridge/runtime
+          chmod 700 bridge/runtime
+          # Only the audited vendor file, not the full Qwen package or autolaunch.
+          curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --connect-timeout 15 --max-time 60 --output bridge/addon.py 'https://raw.githubusercontent.com/QwenLM/Qwen-MM-Plugins/qwen-mm-plugins-blender-v1.2.0/src/capabilities/blender/qwen_mm_plugins_blender/vendor/addon.py'
+          test "$(git hash-object bridge/addon.py)" = 77ec1f85083b39030c12e94e188a7c5a70229744
+          printf '%s  %s\n' f8d22dc2c29aed35730c787a321b9d7b79bd6d5ebdd431420585a8a525b463ec bridge/addon.py | sha256sum --strict --check
+          # Docker daemon already supplied by the standard runner; no new provider.
+          command -v docker
+          docker info --format '{{.ServerVersion}}'
+          # Pin the base digest observed in run 44173983086.
+          base=ubuntu@sha256:73b999393d07f2bf65a40373778a44dc9a6d54ad7718d29247d8ff9413c4d6a8
+          docker pull "$base"
+          printf '%s\n' "$base" > bridge/base-image.txt
+          mkdir -p container-build
+          cat > container-build/Dockerfile <<'DOCKER'
+          FROM ubuntu@sha256:73b999393d07f2bf65a40373778a44dc9a6d54ad7718d29247d8ff9413c4d6a8
+          ARG LAB_UID
+          ARG LAB_GID
+          RUN apt-get update -q && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+              python3 python3-venv xvfb xauth x11-utils ca-certificates fontconfig fonts-dejavu-core \
+              libegl1 libegl-mesa0 libgl1 libgl1-mesa-dri libglx-mesa0 libvulkan1 \
+              libx11-6 libxext6 libxi6 libxfixes3 libxrender1 libxxf86vm1 libxrandr2 \
+              libxcursor1 libxinerama1 libxkbcommon0 libxkbcommon-x11-0 libxcomposite1 libxdamage1 \
+              libsm6 libice6 libglib2.0-0t64 libdbus-1-3 libfontconfig1 libfreetype6 \
+              libpulse0 libasound2t64 libgomp1 libstdc++6 libwayland-client0 \
+              && rm -rf /var/lib/apt/lists/*
+          RUN (getent group "$LAB_GID" >/dev/null || groupadd -g "$LAB_GID" vf3d) \
+              && (getent passwd "$LAB_UID" >/dev/null || useradd -M -u "$LAB_UID" -g "$LAB_GID" -d /work/home vf3d)
+          DOCKER
+          docker build --build-arg "LAB_UID=$(id -u)" --build-arg "LAB_GID=$(id -g)" --tag vf3d-local-probe:single --file container-build/Dockerfile container-build
+          docker image inspect vf3d-local-probe:single --format '{{.Id}}' > bridge/probe-image.txt
+          cat > bridge/start.py <<'PY'
+          import bpy, pathlib, runpy, traceback
+          root = pathlib.Path("/work")
+          def startup():
+              try:
+                  assert not bpy.app.background and bpy.app.version[:3] == (4, 2, 23)
+                  (root / "blender-ready.txt").write_text(bpy.app.version_string)
+                  print("BLENDER_GUI_READY", flush=True)
+                  runpy.run_path("/work/addon.py", run_name="__main__")
+                  scene = bpy.context.scene
+                  for suffix in ("polyhaven", "hyper3d", "sketchfab", "hunyuan3d"):
+                      setattr(scene, "blendermcp_use_" + suffix, False)
+                  assert bpy.types.blendermcp_server.running
+                  (root / "bridge-ready.txt").write_text("READY")
+                  print("VENDOR_ADDON_READY", flush=True)
+              except Exception:
+                  (root / "startup-error.txt").write_text(traceback.format_exc())
+                  traceback.print_exc()
+              return None
+          bpy.app.timers.register(startup, first_interval=1.0)
+          PY
+          cp "$GITHUB_WORKSPACE/scripts/storie-mcp-pilot/artist-cycle.py" bridge/artist-cycle.py
+          cat > bridge/client.py <<'PY'
+          import json, os, pathlib, socket
+          assert os.getuid()!=0
+          assert {name for _,name in socket.if_nameindex()}=={"lo"}
+          assert not pathlib.Path("/home/runner").exists()
+          assert not os.access("/root",os.R_OK|os.X_OK)
+          assert not any("TOKEN" in k or "KEY" in k or "SECRET" in k for k in os.environ)
+          assert not pathlib.Path("/var/run/docker.sock").exists()
+          proc=pathlib.Path("/proc/self/status").read_text()
+          assert "CapEff:\t0000000000000000" in proc and "NoNewPrivs:\t1" in proc
+          assert os.statvfs("/").f_flag & os.ST_RDONLY
+          assert os.statvfs("/input").f_flag & os.ST_RDONLY
+          assert os.statvfs("/deps").f_flag & os.ST_RDONLY
+          s=socket.socket();s.settimeout(1)
+          try:s.connect(("192.0.2.1",443))
+          except OSError:pass
+          else:raise AssertionError("unexpected external route")
+          finally:s.close()
+          conn=socket.create_connection(("127.0.0.1",9876),timeout=5)
+          conn.settimeout(15)
+          def call(kind):
+              conn.sendall(json.dumps({"type":kind,"params":{}}).encode())
+              raw=b""
+              while len(raw)<1024*1024:
+                  chunk=conn.recv(8192)
+                  assert chunk
+                  raw+=chunk
+                  try:return json.loads(raw)
+                  except (ValueError,UnicodeDecodeError):pass
+              raise RuntimeError("oversize response")
+          for service in ("polyhaven","hyper3d","sketchfab","hunyuan3d"):
+              r=call("get_"+service+"_status")
+              assert r["status"]=="success" and r["result"]["enabled"] is False
+          for kind in ("download_polyhaven_asset","create_rodin_job","create_hunyuan_job","download_sketchfab_model"):
+              assert call(kind)["status"]=="error"
+          conn.close()
+          pathlib.Path("/work/isolation-smoke.json").write_text(json.dumps({"status":"PASS","loopbackOnly":True,"credentialsAbsent":True,"externalServicesDisabled":True,"masterReadonly":True}))
+          PY
+          cat > bridge/run.sh <<'SH'
+          set -euo pipefail
+          stage() { printf '%s %s\n' "$(date -u +%FT%TZ)" "$*" | tee -a /work/stages.log; }
+          xpid=
+          bpid=
+          cleanup() {
+            if [[ -n "$bpid" ]]; then kill "$bpid" 2>/dev/null || true; fi
+            if [[ -n "$xpid" ]]; then kill "$xpid" 2>/dev/null || true; fi
+          }
+          trap cleanup EXIT
+          stage D1_CONTAINER_STARTED
+          id
+          test -w /work
+          test -w /tmp
+          test -w "$HOME"
+          getent passwd "$(id -u)"
+          stage D1_CONTAINER_PASS
+          stage D2_DISPLAY_START
+          export DISPLAY=:99
+          export XAUTHORITY=/tmp/vf3d.Xauthority
+          touch "$XAUTHORITY"
+          chmod 600 "$XAUTHORITY"
+          cookie="$(python3 -c 'import secrets; print(secrets.token_hex(16))')"
+          timeout 5s xauth -f "$XAUTHORITY" add "$DISPLAY" . "$cookie"
+          Xvfb "$DISPLAY" -screen 0 1280x720x24 -nolisten tcp -auth "$XAUTHORITY" > /work/xvfb.log 2>&1 &
+          xpid=$!
+          ready=0
+          for i in $(seq 1 15); do
+            kill -0 "$xpid" || { stage D2_XVFB_EXITED; cat /work/xvfb.log; exit 21; }
+            if timeout 2s xdpyinfo > /work/xdpyinfo.log 2>&1; then ready=1; break; fi
+            sleep 1
+          done
+          [[ "$ready" = 1 ]] || { stage D2_DISPLAY_TIMEOUT; cat /work/xvfb.log; exit 22; }
+          stage D2_DISPLAY_PASS
+          stage D3_BLENDER_START
+          /opt/blender/blender --factory-startup --disable-autoexec --threads 4 --python-exit-code 1 /input/storie-preview.blend --python /work/start.py > /work/bridge.log 2>&1 &
+          bpid=$!
+          for i in $(seq 1 35); do
+            kill -0 "$bpid" || { stage D3_BLENDER_EXITED; tail -80 /work/bridge.log; exit 31; }
+            [[ ! -f /work/startup-error.txt ]] || { stage D3_STARTUP_ERROR; cat /work/startup-error.txt; exit 32; }
+            [[ ! -f /work/blender-ready.txt ]] || break
+            sleep 1
+          done
+          [[ -f /work/blender-ready.txt ]] || { stage D3_BLENDER_TIMEOUT; tail -80 /work/bridge.log; exit 33; }
+          stage D3_BLENDER_PASS
+          stage D4_VENDOR_START
+          for i in $(seq 1 25); do
+            kill -0 "$bpid" || { stage D4_BLENDER_EXITED; exit 41; }
+            [[ ! -f /work/startup-error.txt ]] || { stage D4_ADDON_ERROR; cat /work/startup-error.txt; exit 42; }
+            [[ ! -f /work/bridge-ready.txt ]] || break
+            sleep 1
+          done
+          [[ -f /work/bridge-ready.txt ]] || { stage D4_ADDON_TIMEOUT; exit 43; }
+          stage D4_VENDOR_READY
+          timeout 75s /usr/bin/python3 -u /work/client.py > /work/client.log 2>&1 || { stage D4_CLIENT_FAILED; cat /work/client.log; exit 44; }
+          cat /work/client.log
+          stage D4_TRANSPORT_PASS
+          stage D5_MCP_START
+          /usr/bin/python3 -m venv /work/mcp-venv
+          /work/mcp-venv/bin/python -m pip --isolated --disable-pip-version-check install --no-index --find-links /deps/wheels --only-binary=:all: --require-hashes -r /deps/requirements.lock
+          /work/mcp-venv/bin/python -m pip check
+          timeout 315s /work/mcp-venv/bin/python -u /work/artist-cycle.py > /work/mcp-client.log 2>&1 || { stage D5_MCP_FAILED; cat /work/mcp-client.log; tail -80 /work/bridge.log; exit 51; }
+          cat /work/mcp-client.log
+          stage D5_ARTISTIC_CYCLE_COMPLETE
+          # Reopen the candidate in a second isolated Blender process to prove recoverability.
+          kill "$bpid" 2>/dev/null || true
+          wait "$bpid" 2>/dev/null || true
+          bpid=
+          timeout 45s /opt/blender/blender --background --factory-startup --disable-autoexec --threads 4 --python-exit-code 1 /work/storie-B03-mcp-C1.blend --python-expr 'import bpy,json,pathlib; objects=[o for o in bpy.context.scene.objects if o.type=="MESH"]; assert len(objects)==15 and sum(len(o.data.polygons) for o in objects)==105568; assert abs(bpy.data.materials["Storie_1_5"].node_tree.nodes.get("Principled BSDF").inputs["Metallic"].default_value-.96)<1e-5; pathlib.Path("/work/reopen.json").write_text(json.dumps({"status":"PASS","components":len(objects),"triangles":sum(len(o.data.polygons) for o in objects)}))' > /work/reopen.log 2>&1
+          stage D6_REOPEN_PASS
+          SH
+          # No host network, ports, credentials, GPU devices, socket or privileged container.
+          # Fail closed rather than running outside the boundary.
+          name="vf3d-isolated-probe"
+          trap 'docker rm -f "$name" >/dev/null 2>&1 || true' EXIT
+          docker create --name "$name" --network none --read-only --user "$(id -u):$(id -g)" \
+            --cap-drop ALL --security-opt no-new-privileges:true --cpus 4 --memory 6g --pids-limit 256 \
+            --tmpfs /tmp:rw,nosuid,nodev,size=512m,mode=1777 --shm-size 256m \
+            --mount "type=bind,src=$PWD/blender-4.2.23-linux-x64,dst=/opt/blender,readonly" \
+            --mount "type=bind,src=$PWD/bridge,dst=/work" \
+            --mount "type=bind,src=$PWD/mcp-input,dst=/deps,readonly" \
+            --mount "type=bind,src=$PWD/b03-input,dst=/input,readonly" \
+            --workdir /work vf3d-local-probe:single \
+            /usr/bin/env -i PATH=/usr/bin:/bin HOME=/work/home XDG_RUNTIME_DIR=/work/runtime LIBGL_ALWAYS_SOFTWARE=1 \
+            /bin/bash /work/run.sh
+          docker inspect "$name" --format '{{json .HostConfig}}' > container-build/host-config.json
+          python3 - <<'PY'
+          import json, pathlib
+          h=json.loads(pathlib.Path("container-build/host-config.json").read_text())
+          assert h["NetworkMode"]=="none" and h["ReadonlyRootfs"] and not h["Privileged"]
+          assert "ALL" in h["CapDrop"] and not h["PortBindings"] and not h["Devices"]
+          assert any(x.startswith("no-new-privileges") for x in h["SecurityOpt"])
+          assert h["Memory"]==6*1024**3 and h["NanoCpus"]==4*10**9
+          pathlib.Path("bridge/isolation-config.json").write_text(json.dumps({
+              "networkMode":h["NetworkMode"],"readonlyRootfs":h["ReadonlyRootfs"],
+              "privileged":h["Privileged"],"capDrop":h["CapDrop"],
+              "securityOpt":h["SecurityOpt"],"memory":h["Memory"],"nanoCpus":h["NanoCpus"]
+          },indent=2))
+          PY
+          # Detached start and bounded state polling: distinguish Docker launch from child startup.
+          if ! timeout 25s docker start "$name" > bridge/docker-start.log 2>&1; then
+            cat bridge/docker-start.log
+            docker inspect "$name" --format '{{json .State}}' > bridge/docker-state.json || true
+            exit 11
+          fi
+          echo "DOCKER_START_ACCEPTED"
+          running=true
+          for i in $(seq 1 235); do
+            running="$(docker inspect "$name" --format '{{.State.Running}}')"
+            [[ "$running" = true ]] || break
+            sleep 2
+          done
+          docker inspect "$name" --format '{{json .State}}' > bridge/docker-state.json
+          docker logs "$name" > bridge/docker.log 2>&1 || true
+          cat bridge/docker-state.json
+          tail -100 bridge/docker.log
+          if [[ "$running" = true ]]; then
+            echo "STOP_CONTAINER_TIMEOUT"
+            exit 12
+          fi
+          test "$(docker inspect "$name" --format '{{.State.ExitCode}}')" = 0
+          python3 - <<'PY'
+          import json, pathlib
+          import hashlib
+          root=pathlib.Path("bridge")
+          e=json.loads((root/"artistic-evidence.json").read_text())
+          assert e["status"]=="ARTIST_DIRECTED_CANDIDATE_REVIEW_REQUIRED"
+          assert e["sameBlenderProcess"] and e["cycle"]==1 and e["maxCycles"]==2
+          assert not any(e[k] for k in ("autonomousAgentQualified","artisticApproval","publicationAuthorized"))
+          assert e["before"]["geometry"]==e["after"]["geometry"] and e["before"]["light"]==e["after"]["light"]
+          assert json.loads((root/"reopen.json").read_text())["status"]=="PASS"
+          assert json.loads((root/"isolation-smoke.json").read_text())["status"]=="PASS"
+          for n,m in e["images"].items():
+              assert hashlib.sha256((root/n).read_bytes()).hexdigest()==m["sha256"]
+          assert hashlib.sha256(pathlib.Path("b03-input/storie-preview.blend").read_bytes()).hexdigest()==e["masterSha256"]
+          assert hashlib.sha256((root/"storie-B03-mcp-C1.blend").read_bytes()).hexdigest()==e["candidate"]["sha256"]
+          PY
+      - name: Preserve candidate and exact comparison evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-storie-b03-mcp-C1
+          path: |
+            ${{ runner.temp }}/vf3d-l0/b03-input/receipt.json
+            ${{ runner.temp }}/vf3d-l0/mcp-input/audit.json
+            ${{ runner.temp }}/vf3d-l0/mcp-input/profile-evidence.json
+            ${{ runner.temp }}/vf3d-l0/bridge/isolation-config.json
+            ${{ runner.temp }}/vf3d-l0/bridge/isolation-smoke.json
+            ${{ runner.temp }}/vf3d-l0/bridge/stages.log
+            ${{ runner.temp }}/vf3d-l0/bridge/docker-state.json
+            ${{ runner.temp }}/vf3d-l0/bridge/docker.log
+            ${{ runner.temp }}/vf3d-l0/bridge/xvfb.log
+            ${{ runner.temp }}/vf3d-l0/bridge/bridge.log
+            ${{ runner.temp }}/vf3d-l0/bridge/mcp-client.log
+            ${{ runner.temp }}/vf3d-l0/bridge/reopen.log
+            ${{ runner.temp }}/vf3d-l0/bridge/reopen.json
+            ${{ runner.temp }}/vf3d-l0/bridge/artistic-evidence.json
+            ${{ runner.temp }}/vf3d-l0/bridge/baseline-*.png
+            ${{ runner.temp }}/vf3d-l0/bridge/candidate-*.png
+            ${{ runner.temp }}/vf3d-l0/bridge/viewport-*.png
+            ${{ runner.temp }}/vf3d-l0/bridge/storie-B03-mcp-C1.blend
+          if-no-files-found: ignore
+          retention-days: 7
