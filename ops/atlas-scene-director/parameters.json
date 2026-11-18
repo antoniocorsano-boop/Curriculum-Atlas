@@ -1,0 +1,171 @@
+{
+  "schema": "atlas.asd.parameter-registry/v1",
+  "version": "0.1.0",
+  "masterSha256": "f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab",
+  "sourceCommit": "190e776f878e5465a543003ca87a23397579444d",
+  "mode": "PLAN_ONLY",
+  "parameters": [
+    {
+      "id": "camera.mode",
+      "target": "webgl",
+      "type": "enum",
+      "values": [
+        "auto"
+      ],
+      "baseline": "auto",
+      "unit": "profile",
+      "binding": "NATIVE_CAMERAS auto aspect",
+      "source": "native-preview-runtime.js",
+      "scope": "existing behavior"
+    },
+    {
+      "id": "camera.orbit",
+      "target": "webgl",
+      "type": "number",
+      "min": -0.3,
+      "max": 0.3,
+      "baseline": 0,
+      "unit": "rad",
+      "binding": "angle",
+      "source": "native-preview-runtime.js",
+      "scope": "existing range"
+    },
+    {
+      "id": "camera.tilt",
+      "target": "webgl",
+      "type": "number",
+      "min": -1.3,
+      "max": 1.3,
+      "baseline": 0,
+      "unit": "scene units",
+      "binding": "tilt",
+      "source": "native-preview-runtime.js",
+      "scope": "existing range"
+    },
+    {
+      "id": "camera.distance",
+      "target": "webgl",
+      "type": "number",
+      "min": 0.88,
+      "max": 1.12,
+      "baseline": 1,
+      "unit": "ratio",
+      "binding": "distance",
+      "source": "native-preview-runtime.js",
+      "scope": "existing range"
+    },
+    {
+      "id": "lighting.exposure",
+      "target": "webgl",
+      "type": "number",
+      "min": 0.65,
+      "max": 1,
+      "baseline": 0.82,
+      "unit": "ratio",
+      "binding": "renderer.toneMappingExposure",
+      "source": "native-preview-runtime.js",
+      "scope": "proposed experiment range"
+    },
+    {
+      "id": "lighting.skyFill",
+      "target": "webgl",
+      "type": "number",
+      "min": 0.12,
+      "max": 0.35,
+      "baseline": 0.22,
+      "unit": "renderer coefficient",
+      "binding": "HemisphereLight.intensity",
+      "source": "native-preview-runtime.js",
+      "scope": "proposed experiment range"
+    },
+    {
+      "id": "lighting.sun",
+      "target": "webgl",
+      "type": "number",
+      "min": 0.75,
+      "max": 1.3,
+      "baseline": 1.05,
+      "unit": "renderer coefficient",
+      "binding": "DirectionalLight sun intensity",
+      "source": "native-preview-runtime.js",
+      "scope": "proposed experiment range"
+    },
+    {
+      "id": "lighting.frontFill",
+      "target": "webgl",
+      "type": "number",
+      "min": 0.08,
+      "max": 0.28,
+      "baseline": 0.18,
+      "unit": "renderer coefficient",
+      "binding": "DirectionalLight fill intensity",
+      "source": "native-preview-runtime.js",
+      "scope": "proposed experiment range"
+    },
+    {
+      "id": "astral.motion",
+      "target": "webgl",
+      "type": "boolean",
+      "baseline": false,
+      "unit": "boolean",
+      "binding": "ALS motion",
+      "source": "native-preview-runtime.js",
+      "scope": "existing opt-in and reduced motion constraints"
+    },
+    {
+      "id": "camera.active",
+      "target": "blender",
+      "type": "enum",
+      "values": [
+        "atrium",
+        "vertical",
+        "detail",
+        "portals",
+        "portrait-focus",
+        "cupola-detail",
+        "arch-detail"
+      ],
+      "baseline": "atrium",
+      "unit": "camera id",
+      "binding": "scene.camera",
+      "source": "editable-master-receipt-summary.json",
+      "scope": "existing camera inventory; candidate adapter"
+    },
+    {
+      "id": "astral.visible",
+      "target": "blender",
+      "type": "boolean",
+      "baseline": true,
+      "unit": "boolean",
+      "binding": "07 ALS-01 R4 hide_render inverse",
+      "source": "editable-master-receipt-summary.json",
+      "scope": "candidate adapter"
+    }
+  ],
+  "protected": [
+    {
+      "domain": "architecture",
+      "reason": "Master geometry and shared instances preserved"
+    },
+    {
+      "domain": "materials",
+      "reason": "M1/M2 require separate artistic and technical comparison"
+    },
+    {
+      "domain": "navigation",
+      "reason": "Existing portal authority and open transition qualification"
+    },
+    {
+      "domain": "security",
+      "reason": "CSP, asset integrity and authorization immutable"
+    },
+    {
+      "domain": "als.optics",
+      "reason": "R4 qualified limits and point count fixed"
+    },
+    {
+      "domain": "audio",
+      "reason": "No qualified scene audio adapter yet"
+    }
+  ]
+}
