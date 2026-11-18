@@ -9,7 +9,7 @@ import {execFileSync} from "node:child_process";
 import {createHash} from "node:crypto";
 import {createServer} from "node:http";
 import {OPTICS} from "./core.mjs";
-assert.equal(OPTICS.revision,"ALS-01-R3");
+assert.equal(OPTICS.revision,"ALS-01-R4");
 
 const input=resolve(process.argv[2]),out=resolve(process.argv[3]);
 mkdirSync(out,{recursive:true});
@@ -153,14 +153,26 @@ try {
         if(foreground[id]<40||colorEffect[id]<20)throw Error("Core not demonstrably rendered with vertex colors: "+id);
       }
       if(difference(visible,restored)>0)throw Error("Color restoration changed pixels");
-      const {atlasAnchors}=await import("/als-core.mjs");
+      const {atlasAnchors,resolveOptics}=await import("/als-core.mjs");
       const {createAstralLights}=await import("/als-adapter.mjs");
       const als=createAstralLights(T,atlasAnchors(composition));
       scene.add(als.object);
-      const frame=(t,opts={})=>{als.update(t,{viewportHeight:innerHeight,...opts});return capture()};
+      const frame=(t,opts={})=>{als.update(t,{viewportWidth:innerWidth,viewportHeight:innerHeight,...opts});return capture()};
       const lit=frame(0),alsCalls=renderer.info.render.calls;
       const effectPixels=difference(visible,lit);
       if(alsCalls!==4||effectPixels<1)throw Error("ALS not rendered with one extra draw call "+effectPixels);
+      const darkOptics=resolveOptics({width:innerWidth,height:innerHeight,backdrop:"dark"});
+      const priorBackground=scene.background;
+      const contrastEvidence={};
+      for(const [backdrop,color] of [["mixed",0x777b80],["light",0xd5cfbf]]){
+        scene.background=new T.Color(color);als.object.visible=false;const bare=capture();
+        als.object.visible=true;const lit=frame(0,{paused:true,backdrop});
+        const resolved=resolveOptics({width:innerWidth,height:innerHeight,backdrop});
+        if(difference(bare,lit)<1||resolved.maxDiameterPx>14||renderer.info.render.calls!==4)throw Error("Contrast adaptation absent "+backdrop);
+        const same=frame(9,{paused:true,backdrop});if(difference(lit,same)!==0)throw Error("Static contrast unstable");
+        contrastEvidence[backdrop]={effectPixels:difference(bare,lit),resolved};
+      }
+      scene.background=priorBackground;frame(0);
       const a=als.object.geometry.attributes.alpha.array.slice();
       frame(1.2);const b=als.object.geometry.attributes.alpha.array.slice();
       if(!a.some((v,i)=>Math.abs(v-b[i])>.001))throw Error("Pulse absent");
@@ -174,7 +186,7 @@ try {
       const preference=matchMedia("(prefers-reduced-motion: reduce)");
       const sync=()=>{button.setAttribute("aria-pressed",String(!paused&&!preference.matches));button.textContent=paused||preference.matches?"Anima luci":"Ferma luci";button.disabled=preference.matches;};
       function stop(){paused=true;cancelAnimationFrame(animationId);animationId=0;sync();frame(0,{paused:true});}
-      function animate(ms){if(paused||preference.matches||document.hidden){stop();return;}als.update(ms/1000,{viewportHeight:innerHeight});position();renderer.render(scene,camera);animationId=requestAnimationFrame(animate);}
+      function animate(ms){if(paused||preference.matches||document.hidden){stop();return;}als.update(ms/1000,{viewportWidth:innerWidth,viewportHeight:innerHeight});position();renderer.render(scene,camera);animationId=requestAnimationFrame(animate);}
       button.addEventListener("click",()=>{if(!paused){stop();return;}if(preference.matches)return;paused=false;sync();animationId=requestAnimationFrame(animate);});
       preference.addEventListener("change",()=>{if(preference.matches)stop();else sync();});
       document.addEventListener("visibilitychange",()=>{if(document.hidden)stop();});
@@ -190,7 +202,7 @@ try {
         focus:id=>{const s=stars.find(s=>s.id===id);target=new T.Vector3(...s.center);radius=s.radius;move(.18)},
         reset,render:()=>capture()};
       const debug=gl.getExtension("WEBGL_debug_renderer_info");
-      return {loadMs,drawCalls,triangles,alsCalls,effectPixels,alsPoints:als.object.geometry.attributes.position.count,meshes,materials:materials.size,vertices,counts,boxes,foreground,colorEffect,canvas:[renderer.domElement.width,renderer.domElement.height],renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};
+      return {loadMs,drawCalls,triangles,alsCalls,effectPixels,darkOptics,contrastEvidence,alsPoints:als.object.geometry.attributes.position.count,meshes,materials:materials.size,vertices,counts,boxes,foreground,colorEffect,canvas:[renderer.domElement.width,renderer.domElement.height],renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};
     },{stars,expected:proposal,composition});
     return {context,page,errors,external,metrics};
   }
@@ -202,8 +214,9 @@ try {
       assert.deepEqual(metrics.canvas,[device.w,device.h]);
       const controls=await page.locator("nav button, #als-pause").evaluateAll(els=>els.map(e=>{const b=e.getBoundingClientRect();return {w:b.width,h:b.height,x:b.x,y:b.y,r:b.right,b:b.bottom,reachable:e.contains(document.elementFromPoint(b.x+b.width/2,b.y+b.height/2))}}));
       assert.equal(controls.length,4);assert.equal(metrics.alsCalls,4);assert.equal(metrics.alsPoints,18);
+      assert.ok(metrics.contrastEvidence.light.effectPixels>0&&metrics.contrastEvidence.mixed.effectPixels>0);
       const previousPixels={"small-phone":40,phone:38,landscape:38,tablet:139,desktop:231,"large-screen":281}[device.name];
-      assert.ok(metrics.effectPixels>=Math.ceil(previousPixels*1.25),"Optical R3 must increase visible changed pixels by at least 25%: "+device.name+" "+metrics.effectPixels+" vs "+previousPixels);
+      assert.ok(metrics.effectPixels>=Math.ceil(previousPixels*1.25),"Optical R4 must increase visible changed pixels by at least 25%: "+device.name+" "+metrics.effectPixels+" vs "+previousPixels);
       for(const c of controls)assert.ok(c.w>=44&&c.h>=44&&c.x>=0&&c.y>=0&&c.r<=device.w&&c.b<=device.h&&c.reachable,JSON.stringify(c));
       const initial=await page.evaluate(()=>window.atlasStars.state());
       const save=async name=>{const file=device.name+"-"+name+".png";const bytes=await page.screenshot({path:join(out,file),animations:"disabled"});return {file,sha256:sha(bytes),bytes:bytes.length}};
