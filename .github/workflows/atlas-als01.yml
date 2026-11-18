@@ -110,7 +110,7 @@ jobs:
           root=pathlib.Path(os.environ["RUNNER_TEMP"])/"als01-context"
           r=json.loads((root/"als01-context-receipt.json").read_text())
           assert r["status"]=="ALS01_CONTEXT_COMPARISON_ONLY" and r["renderCount"]==4 and r["points"]==18
-          assert r["physicalLightsAdded"]==0 and r["sameScene"]
+          assert r["physicalLightsAdded"]==0 and r["sameScene"] and r["opticalRevision"]=="ALS-01-R3"
           assert not any(r[k] for k in ("architectureChanged","camerasChanged","lightingChanged","navigationChanged","artisticApproval","runtimeQualified","studentAuthorized","publishable","rendererParityClaimed"))
           for name,meta in r["files"].items():
               b=(root/name).read_bytes()
