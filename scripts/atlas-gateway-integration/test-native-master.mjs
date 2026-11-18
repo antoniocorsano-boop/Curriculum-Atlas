@@ -142,7 +142,7 @@ try{
     if(!centers.every(c=>c.inFrame))throw Error("Native constellation framing "+JSON.stringify(centers));
     als.object.visible=false;const noALS=capture();als.object.visible=true;
     const lights=diff(final.b,noALS.b);if(lights.pixels<1||final.calls-noALS.calls!==1)throw Error("ALS invisible or draw-call budget");
-    stars.visible=false;const noStars=capture();stars.visible=true;
+    als.object.visible=false;stars.visible=false;const noStars=capture();stars.visible=true;als.object.visible=true;
     if(diff(noALS.b,noStars.b).pixels<1)throw Error("R2 invisible");
     const moduleEffect={};
     for(const name of ["library-shell.glb","library-scenography.glb","library-cupola.glb","library-portals.glb"]){
