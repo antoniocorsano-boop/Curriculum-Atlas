@@ -200,6 +200,8 @@ try {
       assert.deepEqual(metrics.canvas,[device.w,device.h]);
       const controls=await page.locator("nav button, #als-pause").evaluateAll(els=>els.map(e=>{const b=e.getBoundingClientRect();return {w:b.width,h:b.height,x:b.x,y:b.y,r:b.right,b:b.bottom,reachable:e.contains(document.elementFromPoint(b.x+b.width/2,b.y+b.height/2))}}));
       assert.equal(controls.length,4);assert.equal(metrics.alsCalls,4);assert.equal(metrics.alsPoints,18);
+      const previousPixels={"small-phone":40,phone:38,landscape:38,tablet:139,desktop:231,"large-screen":281}[device.name];
+      assert.ok(metrics.effectPixels>=Math.ceil(previousPixels*1.25),"Optical R2 must increase visible changed pixels by at least 25%: "+device.name+" "+metrics.effectPixels+" vs "+previousPixels);
       for(const c of controls)assert.ok(c.w>=44&&c.h>=44&&c.x>=0&&c.y>=0&&c.r<=device.w&&c.b<=device.h&&c.reachable,JSON.stringify(c));
       const initial=await page.evaluate(()=>window.atlasStars.state());
       const save=async name=>{const file=device.name+"-"+name+".png";const bytes=await page.screenshot({path:join(out,file),animations:"disabled"});return {file,sha256:sha(bytes),bytes:bytes.length}};
