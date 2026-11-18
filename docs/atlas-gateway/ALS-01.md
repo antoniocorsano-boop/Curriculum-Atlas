@@ -1,6 +1,6 @@
 # ALS-01 — Sistema di luci astrali riutilizzabile
 
-Stato: pilota isolato; non approvazione artistica o autorizzazione alla pubblicazione.
+Stato: revisione ottica R2 e confronto contestuale predisposti; non approvazione artistica o autorizzazione alla pubblicazione.
 Base scultorea immutata: ART-FINAL R2, PR #108, GLB SHA-256
 684849b72dfc3314c6383e3a0864fa244145811f3d27fb9bdc76d7fbfd7f92e0.
 
@@ -37,14 +37,23 @@ dell'intera scultura. I moti orbitali e direzionali restano rinviati.
 - Adattatore Three.js: un oggetto Points, una chiamata di disegno addizionale,
   profondità rispettata, alone morbido, nessuna intercettazione del puntatore.
   Aggiornamento via update, stato via setState, rimozione via dispose.
-- In Blender il medesimo campionamento statico può alimentare un adattatore
-  dedicato; non presumere equivalenza percettiva tra motori.
+- In Blender l’adattatore offline importa lo stesso campionamento statico e
+  la stessa curva ottica, con dischi orientati alla camera e controllo delle
+  aree protette; nessuna luce fisica aggiunta. Non presumere equivalenza
+  percettiva tra motori.
+- R2: diametro apparente tra 5 e 11 px (prima 2,5–8), nucleo più leggibile
+  e alone locale più morbido. Intensità, periodi, numero e posizione invariati.
+  Obiettivo verificabile: almeno +25% di pixel interessati rispetto alle
+  misure R1 di ciascuno dei sei formati. Non è una soglia clinica o una
+  misura di luminosità percepita.
 
 ## Qualificazione
 Test deterministici e prova reale in Chromium/Three.js r128, sei formati, su
 modello R2 esatto. Verificare presenza visiva, budget, pausa, preferenza per
 movimento ridotto, assenza di richieste esterne e regressioni di rotazione.
-Restano separati: prova Blender nel contesto architettonico, esame artistico,
-integrazione del Gateway, collaudo fisico e autorizzazioni.
+Prova contestuale Blender: confronto con e senza ALS sul medesimo R2, due
+inquadrature e quattro immagini, verifica di proiezione su aree protette.
+Restano separati: esame artistico, integrazione del Gateway, collaudo fisico
+e autorizzazioni.
 
 Zero nuovi servizi, nessuna spesa autorizzata, nessun merge o deploy.
