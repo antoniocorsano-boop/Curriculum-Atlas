@@ -56,7 +56,9 @@ async function loadHDR(){
   const bytes=await asset("ambient");
   const decoded=new THREE.RGBELoader().setDataType(THREE.HalfFloatType).parse(bytes);
   if(!decoded||!decoded.data||decoded.width<1||decoded.height<1)throw Error("HDR decode");
-  const tex=new THREE.DataTexture(decoded.data,decoded.width,decoded.height,THREE.RGBAFormat,decoded.type);
+  const channels=decoded.data.length/(decoded.width*decoded.height);
+  if(channels!==3&&channels!==4)throw Error("HDR channels");
+  const tex=new THREE.DataTexture(decoded.data,decoded.width,decoded.height,channels===3?THREE.RGBFormat:THREE.RGBAFormat,decoded.type);
   tex.encoding=THREE.LinearEncoding;tex.minFilter=THREE.LinearFilter;tex.magFilter=THREE.LinearFilter;
   tex.flipY=true;tex.generateMipmaps=false;tex.mapping=THREE.EquirectangularReflectionMapping;tex.needsUpdate=true;
   const pmrem=new THREE.PMREMGenerator(renderer);
@@ -97,7 +99,7 @@ function setCamera(){
   // generous vertical field rather than cropping the original cupola.
   camera.fov=Math.max(55,THREE.MathUtils.radToDeg(2*Math.atan(36/view.lensMm/(aspect>=1?aspect:1)/2)));
   camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
-  renderer.setSize(w,h);visibility.update(camera);
+  if(canvas.width!==w||canvas.height!==h)renderer.setSize(w,h);visibility.update(camera);
 }
 function render(t=0){
   if(!ready||failed)return;
