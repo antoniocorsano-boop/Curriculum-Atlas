@@ -27,3 +27,50 @@ Separare scena, regia, osservazione e proposta. La regia deve riferirsi agli ide
 ## Gate L1
 
 Sei regole collegate alle prove reali, query selettiva, inventario master, fonti mancanti e superate bloccate, nessuna promozione di authority, nessuna scrittura al runtime, risultato ripetibile a parità di input. Conservare ricevuta del collaudo e registrare l'esito nel dossier ASP-01. Il raccordo tecnico con Context Pack e l'osservazione del renderer sono fasi successive. Nessun dato personale o studente, nessun servizio esterno, nessuna spesa.
+
+## ASD-01/P1 — Controllo parametrico (18 novembre 2026)
+
+Requisito espresso dall'utente: il sistema deve poter controllare parametricamente l'ambiente tridimensionale. I parametri non sono comandi liberi: sono proprietà tipizzate con identificativo, dominio, unità, valore di riferimento, intervallo o insieme consentito, collegamento al motore, fonte e stato di qualificazione.
+
+### Primo incremento operativo: pianificazione senza applicazione
+
+Il registro `ops/atlas-scene-director/parameters.json` dichiara 11 parametri iniziali. La funzione `scripts/scene-director.py` produce un piano deterministico e reversibile: controlla versione del master, impronta dello stato di riferimento, tipo, intervallo, destinatario e dipendenze; restituisce stato candidato, differenze, configurazione di ripristino e verifiche necessarie. Rifiuta proprietà sconosciute o protette, valori non finiti e richieste che pretendono nuove autorizzazioni.
+
+Il riferimento WebGL deriva dal codice nativo (orbita, inclinazione, distanza, esposizione e tre coefficienti luminosi, movimento ALS). Gli intervalli luminosi sono ipotesi circoscritte per futuri esperimenti, non valori già qualificati. Blender espone le sette camere effettivamente conservate e la visibilità ALS. La scelta di una camera diversa dall'atrio con ALS visibile richiede l'adattatore ottico per riproiettare i punti. L'attivazione del movimento richiede adesione esplicita e assenza della preferenza di movimento ridotto. Non si altera il limite R4 delle luci.
+
+Esempi: `python3 scripts/scene-director.py --example webgl` e `python3 scripts/scene-director.py --example blender`. Il primo piano varia orbita ed esposizione e richiede confronto con P1; il secondo seleziona la camera verticale e richiede riproiezione ALS. Sono piani, non esecuzioni.
+
+### Modello di estensione
+
+- Osservazione: ASI legge il valore reale, unità, identità della scena e versione del parametro; il valore corrente non va confuso con il riferimento di catalogo.
+- Proposta: obiettivo e vincoli -> insieme di parametri candidati, dipendenze e confronto atteso.
+- Regia: ASD verifica proprietà e relazioni; gli adattatori specifici applicheranno soltanto piani autorizzati a copie isolate. Nessuna applicazione nella tranche P1.
+- Verifica: misure e immagini prima/dopo, costo grafico, accessibilità, invarianti. In caso di errore ripristino esatto; conservazione dell'evidenza negativa.
+- Memoria: TRAMA-DE-01 registra ragioni, configurazioni, risultati e limiti. ASI recupera strategie con fonte e stato, senza elevare autonomamente un esperimento a regola approvata.
+
+Le future proprietà comprendono trasformazioni e gruppi geometrici, materiali PBR, luce e ombra, atmosfera, sequenze, comportamento degli oggetti, suono, prestazioni e navigazione. In P1 geometria, materiali, navigazione, sicurezza, ottica ALS e audio sono protetti: non esiste un adattatore qualificato per le rispettive modifiche. Il controllo parametrico deve essere estendibile, non autorizzare tutto indistintamente.
+
+L'osservazione diretta L2 e un interprete ASD su copie del master sono i prossimi incrementi, da qualificare separatamente. Nessun nuovo motore, servizio esterno, costo, pubblicazione o modifica del master. Il piano è vincolato alla fotografia di riferimento, non al valore letto in tempo reale: la rilevazione di stato live e la verifica pre-applicazione restano da attuare.
+
+## Ideatore dei mondi — requisito di prodotto e prova di riuso
+
+Indirizzo dell'utente, 18 novembre 2026: le capacità ASP/ASD/ASI hanno valore solo se effettivamente utilizzabili e riutilizzabili da un ideatore di mondi. Non si introduce un nuovo prodotto né un secondo editor. L'ideazione è una capacità di Studio Atlas, nel rispetto di TRAMA-ADR-020, del Creator Studio Product Vision, del World Brief e del Compact Learning World Specification v1. Il Pathway Authoring Package rimane il contratto di consegna; un futuro riferimento al pacchetto scena e alla regia è una proposta di estensione, non una modifica già operativa del contratto.
+
+L'ideatore è la persona che determina l'intenzione educativa, narrativa e artistica. Una funzione assistita può elaborare alternative di mondi, confrontarle e tradurre l'idea selezionata in richieste di produzione; non approva autonomamente l'idea, i legami al curricolo, la qualità o la pubblicazione. Il sistema deve essere comprensibile senza conoscere Blender, codice o repository.
+
+Percorso principale: idea e obiettivo -> alternative di mondo -> World Brief (luoghi, identità, situazione, ruolo, azioni, informazioni distribuite, conseguenze, artefatto significativo) -> scelta umana -> progetto di scena e regia -> produzione di una copia isolata -> prova interattiva -> revisione -> conservazione riusabile. Un mondo può essere 2-D o 3-D; la scelta della rappresentazione è subordinata alla funzione educativa, all'accessibilità e alla sostenibilità, non all'uso obbligatorio del 3-D. Le capacità ASD e ASI sono strumenti di produzione e osservazione, ASP conserva il risultato e TRAMA-DE-01 documenta le decisioni.
+
+### Prova verticale di usabilità e trasferibilità (da realizzare)
+
+Usare MUSEO ZERO, già dotato di World Brief e di prova interattiva 2-D nel sistema esistente, come riferimento iniziale per il passaggio tra mondo semantico e regia. Non sostituire la sua esperienza esistente e non dichiararne approvato il 3-D. Scegliere una singola scena, ad esempio Sala Zero/Cabina regia, dopo riesame dell'intenzione narrativa: rendere osservabili i cambi di stato di proiezione, luce e sequenza. Usare unicamente azioni simulate, non indicazioni operative per impianti reali.
+
+Dimostrare poi il trasferimento della medesima grammatica di regia a un secondo piccolo mondo distinto (da scegliere in fase di ideazione), con risorse diverse e stessa interfaccia di parametri/eventi; riusare meccanismi ed evidenze, non copiare la storia o l'obiettivo. Le dipendenze specifiche del master biblioteca non devono essere imposte al secondo mondo. Il catalogo P1 è vincolato al master e richiede una successiva generalizzazione mediante manifesti di capacità e adattatori espliciti. Nessun nuovo motore, nuovo archivio concorrente, servizio a pagamento o pubblicazione.
+
+Criteri di riuscita obbligatori:
+1. Un ideatore descrive un'idea in linguaggio naturale, vede alternative comprensibili e può selezionare e correggere il World Brief senza modificare codice.
+2. Una scena effettiva è osservata e configurata da parametri/eventi tipizzati; una variante autorizzata è provata e ripristinata senza alterare il master.
+3. Una seconda scena appartenente a un mondo distinto riusa almeno una capacità di regia mediante contratto comune e adattatore esplicito, senza duplicarne il motore.
+4. Anteprima utilizzabile su schermo mobile e desktop con accessibilità e azioni significative; distinta dalla pubblicazione.
+5. Confronti, errori, provenienza, costi e decisioni sono conservati e consultabili; nessun dato personale o profilazione.
+
+La sequenza operativa prioritaria è: completare il collaudo della biblioteca; qualificare osservazione L2 e applicazione reversibile su una copia del master; dimostrare una scena e un secondo mondo. Solo allora estendere l'interfaccia di ideazione e i domini parametrici. Non accumulare infrastruttura non dimostrata. I dieci test P1 e i due piani (run 44346093780, artefatto 14444669398 conservato) provano il pianificatore, non l'effettiva usabilità creativa o il riuso tra mondi.
