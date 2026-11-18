@@ -1,0 +1,45 @@
+name: Atlas Scene Director - ASD-01 P1
+on:
+  pull_request:
+    paths:
+      - 'ops/atlas-scene-director/**'
+      - 'ops/atlas-scene-package/**'
+      - 'scripts/scene-director.py'
+      - 'scripts/test-scene-director.py'
+      - 'docs/atlas-gateway/ASI-01-ASD-01.md'
+      - '.github/workflows/atlas-scene-director.yml'
+permissions:
+  contents: read
+jobs:
+  parametric-plans:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Verify constraints, rollback and negative cases
+        run: python3 scripts/test-scene-director.py -v
+      - name: Generate and verify candidate plans
+        run: |
+          python3 scripts/scene-director.py --example webgl > "$RUNNER_TEMP/asd-webgl-plan.json"
+          python3 scripts/scene-director.py --example blender > "$RUNNER_TEMP/asd-blender-plan.json"
+          python3 - <<'PY'
+          import pathlib,os,json
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])
+          w=json.loads((p/"asd-webgl-plan.json").read_text())
+          b=json.loads((p/"asd-blender-plan.json").read_text())
+          assert w["status"]==b["status"]=="DEPENDENCY_REQUIRED"
+          assert len(w["changes"])==2 and len(b["changes"])==1
+          assert w["rollback"]["lighting.exposure"]==.82
+          assert b["rollback"]["camera.active"]=="atrium"
+          assert all(not x[k] for x in (w,b) for k in ("rendererWriteAuthorized","artisticApproval","studentAuthorized","publishable"))
+          print("ASD-01 P1: two deterministic parameter plans, dependency detection and rollback, no scene mutation")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atlas-asd01-parametric-plans
+          path: |
+            ${{ runner.temp }}/asd-webgl-plan.json
+            ${{ runner.temp }}/asd-blender-plan.json
+          retention-days: 7
