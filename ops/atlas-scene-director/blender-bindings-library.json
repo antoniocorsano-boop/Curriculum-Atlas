@@ -1,0 +1,34 @@
+{
+  "schema": "atlas.asd.blender-bindings/v1",
+  "sceneId": "atlas-library-master",
+  "sourceArtifact": 14444143410,
+  "sourceArchiveSha256": "c7154de191cb6d25890a2881f470f6d6eeba74b2dcab897842f4753403e685c6",
+  "masterSha256": "f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab",
+  "parameters": {
+    "camera.active": {
+      "kind": "scene-camera",
+      "allowed": [
+        "atrium",
+        "vertical",
+        "detail",
+        "portals",
+        "portrait-focus",
+        "cupola-detail",
+        "arch-detail"
+      ]
+    },
+    "astral.visible": {
+      "kind": "collection-render-visibility",
+      "collection": "07 ALS-01 R4",
+      "expectedObjects": 18
+    }
+  },
+  "experiment": {
+    "parameter": "astral.visible",
+    "value": false,
+    "scope": "one reversible isolated visual experiment",
+    "resolutionPercent": 40
+  },
+  "studentAuthorized": false,
+  "publishable": false
+}
