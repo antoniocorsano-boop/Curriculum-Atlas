@@ -1,0 +1,80 @@
+name: Atlas Scene Observation - ASI-01 L2 Blender
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/atlas-gateway-integration/observe-and-test-blender.py'
+      - 'ops/atlas-scene-director/**'
+      - 'docs/atlas-gateway/ASI-01-ASD-01.md'
+      - '.github/workflows/atlas-scene-observation.yml'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-asi-l2-blender
+  cancel-in-progress: true
+jobs:
+  isolated-experiment:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-scene-observation-l2' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify pinned Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - name: Restore the exact independently qualified master
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir "$RUNNER_TEMP/asi-input"
+          curl --fail --silent --show-error --location --retry 4 --retry-delay 2 --retry-max-time 180 --max-time 90 --remove-on-error -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/14444143410/zip" -o "$RUNNER_TEMP/asi-input/master.zip.part"
+          printf '%s  %s\n' c7154de191cb6d25890a2881f470f6d6eeba74b2dcab897842f4753403e685c6 "$RUNNER_TEMP/asi-input/master.zip.part" | sha256sum --strict --check
+          mv "$RUNNER_TEMP/asi-input/master.zip.part" "$RUNNER_TEMP/asi-input/master.zip"
+          unzip -p "$RUNNER_TEMP/asi-input/master.zip" Atlas-Scene-Master.blend > "$RUNNER_TEMP/asi-input/Atlas-Scene-Master.blend"
+          printf '%s  %s\n' f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab "$RUNNER_TEMP/asi-input/Atlas-Scene-Master.blend" | sha256sum --strict --check
+          chmod a-w "$RUNNER_TEMP/asi-input/Atlas-Scene-Master.blend"
+      - name: Construct plan using the qualified ASD planner
+        run: |
+          python3 - <<'PY'
+          import importlib.util,os,pathlib,json
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"asi-input"
+          spec=importlib.util.spec_from_file_location("asd","scripts/scene-director.py")
+          asd=importlib.util.module_from_spec(spec);spec.loader.exec_module(asd)
+          c,m=asd.load_sources()
+          req=asd.request_for(c,m,"blender",{"astral.visible":False})
+          (p/"request.json").write_text(json.dumps(req))
+          PY
+          python3 scripts/scene-director.py --request "$RUNNER_TEMP/asi-input/request.json" > "$RUNNER_TEMP/asi-input/plan.json"
+      - name: Observe real scene, apply isolated parameter, render and restore
+        run: |
+          "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$RUNNER_TEMP/asi-input/Atlas-Scene-Master.blend" --python-exit-code 1 --python scripts/atlas-gateway-integration/observe-and-test-blender.py -- "$RUNNER_TEMP/asi-input/Atlas-Scene-Master.blend" "$GITHUB_WORKSPACE/ops/atlas-scene-director/blender-bindings-library.json" "$RUNNER_TEMP/asi-input/plan.json" "$RUNNER_TEMP/asi-l2-evidence"
+      - name: Verify evidence and exact rollback
+        run: |
+          python3 - <<'PY'
+          import json,hashlib,pathlib,os
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"asi-l2-evidence"
+          r=json.loads((p/"receipt.json").read_text())
+          assert r["status"]=="PASS" and r["boundObjects"]==18
+          assert r["beforeStateSha256"]==r["restoredStateSha256"]!=r["candidateStateSha256"]
+          assert r["candidateComparison"]["changedPixels"]>0
+          assert r["inputUnchanged"] and not r["studentAuthorized"] and not r["publishable"]
+          for name,sha in r["imageHashes"].items():assert hashlib.sha256((p/name).read_bytes()).hexdigest()==sha
+          PY
+      - name: Preserve actual experiment evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-asi-l2-blender-experiment
+          path: |
+            ${{ runner.temp }}/asi-input/plan.json
+            ${{ runner.temp }}/asi-l2-evidence/
+          if-no-files-found: warn
+          retention-days: 7
