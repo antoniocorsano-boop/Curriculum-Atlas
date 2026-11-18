@@ -1,0 +1,76 @@
+name: ART-100 ENGINE-01 - Gaffer Cycles CPU
+on:
+  pull_request:
+    paths:
+      - 'scripts/engine01-gaffer-probe.py'
+      - '.github/workflows/atlas-art-engine01.yml'
+permissions:
+  contents: read
+concurrency:
+  group: atlas-art-engine01-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  synthetic-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GAFFER_VERSION: '1.6.21.6'
+      ATLAS_ENGINE_EVIDENCE: ${{ runner.temp }}/engine01-evidence
+      QT_QPA_PLATFORM: offscreen
+      ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Recover exact upstream Linux archive and verify published digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$ATLAS_ENGINE_EVIDENCE" "$RUNNER_TEMP/gaffer"
+          python3 - <<'PY'
+          import json, os, pathlib, urllib.request, re
+          v=os.environ["GAFFER_VERSION"]
+          url="https://api.github.com/repos/GafferHQ/gaffer/releases/tags/"+v
+          req=urllib.request.Request(url,headers={"User-Agent":"Atlas-ENGINE-01","Accept":"application/vnd.github+json"})
+          with urllib.request.urlopen(req,timeout=45) as f:
+              release=json.load(f)
+          assert release["tag_name"]==v and not release["draft"] and not release["prerelease"]
+          name="gaffer-"+v+"-linux.tar.gz"
+          assets=[a for a in release["assets"] if a["name"]==name]
+          assert len(assets)==1, "Exact Linux asset missing"
+          a=assets[0]
+          assert a["browser_download_url"]=="https://github.com/GafferHQ/gaffer/releases/download/"+v+"/"+name
+          assert 0<a["size"]<=2_500_000_000, "Archive exceeds bounded budget"
+          assert re.fullmatch(r"sha256:[0-9a-f]{64}",a.get("digest") or ""), "No published SHA256; fail closed"
+          p=pathlib.Path(os.environ["ATLAS_ENGINE_EVIDENCE"])
+          (p/"upstream-lock.json").write_text(json.dumps({"tag":v,"releaseId":release["id"],"assetId":a["id"],"url":a["browser_download_url"],"bytes":a["size"],"digest":a["digest"]},indent=2))
+          PY
+          url=$(python3 -c 'import json,os; print(json.load(open(os.environ["ATLAS_ENGINE_EVIDENCE"]+"/upstream-lock.json"))["url"])')
+          digest=$(python3 -c 'import json,os; print(json.load(open(os.environ["ATLAS_ENGINE_EVIDENCE"]+"/upstream-lock.json"))["digest"].split(":")[1])')
+          curl --proto '=https' --proto-redir '=https' --fail --location --retry 2 --max-time 300 --max-filesize 2500000000 "$url" -o "$RUNNER_TEMP/gaffer.tar.gz"
+          echo "$digest  $RUNNER_TEMP/gaffer.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/gaffer.tar.gz" -C "$RUNNER_TEMP/gaffer" --strip-components=1 --no-same-owner
+          test -x "$RUNNER_TEMP/gaffer/bin/gaffer"
+      - name: Render reference, variant and restored state on CPU
+        shell: bash
+        run: |
+          set -euo pipefail
+          export GITHUB_SHA="$ATLAS_EXACT_HEAD"
+          /usr/bin/time -v timeout 420 "$RUNNER_TEMP/gaffer/bin/gaffer" python scripts/engine01-gaffer-probe.py 2>&1 | tee "$ATLAS_ENGINE_EVIDENCE/probe.log"
+          python3 - <<'PY'
+          import json,os
+          r=json.load(open(os.environ["ATLAS_ENGINE_EVIDENCE"]+"/report.json"))
+          assert r["status"]=="PASS_SYNTHETIC_ONLY"
+          assert r["sourceRevision"]==os.environ["ATLAS_EXACT_HEAD"]
+          assert not any(r[k] for k in ("masterModified","runtimeAuthorized","studentAuthorized","publishable","artisticApproval"))
+          assert set(r["renders"])=={"reference","variant","restored"}
+          PY
+      - name: Preserve bounded evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-engine01-gaffer-probe
+          path: ${{ runner.temp }}/engine01-evidence/
+          retention-days: 7
+          if-no-files-found: warn
