@@ -37,10 +37,11 @@ const channel=Array.from(crypto.getRandomValues(new Uint8Array(24)),x=>x.toStrin
 const frame=document.createElement("iframe");frame.setAttribute("sandbox","allow-scripts");frame.referrerPolicy="no-referrer";
 const controller=new AbortController(),requested=new Set();
 const started=performance.now();
-window.nativePreflight={state:"pending",transfers:[],elapsedMs:null,error:null};
+window.nativePreflight={state:"pending",transfers:[],elapsedMs:null,error:null,handoffs:[]};
 function finish(state,error=null){if(window.nativePreflight.state!=="pending")return;window.nativePreflight.state=state;window.nativePreflight.error=error;window.nativePreflight.elapsedMs=performance.now()-started;if(state!=="ready")controller.abort();}
 addEventListener("message",event=>{
  if(event.source!==frame.contentWindow||event.origin!=="null"||event.data?.channel!==channel)return;
+ if(event.data.type==="atlas-open"){window.nativePreflight.handoffs.push(event.data.id);return}
  if(event.data.type==="atlas-3d-error"){finish("failed","Runtime reported atlas-3d-error");return}
  if(event.data.type==="atlas-3d-ready"){finish("ready");return}
  const a=nativeRequest(event.data,channel,manifest);
@@ -113,17 +114,21 @@ try{
    dispatchEvent(new PageTransitionEvent("pageshow",{persisted:true}));
    const restored=ready&&!closing&&renders>0&&updates>0;
    motionButton.click();
-   dispatchEvent(new PageTransitionEvent("pagehide",{persisted:false}));
+   requestPortal("esperienze");
+   const handedOff=closing&&!ready&&!motion&&frameId===0&&disposals===0&&rendererDisposals===0;
    const previous={renders,updates};
    // Events can already be queued during browser teardown. Even direct calls
    // must not touch the disposed ALS adapter or schedule a frame.
    document.dispatchEvent(new Event("visibilitychange"));
    dispatchEvent(new Event("resize"));
    dispatchEvent(new PageTransitionEvent("pagehide",{persisted:false}));
-   motionButton.click();loop(performance.now());stopMotion();render();shutdown();
-   return {before,paused,restored,closed:closing&&!ready&&!motion&&frameId===0&&nativePhase==="closed",disposals,rendererDisposals,lateRenders:renders-previous.renders,lateUpdates:updates-previous.updates};
+   motionButton.click();loop(performance.now());stopMotion();render();shutdown();shutdown();
+   return {before,paused,restored,handedOff,closed:closing&&!ready&&!motion&&frameId===0&&nativePhase==="closed",disposals,rendererDisposals,lateRenders:renders-previous.renders,lateUpdates:updates-previous.updates};
  });
- assert.deepEqual(report.lifecycle,{before:true,paused:true,restored:true,closed:true,disposals:1,rendererDisposals:1,lateRenders:0,lateUpdates:0});
+ assert.deepEqual(report.lifecycle,{before:true,paused:true,restored:true,handedOff:true,closed:true,disposals:1,rendererDisposals:1,lateRenders:0,lateUpdates:0});
+ await page.waitForFunction(()=>window.nativePreflight.handoffs.length===1);
+ report.handoffs=await page.evaluate(()=>window.nativePreflight.handoffs);
+ assert.deepEqual(report.handoffs,["esperienze"]);
  assert.deepEqual(report.errors,[]);
  report.status="PASS";
 }catch(e){
