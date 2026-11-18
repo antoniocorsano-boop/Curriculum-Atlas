@@ -6,6 +6,7 @@ on:
       - 'ops/atlas-scene-package/**'
       - 'scripts/scene-director.py'
       - 'scripts/test-scene-director.py'
+      - 'scripts/test-world-art-parameters.py'
       - 'docs/atlas-gateway/ASI-01-ASD-01.md'
       - '.github/workflows/atlas-scene-director.yml'
 permissions:
@@ -20,6 +21,8 @@ jobs:
           persist-credentials: false
       - name: Verify constraints, rollback and negative cases
         run: python3 scripts/test-scene-director.py -v
+      - name: Verify ART-100 world-scoped plans and cross-world rejection
+        run: python3 scripts/test-world-art-parameters.py -v
       - name: Generate and verify candidate plans
         run: |
           python3 scripts/scene-director.py --example webgl > "$RUNNER_TEMP/asd-webgl-plan.json"
