@@ -4,6 +4,8 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'scripts/atlas-gateway-integration/observe-and-test-blender.py'
+      - 'scripts/art-learn-observe-blender.py'
+      - 'ops/atlas-scene-director/art-learn-01.md'
       - 'ops/atlas-scene-director/**'
       - 'docs/atlas-gateway/ASI-01-ASD-01.md'
       - '.github/workflows/atlas-scene-observation.yml'
@@ -76,5 +78,107 @@ jobs:
           path: |
             ${{ runner.temp }}/asi-input/plan.json
             ${{ runner.temp }}/asi-l2-evidence/
+          if-no-files-found: warn
+          retention-days: 7
+
+  art-learn-reference:
+    name: ART-LEARN-01 Classroom reference and Atlas comparison
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-scene-consolidated' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify pinned Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - name: Retrieve Classroom CC0 from official mirror
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/art-learn-input" "$RUNNER_TEMP/art-learn/reference" "$RUNNER_TEMP/art-learn/atlas"
+          p="$RUNNER_TEMP/art-learn-input"
+          curl --fail --silent --show-error --location --retry 2 --max-time 180 --proto '=https' --proto-redir '=https' --max-filesize 90000000 https://mirror.blender.org/demo/test/classroom.zip -o "$p/classroom.zip.part"
+          # Independent published fingerprint, checked against the official archive.
+          test "$(stat -c %s "$p/classroom.zip.part")" = 70279690
+          printf '%s  %s\n' 0f0ecc58d45f12b2f4272a53e2d8e69135518e16e956b118f10c20d8dcfdf5e6 "$p/classroom.zip.part" | sha256sum --strict --check
+          mv "$p/classroom.zip.part" "$p/classroom.zip"
+          python3 - <<'PY'
+          import os,pathlib,zipfile,stat,json
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"art-learn-input"
+          with zipfile.ZipFile(p/"classroom.zip") as z:
+              members=z.infolist()
+              assert len(members)<2000 and sum(m.file_size for m in members)<1000000000
+              for m in members:
+                  name=pathlib.PurePosixPath(m.filename)
+                  assert not name.is_absolute() and ".." not in name.parts and not stat.S_ISLNK(m.external_attr>>16)
+              assert "classroom/classroom.blend" in z.namelist()
+              z.extractall(p/"reference")
+          source={"title":"Classroom","creator":"Christophe Seux","license":"CC0-1.0","licenseSource":"https://www.blender.org/download/demo-files/","url":"https://mirror.blender.org/demo/test/classroom.zip","archiveSha256":"0f0ecc58d45f12b2f4272a53e2d8e69135518e16e956b118f10c20d8dcfdf5e6","archiveBytes":70279690,"fingerprintSource":"https://github.com/ArturPHD/blender_dataset_capture_kit/blob/main/docs/SCENE_ASSETS.md","scope":"Read-only reference study; no source asset transferred into Atlas."}
+          (pathlib.Path(os.environ["RUNNER_TEMP"])/"art-learn/source.json").write_text(json.dumps(source,indent=2))
+          PY
+          chmod a-w "$p/reference/classroom/classroom.blend"
+      - name: Recover immutable Atlas master
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/art-learn-input"
+          curl --fail --silent --show-error --location --retry 3 --max-time 120 -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/14444143410/zip" -o "$p/master.zip.part"
+          printf '%s  %s\n' c7154de191cb6d25890a2881f470f6d6eeba74b2dcab897842f4753403e685c6 "$p/master.zip.part" | sha256sum --strict --check
+          unzip -p "$p/master.zip.part" Atlas-Scene-Master.blend > "$p/Atlas-Scene-Master.blend"
+          printf '%s  %s\n' f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab "$p/Atlas-Scene-Master.blend" | sha256sum --strict --check
+          chmod a-w "$p/Atlas-Scene-Master.blend"
+      - name: Observe reference and test causal light contribution
+        shell: bash
+        run: |
+          set -euo pipefail
+          source="$RUNNER_TEMP/art-learn-input/reference/classroom/classroom.blend"
+          out="$RUNNER_TEMP/art-learn/reference"
+          timeout 720 "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$source" --python-exit-code 1 --python scripts/art-learn-observe-blender.py -- "$source" "$out" reference 2>&1 | tee "$out/run.log"
+      - name: Observe Atlas with the same extractor
+        shell: bash
+        run: |
+          set -euo pipefail
+          source="$RUNNER_TEMP/art-learn-input/Atlas-Scene-Master.blend"
+          out="$RUNNER_TEMP/art-learn/atlas"
+          timeout 120 "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$source" --python-exit-code 1 --python scripts/art-learn-observe-blender.py -- "$source" "$out" atlas 2>&1 | tee "$out/run.log"
+      - name: Compare observations and issue candidate knowledge, not an artistic approval
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import pathlib,os,json,hashlib,collections
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"art-learn"
+          a=json.loads((p/"reference/observation.json").read_text())
+          b=json.loads((p/"atlas/observation.json").read_text())
+          assert a["status"]=="PASS_OBSERVATION_AND_ABLATION" and b["status"]=="PASS_OBSERVATION_ONLY"
+          assert all(x["sourceUnchanged"] and x["revision"]==os.environ["ATLAS_EXACT_HEAD"] and not any(x[k] for k in ("masterModified","artisticApproval","publishable","studentAuthorized")) for x in (a,b))
+          assert b["sourceSha256"]=="f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab"
+          for n,h in a["experiment"]["imageHashes"].items():assert hashlib.sha256((p/"reference"/n).read_bytes()).hexdigest()==h
+          def summary(r):
+              t=collections.Counter()
+              for m in r["materials"]:
+                  if m["users"]>0:t.update(m["nodeTypes"])
+              return {"camera":r["camera"],"visibleLightTypes":dict(collections.Counter(x["parameters"]["type"] for x in r["lights"] if x["visible"])),"materialNodeTypes":dict(t),"materialCount":len(r["materials"]),"textureCount":len(r["images"]),"world":r["world"],"color":r["render"]["color"],"geometry":r["geometry"]}
+          ref,atlas=summary(a),summary(b)
+          observed=a["experiment"]
+          result={"schema":"atlas.art-learning.comparison/v1","status":"PASS_REFERENCE_STUDY_ONLY","reference":ref,"atlas":atlas,"causalEvidence":observed,"hypotheses":[{"id":"AL-LIGHT-01","principle":"Isolate one source and measure its causal contribution to the image before changing ratios.","evidence":"reference/observation.json#experiment","candidateAtlasParameters":["lighting.key.intensity","lighting.fill.intensity"],"status":"CANDIDATE_BINDING_REQUIRED"},{"id":"AL-MAT-01","principle":"Compare shader networks and linked inputs before replacing materials; identify texture, roughness and normal chains.","evidence":"reference/observation.json#materials","status":"OBSERVATION_ONLY"},{"id":"AL-CAM-01","principle":"Compare focal length with sensor and framing rather than transfer a raw focal length alone.","evidence":"reference/observation.json#camera","status":"OBSERVATION_ONLY"}],"sourceRevision":os.environ["ATLAS_EXACT_HEAD"],"masterModified":False,"artisticApproval":False,"studentAuthorized":False,"publishable":False,"transferQualified":False}
+          (p/"comparison.json").write_text(json.dumps(result,indent=2,ensure_ascii=False))
+          print("ART_LEARN_01 PASS_REFERENCE_STUDY_ONLY",observed["changedPixels"],"changed pixels")
+          PY
+      - name: Preserve observed evidence and images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-learn-01-classroom
+          path: ${{ runner.temp }}/art-learn/
           if-no-files-found: warn
           retention-days: 7
