@@ -101,7 +101,7 @@ try{
      const restored=await backState.contentFrame();
      assert.equal(await restored.evaluate(()=>nativePhase),"ready");
      await Promise.all([page.waitForURL("**/curricolo/",{waitUntil:"domcontentloaded",timeout:30000}),page.locator("a[data-portal='curricolo']").click()]);
-     await page.locator("main").waitFor({state:"visible",timeout:15000});
+     await page.getByRole("heading",{name:"Il curricolo dell’istituto",exact:true}).waitFor({state:"visible",timeout:15000});
      assert(routeEvents.some(e=>e.resourceType==="document"&&e.status===200&&new URL(e.url).pathname==="/curricolo/"));
      assert.equal(await page.locator("iframe[title='Biblioteca Atlas tridimensionale']").count(),0);
      assert.deepEqual(errors,[]);assert.equal(external.length,0);
