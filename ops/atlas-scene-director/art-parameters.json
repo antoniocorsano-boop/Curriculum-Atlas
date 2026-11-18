@@ -1,0 +1,585 @@
+{
+  "schema": "atlas.asd.world-art-catalog/v1",
+  "version": "0.1.0",
+  "status": "CANDIDATE_PLAN_ONLY",
+  "authority": "ASD-01",
+  "baseRegistry": "ops/atlas-scene-director/parameters.json",
+  "scope": "all worlds; 2D, 3D or hybrid; no default renderer",
+  "parameters": [
+    {
+      "family": "world",
+      "id": "world.role",
+      "type": "enum",
+      "values": [
+        "observer",
+        "curator",
+        "investigator",
+        "designer",
+        "navigator"
+      ],
+      "unit": "role",
+      "availability": "DESIGN_INTENT",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "world",
+      "id": "world.uncertainty",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "DESIGN_INTENT",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "world",
+      "id": "world.agency",
+      "type": "enum",
+      "values": [
+        "inspect",
+        "choose",
+        "construct",
+        "test",
+        "revise"
+      ],
+      "unit": "mode",
+      "availability": "DESIGN_INTENT",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "world",
+      "id": "world.consequence",
+      "type": "enum",
+      "values": [
+        "visual",
+        "narrative",
+        "model",
+        "evidence"
+      ],
+      "unit": "mode",
+      "availability": "DESIGN_INTENT",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "world",
+      "id": "world.state",
+      "type": "enum",
+      "values": [
+        "entry",
+        "exploration",
+        "decision",
+        "consequence",
+        "reflection"
+      ],
+      "unit": "phase",
+      "availability": "DESIGN_INTENT",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "identity",
+      "id": "identity.realism",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "DESIGN_INTENT",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "identity",
+      "id": "identity.warmth",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "DESIGN_INTENT",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "identity",
+      "id": "identity.mystery",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "DESIGN_INTENT",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "identity",
+      "id": "identity.monumentality",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "DESIGN_INTENT",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "identity",
+      "id": "identity.wonder",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "DESIGN_INTENT",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "architecture",
+      "id": "composition.depth",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "architecture",
+      "id": "composition.focus",
+      "type": "enum",
+      "values": [
+        "central",
+        "distributed",
+        "directional"
+      ],
+      "unit": "mode",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "architecture",
+      "id": "composition.scale",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "architecture",
+      "id": "composition.focalLength",
+      "type": "number",
+      "min": 18,
+      "max": 85,
+      "unit": "mm",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "lighting",
+      "id": "lighting.exposure",
+      "type": "number",
+      "min": 0.65,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "P1_REFERENCE",
+      "p1": {
+        "target": "webgl",
+        "id": "lighting.exposure"
+      },
+      "rangeMeaning": "existing P1 proposed or bounded range"
+    },
+    {
+      "family": "lighting",
+      "id": "lighting.skyFill",
+      "type": "number",
+      "min": 0.12,
+      "max": 0.35,
+      "unit": "renderer coefficient",
+      "availability": "P1_REFERENCE",
+      "p1": {
+        "target": "webgl",
+        "id": "lighting.skyFill"
+      },
+      "rangeMeaning": "existing P1 proposed or bounded range"
+    },
+    {
+      "family": "lighting",
+      "id": "lighting.sun",
+      "type": "number",
+      "min": 0.75,
+      "max": 1.3,
+      "unit": "renderer coefficient",
+      "availability": "P1_REFERENCE",
+      "p1": {
+        "target": "webgl",
+        "id": "lighting.sun"
+      },
+      "rangeMeaning": "existing P1 proposed or bounded range"
+    },
+    {
+      "family": "lighting",
+      "id": "lighting.frontFill",
+      "type": "number",
+      "min": 0.08,
+      "max": 0.28,
+      "unit": "renderer coefficient",
+      "availability": "P1_REFERENCE",
+      "p1": {
+        "target": "webgl",
+        "id": "lighting.frontFill"
+      },
+      "rangeMeaning": "existing P1 proposed or bounded range"
+    },
+    {
+      "family": "lighting",
+      "id": "lighting.temperature",
+      "type": "number",
+      "min": 2700,
+      "max": 7500,
+      "unit": "K",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "lighting",
+      "id": "lighting.shadowSoftness",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "lighting",
+      "id": "lighting.indirect",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "lighting",
+      "id": "lighting.volumetric",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "lighting",
+      "id": "lighting.bloom",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "lighting",
+      "id": "lighting.sunElevation",
+      "type": "number",
+      "min": 5,
+      "max": 85,
+      "unit": "deg",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "lighting",
+      "id": "lighting.sunAzimuth",
+      "type": "number",
+      "min": -180,
+      "max": 180,
+      "unit": "deg",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "materials",
+      "id": "material.wood.roughness",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "materials",
+      "id": "material.wood.microdetail",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "materials",
+      "id": "material.stone.roughness",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "materials",
+      "id": "material.stone.microdetail",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "materials",
+      "id": "material.metal.roughness",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "materials",
+      "id": "material.metal.metalness",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "materials",
+      "id": "material.patina",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "materials",
+      "id": "material.glass.transmission",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "materials",
+      "id": "material.book.variation",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "environment",
+      "id": "environment.haze",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "environment",
+      "id": "environment.depth",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "environment",
+      "id": "environment.vegetation",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "environment",
+      "id": "environment.skyWarmth",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "environment",
+      "id": "environment.horizon",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "wonder",
+      "id": "astral.glow",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "wonder",
+      "id": "astral.motion",
+      "type": "boolean",
+      "unit": "boolean",
+      "availability": "P1_REFERENCE",
+      "p1": {
+        "target": "webgl",
+        "id": "astral.motion"
+      },
+      "rangeMeaning": "existing P1 proposed or bounded range"
+    },
+    {
+      "family": "wonder",
+      "id": "astral.motionSpeed",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "wonder",
+      "id": "astral.density",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "wonder",
+      "id": "astral.symbolicEmphasis",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "interaction",
+      "id": "ui.portalEmphasis",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "interaction",
+      "id": "ui.integration",
+      "type": "enum",
+      "values": [
+        "overlay",
+        "architectural",
+        "illustrated"
+      ],
+      "unit": "mode",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "interaction",
+      "id": "ui.controlsDensity",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "unit": "ratio",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "interaction",
+      "id": "ui.motion",
+      "type": "boolean",
+      "unit": "boolean",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    },
+    {
+      "family": "interaction",
+      "id": "ui.audio",
+      "type": "boolean",
+      "unit": "boolean",
+      "availability": "ADAPTER_REQUIRED",
+      "rangeMeaning": "candidate design scale; not calibrated physical range"
+    }
+  ],
+  "invariants": {
+    "runtimeAuthorized": false,
+    "studentAuthorized": false,
+    "publishable": false,
+    "artisticApproval": false,
+    "rendererWriteAuthorized": false,
+    "zeroCost": true
+  },
+  "rubric": [
+    {
+      "id": "architecture",
+      "weight": 15
+    },
+    {
+      "id": "lighting",
+      "weight": 20
+    },
+    {
+      "id": "materials",
+      "weight": 20
+    },
+    {
+      "id": "environment",
+      "weight": 15
+    },
+    {
+      "id": "wonder",
+      "weight": 10
+    },
+    {
+      "id": "interface",
+      "weight": 10
+    },
+    {
+      "id": "experience",
+      "weight": 10
+    }
+  ],
+  "requiredEvidence": [
+    "before",
+    "variant",
+    "restored",
+    "mobile",
+    "desktop",
+    "humanReview"
+  ]
+}
