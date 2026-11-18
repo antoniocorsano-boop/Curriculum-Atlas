@@ -41,3 +41,21 @@ misure di avvio reali; nessuna garanzia di fluidità su smartphone.
 La CI usa ancora gli artefatti temporanei già conservati in archivio:
 recupero automatico durevole aperto. Nessun deploy, merge, pubblicazione
 o accesso studenti.
+
+## Chiusura della scena e prevenzione (18 novembre 2026)
+Run 44335391150: 6/6 scene inizializzate, 5/6 percorsi completi,
+due fallback positivi. Nel formato grande la navigazione ha raggiunto
+/esperienze/; l'immagine large-failure.png mostra la pagina e il titolo
+attesi, nonostante il timeout del test. Errore registrato: ALS-01 disposed.
+La relazione causale con il timeout non è dimostrata.
+Il runtime ora annulla l'animazione prima dell'uscita, non renderizza
+quando nascosto, invalida lo stato prima di distruggere le risorse,
+rimuove gli eventi tramite AbortController, annulla richieste pendenti
+e distingue pagehide persistito (pausa e ripristino) da chiusura finale.
+Il preflight della PR #116 viene adottato nel ramo d'integrazione,
+esteso alla verifica reale di pausa/ripristino/chiusura ripetuta,
+zero render e zero aggiornamenti ALS dopo dispose. Il collaudo completo
+parte dal formato grande con ALS in movimento; controlla errori anche
+dopo la navigazione e arresta la matrice se questo caso fallisce.
+P1-spatial resta il riferimento; nessuna modifica al master, nessuna
+abilitazione M1/M2, nessuna autorizzazione alla pubblicazione.
