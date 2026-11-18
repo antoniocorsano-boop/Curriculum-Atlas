@@ -1,6 +1,6 @@
 # ALS-01 — Sistema di luci astrali riutilizzabile
 
-Stato: revisione ottica R2 e confronto contestuale predisposti; non approvazione artistica o autorizzazione alla pubblicazione.
+Stato: revisione ottica R3 e confronto contestuale predisposti; non approvazione artistica o autorizzazione alla pubblicazione.
 Base scultorea immutata: ART-FINAL R2, PR #108, GLB SHA-256
 684849b72dfc3314c6383e3a0864fa244145811f3d27fb9bdc76d7fbfd7f92e0.
 
@@ -46,6 +46,10 @@ dell'intera scultura. I moti orbitali e direzionali restano rinviati.
   Obiettivo verificabile: almeno +25% di pixel interessati rispetto alle
   misure R1 di ciascuno dei sei formati. Non è una soglia clinica o una
   misura di luminosità percepita.
+- R3: solo il nucleo ottico passa da 0,18–0,64 a 0,24–0,72 della
+  coordinata radiale normalizzata. Diametro, alone, picco di intensità,
+  frequenze e geometria invariati. La soglia +25% rimane obbligatoria;
+  R2 non l'aveva superata su desktop e grande schermo.
 
 ## Qualificazione
 Test deterministici e prova reale in Chromium/Three.js r128, sei formati, su
