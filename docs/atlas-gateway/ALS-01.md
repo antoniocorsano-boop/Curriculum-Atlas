@@ -1,6 +1,6 @@
 # ALS-01 — Sistema di luci astrali riutilizzabile
 
-Stato: revisione ottica R3 e confronto contestuale predisposti; non approvazione artistica o autorizzazione alla pubblicazione.
+Stato: revisione adattiva R4 e confronto contestuale predisposti; non approvazione artistica o autorizzazione alla pubblicazione.
 Base scultorea immutata: ART-FINAL R2, PR #108, GLB SHA-256
 684849b72dfc3314c6383e3a0864fa244145811f3d27fb9bdc76d7fbfd7f92e0.
 
@@ -49,7 +49,17 @@ dell'intera scultura. I moti orbitali e direzionali restano rinviati.
 - R3: solo il nucleo ottico passa da 0,18–0,64 a 0,24–0,72 della
   coordinata radiale normalizzata. Diametro, alone, picco di intensità,
   frequenze e geometria invariati. La soglia +25% rimane obbligatoria;
-  R2 non l'aveva superata su desktop e grande schermo.
+  R2 e R3 non l'avevano superata su desktop e grande schermo.
+- R4: dimensione apparente adattiva, interpolata sul lato corto tra 600 e
+  1000 px; classi di sfondo esplicite dark, mixed, light. Ingombro massimo
+  14 px logici, minimo 5–8,25 px, scala 2–2,5. Nessun campionamento
+  continuo dello sfondo; nessuna variazione temporale aggiuntiva. Colore,
+  intensità, nucleo e alone R3 invariati. Le due camere Blender usano
+  i valori risolti in JS con sfondo light. Il chiamante passa larghezza,
+  altezza, rapporto pixel e classe dello sfondo; default dark.
+  La soglia +25% resta vincolante sul confronto scuro di riferimento;
+  sui due sfondi sintetici aggiuntivi si verifica presenza e stabilità.
+  L'adattamento non garantisce contrasto universale o equivalenza percettiva.
 
 ## Qualificazione
 Test deterministici e prova reale in Chromium/Three.js r128, sei formati, su
