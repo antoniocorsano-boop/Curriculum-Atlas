@@ -8,7 +8,7 @@ from bpy_extras.object_utils import world_to_camera_view
 
 def make_points(scene,sample):
     optics=sample["optics"];limits=sample["limits"]
-    assert optics["revision"]=="ALS-01-R3" and sample["paused"] is True
+    assert optics["revision"]=="ALS-01-R4" and sample["paused"] is True
     assert len(sample["points"])==18 and len(sample["anchors"])==4
     result=[]
     for p in sample["points"]:
@@ -55,10 +55,12 @@ def make_points(scene,sample):
     return result
 
 def position_points(scene,camera,points,optics,protected):
-    assert camera.data.type=="PERSP"
+    assert camera.data.type=="PERSP" and optics["revision"]=="ALS-01-R4"
     bpy.context.view_layer.update()
     height=scene.render.resolution_y*scene.render.resolution_percentage/100
     width=scene.render.resolution_x*scene.render.resolution_percentage/100
+    assert optics["width"]==width and optics["height"]==height and optics["backdrop"] in ("dark","mixed","light")
+    assert 5<=optics["minDiameterPx"]<=optics["maxDiameterPx"]<=14
     frame=camera.data.view_frame(scene=scene)
     rotation=camera.matrix_world.to_quaternion()
     inverse=camera.matrix_world.inverted()
