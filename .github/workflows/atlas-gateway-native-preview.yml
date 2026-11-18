@@ -50,8 +50,13 @@ jobs:
           cd "$RUNNER_TEMP"
           mkdir -p native-input master-transport master-r2
           fetch() {
-            curl --fail --silent --show-error --location --max-time 120 -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$1/zip" -o "$2"
-            printf '%s  %s\n' "$3" "$2" | sha256sum --strict --check
+            echo "Recovering locked artifact $1"
+            rm -f "$2.part"
+            # Bounded retries on transient HTTP 408/429/5xx and transport failures.
+            # A missing artifact or incorrect digest remains a hard failure.
+            curl --fail --silent --show-error --location --retry 4 --retry-delay 2 --retry-max-time 180 --retry-connrefused --max-time 90 --remove-on-error -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$1/zip" -o "$2.part"
+            printf '%s  %s\n' "$3" "$2.part" | sha256sum --strict --check
+            mv "$2.part" "$2"
           }
           fetch 14431658842 native-input/master.zip 485ccce1129920017a04acc737a581693289950eb250fda2b5fa1e524e8f0d8b
           fetch 14413232678 native-input/base.zip ecc9522d03d802668343bf87a387fa4b5e353fa40b2e4f266e18e9ab25d6383a
