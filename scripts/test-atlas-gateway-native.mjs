@@ -14,6 +14,8 @@ assert.equal(parseNativeManifest({...manifest,studentAuthorized:true}),null);
 mkdirSync(out,{recursive:true});
 const browser=await chromium.launch({headless:true,args:["--use-gl=angle","--use-angle=swiftshader","--enable-unsafe-swiftshader"]});
 const origin="http://127.0.0.1:3000",results=[],failures=[];
+let destinationControl=null;
+const bounded=(promise,ms=3000)=>Promise.race([promise.catch(e=>({error:String(e)})),new Promise(r=>setTimeout(()=>r({timeout:true}),ms))]);
 const expectedFiles=manifest.assets.map(a=>"/atlas-gateway-native/"+a.file).sort();
 async function inspect(page,device){
  const frameElement=page.locator("iframe[title='Biblioteca Atlas tridimensionale']");
@@ -50,9 +52,20 @@ async function inspect(page,device){
  return {frame,m};
 }
 try{
+ // Establish the independent destination baseline before creating a WebGL scene.
+ const control=await browser.newContext({viewport:{width:1920,height:1080}});
+ try{
+  const p=await control.newPage();const response=await p.goto(origin+"/esperienze/",{waitUntil:"domcontentloaded",timeout:30000});
+  await p.getByRole("heading",{name:"Esplora, scopri, comprendi.",exact:true}).waitFor({state:"visible",timeout:15000});
+  destinationControl={status:response.status(),title:await p.locator("h1").innerText(),url:p.url()};
+  assert.equal(destinationControl.status,200);
+ }finally{await control.close()}
  for(const device of [{name:"large",viewport:{width:1920,height:1080}},{name:"compact",viewport:{width:320,height:568},isMobile:true,hasTouch:true},{name:"phone",viewport:{width:393,height:873},isMobile:true,hasTouch:true},{name:"landscape",viewport:{width:873,height:393},isMobile:true,hasTouch:true},{name:"tablet",viewport:{width:768,height:1024},isMobile:true,hasTouch:true},{name:"desktop",viewport:{width:1440,height:1000}}]){
   const {name,...opts}=device,context=await browser.newContext({...opts,deviceScaleFactor:1}),page=await context.newPage();
-  const external=[],assets=[],errors=[],diagnostics=[];
+  const external=[],assets=[],errors=[],diagnostics=[],routeEvents=[];
+  page.on("response",r=>{if(r.url().includes("/esperienze")||r.url().includes("/curricolo"))routeEvents.push({url:r.url(),status:r.status(),resourceType:r.request().resourceType()})});
+  page.on("requestfailed",r=>routeEvents.push({url:r.url(),failure:r.failure()?.errorText}));
+  page.on("crash",()=>routeEvents.push({crash:true}));
   page.on("pageerror",e=>errors.push(e.message));
   page.on("console",m=>{const t=m.text();if(m.type()==="error"||t.startsWith("ATLAS_NATIVE_"))diagnostics.push(t);});
   await context.route("**/*",route=>{const u=new URL(route.request().url());if(/^https?:$/.test(u.protocol)&&u.origin!==origin){external.push(u.href);return route.abort()}if(u.pathname.startsWith("/atlas-gateway-native/"))assets.push(u.pathname);return route.continue()});
@@ -68,14 +81,33 @@ try{
    if(name==="large"){
      const toggle=frame.locator("#atlas-astral-toggle");await toggle.click();assert.equal(await toggle.getAttribute("aria-pressed"),"true");
    }
-   await Promise.all([page.waitForURL("**/esperienze/",{timeout:30000}),frame.locator("canvas").click({position:{x:esperienze.x,y:esperienze.y}})]);
+   await Promise.all([page.waitForURL("**/esperienze/",{waitUntil:"domcontentloaded",timeout:30000}),frame.locator("canvas").click({position:{x:esperienze.x,y:esperienze.y}})]);
    await page.getByRole("heading",{name:"Esplora, scopri, comprendi.",exact:true}).waitFor({state:"visible",timeout:30000});
    await page.locator("iframe[title='Biblioteca Atlas tridimensionale']").waitFor({state:"detached",timeout:10000});
    await page.getByRole("button",{name:"Laboratori",exact:true}).click();
    await page.getByRole("region",{name:"Risultati della ricerca"}).getByText("Non ci sono ancora esperienze autorizzate in questa sezione.").waitFor();
    assert.equal(external.length,0);assert.deepEqual(errors,[]);assert.equal(diagnostics.filter(t=>/ATLAS_CSP|ATLAS_NATIVE_FAILURE|ALS-01 disposed|Content Security Policy/i.test(t)).length,0,JSON.stringify(diagnostics));
-   results.push({device:name,...m,assets:assets.length,external:external.length,portal:"PASS",navigationTeardown:"PASS",diagnostics});
-  }catch(e){const notice=await page.locator(".atlas-gateway-notice").textContent({timeout:3000}).catch(()=>null);failures.push({device:name,error:String(e),errors,external,assets,notice,diagnostics});await page.screenshot({path:out+"/"+name+"-failure.png"}).catch(()=>{});}
+   assert(diagnostics.includes("ATLAS_NATIVE_CLOSED"),"Native scene did not quiesce");
+   assert(diagnostics.includes("ATLAS_NATIVE_NAV_REQUEST esperienze"),"Native portal did not send the request");
+   assert(diagnostics.includes("ATLAS_NATIVE_NAV_ACCEPT esperienze"),"Parent did not accept the portal request");
+   assert(routeEvents.some(e=>e.resourceType==="document"&&e.status===200&&new URL(e.url).pathname==="/esperienze/"),"Expected full document navigation");
+   if(name==="large"){
+     await page.goBack({waitUntil:"domcontentloaded",timeout:30000});
+     await page.waitForURL("**/gateway/",{waitUntil:"domcontentloaded",timeout:30000});
+     const backFrame=page.frameLocator("iframe[title='Biblioteca Atlas tridimensionale']");
+     await backFrame.locator("#native-controls").waitFor({state:"visible",timeout:65000});
+     await page.waitForFunction(()=>!document.querySelector("[role='status']")?.textContent?.includes("Preparazione della sala"),null,{timeout:15000});
+     const backState=await page.locator("iframe[title='Biblioteca Atlas tridimensionale']").elementHandle();
+     const restored=await backState.contentFrame();
+     assert.equal(await restored.evaluate(()=>nativePhase),"ready");
+     await Promise.all([page.waitForURL("**/curricolo/",{waitUntil:"domcontentloaded",timeout:30000}),page.locator("a[data-portal='curricolo']").click()]);
+     await page.getByRole("heading",{name:"Il curricolo dell’istituto",exact:true}).waitFor({state:"visible",timeout:15000});
+     assert(routeEvents.some(e=>e.resourceType==="document"&&e.status===200&&new URL(e.url).pathname==="/curricolo/"));
+     assert.equal(await page.locator("iframe[title='Biblioteca Atlas tridimensionale']").count(),0);
+     assert.deepEqual(errors,[]);assert.equal(external.length,0);
+   }
+   results.push({device:name,...m,assets:assets.length,external:external.length,portal:"PASS",navigationTeardown:"PASS",diagnostics,routeEvents});
+  }catch(e){const dom=await bounded(page.evaluate(()=>({url:location.href,readyState:document.readyState,headings:[...document.querySelectorAll("h1")].map(h=>({text:h.textContent,rect:h.getBoundingClientRect().toJSON(),display:getComputedStyle(h).display,visibility:getComputedStyle(h).visibility})),iframes:document.querySelectorAll("iframe").length,notice:document.querySelector(".atlas-gateway-notice")?.textContent??null,body:document.body?.innerText.slice(0,1500)})));failures.push({device:name,error:String(e),errors,external,assets,dom,diagnostics,routeEvents});await bounded(page.screenshot({path:out+"/"+name+"-failure.png",timeout:5000}),6000);}
   finally{await context.close()}
   // Stop after the previously failing large-screen case; do not repeat five
   // expensive runs while the targeted regression remains unresolved.
@@ -98,7 +130,7 @@ try{
  assert.equal(await p.locator("iframe").count(),0);await reduced.close();results.push({reducedMotionFallback:"PASS"});
 }finally{
  await browser.close();
- writeFileSync(out+"/native-gateway-receipt.json",JSON.stringify({status:failures.length?"FAIL":"PASS",scope:"local-native-P1-spatial",studentAuthorized:false,publishable:false,results,failures},null,2)+"\n");
- console.log(JSON.stringify({results,failures}));
+ writeFileSync(out+"/native-gateway-receipt.json",JSON.stringify({status:failures.length?"FAIL":"PASS",scope:"local-native-P1-spatial",studentAuthorized:false,publishable:false,destinationControl,results,failures},null,2)+"\n");
+ console.log(JSON.stringify({destinationControl,results,failures}));
 }
 assert.equal(failures.length,0,JSON.stringify(failures));assert.equal(results.length,8);
