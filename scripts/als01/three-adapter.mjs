@@ -3,6 +3,8 @@
 import {sample,blenderToThree,validateAnchors} from "./core.mjs";
 export function createAstralLights(THREE,anchors){
   validateAnchors(anchors);
+  // Snapshot topology and anchor coordinates; callers cannot mutate the allocated buffers.
+  anchors=anchors.map(a=>({...a,center:a.center.slice()}));
   const initial=sample(anchors,0,{paused:true});
   const n=initial.length,positions=new Float32Array(n*3),colors=new Float32Array(n*3),opacity=new Float32Array(n),radius=new Float32Array(n);
   const geometry=new THREE.BufferGeometry();
@@ -47,5 +49,10 @@ export function createAstralLights(THREE,anchors){
     sample(anchors,seconds,{reducedMotion,paused}).forEach((p,i)=>{opacity[i]=p.opacity});
     geometry.attributes.alpha.needsUpdate=true;
   }
-  return {object,update,dispose(){if(disposed)return;disposed=true;object.parent?.remove(object);geometry.dispose();material.dispose();}};
+  function setState(id,state){
+    if(disposed)throw Error("ALS-01 disposed");
+    const a=anchors.find(a=>a.id===id);if(!a)throw RangeError("unknown anchor");
+    validateAnchors(anchors.map(x=>x===a?{...x,state}:x));a.state=state;
+  }
+  return {object,update,setState,dispose(){if(disposed)return;disposed=true;object.parent?.remove(object);geometry.dispose();material.dispose();}};
 }
