@@ -134,9 +134,13 @@ export function GatewayCandidate({ preparedScene, nativeManifest = null }: { pre
   return (
     <main className={`atlas-gateway-shell${immersive ? " atlas-gateway-immersive" : ""}`}>
       <header className="atlas-gateway-header"><div className="atlas-gateway-heading"><span>ATLAS · Biblioteca della conoscenza</span><h1>Conoscere. Comprendere. Immaginare.</h1>
-        <p>Tre ambienti, un unico accesso.</p></div><div className="atlas-gateway-header-actions">{nativeImmersive ? <a href="/" aria-label="Torna alla pagina iniziale attuale" onClick={event => {
-        if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) nativeDeparting.current = true;
-      }}>← Home Atlas</a> : <Link href="/" aria-label="Torna alla pagina iniziale attuale">← Home Atlas</Link>}
+        <p>Tre ambienti, un unico accesso.</p></div><div className="atlas-gateway-header-actions">{nativeImmersive ? <Link href="/" prefetch={false} aria-label="Torna alla pagina iniziale attuale" onClick={event => {
+        if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
+          event.preventDefault();
+          nativeDeparting.current = true;
+          window.location.assign("/");
+        }
+      }}>← Home Atlas</Link> : <Link href="/" aria-label="Torna alla pagina iniziale attuale">← Home Atlas</Link>}
       {preparedScene && <button className="atlas-gateway-toggle" type="button" onClick={() => {
         setNotice("");
         setShow3D(value => !value);
@@ -148,9 +152,13 @@ export function GatewayCandidate({ preparedScene, nativeManifest = null }: { pre
         sandbox="allow-scripts" referrerPolicy="no-referrer" srcDoc={scene.html} />}</div>}
       <nav className="atlas-gateway-portals" aria-label="Accedi agli ambienti Atlas">
         {PORTALS.map(portal => immersive ? (
-          portal.href ? (nativeImmersive ? <a key={portal.id} className="atlas-gateway-direct" data-portal={portal.id} href={portal.href + "/"} onClick={event => {
-            if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) nativeDeparting.current = true;
-          }}>{portal.label}<span aria-hidden="true">→</span></a> : <Link key={portal.id} className="atlas-gateway-direct" data-portal={portal.id} href={portal.href}>{portal.label}<span aria-hidden="true">→</span></Link>) :
+          portal.href ? (nativeImmersive ? <Link key={portal.id} className="atlas-gateway-direct" data-portal={portal.id} href={portal.href + "/"} prefetch={false} onClick={event => {
+            if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
+              event.preventDefault();
+              nativeDeparting.current = true;
+              window.location.assign(portal.href + "/");
+            }
+          }}>{portal.label}<span aria-hidden="true">→</span></Link> : <Link key={portal.id} className="atlas-gateway-direct" data-portal={portal.id} href={portal.href}>{portal.label}<span aria-hidden="true">→</span></Link>) :
             <button key={portal.id} type="button" className="atlas-gateway-direct" data-portal={portal.id} onClick={() => setNotice("Studio Atlas: accesso professionale non ancora abilitato.")}>{portal.label}<span aria-hidden="true">ⓘ</span></button>
         ) : <div className="atlas-gateway-portal" key={portal.id}>
           <strong>{portal.label}</strong><span className="atlas-gateway-portal-description">{portal.description}</span>
