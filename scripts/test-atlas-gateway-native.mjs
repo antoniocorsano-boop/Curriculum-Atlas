@@ -12,7 +12,8 @@ assert.equal(parseNativeManifest({...manifest,assets:manifest.assets.map((a,i)=>
 assert.equal(parseNativeManifest({...manifest,assets:manifest.assets.map((a,i)=>i===0?{...a,bytes:40000001}:a)}),null);
 assert.equal(parseNativeManifest({...manifest,studentAuthorized:true}),null);
 mkdirSync(out,{recursive:true});
-const browser=await chromium.launch({headless:true,args:["--use-gl=angle","--use-angle=swiftshader","--enable-unsafe-swiftshader"]});
+const launch=()=>chromium.launch({headless:true,args:["--use-gl=angle","--use-angle=swiftshader","--enable-unsafe-swiftshader"]});
+const browser=await launch();
 const origin="http://127.0.0.1:3000",results=[],failures=[];
 let destinationControl=null;
 const bounded=(promise,ms=3000)=>Promise.race([promise.catch(e=>({error:String(e)})),new Promise(r=>setTimeout(()=>r({timeout:true}),ms))]);
@@ -61,14 +62,22 @@ try{
   assert.equal(destinationControl.status,200);
  }finally{await control.close()}
  for(const device of [{name:"large",viewport:{width:1920,height:1080}},{name:"compact",viewport:{width:320,height:568},isMobile:true,hasTouch:true},{name:"phone",viewport:{width:393,height:873},isMobile:true,hasTouch:true},{name:"landscape",viewport:{width:873,height:393},isMobile:true,hasTouch:true},{name:"tablet",viewport:{width:768,height:1024},isMobile:true,hasTouch:true},{name:"desktop",viewport:{width:1440,height:1000}}]){
-  const {name,...opts}=device,context=await browser.newContext({...opts,deviceScaleFactor:1}),page=await context.newPage();
+  // Isolate each format in its own Chromium process, as in the differential test.
+  // Keep the combined graphics + navigation workload and the same deadlines.
+  const deviceBrowser=await launch();
+  const {name,...opts}=device,context=await deviceBrowser.newContext({...opts,deviceScaleFactor:1}),page=await context.newPage();
   const external=[],assets=[],errors=[],diagnostics=[],routeEvents=[];
   page.on("response",r=>{if(r.url().includes("/esperienze")||r.url().includes("/curricolo"))routeEvents.push({url:r.url(),status:r.status(),resourceType:r.request().resourceType()})});
   page.on("requestfailed",r=>routeEvents.push({url:r.url(),failure:r.failure()?.errorText}));
   page.on("crash",()=>routeEvents.push({crash:true}));
   page.on("pageerror",e=>errors.push(e.message));
   page.on("console",m=>{const t=m.text();if(m.type()==="error"||t.startsWith("ATLAS_NATIVE_"))diagnostics.push(t);});
-  await context.route("**/*",route=>{const u=new URL(route.request().url());if(/^https?:$/.test(u.protocol)&&u.origin!==origin){external.push(u.href);return route.abort()}if(u.pathname.startsWith("/atlas-gateway-native/"))assets.push(u.pathname);return route.continue()});
+  // Observe local requests passively. Routing every local response changes
+  // Chromium request scheduling and disables its HTTP cache.
+  page.on("request",req=>{const u=new URL(req.url());if(u.origin===origin&&u.pathname.startsWith("/atlas-gateway-native/"))assets.push(u.pathname);});
+  await context.route(/^https?:\\/\\/(?!127\\.0\\.0\\.1:3000(?:\\/|$))/,route=>{external.push(route.request().url());return route.abort()});
+  page.on("framenavigated",f=>{if(f===page.mainFrame())routeEvents.push({checkpoint:"main-frame",url:f.url(),at:Date.now()})});
+  page.on("domcontentloaded",()=>routeEvents.push({checkpoint:"domcontentloaded",url:page.url(),at:Date.now()}));
   try{
    await page.goto(origin+"/gateway/",{waitUntil:"domcontentloaded"});
    const {frame,m}=await inspect(page,name);
@@ -81,7 +90,14 @@ try{
    if(name==="large"){
      const toggle=frame.locator("#atlas-astral-toggle");await toggle.click();assert.equal(await toggle.getAttribute("aria-pressed"),"true");
    }
-   await Promise.all([page.waitForURL("**/esperienze/",{waitUntil:"domcontentloaded",timeout:30000}),frame.locator("canvas").click({position:{x:esperienze.x,y:esperienze.y}})]);
+   const transitionStarted=Date.now();
+   routeEvents.push({checkpoint:"portal-action",at:transitionStarted});
+   await Promise.all([page.waitForURL("**/esperienze/",{waitUntil:"commit",timeout:30000}),frame.locator("canvas").click({position:{x:esperienze.x,y:esperienze.y}})]);
+   routeEvents.push({checkpoint:"commit-observed",at:Date.now(),url:page.url()});
+   const remaining=30000-(Date.now()-transitionStarted);
+   assert(remaining>0,"Navigation exceeded existing 30 s deadline");
+   await page.waitForLoadState("domcontentloaded",{timeout:remaining});
+   routeEvents.push({checkpoint:"dom-observed",at:Date.now(),url:page.url()});
    await page.getByRole("heading",{name:"Esplora, scopri, comprendi.",exact:true}).waitFor({state:"visible",timeout:30000});
    await page.locator("iframe[title='Biblioteca Atlas tridimensionale']").waitFor({state:"detached",timeout:10000});
    await page.getByRole("button",{name:"Laboratori",exact:true}).click();
@@ -108,7 +124,7 @@ try{
    }
    results.push({device:name,...m,assets:assets.length,external:external.length,portal:"PASS",navigationTeardown:"PASS",diagnostics,routeEvents});
   }catch(e){const dom=await bounded(page.evaluate(()=>({url:location.href,readyState:document.readyState,headings:[...document.querySelectorAll("h1")].map(h=>({text:h.textContent,rect:h.getBoundingClientRect().toJSON(),display:getComputedStyle(h).display,visibility:getComputedStyle(h).visibility})),iframes:document.querySelectorAll("iframe").length,notice:document.querySelector(".atlas-gateway-notice")?.textContent??null,body:document.body?.innerText.slice(0,1500)})));failures.push({device:name,error:String(e),errors,external,assets,dom,diagnostics,routeEvents});await bounded(page.screenshot({path:out+"/"+name+"-failure.png",timeout:5000}),6000);}
-  finally{await context.close()}
+  finally{try{await context.close()}finally{await deviceBrowser.close()}}
   // Stop after the previously failing large-screen case; do not repeat five
   // expensive runs while the targeted regression remains unresolved.
   if(name==="large"&&failures.length)throw Error("Targeted large-screen regression failed");
