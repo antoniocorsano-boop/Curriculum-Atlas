@@ -131,10 +131,15 @@
           "ASP-H020",
           "b207f766a8cf52d87ae33b4830cc9ebf4d462701",
           "qualification-pending"
+        ],
+        [
+          "ASP-H024",
+          "b207f766a8cf52d87ae33b4830cc9ebf4d462701",
+          "partial-pass"
         ]
       ],
-      "finding": "Il controllo della chiusura è positivo, ma il timeout residuo persiste senza errore ALS nel run osservato.",
-      "candidate": "Isolare la destinazione e acquisire diagnostica di transizione prima di attribuire una causa.",
+      "finding": "La chiusura è qualificata in isolamento; il controllo autonomo della destinazione restituisce HTTP 200 e titolo corretto, ma la transizione dal grande schermo resta in timeout. Nessuna causa univoca dimostrata.",
+      "candidate": "Isolare invio dell'evento, rilascio risorse e transizione; non ripetere una correzione del motore senza una nuova evidenza.",
       "preconditions": [
         "Controllo autonomo della destinazione",
         "Evidenza esatta della transizione"
