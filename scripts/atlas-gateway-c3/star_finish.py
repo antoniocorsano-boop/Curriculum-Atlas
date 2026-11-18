@@ -8,22 +8,17 @@ FAMILY={"storie":"warm","scoperte":"warm","laboratori":"cool","percorsi":"cool"}
 SCALARS={"warm":{"emission":.08,"roughness":.34,"metallic":.64},"cool":{"emission":.10,"roughness":.32,"metallic":.38}}
 EMISSION={"warm":(.22,.12,.035),"cool":(.045,.11,.22)}
 # One neutral metal/enamel material per family; distinct per-face linear RGB values.
-COMPONENTS={"storie":(.64,.64,1.18,1.18,.82),"laboratori":(.70,.70,.70,1.06,1.13,1.02),"scoperte":(1.0,.86,1.0,.86,1.28),"percorsi":(.74,.85,.96,1.08,1.16)}
+COMPONENTS={"storie":(.57,.57,1.04,1.04,.72),"laboratori":(.76,.76,.76,1.03,1.03,1.03),"scoperte":(.96,.96,.96,.96,1.13),"percorsi":(.84,.89,.94,.99,1.04)}
 def face_colors(sid,base):
     assert len(base)==3 and all(0<=x<=1 for x in base)
     out=[]
     for component,role,j in face_roles(sid):
         factor=COMPONENTS[sid][component]
-        # Directional contrast supports the actual recessed rims and crests;
-        # pair adjacent rim triangles so that triangulation does not become decoration.
-        if role=="rim":
-            f=(.76,.86,.92,.83)[(j//2)%4]
-        elif role=="crest":
-            if sid=="storie":f=(1.06,1.03,.97,.94)[j%4]
-            elif sid=="laboratori":f=1.02 if component>=3 else .93
-            elif sid=="scoperte":f=(1.19,1.02,.87,.96)[j%4]
-            else:f=(1.09,.99,.93,1.02)[j%4]
-        else:f={"back":.72,"band0":1.23,"band1":.83,"band2":1.07}[role]
+        # ART-FINAL: restrained tonal treatment. No alternating colors per
+        # triangle: the actual relief and lighting define the surface.
+        if role=="rim":f=.94
+        elif role=="crest":f=1.0
+        else:f={"back":.84,"band0":1.05,"band1":.91,"band2":.98}[role]
         out.append(tuple(round(min(.98,max(.002,x*factor*f)),6) for x in base)+(1.,))
     return out
 def make_material(material,family):
