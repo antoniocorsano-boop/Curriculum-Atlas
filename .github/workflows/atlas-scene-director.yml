@@ -92,6 +92,7 @@ jobs:
           assert len(assets)==1, "Expected exactly one official Linux binary; inspect upstream-manifest.json"
           a=assets[0]
           name=a["name"]
+          assert (a["id"],a["size"],a.get("digest"))==(564902348,515209139,"sha256:836bf63e644e8a4c31b2ed9754017d563504a875cafb18a54999ec9c71797a70"), "Published asset differs from verified ENGINE-01 lock"
           assert a["browser_download_url"]=="https://github.com/GafferHQ/gaffer/releases/download/"+v+"/"+name
           assert 0<a["size"]<=2_500_000_000, "Archive exceeds bounded budget"
           assert re.fullmatch(r"sha256:[0-9a-f]{64}",a.get("digest") or ""), "No published SHA256; fail closed"
@@ -104,6 +105,22 @@ jobs:
           echo "$digest  $RUNNER_TEMP/gaffer.tar.gz" | sha256sum -c -
           tar -xf "$RUNNER_TEMP/gaffer.tar.gz" -C "$RUNNER_TEMP/gaffer" --strip-components=1 --no-same-owner
           test -x "$RUNNER_TEMP/gaffer/bin/gaffer"
+      - name: Prepare Linux graphics runtime and check native dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libglu1-mesa libgl1 libegl1 libglx-mesa0 libx11-6 libxext6 libxi6 libxrender1 libxkbcommon0 libfontconfig1 libfreetype6 libxcb1 libsm6 libice6
+          export LD_LIBRARY_PATH="$RUNNER_TEMP/gaffer/lib:$RUNNER_TEMP/gaffer/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+          {
+            cat /etc/os-release
+            ldd --version | head -n 1
+            dpkg-query -W libglu1-mesa libgl1 libegl1 libglx-mesa0
+            find "$RUNNER_TEMP/gaffer/python" -type f \( -name '_GafferScene.so' -o -name '_GafferCycles.so' -o -name '_GafferImage.so' \) -print -exec ldd {} \;
+          } > "$ATLAS_ENGINE_EVIDENCE/native-dependencies.txt"
+          cat "$ATLAS_ENGINE_EVIDENCE/native-dependencies.txt"
+          if grep -F 'not found' "$ATLAS_ENGINE_EVIDENCE/native-dependencies.txt"; then exit 1; fi
+          timeout 60 "$RUNNER_TEMP/gaffer/bin/gaffer" python -c 'import Gaffer, GafferScene, GafferCycles, GafferImage; print("ENGINE-01 native imports PASS")'
       - name: Render reference, variant and restored state on CPU
         shell: bash
         run: |
