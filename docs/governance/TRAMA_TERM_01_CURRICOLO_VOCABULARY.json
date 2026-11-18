@@ -87,6 +87,11 @@
       "path": "docs/atlas-gateway/fonti/scene-threejs.html",
       "contains": ">Curriculum<",
       "reason": "Due segnaposto della copia storica immutata AG-01; il preparatore della candidata li sostituisce con il termine canonico prima dell'esecuzione."
+    },
+    {
+      "path": "ops/atlas-scene-package/history.jsonl",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas/",
+      "reason": "Identificativo storico esatto del repository nei collegamenti alle prove immutabili ASP-01; non introduce terminologia di dominio o nuove eccezioni applicative."
     }
   ]
 }

@@ -1,0 +1,93 @@
+name: Atlas — ASP-01 editable Blender master
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "scripts/atlas-gateway-integration/build-editable-master.py"
+      - ".github/workflows/atlas-editable-master.yml"
+      - "ops/atlas-scene-package/**"
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-asp01-editable-master
+  cancel-in-progress: true
+jobs:
+  reconstruct:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-scene-package-asp01' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - name: Recover exact master source assets and optical sample
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          mkdir -p editable-input atlas-c32b
+          fetch() {
+            curl --fail --silent --show-error --location --retry 4 --retry-delay 2 --retry-max-time 180 --max-time 90 --remove-on-error -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$1/zip" -o "$2.part"
+            printf '%s  %s\n' "$3" "$2.part" | sha256sum --strict --check
+            mv "$2.part" "$2"
+          }
+          fetch 14416938462 editable-input/stars.zip 84f1786ee98dac231f0d8fde0dd34bd1d1724f7ef707c1257b4fc824f3ade3ed
+          fetch 14413232678 editable-input/base.zip ecc9522d03d802668343bf87a387fa4b5e353fa40b2e4f266e18e9ab25d6383a
+          fetch 14413407240 editable-input/ao.zip 47f68653f6d50b703b6f9834b3a5d0c17951f9b577d427564272cecd059baae4
+          fetch 14431145676 editable-input/context.zip 08a6502b3e47b31a65d6fe3cf1d89d2bfa6f3f9d04ab5bd627526ac2d79e9d78
+          unzip -p editable-input/stars.zip four-stars.glb > editable-input/four-stars.glb
+          unzip -p editable-input/stars.zip receipt.json > editable-input/receipt.json
+          unzip -p editable-input/context.zip static-sample.json > editable-input/static-sample.json
+          unzip -q editable-input/base.zip 'atlas-c32/*' -d .
+          unzip -q editable-input/ao.zip -d atlas-c32b
+      - name: Reconstruct and reopen editable master
+        run: |
+          set -euo pipefail
+          "$BLENDER_BIN" --background --factory-startup --disable-autoexec --python-exit-code 1 --python scripts/atlas-gateway-integration/build-editable-master.py -- "$RUNNER_TEMP/editable-input/four-stars.glb" "$RUNNER_TEMP/editable-input/static-sample.json" "$RUNNER_TEMP/editable-master"
+      - name: Reopen in independent directory and render actual packed master
+        run: |
+          set -euo pipefail
+          mkdir "$RUNNER_TEMP/independent-master"
+          cp "$RUNNER_TEMP/editable-master/Atlas-Scene-Master.blend" "$RUNNER_TEMP/independent-master/"
+          # Original source folders removed from their expected paths. The
+          # packed file must be usable without access to the recovery inputs.
+          mv "$RUNNER_TEMP/atlas-c32" "$RUNNER_TEMP/independent-master-source-disabled-c32"
+          mv "$RUNNER_TEMP/atlas-c32b" "$RUNNER_TEMP/independent-master-source-disabled-c32b"
+          "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$RUNNER_TEMP/independent-master/Atlas-Scene-Master.blend" --python-exit-code 1 --python-expr 'import bpy; assert not bpy.data.libraries; assert all(im.packed_file for im in bpy.data.images if im.source=="FILE"); assert bpy.context.scene.camera.name=="atrium"; bpy.context.scene.render.filepath="//atlas-master-atrium.png"; bpy.ops.render.render(write_still=True)'
+          cp "$RUNNER_TEMP/independent-master/atlas-master-atrium.png" "$RUNNER_TEMP/editable-master/atlas-master-atrium.png"
+      - name: Validate portable master evidence
+        run: |
+          python3 - <<'PY'
+          import json,hashlib,os,pathlib,struct
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"editable-master"
+          r=json.loads((p/"editable-master-receipt.json").read_text())
+          assert r["status"]=="DRAFT_EDITABLE_MASTER_REOPENED" and r["sourceTransformsPreserved"]
+          assert r["bayInstances"]==495 and r["sharedBayMeshes"]==25 and r["alsPoints"]==18 and len(r["cameras"])==7
+          assert r["externalLibraries"]==r["externalFonts"]==0 and r["packedImages"]
+          assert not any(r[k] for k in ("artisticApproval","browserQualified","studentAuthorized","publishable"))
+          f=p/r["file"]["name"];b=f.read_bytes()
+          assert len(b)==r["file"]["bytes"] and hashlib.sha256(b).hexdigest()==r["file"]["sha256"]
+          image=(p/"atlas-master-atrium.png").read_bytes()
+          assert image[:8]==b"\x89PNG\r\n\x1a\n" and struct.unpack_from(">II",image,16)==(1200,750)
+          r["independentReopenRender"]={"status":"PASS","imageSha256":hashlib.sha256(image).hexdigest(),"width":1200,"height":750}
+          (p/"editable-master-receipt.json").write_text(json.dumps(r,indent=2)+"\n")
+          PY
+      - name: Preserve editable master and proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-asp01-editable-master
+          path: |
+            ${{ runner.temp }}/editable-master/Atlas-Scene-Master.blend
+            ${{ runner.temp }}/editable-master/editable-master-receipt.json
+            ${{ runner.temp }}/editable-master/atlas-master-atrium.png
+          if-no-files-found: warn
+          retention-days: 7
