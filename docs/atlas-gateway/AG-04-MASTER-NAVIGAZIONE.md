@@ -59,3 +59,7 @@ parte dal formato grande con ALS in movimento; controlla errori anche
 dopo la navigazione e arresta la matrice se questo caso fallisce.
 P1-spatial resta il riferimento; nessuna modifica al master, nessuna
 abilitazione M1/M2, nessuna autorizzazione alla pubblicazione.
+
+## Rilievo residuo dopo la qualificazione della chiusura
+Run 44338940854, commit f6315ab: preflight PASS, una sola liberazione ALS e renderer, zero aggiornamenti tardivi; resta timeout sul titolo di Esperienze con zero errori JS, otto risorse e ATLAS_NATIVE_CLOSED. La causalità ALS è esclusa come spiegazione sufficiente. Artefatto 14442822953 preservato in ASP-01.
+Ipotesi verificabile: la liberazione del solo renderer non garantisce il rilascio di tutte le risorse grafiche prima della transizione. Alternativa: aumentare i timeout senza diagnosi (scartata). Intervento: rilascio deduplicato di geometrie, materiali e texture, render target HDR e contesto prima dell'invio al genitore del comando di navigazione. Nessuna modifica alle risorse artistiche o alla policy dei portali. Prova di controllo separata della pagina di destinazione sul grande schermo, diagnostica DOM e risposte di rete, timeout diagnostico limitato. Non dichiarare la causa accertata né la navigazione conclusa fino al collaudo. Riferimento decisionale ASP-01, TRAMA-DE-01.
