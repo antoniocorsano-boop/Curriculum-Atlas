@@ -261,6 +261,12 @@
       "contains": ">Curriculum<",
       "reason": "Due segnaposto della copia storica immutata AG-01; il preparatore della candidata li sostituisce con il termine canonico prima dell'esecuzione.",
       "category": "historical-evidence"
+    },
+    {
+      "path": "ops/atlas-scene-package/history.jsonl",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas/",
+      "category": "historical-evidence",
+      "reason": "Riferimenti immutabili ai repository e alle prove; nessun lessico di dominio."
     }
   ]
 }
