@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import {readFileSync,writeFileSync,mkdirSync} from "node:fs";
 import {resolve,join} from "node:path";
 import {createHash} from "node:crypto";
+import {execFileSync} from "node:child_process";
 import {createServer} from "node:http";
 import {stripTypeScriptTypes} from "node:module";
 import {chromium} from "playwright";
@@ -98,6 +99,76 @@ try{
  assert.deepEqual(report.external,[]);assert.deepEqual(report.errors,[]);
  assert.equal(report.diagnostics.filter(t=>/ATLAS_CSP|ATLAS_NATIVE_FAILURE|Content Security Policy/i.test(t)).length,0,JSON.stringify(report.diagnostics));
  await page.screenshot({path:join(out,"native-preflight.png")});
+ // ASI-L2: observe the actual renderer; ASD: apply one typed camera plan
+ // only via the isolated Playwright sandbox. No runtime command surface.
+ const plan=JSON.parse(execFileSync("python3",["-c",`import runpy,json
+m=runpy.run_path("scripts/scene-director.py")
+c,r=m["load_sources"]()
+q=m["request_for"](c,r,"webgl",{"camera.orbit":0.11},False,False)
+print(json.dumps(m["make_plan"](c,r,q)))`],{encoding:"utf8"}));
+ assert.equal(plan.status,"CANDIDATE");assert.equal(plan.target,"webgl");
+ assert.equal(plan.rendererWriteAuthorized,false);assert.equal(plan.studentAuthorized,false);
+ assert.equal(plan.publishable,false);assert.equal(plan.changes.length,1);
+ report.sceneObservation={status:"PENDING",plan};
+ report.sceneObservation.result=await frame.evaluate(plan=>{
+   const gl=renderer.getContext(),w=gl.drawingBufferWidth,h=gl.drawingBufferHeight;
+   const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+   const require=(ok,msg)=>{if(!ok)throw Error("ASI-L2 "+msg)};
+   const parameters=()=>{const lights=scene.children.filter(o=>o.isLight);
+     const hemi=lights.find(o=>o.isHemisphereLight),directions=lights.filter(o=>o.isDirectionalLight);
+     require(hemi&&directions.length===2,"light inventory");
+     return {"camera.mode":"auto","camera.orbit":angle,"camera.tilt":tilt,"camera.distance":distance,
+       "lighting.exposure":renderer.toneMappingExposure,"lighting.skyFill":hemi.intensity,
+       "lighting.sun":directions[0].intensity,"lighting.frontFill":directions[1].intensity,"astral.motion":motion};
+   };
+   const inventory=()=>Object.entries(groupMap).map(([id,root])=>{
+     const objects=[];root.traverse(o=>{objects.push({name:o.name,type:o.type,visible:o.visible,
+       matrix:o.matrix.toArray(),vertices:o.geometry?.attributes?.position?.count??0,
+       materials:(Array.isArray(o.material)?o.material:o.material?[o.material]:[]).map(m=>({name:m.name,type:m.type,uuid:m.uuid}))})});
+     return {id,objects};
+   });
+   const state=()=>({parameters:parameters(),position:camera.position.toArray(),quaternion:camera.quaternion.toArray(),
+     projection:camera.projectionMatrix.toArray(),inventory:inventory(),decoded:nativeDecoded,
+     alsPoints:als.object.geometry.attributes.position.count,viewport:[w,h],revision:THREE.REVISION});
+   const canonical=o=>JSON.stringify(Object.entries(o).sort(([a],[b])=>a.localeCompare(b)));
+   function pixels(){render();const b=new Uint8Array(w*h*4);gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,b);
+     require(!gl.isContextLost()&&gl.getError()===gl.NO_ERROR,"pixel capture");return b}
+   function difference(a,b){let changed=0,max=0;for(let i=0;i<a.length;i+=4){
+     const d=Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2]);if(d>12)changed++;max=Math.max(max,d);
+   }return {changed,max,total:w*h,threshold:12}}
+   function check(p){require(ready&&!closing&&!failed&&!motion&&!document.hidden&&!down&&!reduced.matches,"inactive or moving");
+     require(p.schema==="atlas.asd.plan/v1"&&p.target==="webgl"&&p.mode==="PLAN_ONLY"&&p.status==="CANDIDATE"&&p.rendererWriteAuthorized===false&&p.artisticApproval===false&&p.studentAuthorized===false&&p.publishable===false,"authority");
+     require(p.changes.length===1&&p.changes[0].id==="camera.orbit"&&p.changes[0].unit==="rad","allowlist");
+     const v=p.changes[0].after;require(typeof v==="number"&&Number.isFinite(v)&&v>=-.3&&v<=.3&&v!==angle,"range");
+     require(p.changes[0].before===angle&&canonical(p.rollback)===canonical(parameters()),"stale observation");
+     require(canonical(p.candidate)===canonical({...parameters(),"camera.orbit":v}),"candidate drift");return v;
+   }
+   const before=state(),base=pixels();
+   const rejected=[];
+   for(const [id,p] of [
+     ["protected",{...plan,changes:[{...plan.changes[0],id:"materials"}]}],
+     ["range",{...plan,changes:[{...plan.changes[0],after:2}]}],
+     ["stale",{...plan,rollback:{...plan.rollback,"camera.orbit":.2}}],
+     ["authority",{...plan,rendererWriteAuthorized:true}]
+   ]){try{check(p)}catch{rejected.push(id)}}
+   require(rejected.length===4&&equal(before,state()),"negative cases changed state");
+   const next=check(plan),original=angle;let variant,variantPixels,restored,restoredPixels,portalHits;
+   try{
+     angle=next;setCamera();variantPixels=pixels();variant=state();
+     portalHits=NATIVE_PORTALS.map(p=>{const v=new THREE.Vector3(...toThree(p.anchorBlender)).project(camera);
+       return {id:p.id,hit:hitPortal((v.x+1)*innerWidth/2,(1-v.y)*innerHeight/2)}});
+   }finally{angle=original;setCamera();restoredPixels=pixels();restored=state()}
+   const visual=difference(base,variantPixels),rollbackVisual=difference(base,restoredPixels);
+   require(canonical(variant.parameters)===canonical(plan.candidate),"candidate state");
+   require(!equal(before.position,variant.position),"camera unchanged");
+   require(equal(before.inventory,variant.inventory)&&equal(before.decoded,variant.decoded)&&before.alsPoints===variant.alsPoints,"protected inventory");
+   require(equal(before,restored),"rollback state mismatch");
+   require(visual.changed>100&&rollbackVisual.changed===0,"visual comparison");
+   return {before,variant,restored,visual,rollbackVisual,rejected,portalHits};
+ },plan);
+ report.sceneObservation.status="PASS";
+ assert.deepEqual(report.external,[]);assert.deepEqual(report.errors,[]);
+ await page.screenshot({path:join(out,"asi-l2-webgl-restored.png")});
  // Exercise the real runtime's lifecycle with a live ALS adapter, not a mock.
  // Instrument actual calls, then reproduce late events and repeated closure.
  report.lifecycle=await frame.evaluate(()=>{
