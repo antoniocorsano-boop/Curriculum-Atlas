@@ -1,0 +1,129 @@
+name: Atlas — ALS-01 reusable astral light
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/atlas-als01.yml"
+      - "scripts/als01/**"
+      - "docs/atlas-gateway/ALS-01.md"
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-als01
+  cancel-in-progress: true
+jobs:
+  pilot:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.head.ref == 'work/atlas-als01-astral-light' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Check and test reusable profiles
+        run: |
+          node --check scripts/als01/core.mjs
+          node --check scripts/als01/three-adapter.mjs
+          node --check scripts/als01/test-webgl.mjs
+          node scripts/als01/core.test.mjs
+      - name: Install existing application dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Recover exact R2 model
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/als-r2"
+          cd "$RUNNER_TEMP/als-r2"
+          curl --fail --silent --show-error --location --max-time 120 -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/14416938462/zip" -o r2.zip
+          echo '84f1786ee98dac231f0d8fde0dd34bd1d1724f7ef707c1257b4fc824f3ade3ed  r2.zip' | sha256sum --strict --check
+          unzip -p r2.zip four-stars.glb > four-stars.glb
+          unzip -p r2.zip receipt.json > receipt.json
+          echo '684849b72dfc3314c6383e3a0864fa244145811f3d27fb9bdc76d7fbfd7f92e0  four-stars.glb' | sha256sum --strict --check
+      - name: Inspect actual R2 with ALS-01 in six viewports
+        run: node scripts/als01/test-webgl.mjs "$RUNNER_TEMP/als-r2" "$RUNNER_TEMP/als01-evidence"
+      - name: Preserve browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-als01-webgl
+          path: ${{ runner.temp }}/als01-evidence/
+          if-no-files-found: warn
+          retention-days: 7
+  context-r2:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.head.ref == 'work/atlas-als01-astral-light' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - name: Recover exact R2 and architecture resources
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          mkdir -p als-r2 atlas-c32b
+          fetch() {
+            curl --fail --silent --show-error --location --max-time 120 -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$1/zip" -o "$2"
+            printf '%s  %s\n' "$3" "$2" | sha256sum --strict --check
+          }
+          fetch 14416938462 als-r2/stars.zip 84f1786ee98dac231f0d8fde0dd34bd1d1724f7ef707c1257b4fc824f3ade3ed
+          fetch 14413232678 als-r2/base.zip ecc9522d03d802668343bf87a387fa4b5e353fa40b2e4f266e18e9ab25d6383a
+          fetch 14413407240 als-r2/ao.zip 47f68653f6d50b703b6f9834b3a5d0c17951f9b577d427564272cecd059baae4
+          unzip -p als-r2/stars.zip four-stars.glb > als-r2/four-stars.glb
+          unzip -p als-r2/stars.zip receipt.json > als-r2/receipt.json
+          echo '684849b72dfc3314c6383e3a0864fa244145811f3d27fb9bdc76d7fbfd7f92e0  als-r2/four-stars.glb' | sha256sum --strict --check
+          unzip -q als-r2/base.zip 'atlas-c32/*' -d .
+          unzip -q als-r2/ao.zip -d atlas-c32b
+      - name: Export shared static optical sample
+        run: node scripts/als01/export-static.mjs "$RUNNER_TEMP/als-r2/static-sample.json"
+      - name: Compare unchanged library with and without ALS points
+        run: |
+          set -euo pipefail
+          "$BLENDER_BIN" --background --factory-startup --disable-autoexec --python-exit-code 1 --python scripts/als01/compare-context.py -- "$RUNNER_TEMP/als-r2/four-stars.glb" "$RUNNER_TEMP/als-r2/static-sample.json" "$RUNNER_TEMP/als01-context"
+      - name: Verify evidence and retain shared optical sample
+        run: |
+          python3 - <<'PY'
+          import json,hashlib,os,pathlib
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])/"als01-context"
+          r=json.loads((root/"als01-context-receipt.json").read_text())
+          assert r["status"]=="ALS01_CONTEXT_COMPARISON_ONLY" and r["renderCount"]==4 and r["points"]==18
+          assert r["physicalLightsAdded"]==0 and r["sameScene"] and r["opticalRevision"]=="ALS-01-R4"
+          assert not any(r[k] for k in ("architectureChanged","camerasChanged","lightingChanged","navigationChanged","artisticApproval","runtimeQualified","studentAuthorized","publishable","rendererParityClaimed"))
+          for name,meta in r["files"].items():
+              b=(root/name).read_bytes()
+              assert len(b)==meta["bytes"] and hashlib.sha256(b).hexdigest()==meta["sha256"]
+          sample=(root.parent/"als-r2/static-sample.json").read_bytes()
+          assert hashlib.sha256(sample).hexdigest()==r["staticSampleSha256"]
+          (root/"static-sample.json").write_bytes(sample)
+          PY
+      - name: Preserve contextual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-als01-r4-context
+          path: ${{ runner.temp }}/als01-context/
+          if-no-files-found: warn
+          retention-days: 7
