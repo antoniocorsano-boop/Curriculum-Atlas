@@ -10,10 +10,24 @@ import "./gateway.css";
 export function GatewayCandidate({ preparedScene, nativeManifest = null }: { preparedScene: string | null; nativeManifest?: NativeManifest | null }) {
   const router = useRouter();
   const iframe = useRef<HTMLIFrameElement>(null);
+  const nativeDeparting = useRef(false);
   const [scene, setScene] = useState<{ html: string; channel: string } | null>(null);
   const [ready, setReady] = useState(false);
   const [notice, setNotice] = useState("");
   const [show3D, setShow3D] = useState(true);
+
+  // Native scenes own an expensive graphics context. A full document
+  // navigation avoids keeping that iframe mounted during React/RSC transition.
+  // If the browser restores a departed document from BFCache, recreate the
+  // scene/channel rather than reuse a quiesced iframe.
+  useEffect(() => {
+    if (!nativeManifest) return;
+    const restore = (event: PageTransitionEvent) => {
+      if (event.persisted && nativeDeparting.current) window.location.reload();
+    };
+    window.addEventListener("pageshow", restore);
+    return () => window.removeEventListener("pageshow", restore);
+  }, [nativeManifest]);
 
   useEffect(() => {
     if (!preparedScene || !show3D) return;
@@ -51,6 +65,7 @@ export function GatewayCandidate({ preparedScene, nativeManifest = null }: { pre
     // Each verified asset is requested at most once per ephemeral scene.
     // A failure closes the whole scene; retrying a scene creates a new channel.
     const requested = new Set<string>();
+    let nativeReady = false;
     const timer = window.setTimeout(() => {
       assetController.abort();
       setShow3D(false);
@@ -83,6 +98,7 @@ export function GatewayCandidate({ preparedScene, nativeManifest = null }: { pre
       if (!message) return;
       if (message.type === "atlas-3d-ready") {
         window.clearTimeout(timer);
+        nativeReady = true;
         setReady(true);
       } else if (message.type === "atlas-3d-error") {
         window.clearTimeout(timer);
@@ -91,8 +107,18 @@ export function GatewayCandidate({ preparedScene, nativeManifest = null }: { pre
         setNotice("Motore 3D non disponibile. Usa gli accessi della sala.");
       } else if ("id" in message) {
         const portal = resolvePortal(message.id);
-        if (portal?.href) router.push(portal.href);
-        else if (portal?.id === "studio") setNotice("Studio Atlas: accesso professionale non ancora abilitato.");
+        if (portal?.href) {
+          if (nativeManifest) {
+            if (!nativeReady || nativeDeparting.current) return;
+            nativeDeparting.current = true;
+            window.clearTimeout(timer);
+            assetController.abort();
+            console.info("ATLAS_NATIVE_NAV_ACCEPT " + portal.id);
+            // Only the canonical policy path can reach this point. No href
+            // from the sandbox, no external target, no RSC transition.
+            window.location.assign(portal.href + "/");
+          } else router.push(portal.href);
+        } else if (portal?.id === "studio") setNotice("Studio Atlas: accesso professionale non ancora abilitato.");
       }
     };
     window.addEventListener("message", receive);
@@ -104,10 +130,13 @@ export function GatewayCandidate({ preparedScene, nativeManifest = null }: { pre
   }, [scene, router, nativeManifest]);
 
   const immersive = Boolean(preparedScene && show3D);
+  const nativeImmersive = Boolean(nativeManifest && immersive);
   return (
     <main className={`atlas-gateway-shell${immersive ? " atlas-gateway-immersive" : ""}`}>
       <header className="atlas-gateway-header"><div className="atlas-gateway-heading"><span>ATLAS · Biblioteca della conoscenza</span><h1>Conoscere. Comprendere. Immaginare.</h1>
-        <p>Tre ambienti, un unico accesso.</p></div><div className="atlas-gateway-header-actions"><Link href="/" aria-label="Torna alla pagina iniziale attuale">← Home Atlas</Link>
+        <p>Tre ambienti, un unico accesso.</p></div><div className="atlas-gateway-header-actions">{nativeImmersive ? <a href="/" aria-label="Torna alla pagina iniziale attuale" onClick={event => {
+        if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) nativeDeparting.current = true;
+      }}>← Home Atlas</a> : <Link href="/" aria-label="Torna alla pagina iniziale attuale">← Home Atlas</Link>}
       {preparedScene && <button className="atlas-gateway-toggle" type="button" onClick={() => {
         setNotice("");
         setShow3D(value => !value);
@@ -119,7 +148,9 @@ export function GatewayCandidate({ preparedScene, nativeManifest = null }: { pre
         sandbox="allow-scripts" referrerPolicy="no-referrer" srcDoc={scene.html} />}</div>}
       <nav className="atlas-gateway-portals" aria-label="Accedi agli ambienti Atlas">
         {PORTALS.map(portal => immersive ? (
-          portal.href ? <Link key={portal.id} className="atlas-gateway-direct" data-portal={portal.id} href={portal.href}>{portal.label}<span aria-hidden="true">→</span></Link> :
+          portal.href ? (nativeImmersive ? <a key={portal.id} className="atlas-gateway-direct" data-portal={portal.id} href={portal.href + "/"} onClick={event => {
+            if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) nativeDeparting.current = true;
+          }}>{portal.label}<span aria-hidden="true">→</span></a> : <Link key={portal.id} className="atlas-gateway-direct" data-portal={portal.id} href={portal.href}>{portal.label}<span aria-hidden="true">→</span></Link>) :
             <button key={portal.id} type="button" className="atlas-gateway-direct" data-portal={portal.id} onClick={() => setNotice("Studio Atlas: accesso professionale non ancora abilitato.")}>{portal.label}<span aria-hidden="true">ⓘ</span></button>
         ) : <div className="atlas-gateway-portal" key={portal.id}>
           <strong>{portal.label}</strong><span className="atlas-gateway-portal-description">{portal.description}</span>
