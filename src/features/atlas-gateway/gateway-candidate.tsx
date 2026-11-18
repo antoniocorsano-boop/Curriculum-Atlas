@@ -48,9 +48,11 @@ export function GatewayCandidate({ preparedScene, nativeManifest = null }: { pre
   useEffect(() => {
     if (!scene) return;
     const assetController = new AbortController();
-    const delivered = new Set<string>();
-    const pending = new Set<string>();
+    // Each verified asset is requested at most once per ephemeral scene.
+    // A failure closes the whole scene; retrying a scene creates a new channel.
+    const requested = new Set<string>();
     const timer = window.setTimeout(() => {
+      assetController.abort();
       setShow3D(false);
       setNotice("La scena 3D non risponde. Gli accessi restano disponibili.");
     }, nativeManifest ? 60000 : 20000);
@@ -59,21 +61,21 @@ export function GatewayCandidate({ preparedScene, nativeManifest = null }: { pre
       if (nativeManifest) {
         const asset = nativeRequest(event.data, scene.channel, nativeManifest);
         if (asset) {
-          if (delivered.has(asset.id) || pending.has(asset.id)) return;
-          pending.add(asset.id);
+          if (requested.has(asset.id)) return;
+          requested.add(asset.id);
           const target = iframe.current?.contentWindow;
           void verifiedNativeBytes(asset, assetController.signal).then(bytes => {
             if (assetController.signal.aborted || !target || target !== iframe.current?.contentWindow) return;
-            delivered.add(asset.id);
             // Opaque sandbox has no usable target origin. Source window and
             // channel were checked above; these are non-personal art assets.
             target.postMessage({type:"atlas-native-asset",channel:scene.channel,id:asset.id,bytes},"*",[bytes]);
           }).catch(() => {
             if (assetController.signal.aborted) return;
             window.clearTimeout(timer);
+            assetController.abort();
             setShow3D(false);
             setNotice("Risorsa della sala 3D non disponibile o non integra. Usa gli accessi della sala.");
-          }).finally(() => pending.delete(asset.id));
+          });
           return;
         }
       }
@@ -84,6 +86,7 @@ export function GatewayCandidate({ preparedScene, nativeManifest = null }: { pre
         setReady(true);
       } else if (message.type === "atlas-3d-error") {
         window.clearTimeout(timer);
+        assetController.abort();
         setShow3D(false);
         setNotice("Motore 3D non disponibile. Usa gli accessi della sala.");
       } else if ("id" in message) {
