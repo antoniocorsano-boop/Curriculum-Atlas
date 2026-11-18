@@ -58,6 +58,22 @@ for seq, row in enumerate(history, 1):
     require(set(row["artifacts"]) <= artifacts, "missing archived evidence")
     if "supersedes" in row:
         require(row["supersedes"] in ids, "superseded ID must precede correction")
+    # The first fifteen records are a retrospective snapshot. Never fabricate
+    # missing decision fields to retrofit historical records.
+    if seq > 15:
+        for key in ("context", "decision", "rationale"):
+            require(isinstance(row.get(key), str) and bool(row[key].strip()), "missing decision field: " + key)
+        for key in ("alternatives", "constraints", "remaining"):
+            require(isinstance(row.get(key), list) and all(isinstance(v,str) and v.strip() for v in row[key]), "invalid decision list: " + key)
+        require(bool(row["alternatives"]) and bool(row["constraints"]), "alternatives and constraints required")
+        require(isinstance(row.get("evidence"),list) and bool(row["evidence"]), "missing evidence")
+        for evidence in row["evidence"]:
+            require(evidence.get("outcome") and (evidence.get("url","").startswith("https://github.com/") or (isinstance(evidence.get("artifact"),int) and hex64.fullmatch(evidence.get("sha256","")) and evidence.get("bytes",0)>0)), "unverifiable evidence reference")
+        if row["status"] in {"completed","qualified","closed"}:
+            require(not row["remaining"], "cannot close a phase with outstanding required checks")
+            require(any(e["outcome"]=="PASS" for e in row["evidence"]), "closure requires observed PASS evidence")
+            criteria=row.get("acceptanceCriteria")
+            require(isinstance(criteria,list) and bool(criteria) and all(c.get("criterion") and c.get("result")=="PASS" and c.get("evidence") in range(len(row["evidence"])) and row["evidence"][c["evidence"]]["outcome"]=="PASS" for c in criteria), "closure requires evidence-bound acceptance criteria")
     ids.add(row["id"])
 
 if len(sys.argv) == 2:
