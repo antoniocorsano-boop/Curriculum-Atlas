@@ -56,7 +56,6 @@ jobs:
     timeout-minutes: 20
     env:
       GAFFER_VERSION: '1.6.21.6'
-      ATLAS_ENGINE_EVIDENCE: ${{ runner.temp }}/engine01-evidence
       QT_QPA_PLATFORM: offscreen
       ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
     steps:
@@ -64,6 +63,11 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
+      - name: Initialize runner-local evidence directory
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/engine01-evidence"
+          printf 'ATLAS_ENGINE_EVIDENCE=%s\n' "$RUNNER_TEMP/engine01-evidence" >> "$GITHUB_ENV"
       - name: Recover exact upstream Linux archive and verify published digest
         shell: bash
         run: |
