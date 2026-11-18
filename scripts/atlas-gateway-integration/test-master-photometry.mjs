@@ -10,7 +10,11 @@ import {chromium} from "playwright";
 import sharp from "sharp";
 import {atlasAnchors,OPTICS} from "../als01/core.mjs";
 const [master,r2,out,hdriPath,referenceDir]=process.argv.slice(2).map(x=>resolve(x));
-const spatialMode=process.env.ATLAS_MASTER_SPATIAL==="1";
+const materialMode=process.env.ATLAS_MASTER_MATERIAL==="1";
+const spatialMode=materialMode||process.env.ATLAS_MASTER_SPATIAL==="1";
+const materialBytes=readFileSync(join(master,"material-study.json"));
+assert.equal(createHash("sha256").update(materialBytes).digest("hex"),"cdc62198dd97255566f20a1ff48419ecc0540598bf28c517ee7d1fb3f8c9cdc6");
+const materialStudy=JSON.parse(materialBytes);
 mkdirSync(out,{recursive:true});
 const sha=b=>createHash("sha256").update(b).digest("hex");
 const blob=b=>createHash("sha1").update(Buffer.concat([Buffer.from("blob "+b.length+"\0"),b])).digest("hex");
@@ -45,6 +49,7 @@ const anchors=atlasAnchors(composition);
 assert.equal(OPTICS.revision,"ALS-01-R4");
 for(const name of ["core.mjs","three-adapter.mjs"])add(name,readFileSync(join("scripts/als01",name)),"text/javascript");
 if(spatialMode)add("bay-visibility.mjs",readFileSync("scripts/atlas-gateway-integration/bay-visibility.mjs"),"text/javascript");
+if(materialMode)add("material-bridge.mjs",readFileSync("scripts/atlas-gateway-integration/material-bridge.mjs"),"text/javascript");
 // Regional comparison is a diagnostic, not an artistic acceptance threshold.
 async function compareReference(bytes,device){
  if(!refs[device.name])return null;
@@ -89,7 +94,7 @@ try{
   await context.route("**/*",route=>{const url=route.request().url();if(url.startsWith(origin+"/")||url.startsWith("blob:")||url.startsWith("data:"))return route.continue();external.push(url);return route.abort()});
   try{
    await page.goto(origin,{waitUntil:"load"});
-   const metrics=await page.evaluate(async({receipt,anchors,device,lighting,spatialMode})=>{
+   const metrics=await page.evaluate(async({receipt,anchors,device,lighting,spatialMode,materialMode,materialStudy})=>{
     const T=window.THREE,loader=new T.GLTFLoader();
     const {createAstralLights}=await import("/three-adapter.mjs");
     const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
@@ -200,7 +205,7 @@ try{
     scene.traverse(o=>{if(o.isMesh){for(const m of Array.isArray(o.material)?o.material:[o.material])allMaterials.add(m);}});
     // Same glTF material parameters; only environmental illumination changes.
     for(const m of allMaterials)if(m.isMeshStandardMaterial||m.isMeshPhysicalMaterial){m.envMapIntensity=lighting.ambientStrength;m.needsUpdate=true;}
-    let spatial=null;
+    let spatial=null,materialEvidence=null;
     const candidates=[
       {id:"P1-hdr-balanced",exposure:.82,hemi:.22,sun:1.05,fill:.18,shadow:false},
       {id:"P2-hdr-relief",exposure:.75,hemi:.14,sun:1.35,fill:.15,shadow:true}
@@ -254,11 +259,49 @@ try{
       capture();
       profiles.push({id:"P1-spatial",calls:finalFiltered.calls,triangles:finalFiltered.triangles,alsPixels,image:renderer.domElement.toDataURL("image/png")});
       spatial={method:"per-instance conservative sphere compaction",checks,alsPixels,staticMatrixWritesAvoided:true,geometryModified:false};
+      if(materialMode){
+        const {materialBridge}=await import("/material-bridge.mjs");
+        const bridge=materialBridge(T,groups,materialStudy);
+        const detailViews=device.name==="atrium"?["detail","cupola-detail"]:[],materialChecks=[],detailProfiles=[];
+        const baseFov=camera.fov;
+        for(const id of ["reference",...detailViews]){
+          if(id==="reference"){
+            camera.position.copy(initialPosition);camera.lookAt(target);camera.fov=baseFov;
+          }else{
+            const v=receipt.cameras.find(q=>q.id===id);
+            camera.position.set(...v.position);camera.lookAt(...v.target);
+            camera.fov=T.MathUtils.radToDeg(2*Math.atan(36/v.lensMm/(aspect>=1?aspect:1)/2));
+          }
+          camera.updateProjectionMatrix();camera.updateMatrixWorld(true);culling.update(camera);
+          bridge.apply("control");const baseline=capture();
+          const comparison=[];
+          for(const mode of ["scalar","micro"]){
+            bridge.apply(mode);const result=capture();
+            if(result.calls!==baseline.calls||result.triangles!==baseline.triangles)throw Error("Surface bridge changed render topology "+id+" "+mode);
+            const again=capture();if(diff(result.b,again.b).pixels!==0)throw Error("Unstable material image "+id+" "+mode);
+            const effect=diff(baseline.b,result.b);
+            const profile={id:(mode==="scalar"?"M1-brass":"M2-micro")+(id==="reference"?"":"-"+id),calls:result.calls,triangles:result.triangles,changedFromP1:effect,image:renderer.domElement.toDataURL("image/png")};
+            if(id==="reference"){
+              als.object.visible=false;const noLight=capture();als.object.visible=true;
+              profile.alsPixels=diff(result.b,noLight.b).pixels;
+              if(profile.alsPixels<1||result.calls-noLight.calls!==1)throw Error("Material bridge ALS regression");
+              capture();profile.image=renderer.domElement.toDataURL("image/png");profiles.push(profile);
+            }else detailProfiles.push(profile);
+            comparison.push({mode,effect,calls:result.calls,triangles:result.triangles});
+          }
+          bridge.apply("control");const restoredMaterial=capture();
+          if(diff(baseline.b,restoredMaterial.b).pixels!==0)throw Error("Material bridge reversibility failure "+id);
+          materialChecks.push({view:id,baselineCalls:baseline.calls,baselineTriangles:baseline.triangles,comparison});
+        }
+        camera.position.copy(initialPosition);camera.lookAt(target);camera.fov=baseFov;camera.updateProjectionMatrix();camera.updateMatrixWorld(true);culling.update(camera);
+        bridge.apply("micro");capture();
+        materialEvidence={sourcePhase:materialStudy.phase,records:bridge.evidence(),checks:materialChecks,detailProfiles,geometryModified:false,sourceMapsReplaced:false,proceduralParity:false,sourceScalarsRestored:true};
+      }
     }
     if(scene.background!==sky||groups["library-cupola.glb"].visible!==true)throw Error("Protected architecture changed");
     const debug=gl.getExtension("WEBGL_debug_renderer_info");
-    return {profiles,spatial,loadMs,originalCalls:original.calls,optimizedCalls:final.calls,originalTriangles:original.triangles,optimizedTriangles:final.triangles,originalMeshes:originals.length,instancedCount,batches,unbatched:unbatched.length,parity,centers,alsPixels:lights.pixels,moduleEffect,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};
-   },{receipt,anchors,device,lighting,spatialMode});
+    return {profiles,spatial,materialEvidence,loadMs,originalCalls:original.calls,optimizedCalls:final.calls,originalTriangles:original.triangles,optimizedTriangles:final.triangles,originalMeshes:originals.length,instancedCount,batches,unbatched:unbatched.length,parity,centers,alsPixels:lights.pixels,moduleEffect,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};
+   },{receipt,anchors,device,lighting,spatialMode,materialMode,materialStudy});
    assert.equal(external.length,0);assert.equal(errors.length,0,JSON.stringify(errors));
    const profiles=[];
    for(const p of metrics.profiles){
@@ -267,14 +310,29 @@ try{
     profiles.push({...meta,image:{file,sha256:sha(bytes),bytes:bytes.length},referenceComparison:await compareReference(bytes,device)});
    }
    delete metrics.profiles;
+   if(metrics.materialEvidence){
+    const details=[];
+    for(const p of metrics.materialEvidence.detailProfiles){
+      const {image,...meta}=p,bytes=Buffer.from(image.split(",")[1],"base64");
+      const file=device.name+"-"+p.id+".png";writeFileSync(join(out,file),bytes);
+      details.push({...meta,image:{file,sha256:sha(bytes),bytes:bytes.length}});
+    }
+    metrics.materialEvidence.detailProfiles=details;
+   }
    results.push({device:device.name,...metrics,profiles,errors,external,warnings});
   }catch(e){failures.push({device:device.name,error:String(e),errors,external,warnings});await page.screenshot({path:join(out,device.name+"-failure.png")}).catch(()=>{});}
   finally{await context.close();}
  }
 }finally{
  await browser?.close();if(server)await new Promise(r=>server.close(r));rmSync(temp,{recursive:true,force:true});
- const report={status:failures.length||results.length!==3?"FAIL":"PASS",scope:spatialMode?"NATIVE_MASTER_SPATIAL_CULLING":"NATIVE_MASTER_PHOTOMETRY_COMPARISON",source:receipt.source,architectureFiles:receipt.files,bayPayload:receipt.bay.nativePayload,lighting:"same original sky; exact locked HDRI for reflection; source solar direction; two bounded WebGL profiles; no AgX/Cycles or baked AO parity",hdriSha256:sha(hdr),referenceImages:refs,geometryOptimized:spatialMode?"per-instance frustum compaction; no decimation":"instancing only; no decimation",gatewayIntegrated:false,artisticApproval:false,physicalDeviceQualified:false,studentAuthorized:false,publishable:false,results,failures};
+ const report={status:failures.length||results.length!==3?"FAIL":"PASS",scope:materialMode?"NATIVE_MASTER_SURFACE_DETAIL":spatialMode?"NATIVE_MASTER_SPATIAL_CULLING":"NATIVE_MASTER_PHOTOMETRY_COMPARISON",materialStudySha256:sha(materialBytes),source:receipt.source,architectureFiles:receipt.files,bayPayload:receipt.bay.nativePayload,lighting:"same original sky; exact locked HDRI for reflection; source solar direction; two bounded WebGL profiles; no AgX/Cycles or baked AO parity",hdriSha256:sha(hdr),referenceImages:refs,geometryOptimized:spatialMode?"per-instance frustum compaction; no decimation":"instancing only; no decimation",gatewayIntegrated:false,artisticApproval:false,physicalDeviceQualified:false,studentAuthorized:false,publishable:false,results,failures};
  writeFileSync(join(out,"native-master-webgl.json"),JSON.stringify(report,null,2)+"\n");
  console.log(JSON.stringify(report));
 }
 assert.equal(failures.length,0,JSON.stringify(failures));assert.equal(results.length,3);
+if(materialMode){
+ const records=results.flatMap(d=>d.materialEvidence.records);
+ for(const name of Object.keys(materialStudy.offlineMicrostructure))assert.ok(records.some(r=>r.name===name&&r.compiled>0),"No compiled source profile "+name);
+ const checks=results.flatMap(d=>d.materialEvidence.checks);
+ for(const mode of ["scalar","micro"])assert.ok(checks.some(c=>c.comparison.some(q=>q.mode===mode&&q.effect.pixels>0)),"No rendered effect "+mode);
+}
