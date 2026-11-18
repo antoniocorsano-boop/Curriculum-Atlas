@@ -57,14 +57,22 @@ for o in book:
     world=o.matrix_world.copy();o.parent=None
     from mathutils import Matrix
     o.matrix_world=Matrix.Identity(4)
+    # Tilt the book toward the atrium camera to expose the layered leaves.
+    tilt=Matrix.Rotation(math.radians(-22),3,"X")
+    is_page=o.name.rsplit("_",1)[-1].isdigit()
+    if is_page:
+        layer=int(o.name.rsplit("_",1)[-1])
+        # Broad alternating bronze tones remain legible at architectural scale.
+        factor=(.80,1.12,.87,1.18,.94,1.23)[layer]
+        color=tuple(min(.95,max(.015,c*factor)) for c in color)
     for v in o.data.vertices:
         p=(world@v.co-center)*scale
-        v.co=positions["storie"]+Vector((p.x,-p.z,p.y))
+        v.co=positions["storie"]+tilt@Vector((p.x,-p.z,p.y))
     for uv in list(o.data.uv_layers):o.data.uv_layers.remove(uv)
     o.data.calc_loop_triangles()
     activate(o)
     mod=o.modifiers.new("C2 geometric LOD","DECIMATE")
-    mod.ratio=min(1,320/max(1,len(o.data.loop_triangles)))
+    mod.ratio=min(1,480/max(1,len(o.data.loop_triangles)))
     bpy.ops.object.modifier_apply(modifier=mod.name)
     finish(o,"storie",color)
 def mesh(name,sid,verts,faces,color):
@@ -115,21 +123,26 @@ for i in range(4):
     f += [tuple(reversed(range(sides))),tuple((len(sections)-1)*sides+j for j in range(sides))]
     mesh("Compass blade "+str(i),sid,v,f,pale if i%2==0 else gold)
 sphere(sid,"Compass hub",(0,-.025,0),.18,gold,(1,.68,1))
-# Percorsi: continuous ascending sculpture; its direction remains upward.
+# Percorsi: continuous curved shaft and a broad, explicitly triangular head.
+# The head is a shallow double-sided beveled sculpture, not a round cone.
 sid="percorsi"
-pts=[(-.40+.65*t,.035-.06*sin(pi*t),-.37+.65*t*t) for t in [i/20 for i in range(21)]]
-tube(sid,"Ascending ribbon",pts,.092,blue,14)
-# Rounded cone-like terminal with a broad shoulder and tapered point.
-direction=Vector((.42,0,.91)).normalized();u=Vector((0,1,0));w=direction.cross(u)
-base=Vector(pts[-1])-.12*direction
-v=[];f=[];sides=20
-for h,r in [(0,.10),(.07,.19),(.12,.17),(.30,.012)]:
-    v.extend(tuple(base+h*direction+r*(cos(2*pi*j/sides)*u+sin(2*pi*j/sides)*w)) for j in range(sides))
-for k in range(3):
-    for j in range(sides):
-        a=k*sides+j;b=k*sides+(j+1)%sides;f.append((a,b,b+sides,a+sides))
-f += [tuple(reversed(range(sides))),tuple(3*sides+j for j in range(sides))]
-mesh("Ascending terminal",sid,v,f,silver)
+pts=[(-.40+.56*t,.025-.045*sin(pi*t),-.38+.55*t*t) for t in [i/20 for i in range(21)]]
+tube(sid,"Ascending ribbon",pts,.084,blue,14)
+direction=Vector((.38,0,.925)).normalized()
+across=Vector((direction.z,0,-direction.x))
+base=Vector(pts[-1])-.04*direction
+# Distinct shoulders and tip in the frontal plane, with a rounded edge.
+outline=[(-.205,0),(.205,0),(0,.34)]
+v=[tuple(base+x*across+h*direction+Vector((0,y,0))) for y in (-.075,.075) for x,h in outline]
+f=[(2,1,0),(3,4,5),(0,1,4,3),(1,2,5,4),(2,0,3,5)]
+head=mesh("Ascending arrowhead",sid,v,f,silver)
+activate(head)
+bevel=head.modifiers.new("Rounded arrow shoulders","BEVEL");bevel.width=.025;bevel.segments=4
+bpy.ops.object.modifier_apply(modifier=bevel.name)
+# Reapply the constant vertex palette after topology modification.
+layer=head.data.color_attributes["Atlas finish"]
+for item in layer.data:item.color=(*silver,1.)
+for poly in head.data.polygons:poly.use_smooth=True
 bpy.context.view_layer.update()
 bounds={}
 for sid in ids:
@@ -174,7 +187,7 @@ g=json.loads(raw[20:20+n]);pr=[p for m in g["meshes"] for p in m["primitives"]]
 nv=sum(g["accessors"][p["attributes"]["POSITION"]]["count"] for p in pr)
 assert len(pr)==3 and nv<=18000 and len(raw)<=1024*1024,(len(pr),nv,len(raw))
 assert not g.get("extensionsRequired") and not g.get("images") and all("uri" not in b for b in g["buffers"])
-(out/"receipt.json").write_text(json.dumps({"status":"GEOMETRY_LOD_CANDIDATE","sourceC2Sha256":sha(master),"previousModuleSha256":sha(previous),"moduleSha256":sha(glb),"primitives":len(pr),"vertices":nv,"bytes":len(raw),"cores":bounds,"c2MicrostructureBaked":False,"contextRendered":False,"artisticApproval":False,"runtimeQualified":False,"publishable":False,"studentAuthorized":False},indent=2))
+(out/"receipt.json").write_text(json.dumps({"status":"GEOMETRY_LOD_CANDIDATE","revision":"ART-FINAL-R2","changedCores":["storie","percorsi"],"sourceC2Sha256":sha(master),"previousModuleSha256":sha(previous),"moduleSha256":sha(glb),"primitives":len(pr),"vertices":nv,"bytes":len(raw),"cores":bounds,"c2MicrostructureBaked":False,"contextRendered":False,"artisticApproval":False,"runtimeQualified":False,"publishable":False,"studentAuthorized":False},indent=2))
 
 # Produce actual isolated studio evidence with the final exported geometry.
 # No claim of in-context library rendering, baked microstructure or approval.
