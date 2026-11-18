@@ -86,11 +86,11 @@ write("observation.json",report)
 require(not missing,"missing image resources: "+str(missing))
 # One controlled experiment in the reference scene only. The Atlas scene is observed and left intact.
 if mode=="reference":
-    eligible=[o for o in s.objects if o.type=="LIGHT" and not o.hide_render and o.data.energy>0 and o.data.users==1 and not o.data.use_nodes]
-    require(eligible,"no isolated non-node direct light available")
+    eligible=[o for o in s.objects if o.type=="LIGHT" and not o.hide_render and o.data.energy>0]
+    require(eligible,"no visible direct light available")
     light=next((o for o in sorted(eligible,key=lambda o:o.name) if o.data.type=="SUN"),None)
     if light is None:light=max(eligible,key=lambda o:o.data.energy)
-    base=float(light.data.energy)
+    base=bool(light.hide_render)
     # Preserve native camera, material graph and color settings; downscale only resolution/samples.
     s.render.engine="CYCLES";s.cycles.device="CPU";s.cycles.samples=24
     s.cycles.seed=0;s.cycles.use_animated_seed=False;s.cycles.use_adaptive_sampling=False
@@ -107,16 +107,16 @@ if mode=="reference":
         finally:bpy.data.images.remove(image)
     a,ha=render("reference")
     try:
-        light.data.energy=base*.5
+        light.hide_render=True
         b,hb=render("light-ablation")
-    finally:light.data.energy=base
+    finally:light.hide_render=base
     c,hc=render("restored")
     delta=np.abs(a-b);rollback=np.abs(a-c)
     changed=int(np.count_nonzero(np.max(delta,axis=1)>1/255))
     require(changed>0,"no visible light effect")
     require(float(rollback.mean())<.0002 and int(np.count_nonzero(np.max(rollback,axis=1)>1/255))<=max(1,int(len(a)*.001)),"rollback drift")
-    report["experiment"]={"object":light.name,"type":light.data.type,"parameter":"energy","baseline":base,"candidate":base*.5,"restored":float(light.data.energy),"changedPixels":changed,"pixelCount":len(a),"meanAbsoluteRGBDelta":float(delta.mean()),"rollbackMeanAbsoluteRGBDelta":float(rollback.mean()),"imageHashes":{"reference.png":ha,"light-ablation.png":hb,"restored.png":hc},"interpretation":"Demonstrates causal contribution of this light in this source scene, not a portable numerical recipe or aesthetic preference."}
-    require(light.data.energy==base,"parameter rollback")
+    report["experiment"]={"object":light.name,"type":light.data.type,"parameter":"hide_render","baseline":base,"candidate":True,"restored":bool(light.hide_render),"changedPixels":changed,"pixelCount":len(a),"meanAbsoluteRGBDelta":float(delta.mean()),"rollbackMeanAbsoluteRGBDelta":float(rollback.mean()),"imageHashes":{"reference.png":ha,"light-ablation.png":hb,"restored.png":hc},"interpretation":"Demonstrates causal contribution of this light in this source scene, not a portable numerical recipe or aesthetic preference."}
+    require(light.hide_render==base,"parameter rollback")
 require(sha(source)==before,"source bytes changed")
 report["status"]="PASS_OBSERVATION_AND_ABLATION" if mode=="reference" else "PASS_OBSERVATION_ONLY"
 report["sourceUnchanged"]=True
