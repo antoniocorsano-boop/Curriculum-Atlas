@@ -1,0 +1,29 @@
+{
+  "schema": "trama.atlas.asp01-restore-summary/v1",
+  "version": "1.0.0-draft.1",
+  "status": "PASS",
+  "packageSha256": "d2b9f3e944b3d746c0571eb65fb291a4f0ef31aea7769b7237063c12f49b862e",
+  "scriptBlob": "e4b4b6f512ddfe5731ab590de7a20cfbaad60da0",
+  "fullReceiptSha256": "7e136f4f0099efabf7e7c61efd85282574eb36a0f0c4e971730bb8a8471564b4",
+  "fullReceiptFile": "ASP-01-restore-receipt-v1.0-draft.1.json",
+  "restoredFiles": 18,
+  "runtimeAssets": 8,
+  "runtimeBytes": 25798660,
+  "checks": [
+    {
+      "criterion": "Offline restoration from package and byte parity of 8 runtime assets",
+      "result": "PASS"
+    },
+    {
+      "criterion": "Reject corrupt package without output",
+      "result": "PASS"
+    },
+    {
+      "criterion": "Refuse overwrite of existing output",
+      "result": "PASS"
+    }
+  ],
+  "scope": "Local restoration of inputs only; no Blender reconstruction, app build or CI integration",
+  "studentAuthorized": false,
+  "publishable": false
+}
