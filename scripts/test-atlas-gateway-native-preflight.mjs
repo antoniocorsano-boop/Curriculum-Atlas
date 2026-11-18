@@ -109,7 +109,7 @@ print(json.dumps(m["make_plan"](c,r,q)))`],{encoding:"utf8"}));
  assert.equal(plan.status,"CANDIDATE");assert.equal(plan.target,"webgl");
  assert.equal(plan.rendererWriteAuthorized,false);assert.equal(plan.studentAuthorized,false);
  assert.equal(plan.publishable,false);assert.equal(plan.changes.length,1);
- report.sceneObservation={status:"PENDING",plan};
+ report.sceneObservation={status:"PENDING",exactHead:execFileSync("git",["rev-parse","HEAD"],{encoding:"utf8"}).trim(),plan};
  report.sceneObservation.result=await frame.evaluate(plan=>{
    const gl=renderer.getContext(),w=gl.drawingBufferWidth,h=gl.drawingBufferHeight;
    const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
@@ -143,7 +143,7 @@ print(json.dumps(m["make_plan"](c,r,q)))`],{encoding:"utf8"}));
      require(p.changes[0].before===angle&&canonical(p.rollback)===canonical(parameters()),"stale observation");
      require(canonical(p.candidate)===canonical({...parameters(),"camera.orbit":v}),"candidate drift");return v;
    }
-   const before=state(),base=pixels();
+   const before=state(),base=pixels(),beforeImage=canvas.toDataURL("image/png");
    const rejected=[];
    for(const [id,p] of [
      ["protected",{...plan,changes:[{...plan.changes[0],id:"materials"}]}],
@@ -152,20 +152,25 @@ print(json.dumps(m["make_plan"](c,r,q)))`],{encoding:"utf8"}));
      ["authority",{...plan,rendererWriteAuthorized:true}]
    ]){try{check(p)}catch{rejected.push(id)}}
    require(rejected.length===4&&equal(before,state()),"negative cases changed state");
-   const next=check(plan),original=angle;let variant,variantPixels,restored,restoredPixels,portalHits;
+   const next=check(plan),original=angle;let variant,variantPixels,restored,restoredPixels,portalHits,variantImage,restoredImage;
    try{
-     angle=next;setCamera();variantPixels=pixels();variant=state();
+     angle=next;setCamera();variantPixels=pixels();variantImage=canvas.toDataURL("image/png");variant=state();
      portalHits=NATIVE_PORTALS.map(p=>{const v=new THREE.Vector3(...toThree(p.anchorBlender)).project(camera);
        return {id:p.id,hit:hitPortal((v.x+1)*innerWidth/2,(1-v.y)*innerHeight/2)}});
-   }finally{angle=original;setCamera();restoredPixels=pixels();restored=state()}
+   }finally{angle=original;setCamera();restoredPixels=pixels();restoredImage=canvas.toDataURL("image/png");restored=state()}
    const visual=difference(base,variantPixels),rollbackVisual=difference(base,restoredPixels);
    require(canonical(variant.parameters)===canonical(plan.candidate),"candidate state");
    require(!equal(before.position,variant.position),"camera unchanged");
    require(equal(before.inventory,variant.inventory)&&equal(before.decoded,variant.decoded)&&before.alsPoints===variant.alsPoints,"protected inventory");
    require(equal(before,restored),"rollback state mismatch");
    require(visual.changed>100&&rollbackVisual.changed===0,"visual comparison");
-   return {before,variant,restored,visual,rollbackVisual,rejected,portalHits};
+   return {before,variant,restored,visual,rollbackVisual,rejected,portalHits,images:{before:beforeImage,variant:variantImage,restored:restoredImage}};
  },plan);
+ for(const [id,data] of Object.entries(report.sceneObservation.result.images)){
+   assert(data.startsWith("data:image/png;base64,"));
+   writeFileSync(join(out,"asi-l2-webgl-"+id+"-canvas.png"),Buffer.from(data.slice("data:image/png;base64,".length),"base64"));
+ }
+ delete report.sceneObservation.result.images;
  report.sceneObservation.status="PASS";
  assert.deepEqual(report.external,[]);assert.deepEqual(report.errors,[]);
  await page.screenshot({path:join(out,"asi-l2-webgl-restored.png")});
