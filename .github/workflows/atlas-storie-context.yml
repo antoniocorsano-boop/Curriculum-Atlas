@@ -1,0 +1,79 @@
+name: Atlas — B04 contextual library preview
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "scripts/storie-context/**"
+      - ".github/workflows/atlas-storie-context.yml"
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-storie-context-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  context:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'work/storie-p2-blender-preview'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/cache/restore@v5
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Reuse qualified Blender toolchain
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - name: Reuse exact library resource artifacts without rebuilding
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for entry in '14338430297 f7acaf9750ebc4477acf5ac57f6047b0dfdb8415d7a501716c2bb45953e0eed2 textured' '14337736394 6cdfeefd10d90e1fe3b0a195ebb16aa914c80d8dab27aa26f056171a562d20fb ao'; do
+            read -r id digest label <<< "$entry"
+            curl --fail --silent --show-error --location --max-time 120 -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" -o "$RUNNER_TEMP/$label.zip"
+            echo "$digest  $RUNNER_TEMP/$label.zip" | sha256sum -c -
+          done
+          python3 - <<'PY'
+          import os,zipfile
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          for name,dest in (("textured",root),("ao",root/"atlas-c32b")):
+              with zipfile.ZipFile(root/(name+".zip")) as z:
+                  assert all(not n.startswith("/") and ".." not in Path(n).parts for n in z.namelist())
+                  assert sum(i.file_size for i in z.infolist())<256*1024**2
+                  z.extractall(dest)
+          for name in ("atlas-c32/campata.blend","atlas-c32/manifest.json","atlas-c32b/campata-ao.glb","atlas-c32b/ao-manifest.json"):
+              assert (root/name).is_file(),name
+          PY
+      - name: Render B04 in the existing library composition
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/storie-context/preview.py
+          "$BLENDER_BIN" --background --factory-startup --threads 4 --python-exit-code 1 --python scripts/storie-context/preview.py -- "$RUNNER_TEMP/storie-context" 2>&1 | tee "$RUNNER_TEMP/storie-context.log"
+      - name: Verify exact preview outputs
+        run: |
+          python3 - <<'PY'
+          import os,json,hashlib
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"storie-context"
+          r=json.loads((p/"storie-context-receipt.json").read_text())
+          assert r["status"]=="CONTEXT_PREVIEW_ONLY"
+          assert r["book"]["components"]==15 and r["book"]["triangles"]==105568 and r["book"]["radius"]<=.56001
+          assert not any(r[k] for k in ("otherIdentitiesChanged","navigationChanged","webQualified","artisticApproval","publishable","studentAuthorized"))
+          for n,x in r["images"].items():
+              assert hashlib.sha256((p/(n+".png")).read_bytes()).hexdigest()==x["sha256"]
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atlas-storie-b04-context-preview
+          path: |
+            ${{ runner.temp }}/storie-context/atrium.png
+            ${{ runner.temp }}/storie-context/vertical.png
+            ${{ runner.temp }}/storie-context/storie-context-receipt.json
+            ${{ runner.temp }}/storie-context.log
+          retention-days: 7
+          if-no-files-found: error
