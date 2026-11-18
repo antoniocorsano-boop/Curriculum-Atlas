@@ -1,0 +1,182 @@
+{
+  "schema": "atlas.asi.rules/v1",
+  "rules": [
+    {
+      "id": "ASI-K001",
+      "domain": "performance",
+      "tags": [
+        "repeated-meshes",
+        "performance"
+      ],
+      "sources": [
+        [
+          "ASP-H008",
+          "c07f5db442a4012c85d9dda499fccbb89543dcf0",
+          "qualified-isolated"
+        ]
+      ],
+      "finding": "La selezione delle istanze visibili ha ridotto i triangoli in 12 pose senza alterare il riferimento P1.",
+      "candidate": "Valutare la selezione per istanza delle geometrie ripetute.",
+      "preconditions": [
+        "Geometrie ripetute e trasformazioni note",
+        "Confronto con riferimento non ottimizzato"
+      ],
+      "checks": [
+        "Parità visiva",
+        "Conteggio triangoli e chiamate",
+        "Prove sulle inquadrature"
+      ],
+      "limit": "Valido per il caso P1 verificato; non dimostra prestazioni su ogni dispositivo."
+    },
+    {
+      "id": "ASI-K002",
+      "domain": "integration",
+      "tags": [
+        "embedded-textures",
+        "security"
+      ],
+      "sources": [
+        [
+          "ASP-H012",
+          "0e96a5d110cafbaa46e0a6c4e7f58cf6f8bb88ac",
+          "qualified-preflight"
+        ]
+      ],
+      "finding": "TextureLoader decodifica i GLB incorporati nell'isolamento CSP esistente; 8 risorse e 6 GLB verificati.",
+      "candidate": "Eseguire la prova preventiva del pacchetto effettivo nel renderer isolato.",
+      "preconditions": [
+        "Risorse incorporate con digest verificato",
+        "Versione del motore e politica CSP note"
+      ],
+      "checks": [
+        "Zero violazioni CSP",
+        "Decodifica completa",
+        "Primo rendering"
+      ],
+      "limit": "Non autorizza modifiche alla sicurezza o al caricatore di altri motori."
+    },
+    {
+      "id": "ASI-K003",
+      "domain": "lighting",
+      "tags": [
+        "astral-lights",
+        "accessibility"
+      ],
+      "sources": [
+        [
+          "ASP-H004",
+          "ffd9c7b05166d9d433f82d9f2385cc24ddd9a012",
+          "qualified-isolated"
+        ]
+      ],
+      "finding": "ALS-01 R4 usa 18 punti discreti, una chiamata grafica e movimento facoltativo.",
+      "candidate": "Riutilizzare il profilo ALS con movimento disattivato per impostazione iniziale.",
+      "preconditions": [
+        "Ancoraggi misurati",
+        "Preferenza movimento ridotto rispettata"
+      ],
+      "checks": [
+        "Visibilità e assenza di sovrapposizioni",
+        "Budget grafico",
+        "Pausa e chiusura"
+      ],
+      "limit": "Profilo qualificato in isolamento; non estendere automaticamente i parametri ad altre scene."
+    },
+    {
+      "id": "ASI-K004",
+      "domain": "materials",
+      "tags": [
+        "materials",
+        "artistic-quality"
+      ],
+      "sources": [
+        [
+          "ASP-H007",
+          "0652127ec1e120828321a9df1a0f96d5bdee7a52",
+          "qualified-isolated"
+        ],
+        [
+          "ASP-H009",
+          "b574b8f73cb4f7ff7dbfcc157208c42d60a78e9d",
+          "qualified-isolated-not-integrated"
+        ]
+      ],
+      "finding": "P1 è il riferimento provvisorio; M1/M2 sono confronti isolati non integrati. La metrica RGB non prova superiorità artistica.",
+      "candidate": "Proporre un confronto reversibile delle finiture senza sostituire la baseline.",
+      "preconditions": [
+        "Riferimento conservato",
+        "Confronto delle immagini effettive"
+      ],
+      "checks": [
+        "Valutazione artistica esplicita",
+        "Confronto tecnico",
+        "Costo grafico"
+      ],
+      "limit": "Non promuovere M1/M2 né dedurre qualità artistica dal solo errore RGB."
+    },
+    {
+      "id": "ASI-K005",
+      "domain": "navigation",
+      "tags": [
+        "navigation",
+        "lifecycle"
+      ],
+      "sources": [
+        [
+          "ASP-H016",
+          "f6315ab7e1bdd11bf466c52934c67875faa3b7c5",
+          "partial-pass"
+        ],
+        [
+          "ASP-H020",
+          "b207f766a8cf52d87ae33b4830cc9ebf4d462701",
+          "qualification-pending"
+        ],
+        [
+          "ASP-H024",
+          "b207f766a8cf52d87ae33b4830cc9ebf4d462701",
+          "partial-pass"
+        ]
+      ],
+      "finding": "La chiusura è qualificata in isolamento; il controllo autonomo della destinazione restituisce HTTP 200 e titolo corretto, ma la transizione dal grande schermo resta in timeout. Nessuna causa univoca dimostrata.",
+      "candidate": "Isolare invio dell'evento, rilascio risorse e transizione; non ripetere una correzione del motore senza una nuova evidenza.",
+      "preconditions": [
+        "Controllo autonomo della destinazione",
+        "Evidenza esatta della transizione"
+      ],
+      "checks": [
+        "URL e contenuto della pagina",
+        "Zero errori dopo chiusura",
+        "Matrice completa"
+      ],
+      "limit": "Rilievo storico aperto alla fotografia; verificare il nuovo esito prima di agire.",
+      "negative": true
+    },
+    {
+      "id": "ASI-K006",
+      "domain": "preservation",
+      "tags": [
+        "preservation",
+        "recovery"
+      ],
+      "sources": [
+        [
+          "ASP-H018",
+          "85b05ddb9185257da694f12212331ab58096036c",
+          "completed"
+        ]
+      ],
+      "finding": "Ripristino offline di 18 file e 8 risorse originali; rifiutati corruzione e sovrascrittura.",
+      "candidate": "Ripristinare le risorse dal pacchetto immutabile prima di ricorrere a recuperi temporanei.",
+      "preconditions": [
+        "Versione del pacchetto e digest noti"
+      ],
+      "checks": [
+        "Parità byte e digest",
+        "Rifiuto della corruzione",
+        "Nessuna sovrascrittura"
+      ],
+      "limit": "Qualifica solo il recupero locale degli input, non la compilazione o il rilascio."
+    }
+  ]
+}

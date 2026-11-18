@@ -92,6 +92,11 @@
       "path": "ops/atlas-scene-package/history.jsonl",
       "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas/",
       "reason": "Identificativo storico esatto del repository nei collegamenti alle prove immutabili ASP-01; non introduce terminologia di dominio o nuove eccezioni applicative."
+    },
+    {
+      "path": "scripts/scene-intelligence.py",
+      "contains": "antoniocorsano-boop/Curriculum-Atlas",
+      "reason": "Identificativo tecnico esatto della fonte nei riferimenti ASI-01; nessuna modifica al lessico di dominio."
     }
   ]
 }
