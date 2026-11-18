@@ -1,5 +1,5 @@
 /* Local native master candidate. No independent navigation or deployment. */
-let renderer,scene,camera,visibility,als,starGroup,portalGroup,failed=false,ready=false,motion=false;
+let renderer,scene,camera,visibility,als,starGroup,portalGroup,environmentTarget,failed=false,ready=false,motion=false;
 let frameId=0,angle=0,tilt=0,distance=1,closing=false;
 const lifecycle=new AbortController(),events={signal:lifecycle.signal};
 function assertActive(){if(closing||failed)throw Error("Native scene inactive");}
@@ -152,7 +152,22 @@ function shutdown(){
   if(closing)return;
   // Set the terminal state before cancelling listeners or disposing objects.
   closing=true;ready=false;motion=false;nativePhase="closed";cancelFrame();
-  lifecycle.abort();down=null;als?.dispose();renderer?.dispose();
+  lifecycle.abort();down=null;
+  // Explicitly release scene-owned GPU resources, once per shared object.
+  // renderer.dispose alone does not dispose geometry, materials or textures.
+  const geometries=new Set(),materials=new Set(),textures=new Set();
+  scene?.traverse(o=>{
+    if(o.geometry)geometries.add(o.geometry);
+    for(const m of Array.isArray(o.material)?o.material:o.material?[o.material]:[])materials.add(m);
+  });
+  if(als){geometries.delete(als.object.geometry);materials.delete(als.object.material);als.dispose();}
+  for(const m of materials){for(const value of Object.values(m))if(value?.isTexture)textures.add(value);m.dispose();}
+  for(const g of geometries)g.dispose();
+  if(scene?.background?.isTexture)textures.add(scene.background);
+  for(const texture of textures)texture.dispose();
+  environmentTarget?.dispose();environmentTarget=null;
+  if(renderer){renderer.dispose();renderer.forceContextLoss();}
+
   console.info("ATLAS_NATIVE_CLOSED");
 }
 function reset(){angle=0;tilt=0;distance=1;setCamera();render()}
@@ -190,7 +205,7 @@ canvas.addEventListener("pointerup",e=>{
  if(!down||closing||!ready)return;
  if(Math.hypot(e.clientX-down.x,e.clientY-down.y)<8){
   const id=hitPortal(e.clientX,e.clientY);
-  if(id){if(id!=="studio")stopMotion(false);send("atlas-open",{id})}
+  if(id){if(id!=="studio")shutdown();send("atlas-open",{id})}
  }
  down=null;
 },events);
@@ -210,7 +225,7 @@ async function init(){
  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.82;
  canvas.addEventListener("webglcontextlost",e=>{e.preventDefault();fail(Error("WebGL context lost"))},{once:true,signal:lifecycle.signal});
  scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(65,1,.05,150);
- nativePhase="sky";scene.background=await loadSky();assertActive();nativePhase="ambient";const env=await loadHDR();assertActive();scene.environment=env.texture;
+ nativePhase="sky";scene.background=await loadSky();assertActive();nativePhase="ambient";const env=await loadHDR();if(closing||failed){env.dispose();assertActive();}environmentTarget=env;scene.environment=env.texture;
  const hemi=new THREE.HemisphereLight(0xfff3dc,0x746b57,.22);scene.add(hemi);
  const sun=new THREE.DirectionalLight(0xffffff,1.05);sun.color.setRGB(1,.91,.79);
  const elevation=THREE.MathUtils.degToRad(NATIVE_LIGHTING.sunElevationDeg),azimuth=THREE.MathUtils.degToRad(NATIVE_LIGHTING.sunRotationDeg);
