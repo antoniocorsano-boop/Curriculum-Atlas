@@ -11,7 +11,7 @@ candidate=LIB/"library-master-knowledge-stars.py"
 module,sample_path,out=map(lambda p:Path(p).resolve(),sys.argv[sys.argv.index("--")+1:])
 static_sample=json.loads(sample_path.read_text())
 composition=json.loads((LIB/"knowledge-composition.json").read_text())
-assert static_sample["optics"]["revision"]=="ALS-01-R2"
+assert static_sample["optics"]["revision"]=="ALS-01-R3"
 assert [a["center"]+[a["radius"]] for a in static_sample["anchors"]]==composition["layouts"]["A"]
 adapter_spec=importlib.util.spec_from_file_location("als01_blender",HERE/"blender-adapter.py")
 adapter=importlib.util.module_from_spec(adapter_spec);adapter_spec.loader.exec_module(adapter)
@@ -85,6 +85,6 @@ assert set(projection["als"])=={"atrium","vertical"} and all(len(v)==18 for v in
 assert files["baseline-atrium.png"]["sha256"]!=files["candidate-atrium.png"]["sha256"]
 assert files["baseline-vertical.png"]["sha256"]!=files["candidate-vertical.png"]["sha256"]
 assert not list(out.glob("*.blend")) and not list(out.glob("*.glb"))
-receipt={"status":"ALS01_CONTEXT_COMPARISON_ONLY","moduleSha256":digest,"sceneIdentity":pv.identity(candidate),"effectiveComparisonSourceSha256":pv.sha(source.encode()),"files":files,"projection":projection,"renderCount":4,"samples":24,"sameScene":True,"architectureChanged":False,"camerasChanged":False,"lightingChanged":False,"navigationChanged":False,"baseline":"ART-FINAL-R2 same geometry without ALS","staticSampleSha256":hashlib.sha256(sample_path.read_bytes()).hexdigest(),"opticalRevision":"ALS-01-R2","points":18,"physicalLightsAdded":0,"rendererParityClaimed":False,"artisticApproval":False,"runtimeQualified":False,"studentAuthorized":False,"publishable":False}
+receipt={"status":"ALS01_CONTEXT_COMPARISON_ONLY","moduleSha256":digest,"sceneIdentity":pv.identity(candidate),"effectiveComparisonSourceSha256":pv.sha(source.encode()),"files":files,"projection":projection,"renderCount":4,"samples":24,"sameScene":True,"architectureChanged":False,"camerasChanged":False,"lightingChanged":False,"navigationChanged":False,"baseline":"ART-FINAL-R2 same geometry without ALS","staticSampleSha256":hashlib.sha256(sample_path.read_bytes()).hexdigest(),"opticalRevision":"ALS-01-R3","points":18,"physicalLightsAdded":0,"rendererParityClaimed":False,"artisticApproval":False,"runtimeQualified":False,"studentAuthorized":False,"publishable":False}
 (out/"als01-context-receipt.json").write_text(json.dumps(receipt,indent=2)+"\n")
 print("ALS01_CONTEXT_COMPARISON_ONLY",json.dumps(receipt),flush=True)
