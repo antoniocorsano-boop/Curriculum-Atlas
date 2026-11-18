@@ -1,0 +1,70 @@
+name: Atlas — Master architecture transport probe
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "scripts/atlas-gateway-integration/probe-master.py"
+      - ".github/workflows/atlas-master-transport-probe.yml"
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-master-transport-probe
+  cancel-in-progress: true
+jobs:
+  architecture-probe:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-blender-runtime-bridge' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender distribution
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - name: Recover verified architecture inputs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          mkdir -p bridge-input atlas-c32b
+          fetch() {
+            curl --fail --silent --show-error --location --max-time 120 -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$1/zip" -o "$2"
+            printf '%s  %s\n' "$3" "$2" | sha256sum --strict --check
+          }
+          fetch 14413232678 bridge-input/base.zip ecc9522d03d802668343bf87a387fa4b5e353fa40b2e4f266e18e9ab25d6383a
+          fetch 14413407240 bridge-input/ao.zip 47f68653f6d50b703b6f9834b3a5d0c17951f9b577d427564272cecd059baae4
+          unzip -q bridge-input/base.zip 'atlas-c32/*' -d .
+          unzip -q bridge-input/ao.zip -d atlas-c32b
+      - name: Probe architecture transport without production approval
+        run: |
+          set -euo pipefail
+          "$BLENDER_BIN" --background --factory-startup --disable-autoexec --python-exit-code 1 --python scripts/atlas-gateway-integration/probe-master.py -- "$RUNNER_TEMP/master-transport"
+      - name: Verify probe receipt
+        run: |
+          python3 - <<'PY'
+          import json,hashlib,os,pathlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"master-transport"
+          r=json.loads((p/"architecture-transport-receipt.json").read_text())
+          assert r["status"]=="DRAFT_ARCHITECTURE_TRANSPORT_PROBE"
+          assert not any(r[k] for k in ("rendered","browserQualified","artisticApproval","studentAuthorized","publishable"))
+          assert len(r["placements"])==45 and len(r["files"])==4 and len(r["portals"])==3
+          assert r["bay"]["instances"]>=45 and not r["bay"]["aoParityQualified"]
+          for name,f in r["files"].items():
+              b=(p/name).read_bytes()
+              assert len(b)==f["bytes"] and hashlib.sha256(b).hexdigest()==f["sha256"]
+          assert not (p/"library-knowledge-stars.glb").exists()
+          PY
+      - name: Preserve candidate module evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-master-transport-probe
+          path: ${{ runner.temp }}/master-transport/
+          if-no-files-found: warn
+          retention-days: 7
