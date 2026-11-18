@@ -1,0 +1,54 @@
+name: Atlas — ART-FINAL four sculptural stars
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/atlas-four-stars-art-final.yml"
+      - "scripts/atlas-gateway-c3/art-final-four-stars.py"
+permissions:
+  contents: read
+  actions: read
+jobs:
+  isolated-candidate:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.head.ref == 'work/atlas-four-stars-art-final' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Restore existing pinned Blender distribution
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-4.2.23-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify Blender distribution
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - name: Retrieve exact archived C2 and FAST module
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/art-final-input"
+          cd "$RUNNER_TEMP/art-final-input"
+          curl --fail --silent --show-error --location --max-time 120 -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/14400360859/zip" -o c2.zip
+          curl --fail --silent --show-error --location --max-time 120 -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/14413663634/zip" -o fast.zip
+          echo 'eb0101f573db59c54cc6cfa36013372e799722a3e4b9cdd3f498e7c81c90e7ab  c2.zip' | sha256sum --strict --check
+          echo 'f77f1266922d5d4fc13d5a9806dd45668baa66f2a83f539b68f7cef7374a4a73  fast.zip' | sha256sum --strict --check
+          unzip -p c2.zip bridge/storie-B03-mcp-C2.blend > book.blend
+          unzip -p fast.zip cycle/proposal-stars.glb > prior.glb
+          echo 'e3225c61357eafd1467c83b270086d669b6ba2602a364e5d0f2a89964a59e4df  book.blend' | sha256sum --strict --check
+          echo 'b62c4c2ac0ea4d44f388093c1e52e28763538fcc7ee75d497600a59f2665baec  prior.glb' | sha256sum --strict --check
+          chmod a-w book.blend prior.glb
+      - name: Generate four sculptural candidates and isolated renders
+        run: |
+          set -euo pipefail
+          "$BLENDER_BIN" --background --factory-startup --disable-autoexec --python-exit-code 1 --python scripts/atlas-gateway-c3/art-final-four-stars.py -- "$RUNNER_TEMP/art-final-input/book.blend" "$RUNNER_TEMP/art-final-input/prior.glb" "$RUNNER_TEMP/art-final-four-stars"
+      - name: Preserve independent draft evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-final-four-stars
+          path: ${{ runner.temp }}/art-final-four-stars/
+          if-no-files-found: warn
+          retention-days: 7
