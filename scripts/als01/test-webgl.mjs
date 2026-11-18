@@ -8,6 +8,8 @@ import {tmpdir} from "node:os";
 import {execFileSync} from "node:child_process";
 import {createHash} from "node:crypto";
 import {createServer} from "node:http";
+import {OPTICS} from "./core.mjs";
+assert.equal(OPTICS.revision,"ALS-01-R3");
 
 const input=resolve(process.argv[2]),out=resolve(process.argv[3]);
 mkdirSync(out,{recursive:true});
@@ -201,7 +203,7 @@ try {
       const controls=await page.locator("nav button, #als-pause").evaluateAll(els=>els.map(e=>{const b=e.getBoundingClientRect();return {w:b.width,h:b.height,x:b.x,y:b.y,r:b.right,b:b.bottom,reachable:e.contains(document.elementFromPoint(b.x+b.width/2,b.y+b.height/2))}}));
       assert.equal(controls.length,4);assert.equal(metrics.alsCalls,4);assert.equal(metrics.alsPoints,18);
       const previousPixels={"small-phone":40,phone:38,landscape:38,tablet:139,desktop:231,"large-screen":281}[device.name];
-      assert.ok(metrics.effectPixels>=Math.ceil(previousPixels*1.25),"Optical R2 must increase visible changed pixels by at least 25%: "+device.name+" "+metrics.effectPixels+" vs "+previousPixels);
+      assert.ok(metrics.effectPixels>=Math.ceil(previousPixels*1.25),"Optical R3 must increase visible changed pixels by at least 25%: "+device.name+" "+metrics.effectPixels+" vs "+previousPixels);
       for(const c of controls)assert.ok(c.w>=44&&c.h>=44&&c.x>=0&&c.y>=0&&c.r<=device.w&&c.b<=device.h&&c.reachable,JSON.stringify(c));
       const initial=await page.evaluate(()=>window.atlasStars.state());
       const save=async name=>{const file=device.name+"-"+name+".png";const bytes=await page.screenshot({path:join(out,file),animations:"disabled"});return {file,sha256:sha(bytes),bytes:bytes.length}};
@@ -239,7 +241,7 @@ try {
 }finally{
   if(browser)await browser.close();if(server)await new Promise(r=>server.close(r));rmSync(temp,{recursive:true,force:true});
   const pass=results.length===6&&details.length===4&&failures.length===0;
-  writeFileSync(join(out,"als01-webgl.json"),JSON.stringify({status:pass?"PASS":"FAIL",scope:"ALS01_ISOLATED_R2_PILOT",engine:"r128",moduleSha256:sha(glb),productionReceiptSha256:sha(readFileSync(receiptPath)),revision:proposal.revision,changedCores:proposal.changedCores,softwareRenderer:true,fullGatewayQualified:false,artisticApproval:false,publishable:false,studentAuthorized:false,results,details,failures},null,2)+"\n");
+  writeFileSync(join(out,"als01-webgl.json"),JSON.stringify({status:pass?"PASS":"FAIL",scope:"ALS01_ISOLATED_R2_PILOT",opticalRevision:OPTICS.revision,engine:"r128",moduleSha256:sha(glb),productionReceiptSha256:sha(readFileSync(receiptPath)),revision:proposal.revision,changedCores:proposal.changedCores,softwareRenderer:true,fullGatewayQualified:false,artisticApproval:false,publishable:false,studentAuthorized:false,results,details,failures},null,2)+"\n");
   console.log(JSON.stringify({pass,results:results.map(r=>({device:r.device,drawCalls:r.drawCalls,vertices:r.vertices,foreground:r.foreground,colorEffect:r.colorEffect,loadMs:r.loadMs})),failures},null,2));
   assert.ok(pass,JSON.stringify(failures));
 }
