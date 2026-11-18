@@ -3,7 +3,7 @@ import argparse, hashlib, json, re, subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-REPO = "antoniocorsano-boop/" + "Curri" + "culum-Atlas"
+REPO = "antoniocorsano-boop/Curriculum-Atlas"
 HEX40 = re.compile(r"[a-f0-9]{40}")
 HEX64 = re.compile(r"[a-f0-9]{64}")
 
