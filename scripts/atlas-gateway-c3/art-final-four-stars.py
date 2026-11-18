@@ -175,3 +175,29 @@ nv=sum(g["accessors"][p["attributes"]["POSITION"]]["count"] for p in pr)
 assert len(pr)==3 and nv<=18000 and len(raw)<=1024*1024,(len(pr),nv,len(raw))
 assert not g.get("extensionsRequired") and not g.get("images") and all("uri" not in b for b in g["buffers"])
 (out/"receipt.json").write_text(json.dumps({"status":"GEOMETRY_LOD_CANDIDATE","sourceC2Sha256":sha(master),"previousModuleSha256":sha(previous),"moduleSha256":sha(glb),"primitives":len(pr),"vertices":nv,"bytes":len(raw),"cores":bounds,"c2MicrostructureBaked":False,"contextRendered":False,"artisticApproval":False,"runtimeQualified":False,"publishable":False,"studentAuthorized":False},indent=2))
+
+# Produce actual isolated studio evidence with the final exported geometry.
+# No claim of in-context library rendering, baked microstructure or approval.
+scene=bpy.context.scene
+world=bpy.data.worlds.new("ART FINAL neutral studio");scene.world=world;world.use_nodes=True
+bg=world.node_tree.nodes.get("Background");bg.inputs[0].default_value=(.35,.35,.35,1);bg.inputs[1].default_value=.55
+d=bpy.data.cameras.new("Detail camera");d.type="ORTHO";d.ortho_scale=1.6
+cam=bpy.data.objects.new("Detail camera",d);scene.collection.objects.link(cam);scene.camera=cam
+lights=[]
+for name,offset,energy,size in [("Key",(-2,-3,3),230,2.1),("Fill",(2,-2,.8),110,1.9),("Rim",(.3,1.7,2),280,1.6)]:
+    ld=bpy.data.lights.new(name,"AREA");ld.energy=energy;ld.shape="DISK";ld.size=size
+    lamp=bpy.data.objects.new(name,ld);scene.collection.objects.link(lamp);lights.append((lamp,Vector(offset)))
+scene.render.engine="CYCLES";scene.cycles.device="CPU";scene.cycles.samples=32;scene.cycles.use_denoising=True
+scene.render.resolution_x=480;scene.render.resolution_y=480;scene.render.resolution_percentage=100
+scene.render.film_transparent=True;scene.render.image_settings.file_format="PNG";scene.render.image_settings.color_mode="RGBA"
+scene.view_settings.view_transform="AgX"
+for sid in ids:
+    c=positions[sid]
+    cam.location=c+Vector((.45,-4,.55));cam.rotation_euler=(c-cam.location).to_track_quat("-Z","Y").to_euler()
+    for lamp,offset in lights:
+        lamp.location=c+offset;lamp.rotation_euler=(c-lamp.location).to_track_quat("-Z","Y").to_euler()
+    scene.render.filepath=str(out/("detail-"+sid+".png"));bpy.ops.render.render(write_still=True)
+receipt=json.loads((out/"receipt.json").read_text())
+receipt["files"]={p.name:{"bytes":p.stat().st_size,"sha256":sha(p)} for p in sorted(out.iterdir()) if p.name!="receipt.json"}
+receipt["detailRenderCount"]=4
+(out/"receipt.json").write_text(json.dumps(receipt,indent=2))
