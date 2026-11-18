@@ -1,0 +1,42 @@
+name: Atlas Scene Intelligence - ASI-01 L1
+on:
+  pull_request:
+    paths:
+      - 'ops/atlas-scene-intelligence/**'
+      - 'ops/atlas-scene-package/**'
+      - 'scripts/scene-intelligence.py'
+      - 'scripts/test-scene-intelligence.py'
+      - 'docs/atlas-gateway/ASI-01-ASD-01.md'
+      - '.github/workflows/atlas-scene-intelligence.yml'
+permissions:
+  contents: read
+jobs:
+  read-only-projection:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Verify evidence rules and negative cases
+        run: python3 scripts/test-scene-intelligence.py -v
+      - name: Build read-only scene context from exact head
+        run: |
+          python3 scripts/scene-intelligence.py > "$RUNNER_TEMP/asi-context.json"
+          python3 scripts/scene-intelligence.py --tag repeated-meshes > "$RUNNER_TEMP/asi-query.json"
+          python3 - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])
+          r=json.loads((p/"asi-context.json").read_text());q=json.loads((p/"asi-query.json").read_text())
+          assert len(r["findings"])==6 and not r["blocked"] and len(q["findings"])==1
+          assert not any(r[k] for k in ("runtimeAuthorized","studentAuthorized","publishable","modelTraining"))
+          assert r["liveObservationStatus"]=="UNAVAILABLE"
+          print("ASI-01 L1 observed projection: 6 patterns, one targeted query, no authorization")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atlas-asi01-l1-context
+          path: |
+            ${{ runner.temp }}/asi-context.json
+            ${{ runner.temp }}/asi-query.json
+          retention-days: 7
