@@ -67,9 +67,14 @@
           "ASP-H004",
           "ffd9c7b05166d9d433f82d9f2385cc24ddd9a012",
           "qualified-isolated"
+        ],
+        [
+          "ASP-H030",
+          "9dd84902b3a5223d2cdd7dce9336ebe53433f26c",
+          "completed"
         ]
       ],
-      "finding": "ALS-01 R4 usa 18 punti discreti, una chiamata grafica e movimento facoltativo.",
+      "finding": "ALS-01 R4 usa 18 punti discreti, una chiamata grafica e movimento facoltativo. Su una copia del master Blender la visibilità dei 18 punti è stata variata e ripristinata: 1082 pixel modificati nella variante, zero dopo ripristino, stato osservato identico.",
       "candidate": "Riutilizzare il profilo ALS con movimento disattivato per impostazione iniziale.",
       "preconditions": [
         "Ancoraggi misurati",
@@ -78,9 +83,10 @@
       "checks": [
         "Visibilità e assenza di sovrapposizioni",
         "Budget grafico",
-        "Pausa e chiusura"
+        "Pausa e chiusura",
+        "Confronto effettivo della variante e del ripristino"
       ],
-      "limit": "Profilo qualificato in isolamento; non estendere automaticamente i parametri ad altre scene."
+      "limit": "Prova di visibilità su una sola scena Blender; nessuna estensione automatica ad altri parametri, motori o mondi."
     },
     {
       "id": "ASI-K004",
@@ -136,20 +142,32 @@
           "ASP-H024",
           "b207f766a8cf52d87ae33b4830cc9ebf4d462701",
           "partial-pass"
+        ],
+        [
+          "ASP-H032",
+          "cb985fe6b34727ff66c21bcb237a1beb9e7bf665",
+          "partial-pass"
+        ],
+        [
+          "ASP-H034",
+          "989ff057c7524c54e261d50af15308a47c7be509",
+          "completed"
         ]
       ],
-      "finding": "La chiusura è qualificata in isolamento; il controllo autonomo della destinazione restituisce HTTP 200 e titolo corretto, ma la transizione dal grande schermo resta in timeout. Nessuna causa univoca dimostrata.",
-      "candidate": "Isolare invio dell'evento, rilascio risorse e transizione; non ripetere una correzione del motore senza una nuova evidenza.",
+      "finding": "La navigazione è qualificata nella candidata Chromium locale esatta: quattro prove differenziali, sei formati, ritorno, accesso diretto Curricolo e due fallback PASS. I timeout precedenti restano conoscenza negativa, senza causa univoca dimostrata.",
+      "candidate": "Conservare l'handoff nativo qualificato; rieseguire la matrice sul candidato consolidato e, prima di eventuali correzioni, usare la diagnosi differenziale se ricompare un rilievo.",
       "preconditions": [
-        "Controllo autonomo della destinazione",
-        "Evidenza esatta della transizione"
+        "Identità della revisione e del pacchetto",
+        "Evidenza esatta della transizione",
+        "Distinguere prove automatiche e dispositivi fisici"
       ],
       "checks": [
-        "URL e contenuto della pagina",
-        "Zero errori dopo chiusura",
-        "Matrice completa"
+        "Quattro condizioni differenziali",
+        "Sei formati, ritorno e fallback",
+        "Titolo e interattività",
+        "Zero errori JS e rete esterna"
       ],
-      "limit": "Rilievo storico aperto alla fotografia; verificare il nuovo esito prima di agire.",
+      "limit": "Qualifica storica del run osservato; non dimostra causa dei precedenti timeout, ripetibilità assoluta o compatibilità fisica. Non autorizza un nuovo rilascio.",
       "negative": true
     },
     {
