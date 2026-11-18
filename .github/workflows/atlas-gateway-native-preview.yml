@@ -5,6 +5,7 @@ on:
     paths:
       - "scripts/build-atlas-gateway-native.mjs"
       - "scripts/test-atlas-gateway-native.mjs"
+      - "scripts/test-atlas-gateway-native-preflight.mjs"
       - "scripts/atlas-gateway-integration/native-preview-runtime.js"
       - "src/features/atlas-gateway/**"
       - "src/app/gateway/**"
@@ -14,11 +15,11 @@ permissions:
   contents: read
   actions: read
 concurrency:
-  group: atlas-native-navigable-preview
+  group: atlas-native-navigable-preview-${{ github.event.pull_request.head.ref }}
   cancel-in-progress: true
 jobs:
   qualify-native-gateway:
-    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-gateway-native-preview' && github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && (github.event.pull_request.head.ref == 'work/atlas-gateway-native-preview' || github.event.pull_request.head.ref == 'work/atlas-native-preflight') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
@@ -76,9 +77,14 @@ jobs:
           echo "ATLAS_GATEWAY_NATIVE_MANIFEST_SHA256=$(sha256sum "$RUNNER_TEMP/native-gateway/native-manifest.json" | cut -d' ' -f1)" >> "$GITHUB_ENV"
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
+      - name: Preflight exact native scene before application build
+        run: |
+          node --experimental-strip-types scripts/test-atlas-gateway-native-preflight.mjs "$RUNNER_TEMP/native-gateway" "$RUNNER_TEMP/native-gateway/evidence/preflight"
       - name: Build local native Gateway candidate
+        if: github.event.pull_request.head.ref == 'work/atlas-gateway-native-preview'
         run: pnpm build
       - name: Exercise actual route, portals, isolated assets and fallbacks
+        if: github.event.pull_request.head.ref == 'work/atlas-gateway-native-preview'
         run: |
           set -euo pipefail
           pnpm start --hostname 127.0.0.1 > "$RUNNER_TEMP/native-gateway/server.log" 2>&1 &
