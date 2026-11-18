@@ -75,7 +75,7 @@ try{
   // Observe local requests passively. Routing every local response changes
   // Chromium request scheduling and disables its HTTP cache.
   page.on("request",req=>{const u=new URL(req.url());if(u.origin===origin&&u.pathname.startsWith("/atlas-gateway-native/"))assets.push(u.pathname);});
-  await context.route(/^https?:\\/\\/(?!127\\.0\\.0\\.1:3000(?:\\/|$))/,route=>{external.push(route.request().url());return route.abort()});
+  await context.route(/^https?:\/\/(?!127\.0\.0\.1:3000(?:\/|$))/,route=>{external.push(route.request().url());return route.abort()});
   page.on("framenavigated",f=>{if(f===page.mainFrame())routeEvents.push({checkpoint:"main-frame",url:f.url(),at:Date.now()})});
   page.on("domcontentloaded",()=>routeEvents.push({checkpoint:"domcontentloaded",url:page.url(),at:Date.now()}));
   try{
