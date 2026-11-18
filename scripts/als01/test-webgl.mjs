@@ -18,6 +18,7 @@ const receiptPath=join(input,"receipt.json");
 const proposal=readJson(receiptPath),glb=readFileSync(join(input,"four-stars.glb"));
 assert.equal(proposal.status,"GEOMETRY_LOD_CANDIDATE");
 assert.equal(proposal.revision,"ART-FINAL-R2");
+assert.equal(sha(glb),"684849b72dfc3314c6383e3a0864fa244145811f3d27fb9bdc76d7fbfd7f92e0");
 assert.equal(proposal.moduleSha256,sha(glb));
 assert.equal(proposal.bytes,glb.length);
 assert.equal(proposal.primitives,3);
@@ -166,17 +167,17 @@ try {
       const pause0=frame(0,{paused:true}),pause1=frame(7,{paused:true});
       if(difference(pause0,pause1)!==0)throw Error("Paused effect changed pixels");
       if(new T.Raycaster().intersectObject(als.object).length!==0)throw Error("Decorative effect intercepted ray");
-      const button=document.createElement("button");button.id="als-pause";button.textContent="Luce: ferma";button.setAttribute("aria-pressed","true");document.querySelector("nav").append(button);
-      let paused=true;
+      const button=document.createElement("button");button.id="als-pause";button.textContent="Luce: ferma";button.setAttribute("aria-pressed","true");button.style.cssText="position:fixed;top:8px;right:8px;min-height:44px";document.body.append(button);
+      let paused=true,animationId=0;
       const preference=matchMedia("(prefers-reduced-motion: reduce)");
-      const sync=()=>{button.setAttribute("aria-pressed",String(paused||preference.matches));button.textContent=paused||preference.matches?"Luce: ferma":"Luce: viva";button.disabled=preference.matches;};
-      button.addEventListener("click",()=>{paused=!paused;sync();frame(1.2,{paused,reducedMotion:preference.matches})});
-      preference.addEventListener("change",()=>{sync();frame(0,{paused,reducedMotion:preference.matches})});
-      sync();
-      let animationId=0;
-      function animate(ms){if(!paused&&!preference.matches&&!document.hidden)frame(ms/1000);animationId=requestAnimationFrame(animate)}
-      animationId=requestAnimationFrame(animate);
+      const sync=()=>{button.setAttribute("aria-pressed",String(!paused&&!preference.matches));button.textContent=paused||preference.matches?"Anima luci":"Ferma luci";button.disabled=preference.matches;};
+      function stop(){paused=true;cancelAnimationFrame(animationId);animationId=0;sync();frame(0,{paused:true});}
+      function animate(ms){if(paused||preference.matches||document.hidden){stop();return;}als.update(ms/1000,{viewportHeight:innerHeight});position();renderer.render(scene,camera);animationId=requestAnimationFrame(animate);}
+      button.addEventListener("click",()=>{if(!paused){stop();return;}if(preference.matches)return;paused=false;sync();animationId=requestAnimationFrame(animate);});
+      preference.addEventListener("change",()=>{if(preference.matches)stop();else sync();});
+      document.addEventListener("visibilitychange",()=>{if(document.hidden)stop();});
       window.addEventListener("pagehide",()=>{cancelAnimationFrame(animationId);als.dispose()},{once:true});
+      sync();
       frame(0,{paused:true});
       function move(a){angle=a;capture()}
       function reset(){target=overall.center.clone();radius=overall.radius;move(0)}
@@ -197,7 +198,7 @@ try {
       session=await setup(device);const {page,errors,external,metrics}=session;
       assert.equal(metrics.drawCalls,3);assert.ok(metrics.triangles>0);
       assert.deepEqual(metrics.canvas,[device.w,device.h]);
-      const controls=await page.locator("nav button").evaluateAll(els=>els.map(e=>{const b=e.getBoundingClientRect();return {w:b.width,h:b.height,x:b.x,y:b.y,r:b.right,b:b.bottom,reachable:e.contains(document.elementFromPoint(b.x+b.width/2,b.y+b.height/2))}}));
+      const controls=await page.locator("nav button, #als-pause").evaluateAll(els=>els.map(e=>{const b=e.getBoundingClientRect();return {w:b.width,h:b.height,x:b.x,y:b.y,r:b.right,b:b.bottom,reachable:e.contains(document.elementFromPoint(b.x+b.width/2,b.y+b.height/2))}}));
       assert.equal(controls.length,4);assert.equal(metrics.alsCalls,4);assert.equal(metrics.alsPoints,18);
       for(const c of controls)assert.ok(c.w>=44&&c.h>=44&&c.x>=0&&c.y>=0&&c.r<=device.w&&c.b<=device.h&&c.reachable,JSON.stringify(c));
       const initial=await page.evaluate(()=>window.atlasStars.state());
@@ -208,9 +209,9 @@ try {
       assert.ok(Math.abs(turned.angle-.32)<1e-9&&turned.position.some((v,i)=>Math.abs(v-initial.position[i])>.01));
       assert.equal(turned.calls,4);
       const rotated=await save("rotated");
-      await page.locator("#als-pause").click();assert.equal(await page.locator("#als-pause").getAttribute("aria-pressed"),"false");
       await page.locator("#als-pause").click();assert.equal(await page.locator("#als-pause").getAttribute("aria-pressed"),"true");
-      await page.emulateMedia({reducedMotion:"reduce"});await page.locator("#als-pause").isDisabled();assert.equal(await page.locator("#als-pause").isDisabled(),true);
+      await page.locator("#als-pause").click();assert.equal(await page.locator("#als-pause").getAttribute("aria-pressed"),"false");
+      await page.emulateMedia({reducedMotion:"reduce"});await page.waitForFunction(()=>document.querySelector("#als-pause").disabled);assert.equal(await page.locator("#als-pause").isDisabled(),true);
       await page.emulateMedia({reducedMotion:"no-preference"});
       await page.locator("#reset").focus();await page.keyboard.press("Enter");
       const reset=await page.evaluate(()=>window.atlasStars.state());
