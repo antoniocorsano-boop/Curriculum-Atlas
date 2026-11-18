@@ -8,12 +8,15 @@ on:
       - "src/app/esperienze/**"
       - "docs/atlas-gateway/**"
       - "scripts/*atlas-gateway*"
+      - "scripts/atlas-gateway-integration/**"
+      - "scripts/als01/**"
       - "package.json"
       - ".github/workflows/atlas-gateway-webgl.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   local-webgl:
@@ -32,6 +35,19 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Verify portal contract
         run: node --experimental-strip-types --test scripts/test-atlas-gateway-ag03.mjs
+      - name: Recover exact R2 for integrated candidate only
+        if: github.event_name == 'pull_request' && github.event.repository.visibility == 'public' && github.event.pull_request.head.ref == 'work/atlas-gateway-r2-als01-integration' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/atlas-r2"
+          cd "$RUNNER_TEMP/atlas-r2"
+          curl --fail --silent --show-error --location --max-time 120 -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/14416938462/zip" -o r2.zip
+          echo '84f1786ee98dac231f0d8fde0dd34bd1d1724f7ef707c1257b4fc824f3ade3ed  r2.zip' | sha256sum --strict --check
+          unzip -p r2.zip four-stars.glb > four-stars.glb
+          echo '684849b72dfc3314c6383e3a0864fa244145811f3d27fb9bdc76d7fbfd7f92e0  four-stars.glb' | sha256sum --strict --check
+          echo "ATLAS_GATEWAY_R2_GLB=$RUNNER_TEMP/atlas-r2/four-stars.glb" >> "$GITHUB_ENV"
       - name: Prepare and verify local engine and styles
         run: |
           node scripts/build-atlas-gateway-local.mjs "$RUNNER_TEMP/atlas-gateway"

@@ -9,6 +9,7 @@ const basePath = process.env.ATLAS_GATEWAY_TEST_BASEPATH ?? "";
 const evidence = process.env.ATLAS_GATEWAY_EVIDENCE ?? ".atlas-gateway/evidence";
 mkdirSync(evidence,{recursive:true});
 const browser = await chromium.launch({headless:true,args:["--use-gl=angle","--use-angle=swiftshader","--enable-unsafe-swiftshader"]});
+const integrated=Boolean(process.env.ATLAS_GATEWAY_R2_GLB);
 const results = [];
 const failures = [];
 async function assertLayout(page, frame, label) {
@@ -98,6 +99,38 @@ try {
     assert.equal(initial.panels,3);
     assert(initial.calls>0);
     const beforeNotice=await assertLayout(page,frame,name);
+    let astral=null;
+    if(integrated){
+      const toggle=frame.locator("#atlas-astral-toggle");
+      assert.equal(await toggle.getAttribute("aria-pressed"),"false");
+      assert(await toggle.isVisible(),name+" light control visible");
+      astral=await frame.evaluate(()=>{
+        const group=atlasAstralGroup,points=atlasAstral.object;
+        scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);
+        let vertices=0,meshes=0;
+        group.traverse(o=>{if(o.isMesh){meshes++;vertices+=o.geometry.attributes.position.count;}});
+        const g=renderer.getContext(),w=g.drawingBufferWidth,h=g.drawingBufferHeight;
+        function capture(){renderer.render(scene,camera);const b=new Uint8Array(w*h*4);g.readPixels(0,0,w,h,g.RGBA,g.UNSIGNED_BYTE,b);if(g.getError()!==g.NO_ERROR)throw Error("GPU error");return b;}
+        const full=capture(),fullCalls=renderer.info.render.calls;
+        points.visible=false;const without=capture();points.visible=true;
+        const pointsCalls=fullCalls-renderer.info.render.calls;
+        const centers=ATLAS_R2_ANCHORS.map(a=>{
+          const p=new THREE.Vector3(a.center[0],a.center[2],-a.center[1]).applyMatrix4(group.matrixWorld).project(camera);
+          return {id:a.id,x:(p.x+1)*w/2,y:(p.y+1)*h/2,inFrame:Math.abs(p.x)<1&&Math.abs(p.y)<1&&Math.abs(p.z)<1};
+        });
+        let changed=0;for(let i=0;i<full.length;i+=4)if(Math.abs(full[i]-without[i])+Math.abs(full[i+1]-without[i+1])+Math.abs(full[i+2]-without[i+2])>12)changed++;
+        renderer.render(scene,camera);
+        const rect=document.querySelector("#atlas-astral-toggle").getBoundingClientRect();
+        const control={w:rect.width,h:rect.height,reachable:document.querySelector("#atlas-astral-toggle").contains(document.elementFromPoint(rect.x+rect.width/2,rect.y+rect.height/2))};
+        return {vertices,meshes,points:points.geometry.attributes.position.count,pointsCalls,changed,centers,control,interactive:interactiveMeshes.length,static:!atlasAstralMotion};
+      });
+      assert.equal(astral.vertices,9956);assert.equal(astral.meshes,3);assert.equal(astral.points,18);
+      assert.equal(astral.pointsCalls,1);assert.equal(astral.interactive,3);assert(astral.changed>0,name+" no visible ALS pixels");
+      assert(astral.centers.every(c=>c.inFrame),name+" star out of frame "+JSON.stringify(astral.centers));
+      assert(astral.control.w>=44&&astral.control.h>=44&&astral.control.reachable&&astral.static);
+      await toggle.click();assert.equal(await toggle.getAttribute("aria-pressed"),"true");
+      await toggle.click();assert.equal(await toggle.getAttribute("aria-pressed"),"false");
+    }
     await page.screenshot({path:evidence+"/"+name+"-sala.png",animations:"disabled"});
     await frame.locator("#cycle-next").click();
     const after=await waitScene(frame, state => Math.abs(state.offset - 1) < 0.025, "Assestamento portali");
@@ -129,7 +162,7 @@ try {
     await page.getByRole("region",{name:"Risultati della ricerca"}).getByText("Non ci sono ancora esperienze autorizzate in questa sezione.").waitFor();
     await page.screenshot({path:evidence+"/"+name+"-esperienze.png",animations:"disabled"});
     assert.equal(external.length,0,"nessuna richiesta HTTP a origini terze");
-    results.push({device:name,revision:initial.revision,drawCalls:initial.calls,panels:initial.panels,layout:"PASS",stableNotice:"PASS",carousel:"PASS",studio:"PASS",experiences:"PASS",externalRequests:external.length});
+    results.push({device:name,...(astral?{astral}:{}),revision:initial.revision,drawCalls:initial.calls,panels:initial.panels,layout:"PASS",stableNotice:"PASS",carousel:"PASS",studio:"PASS",experiences:"PASS",externalRequests:external.length});
     } catch (error) {
       const detail=error instanceof Error ? error.message : String(error);
       failures.push({device:name,error:detail});
