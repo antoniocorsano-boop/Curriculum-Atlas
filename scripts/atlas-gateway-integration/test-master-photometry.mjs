@@ -10,6 +10,7 @@ import {chromium} from "playwright";
 import sharp from "sharp";
 import {atlasAnchors,OPTICS} from "../als01/core.mjs";
 const [master,r2,out,hdriPath,referenceDir]=process.argv.slice(2).map(x=>resolve(x));
+const spatialMode=process.env.ATLAS_MASTER_SPATIAL==="1";
 mkdirSync(out,{recursive:true});
 const sha=b=>createHash("sha256").update(b).digest("hex");
 const blob=b=>createHash("sha1").update(Buffer.concat([Buffer.from("blob "+b.length+"\0"),b])).digest("hex");
@@ -43,6 +44,7 @@ const composition=JSON.parse(readFileSync("scripts/atlas-gateway-c3/knowledge-co
 const anchors=atlasAnchors(composition);
 assert.equal(OPTICS.revision,"ALS-01-R4");
 for(const name of ["core.mjs","three-adapter.mjs"])add(name,readFileSync(join("scripts/als01",name)),"text/javascript");
+if(spatialMode)add("bay-visibility.mjs",readFileSync("scripts/atlas-gateway-integration/bay-visibility.mjs"),"text/javascript");
 // Regional comparison is a diagnostic, not an artistic acceptance threshold.
 async function compareReference(bytes,device){
  if(!refs[device.name])return null;
@@ -87,7 +89,7 @@ try{
   await context.route("**/*",route=>{const url=route.request().url();if(url.startsWith(origin+"/")||url.startsWith("blob:")||url.startsWith("data:"))return route.continue();external.push(url);return route.abort()});
   try{
    await page.goto(origin,{waitUntil:"load"});
-   const metrics=await page.evaluate(async({receipt,anchors,device,lighting})=>{
+   const metrics=await page.evaluate(async({receipt,anchors,device,lighting,spatialMode})=>{
     const T=window.THREE,loader=new T.GLTFLoader();
     const {createAstralLights}=await import("/three-adapter.mjs");
     const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
@@ -198,11 +200,12 @@ try{
     scene.traverse(o=>{if(o.isMesh){for(const m of Array.isArray(o.material)?o.material:[o.material])allMaterials.add(m);}});
     // Same glTF material parameters; only environmental illumination changes.
     for(const m of allMaterials)if(m.isMeshStandardMaterial||m.isMeshPhysicalMaterial){m.envMapIntensity=lighting.ambientStrength;m.needsUpdate=true;}
+    let spatial=null;
     const candidates=[
       {id:"P1-hdr-balanced",exposure:.82,hemi:.22,sun:1.05,fill:.18,shadow:false},
       {id:"P2-hdr-relief",exposure:.75,hemi:.14,sun:1.35,fill:.15,shadow:true}
     ];
-    for(const p of candidates){
+    for(const p of spatialMode?candidates.slice(0,1):candidates){
       renderer.toneMappingExposure=p.exposure;hemi.intensity=p.hemi;sun.intensity=p.sun;fill.intensity=p.fill;
       renderer.shadowMap.enabled=p.shadow;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.shadowMap.autoUpdate=false;
       sun.castShadow=p.shadow;
@@ -221,10 +224,41 @@ try{
       if(alsEffect<1||rendered.calls-noLight.calls!==1)throw Error("ALS regression "+p.id);
       capture();profiles.push({...p,alsPixels:alsEffect,calls:rendered.calls,triangles:rendered.triangles,initialShadowCalls:warmup.calls,changedFromControl:diff(restored.b,rendered.b),image:renderer.domElement.toDataURL("image/png")});
     }
+    if(spatialMode){
+      const {createBayVisibility}=await import("/bay-visibility.mjs");
+      const culling=createBayVisibility(T,optimized,originals);
+      const initialPosition=camera.position.clone(),target=new T.Vector3(...view.target);
+      const offset=initialPosition.clone().sub(target),axis=new T.Vector3(0,1,0);
+      const poses=[{id:"reference",yaw:0,zoom:1},{id:"left",yaw:-.22,zoom:1},{id:"right-near",yaw:.22,zoom:.88},{id:"reset",yaw:0,zoom:1}];
+      const checks=[];
+      for(const pose of poses){
+        camera.position.copy(target).add(offset.clone().applyAxisAngle(axis,pose.yaw).multiplyScalar(pose.zoom));camera.lookAt(target);camera.updateMatrixWorld(true);
+        culling.restoreAll();const global=capture();
+        optimized.visible=false;bays.visible=true;const individual=capture();
+        bays.visible=false;optimized.visible=true;
+        const stats=culling.update(camera),filtered=capture();
+        const parity=diff(global.b,filtered.b),meshParity=diff(individual.b,filtered.b);
+        if(!stats.culled||filtered.triangles>=global.triangles||filtered.calls>global.calls)throw Error("No safe culling gain "+JSON.stringify({pose,stats,global:global.triangles,filtered:filtered.triangles}));
+        if(pose.id==="reference"&&filtered.triangles>global.triangles*.75)throw Error("Reference triangle reduction below 25%");
+        if(filtered.triangles>individual.triangles||filtered.calls>=individual.calls)throw Error("Culling no better than individual meshes "+JSON.stringify({pose,filtered:[filtered.calls,filtered.triangles],individual:[individual.calls,individual.triangles]}));
+        if(parity.pixels>innerWidth*innerHeight*.01||parity.mean>1||meshParity.pixels>innerWidth*innerHeight*.01||meshParity.mean>1)throw Error("Visible geometry parity regression "+JSON.stringify({pose,parity,meshParity}));
+        const cached=culling.update(camera);if(cached.recomputed||cached.visible!==stats.visible)throw Error("Static camera triggered redundant matrix writes");
+        const stable=capture();if(diff(stable.b,filtered.b).pixels!==0)throw Error("Static filtered image changed");
+        checks.push({id:pose.id,globalCalls:global.calls,globalTriangles:global.triangles,individualCalls:individual.calls,individualTriangles:individual.triangles,filteredCalls:filtered.calls,filteredTriangles:filtered.triangles,stats,parity,meshParity});
+      }
+      if(checks[0].filteredTriangles!==checks[3].filteredTriangles||checks[0].stats.visible!==checks[3].stats.visible)throw Error("Reset visibility mismatch");
+      const finalFiltered=capture();
+      als.object.visible=false;const noLight=capture();als.object.visible=true;
+      const alsPixels=diff(finalFiltered.b,noLight.b).pixels;
+      if(alsPixels<1||finalFiltered.calls-noLight.calls!==1)throw Error("ALS culling regression");
+      capture();
+      profiles.push({id:"P1-spatial",calls:finalFiltered.calls,triangles:finalFiltered.triangles,alsPixels,image:renderer.domElement.toDataURL("image/png")});
+      spatial={method:"per-instance conservative sphere compaction",checks,alsPixels,staticMatrixWritesAvoided:true,geometryModified:false};
+    }
     if(scene.background!==sky||groups["library-cupola.glb"].visible!==true)throw Error("Protected architecture changed");
     const debug=gl.getExtension("WEBGL_debug_renderer_info");
-    return {profiles,loadMs,originalCalls:original.calls,optimizedCalls:final.calls,originalTriangles:original.triangles,optimizedTriangles:final.triangles,originalMeshes:originals.length,instancedCount,batches,unbatched:unbatched.length,parity,centers,alsPixels:lights.pixels,moduleEffect,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};
-   },{receipt,anchors,device,lighting});
+    return {profiles,spatial,loadMs,originalCalls:original.calls,optimizedCalls:final.calls,originalTriangles:original.triangles,optimizedTriangles:final.triangles,originalMeshes:originals.length,instancedCount,batches,unbatched:unbatched.length,parity,centers,alsPixels:lights.pixels,moduleEffect,renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};
+   },{receipt,anchors,device,lighting,spatialMode});
    assert.equal(external.length,0);assert.equal(errors.length,0,JSON.stringify(errors));
    const profiles=[];
    for(const p of metrics.profiles){
@@ -239,7 +273,7 @@ try{
  }
 }finally{
  await browser?.close();if(server)await new Promise(r=>server.close(r));rmSync(temp,{recursive:true,force:true});
- const report={status:failures.length||results.length!==3?"FAIL":"PASS",scope:"NATIVE_MASTER_PHOTOMETRY_COMPARISON",source:receipt.source,architectureFiles:receipt.files,bayPayload:receipt.bay.nativePayload,lighting:"same original sky; exact locked HDRI for reflection; source solar direction; two bounded WebGL profiles; no AgX/Cycles or baked AO parity",hdriSha256:sha(hdr),referenceImages:refs,geometryOptimized:"instancing only; no decimation",gatewayIntegrated:false,artisticApproval:false,physicalDeviceQualified:false,studentAuthorized:false,publishable:false,results,failures};
+ const report={status:failures.length||results.length!==3?"FAIL":"PASS",scope:spatialMode?"NATIVE_MASTER_SPATIAL_CULLING":"NATIVE_MASTER_PHOTOMETRY_COMPARISON",source:receipt.source,architectureFiles:receipt.files,bayPayload:receipt.bay.nativePayload,lighting:"same original sky; exact locked HDRI for reflection; source solar direction; two bounded WebGL profiles; no AgX/Cycles or baked AO parity",hdriSha256:sha(hdr),referenceImages:refs,geometryOptimized:spatialMode?"per-instance frustum compaction; no decimation":"instancing only; no decimation",gatewayIntegrated:false,artisticApproval:false,physicalDeviceQualified:false,studentAuthorized:false,publishable:false,results,failures};
  writeFileSync(join(out,"native-master-webgl.json"),JSON.stringify(report,null,2)+"\n");
  console.log(JSON.stringify(report));
 }
