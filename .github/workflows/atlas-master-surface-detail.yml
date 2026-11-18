@@ -1,0 +1,113 @@
+name: Atlas — Native master surface detail
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "scripts/atlas-gateway-integration/test-master-photometry.mjs"
+      - ".github/workflows/atlas-master-surface-detail.yml"
+      - "scripts/atlas-gateway-integration/bay-visibility.mjs"
+      - "scripts/atlas-gateway-integration/material-bridge.mjs"
+      - "docs/atlas-gateway/AG-04-MASTER-MATERIA.md"
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-master-surface-detail
+  cancel-in-progress: true
+jobs:
+  qualify-surface-detail:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-master-surface-detail' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Install existing dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Recover verified architecture, source HDRI, R2 and Blender references
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          mkdir -p photometry-input master-transport master-r2 reference
+          fetch() {
+            curl --fail --silent --show-error --location --max-time 120 -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$1/zip" -o "$2"
+            printf '%s  %s\n' "$3" "$2" | sha256sum --strict --check
+          }
+          fetch 14431658842 photometry-input/master.zip 485ccce1129920017a04acc737a581693289950eb250fda2b5fa1e524e8f0d8b
+          fetch 14413232678 photometry-input/base.zip ecc9522d03d802668343bf87a387fa4b5e353fa40b2e4f266e18e9ab25d6383a
+          fetch 14416938462 photometry-input/r2.zip 84f1786ee98dac231f0d8fde0dd34bd1d1724f7ef707c1257b4fc824f3ade3ed
+          fetch 14431145676 photometry-input/blender.zip 08a6502b3e47b31a65d6fe3cf1d89d2bfa6f3f9d04ab5bd627526ac2d79e9d78
+          unzip -q photometry-input/master.zip -d master-transport
+          unzip -p photometry-input/base.zip atlas-c32/assets/kloppenheim_03.hdr > photometry-input/ambient.hdr
+          unzip -p photometry-input/r2.zip four-stars.glb > master-r2/four-stars.glb
+          unzip -q photometry-input/blender.zip candidate-atrium.png candidate-vertical.png -d reference
+          echo 'cf7220b7d6705577e772c28a75cfd67ef508b342904e24d20f227a38fe853130  photometry-input/ambient.hdr' | sha256sum --strict --check
+          echo '684849b72dfc3314c6383e3a0864fa244145811f3d27fb9bdc76d7fbfd7f92e0  master-r2/four-stars.glb' | sha256sum --strict --check
+      - name: Compare P1 spatial control with M1 brass and M2 microrelief
+        env:
+          ATLAS_MASTER_MATERIAL: "1"
+        run: |
+          node --check scripts/atlas-gateway-integration/material-bridge.mjs
+          node --check scripts/atlas-gateway-integration/bay-visibility.mjs
+          node --check scripts/atlas-gateway-integration/test-master-photometry.mjs
+          node scripts/atlas-gateway-integration/test-master-photometry.mjs "$RUNNER_TEMP/master-transport" "$RUNNER_TEMP/master-r2" "$RUNNER_TEMP/master-photometry" "$RUNNER_TEMP/photometry-input/ambient.hdr" "$RUNNER_TEMP/reference"
+      - name: Verify evidence and boundaries
+        run: |
+          python3 - <<'PY'
+          import json,hashlib,os,pathlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"master-photometry"
+          r=json.loads((p/"native-master-webgl.json").read_text())
+          assert r["status"]=="PASS" and r["scope"]=="NATIVE_MASTER_SURFACE_DETAIL" and len(r["results"])==3
+          assert not any(r[k] for k in ("gatewayIntegrated","artisticApproval","physicalDeviceQualified","studentAuthorized","publishable"))
+          for d in r["results"]:
+              assert len(d["profiles"])==5 and d["errors"]==d["external"]==[]
+              assert d["spatial"]["staticMatrixWritesAvoided"] and not d["spatial"]["geometryModified"]
+              assert len(d["spatial"]["checks"])==4
+              for c in d["spatial"]["checks"]:
+                  assert c["filteredTriangles"]<c["globalTriangles"] and c["filteredTriangles"]<=c["individualTriangles"]
+                  assert c["filteredCalls"]<=c["globalCalls"] and c["filteredCalls"]<c["individualCalls"]
+              assert d["spatial"]["checks"][0]["filteredTriangles"]<=d["spatial"]["checks"][0]["globalTriangles"]*.75
+              for q in d["profiles"]:
+                  f=q["image"];b=(p/f["file"]).read_bytes()
+                  assert len(b)==f["bytes"] and hashlib.sha256(b).hexdigest()==f["sha256"]
+                  if q["id"] in ("P1-spatial","M1-brass","M2-micro"):
+                      assert q["calls"]==d["spatial"]["checks"][-1]["filteredCalls"] and q["triangles"]==d["spatial"]["checks"][-1]["filteredTriangles"] and q["alsPixels"]>0
+                  else:
+                      assert q["calls"]==d["optimizedCalls"] and q["triangles"]==d["optimizedTriangles"]
+                      if q["id"]!="native-control":assert q["alsPixels"]>0 and q["changedFromControl"]["pixels"]>0
+              m=d["materialEvidence"]
+              assert m["sourcePhase"]=="C3.3A5.4a" and not m["geometryModified"] and not m["sourceMapsReplaced"] and not m["proceduralParity"] and m["sourceScalarsRestored"]
+              assert len([q for q in m["records"] if q["corrected"]])==1
+              assert len(m["checks"])==(3 if d["device"]=="atrium" else 1)
+              for c in m["checks"]:
+                  for q in c["comparison"]:
+                      assert q["calls"]==c["baselineCalls"] and q["triangles"]==c["baselineTriangles"]
+              for q in m["detailProfiles"]:
+                  f=q["image"];b=(p/f["file"]).read_bytes()
+                  assert len(b)==f["bytes"] and hashlib.sha256(b).hexdigest()==f["sha256"]
+              if d["device"]!="compact":assert all(q["referenceComparison"] for q in d["profiles"])
+          assert r["materialStudySha256"]=="cdc62198dd97255566f20a1ff48419ecc0540598bf28c517ee7d1fb3f8c9cdc6"
+          records=[q for d in r["results"] for q in d["materialEvidence"]["records"]]
+          assert len({q["name"] for q in records if q["compiled"]>0})==7
+          assert any(q["effect"]["pixels"]>0 for d in r["results"] for c in d["materialEvidence"]["checks"] for q in c["comparison"] if q["mode"]=="micro")
+          PY
+      - name: Preserve all render comparisons and metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-master-surface-detail-comparison
+          path: ${{ runner.temp }}/master-photometry/
+          if-no-files-found: warn
+          retention-days: 7
