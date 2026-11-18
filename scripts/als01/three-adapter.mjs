@@ -1,6 +1,6 @@
 // ALS-01 adapter for a supplied Three.js r128+ namespace. No network, assets,
 // extra light sources, postprocessing, event handlers, or autonomous animation.
-import {sample,blenderToThree,validateAnchors} from "./core.mjs";
+import {sample,blenderToThree,validateAnchors,OPTICS} from "./core.mjs";
 export function createAstralLights(THREE,anchors){
   validateAnchors(anchors);
   // Snapshot topology and anchor coordinates; callers cannot mutate the allocated buffers.
@@ -23,15 +23,15 @@ export function createAstralLights(THREE,anchors){
         vec4 mv=modelViewMatrix*vec4(position,1.);
         gl_Position=projectionMatrix*mv;
         float diameter=worldRadius*viewportHeight*projectionMatrix[1][1]/max(.1,-mv.z);
-        gl_PointSize=clamp(diameter*2.,2.5,8.);
+        gl_PointSize=clamp(diameter*${OPTICS.diameterScale.toFixed(2)},${OPTICS.minDiameterPx.toFixed(2)},${OPTICS.maxDiameterPx.toFixed(2)});
         vTint=tint;vAlpha=alpha;
       }`,
     fragmentShader:`
       varying vec3 vTint;varying float vAlpha;
       void main(){
         float r=length(gl_PointCoord-vec2(.5))*2.;
-        float core=1.-smoothstep(.12,.46,r);
-        float halo=(1.-smoothstep(.15,1.,r))*.26;
+        float core=1.-smoothstep(${OPTICS.coreInner.toFixed(2)},${OPTICS.coreOuter.toFixed(2)},r);
+        float halo=(1.-smoothstep(${OPTICS.haloInner.toFixed(2)},${OPTICS.haloOuter.toFixed(2)},r))*${OPTICS.haloWeight.toFixed(2)};
         float a=vAlpha*max(core,halo);
         if(a<.003)discard;
         gl_FragColor=vec4(vTint,a);
