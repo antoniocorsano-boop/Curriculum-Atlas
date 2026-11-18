@@ -6,13 +6,31 @@ const reduced=matchMedia("(prefers-reduced-motion: reduce)");
 const canvas=document.querySelector("canvas");
 const status=document.querySelector("#native-status");
 const motionButton=document.querySelector("#atlas-astral-toggle");
-const loader=new THREE.GLTFLoader();
+// r128 normally chooses ImageBitmapLoader on Chromium; that loader fetches
+// embedded blob URLs, which connect-src 'none' deliberately blocks.
+// Decode only embedded images via the DOM image path (img-src blob:).
+const nativeManager=new THREE.LoadingManager();
+nativeManager.setURLModifier(url=>{
+  if(!url.startsWith("blob:"))throw Error("Non-embedded GLTF resource rejected");
+  return url;
+});
+const loader=new THREE.GLTFLoader(nativeManager);
+loader.register(parser=>{
+  parser.textureLoader=new THREE.TextureLoader(parser.options.manager);
+  parser.textureLoader.setCrossOrigin(parser.options.crossOrigin);
+  return {name:"ATLAS_embedded_image_decoder"};
+});
+let nativePhase="initialization";
+const nativeDecoded={};
+addEventListener("securitypolicyviolation",event=>{
+  console.error("ATLAS_CSP "+event.violatedDirective+" "+event.blockedURI);
+});
 const toThree=p=>[p[0],p[2],-p[1]];
 function send(type,extra={}){parent.postMessage({type,channel:ATLAS_CHANNEL,...extra},ATLAS_PARENT_ORIGIN)}
 function fail(error){
   if(failed)return;failed=true;ready=false;cancelAnimationFrame(frameId);
   status.textContent="Sala 3D non disponibile.";
-  console.error(error);send("atlas-3d-error");
+  console.error("ATLAS_NATIVE_FAILURE "+nativePhase+" "+(error?.message??String(error)));send("atlas-3d-error");
 }
 async function asset(id){
   return new Promise((resolve,reject)=>{
@@ -30,8 +48,16 @@ async function asset(id){
   });
 }
 async function loadModel(id){
+  nativePhase="transfer:"+id;
   const bytes=await asset(id);
+  nativePhase="decode:"+id;
   const gltf=await new Promise((resolve,reject)=>loader.parse(bytes,"",resolve,reject));
+  if(!gltf.parser.textureLoader.isTextureLoader && !(gltf.parser.textureLoader instanceof THREE.TextureLoader))throw Error("Wrong embedded texture decoder");
+  const images=gltf.parser.json.images||[];
+  const textures=await gltf.parser.getDependencies("texture");
+  if(textures.some(t=>!t.image||!(t.image.width>0&&t.image.height>0)))throw Error("Embedded texture decode incomplete");
+  nativeDecoded[id]={images:images.length,textures:textures.length,decoder:"TextureLoader"};
+  console.info("ATLAS_NATIVE_DECODE "+id+" "+JSON.stringify(nativeDecoded[id]));
   const byName=new Map((gltf.parser.json.materials||[]).map(m=>[m.name,m]));
   gltf.scene.traverse(o=>{
     if(!o.isMesh)return;
@@ -158,7 +184,7 @@ async function init(){
  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.82;
  canvas.addEventListener("webglcontextlost",e=>{e.preventDefault();fail(Error("WebGL context lost"))},{once:true});
  scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(65,1,.05,150);
- scene.background=await loadSky();const env=await loadHDR();scene.environment=env.texture;
+ nativePhase="sky";scene.background=await loadSky();nativePhase="ambient";const env=await loadHDR();scene.environment=env.texture;
  const hemi=new THREE.HemisphereLight(0xfff3dc,0x746b57,.22);scene.add(hemi);
  const sun=new THREE.DirectionalLight(0xffffff,1.05);sun.color.setRGB(1,.91,.79);
  const elevation=THREE.MathUtils.degToRad(NATIVE_LIGHTING.sunElevationDeg),azimuth=THREE.MathUtils.degToRad(NATIVE_LIGHTING.sunRotationDeg);
@@ -168,15 +194,15 @@ async function init(){
  portalGroup=groupMap.portals;starGroup=groupMap.stars;
  let starMeshes=0,starVertices=0;starGroup.traverse(o=>{if(o.isMesh){starMeshes++;starVertices+=o.geometry.attributes.position.count}});
  if(starMeshes!==3||starVertices!==9956)throw Error("R2 topology");
- scene.updateMatrixWorld(true);buildBays();
+ nativePhase="bay-compaction";scene.updateMatrixWorld(true);buildBays();
  als=ATLAS_ASTRAL.createAstralLights(THREE,NATIVE_ANCHORS);scene.add(als.object);
  if(als.object.geometry.attributes.position.count!==18)throw Error("ALS topology");
  // P1 is the last qualified material baseline. M1/M2 are intentionally
  // not applied while their separate qualification is unresolved.
- ready=true;setCamera();render();
+ nativePhase="first-render";ready=true;setCamera();render();
  if(renderer.info.render.calls<1)throw Error("Native renderer empty");
  status.hidden=true;document.querySelector("#native-controls").hidden=false;
  motionButton.disabled=reduced.matches;
- send("atlas-3d-ready");
+ nativePhase="ready";send("atlas-3d-ready");
 }
 init().catch(fail);
