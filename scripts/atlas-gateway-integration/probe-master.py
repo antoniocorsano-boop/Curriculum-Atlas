@@ -58,6 +58,15 @@ files={name:record(out/name) for name in sorted(expected-{"library-knowledge-sta
 assert not (out/"library-knowledge-stars.glb").exists()
 bay=[o for o in scene.objects if o.type=="MESH" and o.name.startswith("Library bay ") and not o.hide_render]
 assert len(bay)>0 and len(ns["placements"])==45
+# Native bay payload: linked meshes retain their exact transforms and materials.
+# Exports the actual visible bay instances, not the obsolete single AO bay.
+bpy.ops.object.select_all(action="DESELECT")
+for o in bay:o.select_set(True)
+bpy.context.view_layer.objects.active=bay[0]
+bpy.ops.export_scene.gltf(filepath=str(out/"library-bays.glb"),export_format="GLB",use_selection=True,export_texcoords=True,export_draco_mesh_compression_enable=False)
+bay_file=record(out/"library-bays.glb")
+assert bay_file["nodes"]>=len(bay) and bay_file["uniquePrimitives"]<=len(bay),bay_file
+
 # Preserve real transforms and distinct mesh identities, not an assumed
 # equivalence with the old single AO bay.
 bay_meshes={}
@@ -70,6 +79,6 @@ for o in bay:
     instances.append({"name":o.name,"mesh":key,"matrixBlender":[list(row) for row in o.matrix_world]})
 portal_layout=ns["portal_layout"]
 views=[{"id":name,"width":w,"height":h,"position":xyz(Vector(pos)),"target":xyz(Vector(target)),"lensMm":lens} for name,w,h,pos,target,lens in ns["views"]]
-report={"status":"DRAFT_ARCHITECTURE_TRANSPORT_PROBE","source":pv.identity(candidate),"files":files,"placements":ns["placements"],"bay":{"instances":len(instances),"uniqueMeshes":len(bay_meshes),"meshInventory":bay_meshes,"transforms":instances,"boundsThree":bounds(bay),"aoReference":record(out.parent/"atlas-c32b/campata-ao.glb"),"aoParityQualified":False},"portals":portal_layout,"cameras":views,"coordinateConvention":"Blender x,y,z -> Three x,z,-y; no procedural +1.2 shift in native architecture","totalArchitectureBytes":sum(f["bytes"] for f in files.values()),"rendered":False,"browserQualified":False,"artisticApproval":False,"studentAuthorized":False,"publishable":False}
+report={"status":"DRAFT_ARCHITECTURE_TRANSPORT_PROBE","source":pv.identity(candidate),"files":files,"placements":ns["placements"],"bay":{"instances":len(instances),"uniqueMeshes":len(bay_meshes),"meshInventory":bay_meshes,"transforms":instances,"boundsThree":bounds(bay),"nativePayload":bay_file,"aoReference":record(out.parent/"atlas-c32b/campata-ao.glb"),"aoParityQualified":False},"portals":portal_layout,"cameras":views,"coordinateConvention":"Blender x,y,z -> Three x,z,-y; no procedural +1.2 shift in native architecture","totalArchitectureBytes":sum(f["bytes"] for f in files.values())+bay_file["bytes"],"rendered":False,"browserQualified":False,"artisticApproval":False,"studentAuthorized":False,"publishable":False}
 (out/"architecture-transport-receipt.json").write_text(json.dumps(report,indent=2)+"\n")
 print("ARCHITECTURE_TRANSPORT_PROBE",json.dumps({k:report[k] for k in ("status","files","totalArchitectureBytes","cameras")}),flush=True)
