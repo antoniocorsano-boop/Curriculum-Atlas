@@ -1,6 +1,9 @@
 /* Local native master candidate. No independent navigation or deployment. */
 let renderer,scene,camera,visibility,als,starGroup,portalGroup,failed=false,ready=false,motion=false;
-let frameId=0,angle=0,tilt=0,distance=1;
+let frameId=0,angle=0,tilt=0,distance=1,closing=false;
+const lifecycle=new AbortController(),events={signal:lifecycle.signal};
+function assertActive(){if(closing||failed)throw Error("Native scene inactive");}
+function cancelFrame(){if(frameId)cancelAnimationFrame(frameId);frameId=0;}
 const groupMap={};
 const reduced=matchMedia("(prefers-reduced-motion: reduce)");
 const canvas=document.querySelector("canvas");
@@ -28,33 +31,35 @@ addEventListener("securitypolicyviolation",event=>{
 const toThree=p=>[p[0],p[2],-p[1]];
 function send(type,extra={}){parent.postMessage({type,channel:ATLAS_CHANNEL,...extra},ATLAS_PARENT_ORIGIN)}
 function fail(error){
-  if(failed)return;failed=true;ready=false;cancelAnimationFrame(frameId);
+  if(failed||closing)return;failed=true;ready=false;motion=false;cancelFrame();
   status.textContent="Sala 3D non disponibile.";
   console.error("ATLAS_NATIVE_FAILURE "+nativePhase+" "+(error?.message??String(error)));send("atlas-3d-error");
 }
 async function asset(id){
   return new Promise((resolve,reject)=>{
+    if(closing||failed){reject(Error("Native scene inactive"));return}
     const timeout=setTimeout(()=>{cleanup();reject(Error("Native asset timeout "+id))},45000);
     const repeat=setInterval(request,750);
     function request(){send("atlas-native-asset-request",{id})}
-    function cleanup(){clearTimeout(timeout);clearInterval(repeat);removeEventListener("message",receive)}
+    function cleanup(){clearTimeout(timeout);clearInterval(repeat);removeEventListener("message",receive);lifecycle.signal.removeEventListener("abort",abort)}
+    function abort(){cleanup();reject(Error("Native scene closed"))}
     function receive(event){
       if(event.source!==parent||event.origin!==ATLAS_PARENT_ORIGIN)return;
       const d=event.data;
       if(!d||d.channel!==ATLAS_CHANNEL||d.type!=="atlas-native-asset"||d.id!==id||!(d.bytes instanceof ArrayBuffer))return;
       cleanup();resolve(d.bytes);
     }
-    addEventListener("message",receive);request();
+    lifecycle.signal.addEventListener("abort",abort,{once:true});addEventListener("message",receive,events);request();
   });
 }
 async function loadModel(id){
   nativePhase="transfer:"+id;
-  const bytes=await asset(id);
+  const bytes=await asset(id);assertActive();
   nativePhase="decode:"+id;
-  const gltf=await new Promise((resolve,reject)=>loader.parse(bytes,"",resolve,reject));
+  const gltf=await new Promise((resolve,reject)=>loader.parse(bytes,"",resolve,reject));assertActive();
   if(!gltf.parser.textureLoader.isTextureLoader && !(gltf.parser.textureLoader instanceof THREE.TextureLoader))throw Error("Wrong embedded texture decoder");
   const images=gltf.parser.json.images||[];
-  const textures=await gltf.parser.getDependencies("texture");
+  const textures=await gltf.parser.getDependencies("texture");assertActive();
   if(textures.some(t=>!t.image||!(t.image.width>0&&t.image.height>0)))throw Error("Embedded texture decode incomplete");
   nativeDecoded[id]={images:images.length,textures:textures.length,decoder:"TextureLoader"};
   console.info("ATLAS_NATIVE_DECODE "+id+" "+JSON.stringify(nativeDecoded[id]));
@@ -70,16 +75,17 @@ async function loadModel(id){
   groupMap[id]=gltf.scene;scene.add(gltf.scene);return gltf.scene;
 }
 async function loadSky(){
-  const bytes=await asset("sky");
+  const bytes=await asset("sky");assertActive();
   const url=URL.createObjectURL(new Blob([bytes],{type:"image/png"}));
   try{
     const texture=await new THREE.TextureLoader().loadAsync(url);
+    if(closing||failed){texture.dispose();assertActive();}
     texture.encoding=THREE.sRGBEncoding;texture.mapping=THREE.EquirectangularReflectionMapping;
     return texture;
   }finally{URL.revokeObjectURL(url)}
 }
 async function loadHDR(){
-  const bytes=await asset("ambient");
+  const bytes=await asset("ambient");assertActive();
   const decoded=new THREE.RGBELoader().setDataType(THREE.HalfFloatType).parse(bytes);
   if(!decoded||!decoded.data||decoded.width<1||decoded.height<1)throw Error("HDR decode");
   const channels=decoded.data.length/(decoded.width*decoded.height);
@@ -128,13 +134,27 @@ function setCamera(){
   if(canvas.width!==w||canvas.height!==h)renderer.setSize(w,h);visibility.update(camera);
 }
 function render(t=0){
-  if(!ready||failed)return;
+  if(!ready||failed||closing)return;
   visibility.update(camera);
   als.update(Math.max(0,t/1000),{viewportWidth:innerWidth,viewportHeight:innerHeight,pixelRatio:renderer.getPixelRatio(),backdrop:"light",paused:!motion||document.hidden,reducedMotion:reduced.matches});
   renderer.render(scene,camera);
 }
-function loop(t){render(t);if(motion&&!failed&&!document.hidden)frameId=requestAnimationFrame(loop)}
-function stopMotion(){cancelAnimationFrame(frameId);motion=false;motionButton.textContent="Anima luci";motionButton.setAttribute("aria-pressed","false");render()}
+function loop(t){
+  frameId=0;if(!ready||failed||closing||!motion||document.hidden)return;
+  render(t);if(ready&&!failed&&!closing&&motion&&!document.hidden)frameId=requestAnimationFrame(loop);
+}
+function stopMotion(redraw=true){
+  cancelFrame();motion=false;
+  motionButton.textContent="Anima luci";motionButton.setAttribute("aria-pressed","false");
+  if(redraw&&!closing&&!document.hidden)render();
+}
+function shutdown(){
+  if(closing)return;
+  // Set the terminal state before cancelling listeners or disposing objects.
+  closing=true;ready=false;motion=false;nativePhase="closed";cancelFrame();
+  lifecycle.abort();down=null;als?.dispose();renderer?.dispose();
+  console.info("ATLAS_NATIVE_CLOSED");
+}
 function reset(){angle=0;tilt=0;distance=1;setCamera();render()}
 function change(action){
   if(!ready)return;
@@ -159,38 +179,44 @@ function hitPortal(x,y){
   return portalBoxes.find(p=>p.box.clone().expandByScalar(.02).containsPoint(hits[0].point))?.id??null;
 }
 let down=null;
-canvas.addEventListener("pointerdown",e=>{if(!ready)return;down={x:e.clientX,y:e.clientY,angle,tilt};canvas.setPointerCapture(e.pointerId)});
+canvas.addEventListener("pointerdown",e=>{if(!ready||closing)return;down={x:e.clientX,y:e.clientY,angle,tilt};canvas.setPointerCapture(e.pointerId)},events);
 canvas.addEventListener("pointermove",e=>{
  if(!down||!ready)return;
  if(Math.hypot(e.clientX-down.x,e.clientY-down.y)<8)return;
  angle=THREE.MathUtils.clamp(down.angle+(down.x-e.clientX)*.002,-.30,.30);
  tilt=THREE.MathUtils.clamp(down.tilt+(e.clientY-down.y)*.008,-1.3,1.3);setCamera();render();
-});
+},events);
 canvas.addEventListener("pointerup",e=>{
- if(!down)return;
- if(Math.hypot(e.clientX-down.x,e.clientY-down.y)<8){const id=hitPortal(e.clientX,e.clientY);if(id)send("atlas-open",{id})}
+ if(!down||closing||!ready)return;
+ if(Math.hypot(e.clientX-down.x,e.clientY-down.y)<8){
+  const id=hitPortal(e.clientX,e.clientY);
+  if(id){if(id!=="studio")stopMotion(false);send("atlas-open",{id})}
+ }
  down=null;
-});
-canvas.addEventListener("pointercancel",()=>{down=null});
-for(const button of document.querySelectorAll("[data-action]"))button.addEventListener("click",()=>change(button.dataset.action));
-motionButton.addEventListener("click",()=>{if(!ready||reduced.matches)return;if(motion)stopMotion();else{motion=true;motionButton.textContent="Ferma luci";motionButton.setAttribute("aria-pressed","true");frameId=requestAnimationFrame(loop)}});
-reduced.addEventListener("change",()=>{if(reduced.matches)stopMotion();motionButton.disabled=reduced.matches});
-document.addEventListener("visibilitychange",()=>{if(document.hidden)stopMotion()});
-addEventListener("resize",()=>{if(ready){setCamera();render()}});
-addEventListener("pagehide",()=>{cancelAnimationFrame(frameId);als?.dispose();renderer?.dispose()},{once:true});
+},events);
+canvas.addEventListener("pointercancel",()=>{down=null},events);
+for(const button of document.querySelectorAll("[data-action]"))button.addEventListener("click",()=>change(button.dataset.action),events);
+motionButton.addEventListener("click",()=>{if(!ready||closing||reduced.matches)return;if(motion)stopMotion();else{motion=true;motionButton.textContent="Ferma luci";motionButton.setAttribute("aria-pressed","true");frameId=requestAnimationFrame(loop)}},events);
+reduced.addEventListener("change",()=>{if(reduced.matches)stopMotion();motionButton.disabled=reduced.matches},events);
+document.addEventListener("visibilitychange",()=>{if(document.hidden)stopMotion(false);else if(ready&&!closing)render()},events);
+addEventListener("resize",()=>{if(ready&&!closing){setCamera();render()}},events);
+// A persisted pagehide (back/forward cache) pauses rather than destroys
+// the scene. A real unload is terminal and idempotent.
+addEventListener("pagehide",e=>{if(e.persisted)stopMotion(false);else shutdown()},events);
+addEventListener("pageshow",e=>{if(e.persisted&&ready&&!closing){setCamera();render()}},events);
 async function init(){
  renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});
  renderer.setPixelRatio(1);renderer.outputEncoding=THREE.sRGBEncoding;
  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.82;
- canvas.addEventListener("webglcontextlost",e=>{e.preventDefault();fail(Error("WebGL context lost"))},{once:true});
+ canvas.addEventListener("webglcontextlost",e=>{e.preventDefault();fail(Error("WebGL context lost"))},{once:true,signal:lifecycle.signal});
  scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(65,1,.05,150);
- nativePhase="sky";scene.background=await loadSky();nativePhase="ambient";const env=await loadHDR();scene.environment=env.texture;
+ nativePhase="sky";scene.background=await loadSky();assertActive();nativePhase="ambient";const env=await loadHDR();assertActive();scene.environment=env.texture;
  const hemi=new THREE.HemisphereLight(0xfff3dc,0x746b57,.22);scene.add(hemi);
  const sun=new THREE.DirectionalLight(0xffffff,1.05);sun.color.setRGB(1,.91,.79);
  const elevation=THREE.MathUtils.degToRad(NATIVE_LIGHTING.sunElevationDeg),azimuth=THREE.MathUtils.degToRad(NATIVE_LIGHTING.sunRotationDeg);
  sun.position.set(Math.cos(elevation)*Math.cos(azimuth),Math.sin(elevation),-Math.cos(elevation)*Math.sin(azimuth)).multiplyScalar(24);scene.add(sun);
  const fill=new THREE.DirectionalLight(0xddeaff,.18);fill.position.set(0,4,9);scene.add(fill);
- for(const id of ["shell","scenography","cupola","portals","bays","stars"])await loadModel(id);
+ for(const id of ["shell","scenography","cupola","portals","bays","stars"]){await loadModel(id);assertActive();}
  portalGroup=groupMap.portals;starGroup=groupMap.stars;
  let starMeshes=0,starVertices=0;starGroup.traverse(o=>{if(o.isMesh){starMeshes++;starVertices+=o.geometry.attributes.position.count}});
  if(starMeshes!==3||starVertices!==9956)throw Error("R2 topology");
