@@ -50,7 +50,7 @@ async function inspect(page,device){
  return {frame,m};
 }
 try{
- for(const device of [{name:"compact",viewport:{width:320,height:568},isMobile:true,hasTouch:true},{name:"phone",viewport:{width:393,height:873},isMobile:true,hasTouch:true},{name:"landscape",viewport:{width:873,height:393},isMobile:true,hasTouch:true},{name:"tablet",viewport:{width:768,height:1024},isMobile:true,hasTouch:true},{name:"desktop",viewport:{width:1440,height:1000}},{name:"large",viewport:{width:1920,height:1080}}]){
+ for(const device of [{name:"large",viewport:{width:1920,height:1080}},{name:"compact",viewport:{width:320,height:568},isMobile:true,hasTouch:true},{name:"phone",viewport:{width:393,height:873},isMobile:true,hasTouch:true},{name:"landscape",viewport:{width:873,height:393},isMobile:true,hasTouch:true},{name:"tablet",viewport:{width:768,height:1024},isMobile:true,hasTouch:true},{name:"desktop",viewport:{width:1440,height:1000}}]){
   const {name,...opts}=device,context=await browser.newContext({...opts,deviceScaleFactor:1}),page=await context.newPage();
   const external=[],assets=[],errors=[],diagnostics=[];
   page.on("pageerror",e=>errors.push(e.message));
@@ -63,15 +63,23 @@ try{
    assert.equal(external.length,0);assert.equal(errors.length,0,JSON.stringify(errors));assert.equal(diagnostics.filter(t=>/ATLAS_CSP|ATLAS_NATIVE_FAILURE|Content Security Policy/i.test(t)).length,0,JSON.stringify(diagnostics));
    const studio=m.hits.find(h=>h.id==="studio");await frame.locator("canvas").click({position:{x:studio.x,y:studio.y}});
    await page.getByRole("status").filter({hasText:"accesso professionale non ancora abilitato"}).waitFor({timeout:15000});
-   const esperienze=m.hits.find(h=>h.id==="esperienze");await frame.locator("canvas").click({position:{x:esperienze.x,y:esperienze.y}});
-   await page.waitForURL("**/esperienze/",{timeout:30000});
-   await page.getByRole("heading",{name:"Esplora, scopri, comprendi."}).waitFor();
+   const esperienze=m.hits.find(h=>h.id==="esperienze");
+   // Reproduce the previous large-screen failure with animation still active.
+   if(name==="large"){
+     const toggle=frame.locator("#atlas-astral-toggle");await toggle.click();assert.equal(await toggle.getAttribute("aria-pressed"),"true");
+   }
+   await Promise.all([page.waitForURL("**/esperienze/",{timeout:30000}),frame.locator("canvas").click({position:{x:esperienze.x,y:esperienze.y}})]);
+   await page.getByRole("heading",{name:"Esplora, scopri, comprendi.",exact:true}).waitFor({state:"visible",timeout:30000});
+   await page.locator("iframe[title='Biblioteca Atlas tridimensionale']").waitFor({state:"detached",timeout:10000});
    await page.getByRole("button",{name:"Laboratori",exact:true}).click();
    await page.getByRole("region",{name:"Risultati della ricerca"}).getByText("Non ci sono ancora esperienze autorizzate in questa sezione.").waitFor();
-   assert.equal(external.length,0);
-   results.push({device:name,...m,assets:assets.length,external:external.length,portal:"PASS",diagnostics});
+   assert.equal(external.length,0);assert.deepEqual(errors,[]);assert.equal(diagnostics.filter(t=>/ATLAS_CSP|ATLAS_NATIVE_FAILURE|ALS-01 disposed|Content Security Policy/i.test(t)).length,0,JSON.stringify(diagnostics));
+   results.push({device:name,...m,assets:assets.length,external:external.length,portal:"PASS",navigationTeardown:"PASS",diagnostics});
   }catch(e){const notice=await page.locator(".atlas-gateway-notice").textContent({timeout:3000}).catch(()=>null);failures.push({device:name,error:String(e),errors,external,assets,notice,diagnostics});await page.screenshot({path:out+"/"+name+"-failure.png"}).catch(()=>{});}
   finally{await context.close()}
+  // Stop after the previously failing large-screen case; do not repeat five
+  // expensive runs while the targeted regression remains unresolved.
+  if(name==="large"&&failures.length)throw Error("Targeted large-screen regression failed");
  }
  // Integrity rejection exercises the real parent fallback, not a mocked
  // renderer. A one-byte modification preserves length but fails SHA-256.
