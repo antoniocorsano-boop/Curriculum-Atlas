@@ -9,3 +9,13 @@ Il workflow esistente produce la build Next standalone, confeziona la route effe
 
 ## Decisioni e limiti
 Nessun nuovo motore, dipendenza esterna, servizio a pagamento o modifica di World Composer. Riutilizzo della verifica già esistente di route, navigazione, sei formati e fallback; niente cicli di ricerca separati. Il pacchetto completo ha priorità sui nuovi esperimenti; eventuali interventi successivi devono correggere problemi concretamente visibili nel prodotto e preservarne la fruibilità. I 25,8 MB sono la baseline delle risorse grafiche, non il peso del pacchetto applicativo. Non sono dimostrate le prestazioni fisiche, la qualità artistica finale, la riduzione a 5 MB o l'adozione dei bake LBC-01. La candidata resta privata/local-only; nessun merge o rilascio pubblico autorizzato. Gli artefatti CI temporanei non sostituiscono l'archivio durevole.
+
+
+## Accesso diretto sul Web — ramo PR #148
+La candidata può essere assemblata come **sito statico completo** e distribuita sul progetto gratuito Cloudflare Pages **già esistente** \`atlas-pr-preview\`, con una diramazione di anteprima distinta dalla produzione. Non è richiesto Node sul dispositivo e non si installa alcun archivio sul telefono.
+
+La pagina \`/biblioteca/\` è un involucro Web autonomo: carica esclusivamente la scena M2 integrata e gli otto asset verificati, presenta i comandi della sala in un iframe isolato, offre accessi diretti a Curricolo ed Esperienze e conserva Studio come accesso professionale informativo. Il genitore valida impronte e dimensioni di ogni asset prima del trasferimento e non consente richieste esterne dalla scena. Il lavoro non replica le texture grezze della campata #147.
+
+Il flusso automatico svolge una verifica del sito statico su browser telefonico e desktop, controlla i percorsi, pubblica sul ramo \`library-<SHA12>\` del progetto Cloudflare preesistente e verifica via HTTPS URL effettivo, revisione, scena e manifest. Solo dopo l'esito positivo il collegamento compare nel riepilogo GitHub. Il collegamento non è predefinito: si usa esclusivamente il dominio restituito dal servizio.
+
+**Limiti espliciti:** un URL di anteprima Cloudflare può essere consultato da chi possiede il collegamento; \`studentAuthorized=false\` è una decisione di governance, **non** una protezione tecnica con autenticazione. Non si introducono dati personali o pubblicazioni curricolari non autorizzate. La pubblicazione non modifica il sito istituzionale, non integra PR in main e non autorizza diffusione agli studenti. L'indicizzazione è disincentivata con \`X-Robots-Tag\` e \`robots.txt\`, senza affermare che tali segnali limitino realmente l'accesso. Se credenziali, configurazione Cloudflare o verifica HTTPS mancano, non dichiarare il sito raggiungibile.
