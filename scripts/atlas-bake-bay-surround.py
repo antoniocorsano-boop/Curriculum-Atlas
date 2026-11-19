@@ -6,6 +6,7 @@ import bpy, numpy as np, hashlib, json, os, sys
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 from atlas_linear_texture_contract import preflight, export_opaque_rgb, pixels
+from atlas_uv_pack import pack
 
 master,baydir,out=map(lambda p:Path(p).resolve(),sys.argv[sys.argv.index("--")+1:])
 MASTER="f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab"
@@ -112,6 +113,89 @@ def uv_occupancy(mesh,uv,size):
         counts[lo[1]:hi[1]+1,lo[0]:hi[0]+1]+=((u>1e-7)&(t>1e-7)&(u+t<1-1e-7)).astype(np.uint16)
     return counts,minarea
 
+def uv_digest(a):
+    return hashlib.sha256(np.ascontiguousarray(a,dtype="<f4").tobytes()).hexdigest()
+def topology(mesh):
+    mesh.calc_loop_triangles()
+    return (tuple(l.vertex_index for l in mesh.loops),tuple(tuple(t.loops) for t in mesh.loop_triangles))
+def validate_rectangles(packing,size):
+    rects=packing["rectangles"];border=packing["borderPixels"];gap=packing["gapPixels"]
+    need(len(rects)==packing["islands"]>0 and border>=9 and gap>=20,"packing contract")
+    min_gap=float(size)
+    for i,(x,y,w,h) in enumerate(rects):
+        need(w>0 and h>0 and min(x,y)>=border-1e-7 and max(x+w,y+h)<=size-border+1e-7,"packing rectangle bounds")
+        for ax,ay,aw,ah in rects[:i]:
+            separation=max(ax-x-w,x-ax-aw,ay-y-h,y-ay-ah)
+            need(separation>=gap-1e-7,"packing rectangle separation")
+            min_gap=min(min_gap,separation)
+    return min_gap
+def test_packer():
+    # Synthetic repeated islands: disjoint corners, identical starting UVs.
+    raw=np.tile(np.array([[.10,.10],[.22,.10],[.10,.25]],np.float64),(64,1))
+    tri=np.arange(len(raw)).reshape(-1,3);verts=list(range(len(raw)))
+    a,p=pack(raw,tri,verts,size=512);b,q=pack(raw,tri,verts,size=512)
+    need(np.array_equal(a,b) and p==q and p["islands"]==64,"large packing determinism")
+    need(p["method"]=="deterministic-aabb-shelf","large packing strategy")
+    min_gap=validate_rectangles(p,512)
+    return {"passed":True,"islands":64,"method":p["method"],"minimumRectangleGap":min_gap}
+def apply_uv(mesh,values,primary,size):
+    uv=mesh.uv_layers.get("ASC_BayBake")
+    if uv is None:
+        uv=mesh.uv_layers.new(name="ASC_BayBake")
+    need(uv.name=="ASC_BayBake" and len(uv.data)==len(values),"UV target layer")
+    for loop,value in zip(uv.data,values):loop.uv=tuple(value)
+    mesh.update();mesh.calc_loop_triangles()
+    uv=mesh.uv_layers.get("ASC_BayBake");mesh.uv_layers.active=uv
+    if primary:mesh.uv_layers[primary].active_render=True
+    else:uv.active_render=True
+    actual=np.array([tuple(x.uv) for x in uv.data],dtype=np.float32)
+    need(uv_digest(actual)==uv_digest(values),"UV writeback drift")
+    need(actual.min()>=9/size-1e-7 and actual.max()<=1-9/size+1e-7,"fitted UV bounds")
+    return uv,actual
+def prepare_uv(o,d,primary):
+    # Smart project only unwraps. The second Blender UV operator was cancelled
+    # in headless execution; deterministic packing happens in ordinary Python.
+    bpy.ops.object.select_all(action="DESELECT");o.select_set(True);bpy.context.view_layer.objects.active=o
+    uv=d.uv_layers.new(name="ASC_BayBake");need(uv.name=="ASC_BayBake","UV layer conflict")
+    d.uv_layers.active=uv
+    bpy.ops.object.mode_set(mode="EDIT");bpy.ops.mesh.select_all(action="SELECT")
+    need("FINISHED" in bpy.ops.uv.smart_project(island_margin=.025),"smart project")
+    bpy.ops.object.mode_set(mode="OBJECT");d.update();d.calc_loop_triangles()
+    uv=d.uv_layers.get("ASC_BayBake");need(uv is not None and len(uv.data)==len(d.loops),"UV reacquire")
+    raw=np.array([tuple(x.uv) for x in uv.data],dtype=np.float64)
+    lo=raw.min(axis=0);hi=raw.max(axis=0);span=hi-lo
+    need(np.isfinite(raw).all() and span.min()>1e-8,"UV extent")
+    fit=(raw-(lo+hi)/2)*(.96/span.max())+.5
+    verts,tris=topology(d)
+    attempts=[]
+    for size in (512,1024,2048):
+        attempt={"size":size};attempts.append(attempt)
+        try:
+            packed,packing=pack(fit,tris,verts,size=size,border=9,gap=20)
+        except AssertionError as exc:
+            attempt.update(status="REJECTED_PACK",error=str(exc));continue
+        gap=validate_rectangles(packing,size)
+        uv,actual=apply_uv(d,np.asarray(packed,dtype=np.float32),primary,size)
+        counts,minarea=uv_occupancy(d,uv,size);covered=counts>0
+        occupied=int(covered.sum());overlap=int((counts>1).sum())
+        # Each rectangle belongs to one island, separated from all others.
+        # A rectangle with no sampled texel cannot be accepted for baking.
+        empty=0
+        for x,y,w,h in packing["rectangles"]:
+            x0=max(0,int(np.floor(x)));y0=max(0,int(np.floor(y)))
+            x1=min(size,int(np.ceil(x+w)));y1=min(size,int(np.ceil(y+h)))
+            if not covered[y0:y1,x0:x1].any():empty+=1
+        attempt.update(status="PASS" if occupied>100 and overlap==0 and empty==0 else "REJECTED_COVERAGE",islands=packing["islands"],occupiedTexels=occupied,overlapTexels=overlap,emptyIslandRectangles=empty,relativeScale=packing["relativeScale"])
+        if attempt["status"]!="PASS":continue
+        # The 20-texel AABB separation exceeds two 4-texel bake dilations.
+        record={"size":size,"occupiedTexels":occupied,"overlapTexels":overlap,
+                "minTriangleArea":minarea,"borderPixels":9,"bakeMarginPixels":4,
+                "sampledOnly":True,"sourceRenderUV":primary,"packing":packing,
+                "minimumRectangleGap":gap,"emptyIslandRectangles":empty,
+                "uvSha256":uv_digest(actual),"attempts":attempts}
+        return actual,record
+    raise RuntimeError("bounded UV packing failed "+o.name+" "+json.dumps(attempts))
+
 try:
     report["materialBindingPreflight"]={"synthetic":test_shared_override(),"real":[],"passed":False};write()
     verify_originals()
@@ -131,6 +215,27 @@ try:
         entry["rollback"]=True;report["materialBindingPreflight"]["real"].append(entry);write()
     need(any(q["link"]=="OBJECT" for entry in report["materialBindingPreflight"]["real"] for q in entry["slots"]),"original override regression not covered")
     report["materialBindingPreflight"]["passed"]=True;write()
+    report["uvPreflight"]={"synthetic":test_packer(),"real":[],"passed":False};write()
+    prepared={}
+    for item in targets:
+        o=bpy.data.objects[item["object"]];source=o.data;slots=object_slots[o.name]
+        primary=next((u.name for u in source.uv_layers if u.active_render),None)
+        d=source.copy();clones=[]
+        print("ASC UV PREFLIGHT",o.name,flush=True)
+        try:
+            bind_isolated(o,d,slots,clones)
+            actual,record=prepare_uv(o,d,primary)
+            prepared[o.name]=(actual,record,topology(d))
+        finally:
+            if o.mode!="OBJECT":bpy.ops.object.mode_set(mode="OBJECT")
+            restore_slots(o,source,slots);bpy.context.view_layer.update()
+            bpy.data.meshes.remove(d)
+            for c in clones:bpy.data.materials.remove(c)
+        verify_originals()
+        report["uvPreflight"]["real"].append({"object":o.name,"mesh":source.name,**record,"rollback":True});write()
+    total=sum(record["size"]**2 for _,record,_ in prepared.values())
+    need(total<=12*1024*1024,"bounded diagnostic texture pixel budget")
+    report["uvPreflight"].update(passed=True,totalTexels=total,maxTotalTexels=12*1024*1024);write()
     report["preflight"]=preflight(out);write()
     need(report["preflight"]["passed"],"preventive EXR transfer")
     s.render.engine="CYCLES";s.cycles.device="CPU";s.cycles.samples=64
@@ -147,29 +252,13 @@ try:
             d=source.copy();d.name="Atlas bay baked "+source.name
             bind_isolated(o,d,slots,clones)
             bpy.ops.object.select_all(action="DESELECT");o.select_set(True);bpy.context.view_layer.objects.active=o
-            uv=d.uv_layers.new(name="ASC_BayBake");need(uv.name=="ASC_BayBake","UV layer conflict")
-            d.uv_layers.active=uv
-            bpy.ops.object.mode_set(mode="EDIT");bpy.ops.mesh.select_all(action="SELECT")
-            need("FINISHED" in bpy.ops.uv.smart_project(island_margin=.025),"smart project")
-            need("FINISHED" in bpy.ops.uv.pack_islands(margin_method="FRACTION",margin=.012),"pack islands")
-            bpy.ops.object.mode_set(mode="OBJECT");d.update();d.calc_loop_triangles()
-            uv=d.uv_layers.get("ASC_BayBake");need(uv is not None and len(uv.data)==len(d.loops),"UV reacquire")
-            size=512
-            raw=np.array([tuple(x.uv) for x in uv.data],dtype=np.float64)
-            lo=raw.min(axis=0);hi=raw.max(axis=0);span=hi-lo
-            need(np.isfinite(raw).all() and span.min()>1e-8,"UV extent")
-            fit=(raw-(lo+hi)/2)*((1-16/size)/span.max())+.5
-            for loop,value in zip(uv.data,fit):loop.uv=tuple(value)
-            d.update();uv=d.uv_layers.get("ASC_BayBake");d.uv_layers.active=uv
-            # Bake uses its explicit UV layer; original material graph still sees original render UV.
-            if primary:
-                d.uv_layers[primary].active_render=True
-            else:
-                uv.active_render=True
+            actual,record,signature=prepared[name]
+            need(topology(d)==signature,"preflight topology drift "+name)
+            size=record["size"]
+            uv,_=apply_uv(d,actual,primary,size)
             counts,minarea=uv_occupancy(d,uv,size);covered=counts>0
-            rec["uv"]={"size":size,"occupiedTexels":int(covered.sum()),"overlapTexels":int((counts>1).sum()),"minTriangleArea":minarea,"borderPixels":8,"bakeMarginPixels":4,"sampledOnly":True,"sourceRenderUV":primary}
-            write()
-            need(rec["uv"]["occupiedTexels"]>100 and rec["uv"]["overlapTexels"]==0,"UV coverage "+name)
+            need(int(covered.sum())==record["occupiedTexels"] and int((counts>1).sum())==0,"preflight coverage drift "+name)
+            rec["uv"]=record;write()
             im=bpy.data.images.new(rec["id"],width=size,height=size,alpha=True,float_buffer=True)
             im.colorspace_settings.name="Linear Rec.709"
             need(tuple(p.material_index for p in d.polygons)==original_indices,"material face assignment drift")
