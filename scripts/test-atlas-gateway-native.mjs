@@ -3,7 +3,8 @@ import {readFileSync,mkdirSync,writeFileSync} from "node:fs";
 import {chromium} from "playwright";
 import sharp from "sharp";
 import {parseNativeManifest,nativeRequest} from "../src/features/atlas-gateway/native-asset-policy.ts";
-const [bundle,out,perfBufferMode="transient",navMode="detach-first"]=process.argv.slice(2);
+const [bundle,out,perfBufferMode="transient",navMode="detach-first",qualityMode]=process.argv.slice(2);
+assert(!qualityMode||["fixed","adaptive"].includes(qualityMode));
 assert(["detach-first","navigation-first"].includes(navMode));
 assert(!perfBufferMode||["retained","transient"].includes(perfBufferMode));
 const perfDiagnostic=Boolean(perfBufferMode);
@@ -107,6 +108,27 @@ try{
    const studio=m.hits.find(h=>h.id==="studio");await frame.locator("canvas").click({position:{x:studio.x,y:studio.y}});
    await page.getByRole("status").filter({hasText:"accesso professionale non ancora abilitato"}).waitFor({timeout:15000});
    const esperienze=m.hits.find(h=>h.id==="esperienze");
+   if(qualityMode&&(name.startsWith("large")||name==="desktop")){
+     // Identical sustained workload in both variants. The 45 s budget is for
+     // collecting six animation frames; departure retains the existing 30 s.
+     const toggle=frame.locator("#atlas-astral-toggle");
+     const initial=await frame.evaluate(()=>({state:adaptiveQuality.snapshot(),frames:renderBudget.animationFrames,css:[innerWidth,innerHeight]}));
+     assert.equal(initial.state.adaptive,qualityMode==="adaptive");assert.equal(initial.state.tier,0);
+     const loadStart=Date.now();await toggle.click();
+     await frame.waitForFunction(n=>renderBudget.animationFrames>=n+6,initial.frames,{timeout:45000});
+     await toggle.click();assert.equal(await toggle.getAttribute("aria-pressed"),"false");
+     const final=await frame.evaluate(()=>({state:adaptiveQuality.snapshot(),observations:qualityObservations.slice(),frames:renderBudget.animationFrames,buffer:[renderer.getContext().drawingBufferWidth,renderer.getContext().drawingBufferHeight],css:[innerWidth,innerHeight],hits:NATIVE_PORTALS.map(p=>{const v=new THREE.Vector3(...toThree(p.anchorBlender)).project(camera);return {id:p.id,hit:hitPortal((v.x+1)*innerWidth/2,(1-v.y)*innerHeight/2)}}),triangles:renderer.info.render.triangles,calls:renderer.info.render.calls}));
+     assert(final.frames>=initial.frames+6&&final.observations.length>=6);assert.deepEqual(final.css,initial.css);
+     assert(final.hits.every(p=>p.id===p.hit));assert.equal(final.triangles,m.triangles);assert.equal(final.calls,m.calls);
+     const scale=Math.min(1,Math.sqrt(final.state.limit/(final.css[0]*final.css[1])));
+     assert.deepEqual(final.buffer,final.css.map(x=>Math.max(1,Math.floor(x*scale))));
+     if(qualityMode==="fixed"){assert.equal(final.state.tier,0);assert.equal(final.state.transitions.length,0)}
+     else {assert(final.state.tier>=0&&final.state.tier<=2);assert(final.state.transitions.every(t=>Math.abs(t.to-t.from)===1));}
+     const workloadMs=Date.now()-loadStart;
+     const target=frame.locator("canvas");const png=await target.screenshot({path:out+"/"+name+"-quality-stable.png",timeout:15000});
+     const raw=await sharp(png).removeAlpha().raw().toBuffer();let min=255,max=0;for(const v of raw){min=Math.min(min,v);max=Math.max(max,v)}assert(max-min>32,"Quality candidate blank");
+     m.qualityEvidence={initial,final,workloadMs};
+   }
    // Reproduce the previous large-screen failure with animation still active.
    if(name.startsWith("large")){
      const toggle=frame.locator("#atlas-astral-toggle");const framesBefore=await frame.evaluate(()=>renderBudget.animationFrames);await toggle.click();assert.equal(await toggle.getAttribute("aria-pressed"),"true");
@@ -184,7 +206,7 @@ try{
  assert.equal(await p.locator("iframe").count(),0);await reduced.close();results.push({reducedMotionFallback:"PASS"});
 }finally{
  await browser.close();
- writeFileSync(out+"/native-gateway-receipt.json",JSON.stringify({status:failures.length?"FAIL":"PASS",scope:"local-native-P1-spatial",perfBufferMode,navMode,studentAuthorized:false,publishable:false,destinationControl,results,failures},null,2)+"\n");
+ writeFileSync(out+"/native-gateway-receipt.json",JSON.stringify({status:failures.length?"FAIL":"PASS",scope:"local-native-P1-spatial",perfBufferMode,navMode,qualityMode:qualityMode??null,studentAuthorized:false,publishable:false,destinationControl,results,failures},null,2)+"\n");
  console.log(JSON.stringify({destinationControl,results,failures}));
 }
 assert.equal(failures.length,0,JSON.stringify(failures));assert.equal(results.length,10);
