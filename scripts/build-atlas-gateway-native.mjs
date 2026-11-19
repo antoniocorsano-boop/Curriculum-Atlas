@@ -7,6 +7,7 @@ import {createHash} from "node:crypto";
 import {atlasAnchors,OPTICS} from "./als01/core.mjs";
 const [master,r2,hdr,out]=process.argv.slice(2).map(x=>resolve(x));
 if(process.env.ATLAS_GATEWAY_PREVIEW!=="true"||process.env.ATLAS_GATEWAY_NATIVE_PREVIEW!=="true"||process.env.ATLAS_GITHUB_PAGES==="true"||process.env.ATLAS_PREVIEW_ROOT_SCOPED==="true")throw Error("Native local preview only");
+const delivery=process.env.ATLAS_LIBRARY_WEB_DELIVERY==="true";
 const stage=resolve("public/atlas-gateway-native");
 if(existsSync(stage)||existsSync(out))throw Error("Native staging must be clean");
 const sha=b=>createHash("sha256").update(b).digest("hex");
@@ -48,10 +49,14 @@ try{
  const adapter=readFileSync("scripts/als01/three-adapter.mjs","utf8").replace(/^import .* from "\.\/core\.mjs";\n/m,"").replace(/^export /gm,"");
  const visibility=readFileSync("scripts/atlas-gateway-integration/bay-visibility.mjs","utf8").replace(/^export /gm,"");
  const runtime=readFileSync("scripts/atlas-gateway-integration/native-preview-runtime.js","utf8");
+ const materialBytes=delivery?readFileSync(join(master,"material-study.json")):null;
+ if(delivery&&sha(materialBytes)!=="cdc62198dd97255566f20a1ff48419ecc0540598bf28c517ee7d1fb3f8c9cdc6")throw Error("Verified material study identity");
+ const materialSource=delivery?readFileSync("scripts/atlas-gateway-integration/material-bridge.mjs","utf8").replace(/^export /gm,""):"";
+ const materialScript=delivery?"const ATLAS_MATERIAL_STUDY="+materialBytes.toString("utf8")+";\n"+materialSource+"\n":"const ATLAS_MATERIAL_STUDY=null;\n";
  const script=[engine,loader,rgbe].map(x=>x.toString("utf8")).join("\n;\n")+"\n;const ATLAS_PARENT_ORIGIN=__ATLAS_PARENT_ORIGIN_JSON__;const ATLAS_CHANNEL=__ATLAS_CHANNEL_JSON__;\n"+
  "const ATLAS_ASTRAL=(()=>{"+core+"\n"+adapter+"\nreturn {createAstralLights};})();\n"+
  "const ATLAS_VISIBILITY=(()=>{"+visibility+"\nreturn {createBayVisibility};})();\n"+
- "const NATIVE_CAMERAS="+JSON.stringify(receipt.cameras)+";const NATIVE_PORTALS="+JSON.stringify(receipt.portals)+";const NATIVE_LIGHTING="+JSON.stringify(lighting)+";const NATIVE_ANCHORS="+JSON.stringify(anchors)+";\n"+runtime;
+ "const NATIVE_CAMERAS="+JSON.stringify(receipt.cameras)+";const NATIVE_PORTALS="+JSON.stringify(receipt.portals)+";const NATIVE_LIGHTING="+JSON.stringify(lighting)+";const NATIVE_ANCHORS="+JSON.stringify(anchors)+";\n"+materialScript+runtime;
  if(/<\/script/i.test(script))throw Error("Inline script boundary");
  const controls=[["left","Sinistra"],["right","Destra"],["up","Alto"],["down","Basso"],["near","Avvicina"],["far","Allontana"],["reset","Ripristina"]].map(([id,label])=>'<button type="button" data-action="'+id+'">'+label+'</button>').join("");
  const html='<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="atlas-gateway-local-scene-v1" content="prepared"><meta name="atlas-gateway-native-v1" content="P1-spatial"><meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\'; style-src \'unsafe-inline\'; img-src data: blob:; connect-src \'none\'; font-src \'none\'; object-src \'none\'; base-uri \'none\'; form-action \'none\'"><style>html,body{margin:0;overflow:hidden;background:#182634;height:100%}canvas{display:block;width:100%;height:100%;touch-action:none}#native-status{position:fixed;inset:0;display:grid;place-items:center;color:#fff;font:16px system-ui;background:#182634}#native-status[hidden],#native-controls[hidden]{display:none}#native-controls{position:fixed;bottom:6px;left:6px;right:6px;display:flex;justify-content:center;flex-wrap:wrap;gap:4px}button{min-height:44px;padding:4px 8px;border:1px solid #bda77b;border-radius:9px;background:#142634;color:#fff;font:12px system-ui;cursor:pointer}button:focus-visible{outline:3px solid #fff}</style></head><body><canvas aria-label="Biblioteca Atlas tridimensionale"></canvas><div id="native-status" role="status">Preparazione della biblioteca…</div><nav id="native-controls" aria-label="Controlli della visuale" hidden>'+controls+'<button id="atlas-astral-toggle" type="button" aria-pressed="false">Anima luci</button></nav><script>'+script+'</script></body></html>';
@@ -62,7 +67,7 @@ try{
   writeFileSync(join(out,"scene.html"),html);
   writeFileSync(join(out,"native-manifest.json"),JSON.stringify(manifest,null,2)+"\n");
   writeFileSync(join(out,"THREE-LICENSE.txt"),license);
-  const evidence={profile:"P1-spatial",materialDetailApplied:false,sceneSha256:sha(Buffer.from(html)),manifestSha256:sha(readFileSync(join(out,"native-manifest.json"))),assets:manifest.assets,totalBytes:resources.reduce((n,r)=>n+r.bytes.length,0),studentAuthorized:false,publishable:false};
+  const evidence={profile:delivery?"M2-micro-integrated":"P1-spatial",materialDetailApplied:delivery,materialStudySha256:materialBytes?sha(materialBytes):null,sceneSha256:sha(Buffer.from(html)),manifestSha256:sha(readFileSync(join(out,"native-manifest.json"))),assets:manifest.assets,totalBytes:resources.reduce((n,r)=>n+r.bytes.length,0),studentAuthorized:false,publishable:false};
   writeFileSync(join(out,"native-build-receipt.json"),JSON.stringify(evidence,null,2)+"\n");console.log(JSON.stringify(evidence));
  }catch(e){rmSync(stage,{recursive:true,force:true});throw e}
 }finally{rmSync(temp,{recursive:true,force:true})}
