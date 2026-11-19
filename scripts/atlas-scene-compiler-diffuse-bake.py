@@ -188,6 +188,9 @@ try:
     for i in range(len(derived.materials)):derived.materials[i]=preview
     bpy.context.view_layer.update()
     cand=render("native-baked-preview")
+    if os.environ.get("ATLAS_P2C3_ORACLE"):
+        from atlas_material_ablation import run as material_ablation
+        material_ablation(out,s,o,source,derived,uv,transferred,ref,render,report)
     o.data=source;bpy.context.view_layer.update();restored=render("native-restored")
     report["comparisons"]={"candidate":compare(ref,cand),"restored":compare(ref,restored)}
     q=report["comparisons"]["restored"]
