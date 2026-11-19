@@ -72,7 +72,7 @@ def make_transfer(definition,source,prior):
             "pedagogicalScope":"simulated sensor A/B; four MZ locales remain in authored 2D experience; 3D Sala Zero technical fixture only",
             "sourceNarrative":story["narrative"],"transferReference":story["transferReference"],
             "authority":definition["authority"],"readyForProduction":False,"studentAuthorized":False,
-            "publishable":False,"artisticApproval":False,"deviceQualified":False,"curriculumAuthorityChanged":False}
+            "publishable":False,"artisticApproval":False,"deviceQualified":False,"curricoloAuthorityChanged":False}
     result["planSha256"]=awc.asd.digest(result)
     return result
 
