@@ -65,7 +65,7 @@ def validate(index,catalog,report):
     files=set()
     for key,r in index["receipts"].items():
         shape(r,{"archive","file","sha256","schema","status"},"receipt shape")
-        require(r["archive"] in index["archives"] and re.fullmatch(r"[a-z][a-z0-9-]*\\.json",r["file"]) is not None
+        require(r["archive"] in index["archives"] and re.fullmatch(r"[a-z][a-z0-9-]*[.]json",r["file"]) is not None
                 and hex64(r["sha256"]) and r["schema"].startswith("atlas.asc01."),"receipt identity")
         require(r["status"] is None or (type(r["status"]) is str and r["status"].startswith("PASS_")),"receipt status")
         pair=(r["archive"],r["file"]);require(pair not in files,"duplicate receipt file");files.add(pair)
