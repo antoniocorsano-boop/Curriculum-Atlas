@@ -4,6 +4,9 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - "scripts/build-atlas-gateway-native.mjs"
+      - "scripts/atlas-library-static/**"
+      - "scripts/atlas-library-static-assemble.mjs"
+      - "scripts/test-atlas-library-static-web.mjs"
       - "scripts/test-atlas-gateway-native.mjs"
       - "scripts/test-atlas-gateway-native-preflight.mjs"
       - "scripts/test-atlas-gateway-navigation-differential.mjs"
@@ -138,6 +141,31 @@ jobs:
           path: ${{ runner.temp }}/atlas-web-linux-x64.tar.gz
           if-no-files-found: error
           retention-days: 30
+      - name: Build complete static library with its real Atlas destinations
+        if: env.ATLAS_LIBRARY_WEB_DELIVERY == 'true'
+        env:
+          ATLAS_PREVIEW_ROOT_SCOPED: "true"
+          ATLAS_LIBRARY_STATIC_PREVIEW: "true"
+          ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          node --check scripts/atlas-library-static-assemble.mjs
+          node --check scripts/atlas-library-static/host.js
+          node --check scripts/test-atlas-library-static-web.mjs
+          pnpm build
+          node scripts/test-percorsi-publication-filter.mjs
+          node scripts/filter-unauthorized-pathway-routes.mjs out
+          node scripts/atlas-library-static-assemble.mjs "$RUNNER_TEMP/native-gateway" out
+          node scripts/validate-atlas-preview-contract.mjs out "$ATLAS_EXACT_HEAD"
+          node scripts/test-atlas-library-static-web.mjs out "$RUNNER_TEMP/native-gateway/evidence/static-web"
+      - name: Preserve complete static Web library
+        if: success() && env.ATLAS_LIBRARY_WEB_DELIVERY == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-library-static-${{ github.event.pull_request.head.sha }}
+          path: out/
+          if-no-files-found: error
+          retention-days: 7
       - name: Remove staging
         if: always()
         run: rm -rf public/atlas-gateway-native
