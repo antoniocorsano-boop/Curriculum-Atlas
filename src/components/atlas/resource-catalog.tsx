@@ -5,6 +5,7 @@ import { CheckCircle2, CircleAlert, FileText, Image, Link2, MonitorPlay, Present
 import { useMemo, useState } from "react";
 import { atlasResources, publicDisciplines, publishedLessons } from "@/features/materials/fixtures";
 import type { ResourceKind } from "@/features/curriculum/model";
+import { findObjective } from "@/features/curriculum/fixtures";
 
 const icons: Record<ResourceKind, React.ComponentType<{ size?: number; "aria-hidden"?: boolean }>> = {
   Scheda: FileText,
@@ -98,7 +99,13 @@ export function ResourceCatalog() {
                 <footer>
                   <strong>Collegamenti curricolari</strong>
                   <div className="atlas-chip-row">
-                    {resource.objectiveIds.map(id => <Link key={id} className="atlas-chip" href={"/obiettivi/" + id}>{id}</Link>)}
+                    {resource.objectiveIds.map(id => {
+                      const match = findObjective(id);
+                      if (!match || match.discipline.id !== resource.disciplineId || !resource.schoolStages.some(stage => stage === match.band.schoolStage)) {
+                        return <span key={id} className="atlas-chip">Raccordo da verificare</span>;
+                      }
+                      return <Link key={id} className="atlas-chip" href={"/obiettivi/" + id}>{match.objective.title}</Link>;
+                    })}
                   </div>
                 </footer>
               )}
