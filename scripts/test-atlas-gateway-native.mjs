@@ -3,7 +3,8 @@ import {readFileSync,mkdirSync,writeFileSync} from "node:fs";
 import {chromium} from "playwright";
 import sharp from "sharp";
 import {parseNativeManifest,nativeRequest} from "../src/features/atlas-gateway/native-asset-policy.ts";
-const [bundle,out,perfBufferMode]=process.argv.slice(2);
+const [bundle,out,perfBufferMode="transient",navMode="detach-first"]=process.argv.slice(2);
+assert(["detach-first","navigation-first"].includes(navMode));
 assert(!perfBufferMode||["retained","transient"].includes(perfBufferMode));
 const perfDiagnostic=Boolean(perfBufferMode);
 const manifest=parseNativeManifest(JSON.parse(readFileSync(bundle+"/native-manifest.json","utf8")));
@@ -91,7 +92,7 @@ try{
   page.on("requestfailed",r=>routeEvents.push({url:r.url(),failure:r.failure()?.errorText}));
   page.on("crash",()=>routeEvents.push({crash:true}));
   page.on("pageerror",e=>errors.push(e.message));
-  page.on("console",m=>{const t=m.text();if(m.type()==="error"||t.startsWith("ATLAS_NATIVE_"))diagnostics.push(t);if(t==="ATLAS_NATIVE_FRAME_DETACHED"||t==="ATLAS_NATIVE_DOCUMENT_NAV_START"||t==="ATLAS_NATIVE_DETACH_BEGIN"||t==="ATLAS_NATIVE_CLOSED"||t.startsWith("ATLAS_NATIVE_NAV_ACCEPT "))routeEvents.push({checkpoint:t,at:Date.now()});});
+  page.on("console",m=>{const t=m.text();if(m.type()==="error"||t.startsWith("ATLAS_NATIVE_"))diagnostics.push(t);if(t==="ATLAS_NATIVE_FRAME_DETACHED"||t==="ATLAS_NATIVE_DOCUMENT_NAV_START"||t==="ATLAS_NATIVE_FRAME_RETAINED"||t==="ATLAS_NATIVE_DETACH_BEGIN"||t==="ATLAS_NATIVE_CLOSED"||t.startsWith("ATLAS_NATIVE_NAV_ACCEPT "))routeEvents.push({checkpoint:t,at:Date.now()});});
   // Observe local requests passively. Routing every local response changes
   // Chromium request scheduling and disables its HTTP cache.
   page.on("request",req=>{const u=new URL(req.url());if(u.origin===origin&&u.pathname.startsWith("/atlas-gateway-native/"))assets.push(u.pathname);if(u.origin===origin&&req.isNavigationRequest()&&req.resourceType()==="document"&&["/esperienze/","/curricolo/"].includes(u.pathname))routeEvents.push({checkpoint:"document-request",path:u.pathname,at:Date.now()});});
@@ -136,7 +137,10 @@ try{
      const request=routeEvents.findIndex(e=>e.checkpoint==="document-request"&&e.path===path);
      const start=routeEvents.findLastIndex((e,i)=>i<request&&e.checkpoint==="ATLAS_NATIVE_DOCUMENT_NAV_START");
      const detached=routeEvents.findLastIndex((e,i)=>i<start&&e.checkpoint==="ATLAS_NATIVE_FRAME_DETACHED");
-     assert(detached>=0&&detached<start&&start<request,"Expected committed frame removal before document request: "+path);
+     if(navMode==="navigation-first"){
+       const retained=routeEvents.findLastIndex((e,i)=>i<start&&e.checkpoint==="ATLAS_NATIVE_FRAME_RETAINED");
+       assert(retained>=0&&retained<start&&start<request&&detached<0,"Expected document request without prior iframe removal: "+path);
+     }else assert(detached>=0&&detached<start&&start<request,"Expected committed frame removal before document request: "+path);
    }
    assertDetachedBeforeDocument("/esperienze/");
    assert(routeEvents.some(e=>e.resourceType==="document"&&e.status===200&&new URL(e.url).pathname==="/esperienze/"),"Expected full document navigation");
@@ -180,7 +184,7 @@ try{
  assert.equal(await p.locator("iframe").count(),0);await reduced.close();results.push({reducedMotionFallback:"PASS"});
 }finally{
  await browser.close();
- writeFileSync(out+"/native-gateway-receipt.json",JSON.stringify({status:failures.length?"FAIL":"PASS",scope:"local-native-P1-spatial",perfBufferMode:perfBufferMode??null,studentAuthorized:false,publishable:false,destinationControl,results,failures},null,2)+"\n");
+ writeFileSync(out+"/native-gateway-receipt.json",JSON.stringify({status:failures.length?"FAIL":"PASS",scope:"local-native-P1-spatial",perfBufferMode,navMode,studentAuthorized:false,publishable:false,destinationControl,results,failures},null,2)+"\n");
  console.log(JSON.stringify({destinationControl,results,failures}));
 }
 assert.equal(failures.length,0,JSON.stringify(failures));assert.equal(results.length,10);
