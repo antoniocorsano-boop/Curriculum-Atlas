@@ -1,0 +1,163 @@
+name: Atlas — PERF-04 adaptive quality experiment
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "scripts/prepare-atlas-perf-quality.mjs"
+      - "scripts/atlas-gateway-integration/adaptive-quality.mjs"
+      - "scripts/test-atlas-adaptive-quality.mjs"
+      - "scripts/compare-atlas-perf-quality.mjs"
+      - "scripts/test-atlas-gateway-native.mjs"
+      - "scripts/test-atlas-gateway-navigation-differential.mjs"
+      - "scripts/atlas-gateway-integration/native-preview-runtime.js"
+      - "src/features/atlas-gateway/**"
+      - ".github/workflows/atlas-perf-quality.yml"
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-perf-quality-${{ github.event.pull_request.head.ref }}
+  cancel-in-progress: true
+jobs:
+  perf-quality:
+    name: PERF-04 ${{ matrix.quality }}
+    strategy:
+      fail-fast: false
+      matrix:
+        quality: [fixed, adaptive]
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && (github.event.pull_request.head.ref == 'work/atlas-gateway-native-preview' || github.event.pull_request.head.ref == 'work/atlas-scene-consolidated') && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      ATLAS_GATEWAY_PREVIEW: "true"
+      ATLAS_GATEWAY_NATIVE_PREVIEW: "true"
+      ATLAS_PERF_QUALITY: ${{ matrix.quality }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Install existing dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Test policy and prepare isolated quality variant
+        run: |
+          node scripts/test-atlas-adaptive-quality.mjs
+          node scripts/prepare-atlas-perf-quality.mjs "$ATLAS_PERF_QUALITY" "$RUNNER_TEMP/perf-quality"
+      - name: Verify types and lint
+        run: |
+          pnpm typecheck
+          pnpm lint
+          node --experimental-strip-types --test scripts/test-atlas-gateway-ag03.mjs
+      - name: Recover exact native master, R2 and HDR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          mkdir -p native-input master-transport master-r2
+          fetch() {
+            echo "Recovering locked artifact $1"
+            rm -f "$2.part"
+            # Bounded retries on transient HTTP 408/429/5xx and transport failures.
+            # A missing artifact or incorrect digest remains a hard failure.
+            curl --fail --silent --show-error --location --retry 4 --retry-delay 2 --retry-max-time 180 --retry-connrefused --max-time 90 --remove-on-error -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$1/zip" -o "$2.part"
+            printf '%s  %s\n' "$3" "$2.part" | sha256sum --strict --check
+            mv "$2.part" "$2"
+          }
+          fetch 14431658842 native-input/master.zip 485ccce1129920017a04acc737a581693289950eb250fda2b5fa1e524e8f0d8b
+          fetch 14413232678 native-input/base.zip ecc9522d03d802668343bf87a387fa4b5e353fa40b2e4f266e18e9ab25d6383a
+          fetch 14416938462 native-input/r2.zip 84f1786ee98dac231f0d8fde0dd34bd1d1724f7ef707c1257b4fc824f3ade3ed
+          unzip -q native-input/master.zip -d master-transport
+          unzip -p native-input/base.zip atlas-c32/assets/kloppenheim_03.hdr > native-input/ambient.hdr
+          unzip -p native-input/r2.zip four-stars.glb > master-r2/four-stars.glb
+      - name: Stage verified local native preview only
+        run: |
+          set -euo pipefail
+          node --check scripts/atlas-gateway-integration/native-preview-runtime.js
+          node scripts/build-atlas-gateway-native.mjs "$RUNNER_TEMP/master-transport" "$RUNNER_TEMP/master-r2" "$RUNNER_TEMP/native-input/ambient.hdr" "$RUNNER_TEMP/native-gateway"
+          test -z "$(git status --porcelain -- public/atlas-gateway-native)"
+          echo "ATLAS_GATEWAY_SCENE_FILE=$RUNNER_TEMP/native-gateway/scene.html" >> "$GITHUB_ENV"
+          echo "ATLAS_GATEWAY_SCENE_SHA256=$(sha256sum "$RUNNER_TEMP/native-gateway/scene.html" | cut -d' ' -f1)" >> "$GITHUB_ENV"
+          echo "ATLAS_GATEWAY_NATIVE_MANIFEST=$RUNNER_TEMP/native-gateway/native-manifest.json" >> "$GITHUB_ENV"
+          echo "ATLAS_GATEWAY_NATIVE_MANIFEST_SHA256=$(sha256sum "$RUNNER_TEMP/native-gateway/native-manifest.json" | cut -d' ' -f1)" >> "$GITHUB_ENV"
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Preflight exact native scene and teardown before application build
+        run: |
+          node --experimental-strip-types scripts/test-atlas-gateway-native-preflight.mjs "$RUNNER_TEMP/native-gateway" "$RUNNER_TEMP/native-gateway/evidence/preflight"
+      - name: Build local native Gateway candidate
+        run: pnpm build
+      - name: Exercise actual route, portals, isolated assets and fallbacks
+        run: |
+          set -euo pipefail
+          pnpm start --hostname 127.0.0.1 > "$RUNNER_TEMP/native-gateway/server.log" 2>&1 &
+          trap 'kill $! 2>/dev/null || true' EXIT
+          for i in {1..60}; do
+            if curl -fsS http://127.0.0.1:3000/gateway/ >/dev/null; then
+              node --experimental-strip-types scripts/test-atlas-gateway-navigation-differential.mjs "$RUNNER_TEMP/native-gateway" "$RUNNER_TEMP/native-gateway/evidence/differential" detach-first
+              node --experimental-strip-types scripts/test-atlas-gateway-native.mjs "$RUNNER_TEMP/native-gateway" "$RUNNER_TEMP/native-gateway/evidence" transient detach-first "$ATLAS_PERF_QUALITY"
+              exit 0
+            fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/native-gateway/server.log"
+          exit 1
+      - name: Preserve native preview evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-perf-quality-${{ matrix.quality }}
+          path: |
+            ${{ runner.temp }}/native-gateway/native-manifest.json
+            ${{ runner.temp }}/native-gateway/native-build-receipt.json
+            ${{ runner.temp }}/perf-quality/perf-quality-variant.json
+            ${{ runner.temp }}/native-gateway/THREE-LICENSE.txt
+            ${{ runner.temp }}/native-gateway/server.log
+            ${{ runner.temp }}/native-gateway/evidence/
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Remove staging
+        if: always()
+        run: rm -rf public/atlas-gateway-native
+
+  compare:
+    name: PERF-04 compare load, quality and visual evidence
+    needs: perf-quality
+    if: always() && github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-scene-consolidated' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: atlas-perf-quality-*
+          path: ${{ runner.temp }}/perf-quality
+      - name: Compare both modes without automatic promotion
+        run: node scripts/compare-atlas-perf-quality.mjs "$RUNNER_TEMP/perf-quality"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: atlas-perf-quality-comparison
+          path: ${{ runner.temp }}/perf-quality/perf-quality-comparison.json
+          retention-days: 7
+          if-no-files-found: warn
+
+# Local read-only experimental qualification. No merge or deployment.
