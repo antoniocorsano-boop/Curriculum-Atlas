@@ -1,6 +1,44 @@
 /* Local native master candidate. No independent navigation or deployment. */
 let renderer,scene,camera,visibility,als,starGroup,portalGroup,environmentTarget,failed=false,ready=false,motion=false;
 let frameId=0,angle=0,tilt=0,distance=1,closing=false,released=false;
+// NAV-STAB-02: cap physical raster work, not CSS layout or geometry.
+// 1 Mi pixels: preserve native resolution on smaller views; bound wide views.
+const NATIVE_MAX_RASTER_PIXELS=1048576;
+let rasterWidth=0,rasterHeight=0,frameFence=null;
+const renderBudget={maxPixels:NATIVE_MAX_RASTER_PIXELS,cssWidth:0,cssHeight:0,bufferWidth:0,bufferHeight:0,scale:1,frames:0,animationFrames:0,backpressureSkips:0,fenceSupported:false,lastSubmitMs:0};
+function resizeRaster(w,h){
+  if(rasterWidth===w&&rasterHeight===h)return;
+  const scale=Math.min(1,Math.sqrt(NATIVE_MAX_RASTER_PIXELS/(w*h)));
+  // CSS fills the stage; camera and hit-testing keep CSS-pixel coordinates.
+  // A single setSize with physical dimensions avoids a transient full buffer.
+  const bw=Math.max(1,Math.floor(w*scale)),bh=Math.max(1,Math.floor(h*scale));
+  renderer.setSize(bw,bh,false);
+  rasterWidth=w;rasterHeight=h;
+  const gl=renderer.getContext();
+  Object.assign(renderBudget,{cssWidth:w,cssHeight:h,bufferWidth:gl.drawingBufferWidth,bufferHeight:gl.drawingBufferHeight,scale:Math.min(bw/w,bh/h),fenceSupported:typeof gl.fenceSync==="function"&&typeof gl.clientWaitSync==="function"});
+  if(renderBudget.bufferWidth*renderBudget.bufferHeight>NATIVE_MAX_RASTER_PIXELS)throw Error("Native raster budget exceeded");
+  console.info("ATLAS_NATIVE_RENDER_BUDGET "+JSON.stringify(renderBudget));
+}
+// Nonblocking WebGL2 backpressure: no sync wait, readback or resource
+// disposal on navigation. WebGL1 retains the bounded animation cadence.
+function animationSlot(){
+  if(!frameFence)return true;
+  const gl=renderer.getContext();
+  const status=gl.clientWaitSync(frameFence,0,0);
+  if(status===gl.TIMEOUT_EXPIRED){renderBudget.backpressureSkips++;return false}
+  gl.deleteSync(frameFence);frameFence=null;
+  if(status===gl.WAIT_FAILED){renderBudget.fenceSupported=false}
+  return true;
+}
+function recordSubmission(){
+  if(!renderBudget.fenceSupported)return;
+  const gl=renderer.getContext();
+  if(frameFence)gl.deleteSync(frameFence);
+  frameFence=gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE,0);
+  if(!frameFence){renderBudget.fenceSupported=false;return}
+  // Submit, never wait for completion. The next animation tick polls once.
+  gl.flush();
+}
 const lifecycle=new AbortController(),events={signal:lifecycle.signal};
 function assertActive(){if(closing||failed)throw Error("Native scene inactive");}
 function cancelFrame(){if(frameId)clearTimeout(frameId);frameId=0;}
@@ -134,18 +172,19 @@ function setCamera(){
   // generous vertical field rather than cropping the original cupola.
   camera.fov=Math.max(55,THREE.MathUtils.radToDeg(2*Math.atan(36/view.lensMm/(aspect>=1?aspect:1)/2)));
   camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
-  if(canvas.width!==w||canvas.height!==h)renderer.setSize(w,h);visibility.update(camera);
+  resizeRaster(w,h);visibility.update(camera);
 }
 function render(t=0){
   if(!ready||failed||closing)return;
   visibility.update(camera);
-  als.update(Math.max(0,t/1000),{viewportWidth:innerWidth,viewportHeight:innerHeight,pixelRatio:renderer.getPixelRatio(),backdrop:"light",paused:!motion||document.hidden,reducedMotion:reduced.matches});
-  renderer.render(scene,camera);
+  als.update(Math.max(0,t/1000),{viewportWidth:innerWidth,viewportHeight:innerHeight,pixelRatio:renderBudget.scale,backdrop:"light",paused:!motion||document.hidden,reducedMotion:reduced.matches});
+  const start=performance.now();renderer.render(scene,camera);recordSubmission();
+  renderBudget.frames++;renderBudget.lastSubmitMs=Math.round(performance.now()-start);
 }
 function loop(t){
   frameId=0;if(!ready||failed||closing||!motion||document.hidden)return;
   if(down)return;
-  render(t);scheduleFrame();
+  if(animationSlot()){render(t);renderBudget.animationFrames++}scheduleFrame();
 }
 function stopMotion(redraw=true){
   cancelFrame();motion=false;
@@ -157,6 +196,7 @@ function quiesce(){
   closing=true;ready=false;motion=false;nativePhase="closed";cancelFrame();
   lifecycle.abort();down=null;
   console.info("ATLAS_NATIVE_CLOSED");
+  console.info("ATLAS_NATIVE_RENDER_FINAL "+JSON.stringify(renderBudget));
 }
 function shutdown(){
   quiesce();if(released)return;released=true;
@@ -175,7 +215,7 @@ function shutdown(){
   if(scene?.background?.isTexture)textures.add(scene.background);
   for(const texture of textures)texture.dispose();
   environmentTarget?.dispose();environmentTarget=null;
-  if(renderer){renderer.dispose();renderer.forceContextLoss();}
+  if(renderer){if(frameFence){renderer.getContext().deleteSync(frameFence);frameFence=null}renderer.dispose();renderer.forceContextLoss();}
   console.info("ATLAS_NATIVE_RESOURCES_RELEASED");
 }
 function reset(){angle=0;tilt=0;distance=1;setCamera();render()}
