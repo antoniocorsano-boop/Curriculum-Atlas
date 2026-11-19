@@ -4,7 +4,7 @@ import {createHash} from "node:crypto";
 import {readFileSync,writeFileSync} from "node:fs";
 import {join,resolve} from "node:path";
 import {chromium} from "playwright";
-const [source,out,enginePath]=process.argv.slice(2).map(resolve);
+const [source,out,enginePath]=process.argv.slice(2).map(x=>resolve(x));
 const sha=b=>createHash("sha256").update(b).digest("hex");
 const plan=JSON.parse(readFileSync(join(source,"transfer-plan.json")));
 assert.equal(plan.schema,"atlas.awc.transfer-plan/v1");
