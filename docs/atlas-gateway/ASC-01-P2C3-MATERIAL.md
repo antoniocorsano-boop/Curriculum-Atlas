@@ -1,0 +1,21 @@
+# ASC-01/P2C3A — Qualità materica: confronto controllato sul noce della biblioteca
+
+19 novembre 2026. Stato: candidata, risultato non ancora osservato.
+Base: PR #140, 89c5a2556e86ad311c3b89a70fdd05ff7f5ba8e9, 5/5 workflow positivi.
+B2c: confronto Blender/Three.js r128 su quattro fotogrammi, massimo 1/255; riferimento e ripristino identici. Run 44552444973, artifact 14542299308, SHA-256 0e27ddcfed94a39be33af84862318e29111a129ad7acc2b1f94af56c8c6acfb8. Nessuna promozione artistica. AWC-A #136 separata.
+
+## Obiettivo
+Individuare quale contributo del materiale originale si perde nel trasferimento esclusivamente diffuso, evitando di aggiungere geometria o avviare altri laboratori cromatici. Target reale già verificato: noce incassato, campata 04-0, camera context, 108 triangoli. La sorgente resta il master Blender immutabile. L'esperimento è isolato e reversibile, non una modifica dell'ambientazione pubblicata.
+
+## Metodo
+- Recupero dei pacchetti originali e delle ricevute P2a/P2b, B2a e B2c tramite hash, mantenendo il motore e la camera qualificati. Ripetere il bake soltanto per produrre un abbinamento UV/texture coerente con la mesh derivata utilizzata da Cycles; non dichiarare identità con le UV storiche.
+- Inventario dei nodi e delle effettive connessioni colore, rugosità, normale, IOR e rivestimento. Rifiutare topologie non supportate e materiali non dielettrici/opachi. Conservare il riferimento di materiale originale.
+- Controllo della mesh derivata con materiale originale, ripristinando l'UV primaria, per distinguere deriva geometrica/UV da differenze di materiale.
+- Confronto camera-only: (D) diffusione precalcolata, (H) stessa diffusione più lobo speculare dinamico del Principled originale con base nera; le altre componenti restano quelle documentate, le connessioni di rugosità e normale vengono mantenute. Per i raggi non provenienti dalla camera si conserva lo shader originale. Il lobo nero è una approssimazione sperimentale, non una decomposizione fisicamente esatta; non dedurre equivalenza di glTF/WebGL.
+- Confrontare con il riferimento sui 1068 campioni target stabili B2a, conservare media, p95, massimo e media del fotogramma. Controllo derivato: media frame <=0.0002 e target <=0.001. Candidato al riesame visivo soltanto se H riduce la media target di oltre il 5% rispetto a D. Un esito senza miglioramento è un risultato sperimentale valido, non approvazione del materiale. Conservare anche eventuali fallimenti.
+- Conservare sei immagini reali, ricevute, EXR, impronte, e ripristino; nessuna promozione automatica. Un materiale privo di collegamenti microstrutturali non dimostra che siano state recuperate venature o normali: registrare quanto effettivamente presente.
+
+Riferimenti tecnici: Blender 4.2 Principled BSDF https://docs.blender.org/manual/en/4.2/render/shader_nodes/shader/principled.html ; Light Path https://docs.blender.org/manual/en/4.2/render/shader_nodes/input/light_path.html ; Cycles baking https://docs.blender.org/manual/en/4.2/render/cycles/baking.html . Le proprietà reali sono lette dal master, non dedotte dalla documentazione.
+
+## Confini e prossima decisione
+La procedura qualifica esclusivamente il confronto in Cycles. Non dimostra qualità artistica complessiva, prestazioni o trasporto WebGL del lobo speculare. Con esito positivo, riesaminare le immagini e qualificare le componenti microstrutturali effettivamente presenti, il margine fra isole UV e il filtraggio; trasferire soltanto le componenti che apportano un beneficio dimostrato. Se la differenza è insufficiente, valutare il materiale reale e il budget prima di un ciclo correttivo circoscritto. Conservare la prova e la decisione nel dossier ASC/ASP per AWC-B, evitando una nuova infrastruttura. Master e runtime invariati, nessun merge/deploy, nessuna spesa o accesso studenti. Artefatti CI temporanei, da conservare prima della promozione.
