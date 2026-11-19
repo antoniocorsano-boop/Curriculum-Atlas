@@ -30,21 +30,54 @@ def inventory(collection):
             d.update(body=o.data.body,size=float(o.data.size),materials=[x.name for x in o.data.materials])
         rows.append(d)
     return rows
-if args[0]=="verify-library":
-    path,receipt=map(Path,args[1:])
-    r=json.loads(receipt.read_text())
-    require(sha(path)==r["librarySha256"],"library digest")
-    with bpy.data.libraries.load(str(path),link=False) as (src,dst):
-        require(set(src.collections)==set(r["assets"]),"unexpected library collections")
-        dst.collections=sorted(src.collections)
-    for c in dst.collections:
+def dependency_audit():
+    # A Library record alone is not evidence of a live linked datablock.
+    # Inspect all ID types, not merely the appended Object IDs.
+    ids=set(bpy.data.user_map().keys())
+    for prop in bpy.data.bl_rna.properties:
+        if prop.type!="COLLECTION":continue
+        try:ids.update(x for x in getattr(bpy.data,prop.identifier) if isinstance(x,bpy.types.ID))
+        except (TypeError,AttributeError):continue
+    linked=sorted([{"type":x.bl_rna.identifier,"name":x.name,"library":x.library.filepath} for x in ids if x.library],key=lambda x:(x["type"],x["name"],x["library"]))
+    return {"linkedIDs":linked,"libraryRecords":[{"name":x.name,"filepath":x.filepath,"users":x.users} for x in bpy.data.libraries],"fileImages":[i.filepath for i in bpy.data.images if i.source=="FILE" and not i.packed_file],"externalFonts":[f.filepath for f in bpy.data.fonts if f.filepath not in ("","<builtin>") and not f.packed_file]}
+def validate_assets(collections,r):
+    require(set(c.name for c in collections)==set(r["assets"]),"unexpected asset collections")
+    for c in collections:
         require(c and inventory(c)==r["assets"][c.name]["objects"],"asset roundtrip drift "+str(c))
-        require(all(not o.library for o in c.all_objects),"unexpected linked asset")
-    require(not bpy.data.libraries,"external library dependency")
-    require(all(c.asset_data for c in dst.collections),"asset metadata not preserved")
-    require(not any(i.source=="FILE" for i in bpy.data.images),"external image dependency")
-    (receipt.parent/"library-roundtrip.json").write_text(json.dumps({"status":"PASS","librarySha256":sha(path),"assets":sorted(r["assets"]),"objectInventoriesEqual":True,"externalDependencies":False},indent=2)+"\n")
-    print("ART_LEARN_05B_LIBRARY_ROUNDTRIP PASS",flush=True)
+        require(c.asset_data and not c.library,"asset metadata/locality")
+    audit=dependency_audit()
+    require(not any(audit[k] for k in ("linkedIDs","fileImages","externalFonts")),"live external dependencies: "+json.dumps(audit))
+    return audit
+
+if args[0] in ("verify-library","verify-offline"):
+    path,receipt=map(Path,args[1:3])
+    r=json.loads(receipt.read_text());out=receipt.parent
+    if args[0]=="verify-library":
+        require(sha(path)==r["librarySha256"],"library digest")
+        with bpy.data.libraries.load(str(path),link=False) as (src,dst):
+            require(set(src.collections)==set(r["assets"]),"unexpected library collections")
+            dst.collections=sorted(src.collections)
+        for c in dst.collections:bpy.context.scene.collection.children.link(c)
+        audit=dependency_audit()
+        (out/"library-append-audit.json").write_text(json.dumps(audit,indent=2)+"\n")
+        validate_assets(dst.collections,r)
+        target=out/"Atlas-Book-Offline-Test.blend"
+        bpy.ops.wm.save_as_mainfile(filepath=str(target),compress=True)
+        require(target.is_file(),"independent file not written")
+        print("ART_LEARN_05B_APPEND PASS",json.dumps(audit),flush=True)
+    else:
+        require(len(args)==4,"offline source path required")
+        require(not Path(args[3]).exists(),"original library still accessible")
+        require(Path(bpy.data.filepath).resolve()==path.resolve(),"offline file not opened")
+        collections=[bpy.data.collections.get(n) for n in sorted(r["assets"])]
+        require(all(collections),"missing appended collections")
+        audit=dependency_audit()
+        (out/"library-offline-audit.json").write_text(json.dumps(audit,indent=2)+"\n")
+        validate_assets(collections,r)
+        require(all(c in list(bpy.context.scene.collection.children) for c in collections),"collections not in independent scene")
+        q={"status":"PASS","librarySha256":r["librarySha256"],"offlineFileSha256":sha(path),"assets":sorted(r["assets"]),"objectInventoriesEqual":True,"externalDependencies":False,"sourceUnavailableOnReopen":True,"appendAudit":json.loads((out/"library-append-audit.json").read_text()),"offlineAudit":audit}
+        (out/"library-roundtrip.json").write_text(json.dumps(q,indent=2)+"\n")
+        print("ART_LEARN_05B_LIBRARY_ROUNDTRIP PASS",json.dumps(audit),flush=True)
     sys.exit(0)
 
 master,prior,out=map(lambda x:Path(x).resolve(),args)
