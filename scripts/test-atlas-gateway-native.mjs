@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import {readFileSync,mkdirSync,writeFileSync} from "node:fs";
 import {chromium} from "playwright";
+import sharp from "sharp";
 import {parseNativeManifest,nativeRequest} from "../src/features/atlas-gateway/native-asset-policy.ts";
-const [bundle,out]=process.argv.slice(2);
+const [bundle,out,perfBufferMode]=process.argv.slice(2);
+assert(!perfBufferMode||["retained","transient"].includes(perfBufferMode));
+const perfDiagnostic=Boolean(perfBufferMode);
 const manifest=parseNativeManifest(JSON.parse(readFileSync(bundle+"/native-manifest.json","utf8")));
 assert(manifest);assert.equal(manifest.assets.length,8);
 const channel="a".repeat(48);
@@ -37,7 +40,7 @@ async function inspect(page,device){
    const baseline=capture(),calls=renderer.info.render.calls,triangles=renderer.info.render.triangles;
    function effect(o){o.visible=false;const b=capture();o.visible=true;let count=0;for(let i=0;i<b.length;i+=4)if(Math.abs(b[i]-baseline[i])+Math.abs(b[i+1]-baseline[i+1])+Math.abs(b[i+2]-baseline[i+2])>12)count++;return count}
    const cupola=effect(groupMap.cupola),stars=effect(starGroup),lights=effect(als.object);capture();
-   return {revision:THREE.REVISION,stats,calls,triangles,meshes,vertices,points:als.object.geometry.attributes.position.count,cupola,stars,lights,sky:!!scene.background,centers,hits,controls,motion,decoded:nativeDecoded,phase:nativePhase,raster:{...renderBudget},actualBuffer:[w,h],css:[innerWidth,innerHeight],canvasRect:[canvas.getBoundingClientRect().width,canvas.getBoundingClientRect().height]};
+   return {revision:THREE.REVISION,stats,calls,triangles,meshes,vertices,points:als.object.geometry.attributes.position.count,cupola,stars,lights,sky:!!scene.background,centers,hits,controls,motion,decoded:nativeDecoded,phase:nativePhase,preserved:gl.getContextAttributes().preserveDrawingBuffer,raster:{...renderBudget},actualBuffer:[w,h],css:[innerWidth,innerHeight],canvasRect:[canvas.getBoundingClientRect().width,canvas.getBoundingClientRect().height]};
  });
  assert.equal(m.phase,"ready");
  assert.equal(m.raster.maxPixels,1048576);const [cw,ch]=m.css,[bw,bh]=m.actualBuffer;const scale=Math.min(1,Math.sqrt(1048576/(cw*ch)));
@@ -46,6 +49,21 @@ async function inspect(page,device){
  assert.equal(m.stats.total,495);assert(m.stats.culled>0);assert(m.triangles<1101794);assert(m.calls>0&&m.calls<=100);
  assert(m.cupola>0&&m.stars>0&&m.lights>0&&m.sky);assert(m.centers.every(c=>c.inFrame),JSON.stringify(m.centers));assert(m.hits.every(h=>h.hit===h.id),JSON.stringify(m.hits));assert(m.controls.every(c=>c.h>=44&&c.reachable));assert.equal(m.motion,false);
  await page.screenshot({path:out+"/"+device+"-native.png"});
+ if(perfDiagnostic){
+   assert.equal(m.preserved,perfBufferMode==="retained","Actual WebGL context attribute mismatch");
+   const target=frame.locator("canvas");
+   const before=await target.screenshot({path:out+"/"+device+"-canvas-before.png",timeout:15000});
+   const frames=await frame.evaluate(()=>renderBudget.frames);
+   // Explicit idle interval: no redraw/readback during compositor persistence probe.
+   await new Promise(r=>setTimeout(r,1200));
+   const after=await target.screenshot({path:out+"/"+device+"-canvas-idle.png",timeout:15000});
+   assert.equal(await frame.evaluate(()=>renderBudget.frames),frames,"Unexpected redraw in idle persistence probe");
+   const decode=async x=>sharp(x).removeAlpha().raw().toBuffer({resolveWithObject:true});
+   const a=await decode(before),b=await decode(after);assert.deepEqual(a.info,b.info);
+   let delta=0,min=255,max=0;for(let i=0;i<a.data.length;i++){delta+=Math.abs(a.data[i]-b.data[i]);min=Math.min(min,b.data[i]);max=Math.max(max,b.data[i]);}
+   m.idlePersistence={meanAbsoluteRGBDelta:delta/a.data.length/255,range:max-min,width:b.info.width,height:b.info.height,frames};
+   assert(m.idlePersistence.range>32,"Canvas screenshot blank or uniform");assert(m.idlePersistence.meanAbsoluteRGBDelta<=.005,"Composited scene changed during idle");
+ }
  await frame.locator('[data-action="right"]').click();
  const moved=await frame.evaluate(()=>angle);
  assert(moved>0);
@@ -90,7 +108,12 @@ try{
    const esperienze=m.hits.find(h=>h.id==="esperienze");
    // Reproduce the previous large-screen failure with animation still active.
    if(name.startsWith("large")){
-     const toggle=frame.locator("#atlas-astral-toggle");await toggle.click();assert.equal(await toggle.getAttribute("aria-pressed"),"true");
+     const toggle=frame.locator("#atlas-astral-toggle");const framesBefore=await frame.evaluate(()=>renderBudget.animationFrames);await toggle.click();assert.equal(await toggle.getAttribute("aria-pressed"),"true");
+     if(perfDiagnostic){
+       // A toggled control is not proof that animation submitted a frame.
+       await frame.waitForFunction(n=>renderBudget.animationFrames>n,framesBefore,{timeout:15000});
+       m.animationEvidence={before:framesBefore,after:await frame.evaluate(()=>renderBudget.animationFrames)};
+     }
    }
    // Keep the original five full readbacks and all interaction/departure deadlines.
     const transitionStarted=Date.now();
@@ -157,7 +180,7 @@ try{
  assert.equal(await p.locator("iframe").count(),0);await reduced.close();results.push({reducedMotionFallback:"PASS"});
 }finally{
  await browser.close();
- writeFileSync(out+"/native-gateway-receipt.json",JSON.stringify({status:failures.length?"FAIL":"PASS",scope:"local-native-P1-spatial",studentAuthorized:false,publishable:false,destinationControl,results,failures},null,2)+"\n");
+ writeFileSync(out+"/native-gateway-receipt.json",JSON.stringify({status:failures.length?"FAIL":"PASS",scope:"local-native-P1-spatial",perfBufferMode:perfBufferMode??null,studentAuthorized:false,publishable:false,destinationControl,results,failures},null,2)+"\n");
  console.log(JSON.stringify({destinationControl,results,failures}));
 }
 assert.equal(failures.length,0,JSON.stringify(failures));assert.equal(results.length,10);
