@@ -1,0 +1,109 @@
+name: Atlas — ASC-01 navigable material bay
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/test-atlas-bay-material-webgl.mjs'
+      - 'scripts/atlas-export-bay-preview.py'
+      - '.github/workflows/atlas-bay-material-webgl.yml'
+      - 'docs/atlas-gateway/ASC-01-BAY-WEBGL.md'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-asc-bay-${{ github.event.pull_request.head.ref }}
+  cancel-in-progress: true
+jobs:
+  live:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-production-standard-bay-webgl' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify pinned Blender and syntax
+        run: |
+          bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+          python3 -m py_compile scripts/atlas-export-bay-preview.py
+          node --check scripts/test-atlas-bay-material-webgl.mjs
+      - name: Recover exact master, material, context and AgX artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/asc-live-input"
+          mkdir -p "$p"/{finish,context,agx,bay} "$RUNNER_TEMP/asc-live-evidence"
+          for spec in "14444143410 c7154de191cb6d25890a2881f470f6d6eeba74b2dcab897842f4753403e685c6 master" "14550684753 b0bfa200423cdb3b58e0b7bcfcefec6be68a8adbf6f93ca47817d76d8a80f633 finish" "14541319689 d1abd91c141ff35286d2ec005bcdf2a6556126aedcc29040b38e4ba5957fb225 context" "14542267386 508a424f41059a3b1cfaa30eff2315746545f866479235e5b5f2e915cce350e4 agx"; do
+            read -r id sha name <<< "$spec"
+            curl --fail --silent --show-error --location --retry 3 --max-time 180 --proto '=https' --proto-redir '=https' -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" -o "$p/$name.zip"
+            printf '%s  %s\n' "$sha" "$p/$name.zip" | sha256sum --strict --check
+          done
+          unzip -p "$p/master.zip" Atlas-Scene-Master.blend > "$p/Atlas-Scene-Master.blend"
+          printf '%s  %s\n' f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab "$p/Atlas-Scene-Master.blend" | sha256sum --strict --check
+          for f in surface-binding.json binding.rgba32f material-package.json material-finish.json roughness.rgb8; do unzip -p "$p/finish.zip" "$f" > "$p/finish/$f"; done
+          for f in context-oracle.json occluders.f32; do unzip -p "$p/context.zip" "$f" > "$p/context/$f"; done
+          for f in agx-lut.json agx-browser.json lut.rgba8; do unzip -p "$p/agx.zip" "$f" > "$p/agx/$f"; done
+          chmod a-w "$p/Atlas-Scene-Master.blend" "$p"/{finish,context,agx}/*
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Prepare existing verified WebGL engine
+        run: |
+          pnpm install --frozen-lockfile
+          node scripts/build-atlas-gateway-local.mjs "$RUNNER_TEMP/asc-live-engine"
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Export actual bay and source material inventory
+        run: |
+          p="$RUNNER_TEMP/asc-live-input"
+          "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$p/Atlas-Scene-Master.blend" --python-exit-code 1 --python scripts/atlas-export-bay-preview.py -- "$p/Atlas-Scene-Master.blend" "$p/finish" "$p/bay"
+          cp "$p/bay/bay.json" "$RUNNER_TEMP/asc-live-evidence/"
+      - name: Bind corrected material and test actual pointer navigation
+        run: |
+          p="$RUNNER_TEMP/asc-live-input"
+          node scripts/test-atlas-bay-material-webgl.mjs "$p/finish" "$p/context" "$p/agx" "$p/bay" "$RUNNER_TEMP/asc-live-evidence" "$RUNNER_TEMP/asc-live-engine/three.min.js"
+      - name: Verify preview receipts
+        run: |
+          python3 - <<'PY'
+          import json,os,pathlib,hashlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"asc-live-evidence"
+          b,r=[json.loads((p/n).read_text()) for n in ("bay.json","bay-browser.json")]
+          assert b["revision"]==r["revision"]==os.environ["ATLAS_EXACT_HEAD"]
+          assert b["masterUnchanged"] and b["sourceRevision"]==r["sourceRevision"]=="52804c49858aafb643f11bff10772a32a0c5e14f"
+          assert b["materialPackageSha256"]==r["packageSha256"] and b["sha256"]==r["baySha256"]
+          assert r["status"]=="PASS_NAVIGABLE_BAY_PREVIEW" and r["result"]["status"]=="PASS_BAY_BINDING"
+          x=r["result"];m=x["metrics"]
+          assert b["triangles"]==x["triangles"]<100000 and x["objects"]==11 and b["targetTriangles"]==108
+          assert m["stable"]==5961 and m["target"]==1068 and m["tested"]>=100 and m["badVisibility"]==m["badSamples"]==0
+          assert m["maxUV"]<=.0002 and m["maxDiffuse"]<=.003 and m["maxRoughness"]<=.006
+          assert x["actualBay"] and x["sourceRoughness"] and x["agxLive"] and x["geometryBudgetOnly"]
+          assert not any(x[k] for k in ("artisticApproval","physicalDeviceQualified","publishable"))
+          assert not b["publishable"] and not r["externalRequests"] and not r["pageErrors"]
+          assert set(r["views"])=={"reference","rotated","restored","mobile"}
+          for name,v in r["views"].items():
+              assert hashlib.sha256((p/(name+".png")).read_bytes()).hexdigest()==v["sha256"]
+              assert v["lit"]>v["width"]*v["height"]*.04
+          assert r["views"]["reference"]["sha256"]==r["views"]["restored"]["sha256"]!=r["views"]["rotated"]["sha256"]
+          assert r["views"]["mobile"]["width"]==320 and r["views"]["mobile"]["height"]==240
+          print("Real bay navigation and material binding verified; no full-scene or artistic approval.")
+          PY
+      - name: Preserve actual bay preview evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-asc-bay-webgl
+          path: ${{ runner.temp }}/asc-live-evidence/
+          retention-days: 7
+          if-no-files-found: warn
