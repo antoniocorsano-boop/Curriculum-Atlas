@@ -4,7 +4,7 @@ import {createHash} from "node:crypto";
 import {readFileSync,writeFileSync} from "node:fs";
 import {resolve,join} from "node:path";
 import {chromium} from "playwright";
-const [src,ctx,agx,bayDir,out,enginePath]=process.argv.slice(2).map(resolvePath=>resolve(resolvePath));
+const [src,ctx,agx,bayDir,out,enginePath,surroundDir]=process.argv.slice(2).map(resolvePath=>resolve(resolvePath));
 const sha=b=>createHash("sha256").update(b).digest("hex");
 const read=(d,n)=>readFileSync(join(d,n));
 const json=(d,n)=>JSON.parse(read(d,n));
@@ -13,6 +13,28 @@ assert.equal(createHash("sha1").update(Buffer.concat([Buffer.from("blob "+engine
 const b=json(src,"surface-binding.json"),m=json(src,"material-package.json"),f=json(src,"material-finish.json");
 const bay=json(bayDir,"bay.json"),oracle=json(ctx,"context-oracle.json"),lut=json(agx,"agx-lut.json"),prior=json(agx,"agx-browser.json");
 const texture=read(src,"binding.rgba32f"),rough=read(src,"roughness.rgb8"),rows=read(bayDir,"bay.f32"),occ=read(ctx,"occluders.f32"),lutBytes=read(agx,"lut.rgba8");
+const bakedManifest=surroundDir?json(surroundDir,"baked-surround.json"):null;
+const bakedFiles=new Map();
+if(bakedManifest){
+  assert.equal(bakedManifest.status,"PASS_BAY_SURROUND_PACKAGE");
+  assert.equal(bakedManifest.revision,bay.revision);
+  assert.equal(bakedManifest.baySha256,bay.sha256);
+  assert.equal(bakedManifest.retainedTarget,bay.target);
+  assert.equal(bakedManifest.objects.length,9);
+  assert.equal(bakedManifest.retainedPaper.length,1);
+  assert.deepEqual(new Set(bakedManifest.objects.map(x=>x.object)),new Set(bay.objects.map(x=>x.object).filter(n=>n!==bay.target&&!bakedManifest.retainedPaper.includes(n))));
+  for(const item of bakedManifest.objects){
+    assert.match(item.id,/^surface-\d{2}$/);
+    assert.equal(item.state,"PASS_BAKED_SURFACE");
+    assert.equal(item.transfer.outsideTolerance,0);
+    const g=read(surroundDir,item.id+".f32"),t=read(surroundDir,item.id+".rgba32f");
+    assert.equal(sha(g),item.geometrySha256);assert.equal(sha(t),item.textureSha256);
+    assert.equal(g.length,item.vertices*5*4);assert.equal(t.length,item.width*item.height*16);
+    bakedFiles.set("/"+item.id+".f32",["application/octet-stream",g]);
+    bakedFiles.set("/"+item.id+".rgba32f",["application/octet-stream",t]);
+  }
+  bakedFiles.set("/baked-surround",["application/json",read(surroundDir,"baked-surround.json")]);
+}
 assert.equal(b.revision,"52804c49858aafb643f11bff10772a32a0c5e14f");
 assert.equal(b.revision,m.revision);assert.equal(f.status,"PASS_FINISH_PACKAGE");
 assert.equal(m.bindingSha256,sha(read(src,"surface-binding.json")));assert.equal(f.packageSha256,sha(read(src,"material-package.json")));
@@ -85,7 +107,35 @@ const geom=new T.BufferGeometry(),p=[],n=[],c=[],props=[];
 for(const obj of bay.objects){if(obj.object===bay.target)continue;for(let i=obj.firstVertex;i<obj.firstVertex+obj.vertexCount;i++){const k=i*11;p.push(...rows.slice(k,k+3));n.push(...rows.slice(k+3,k+6));c.push(...rows.slice(k+6,k+9));props.push(rows[k+9],rows[k+10]);}}
 geom.setAttribute("position",new T.Float32BufferAttribute(p,3));geom.setAttribute("normal",new T.Float32BufferAttribute(n,3));geom.setAttribute("baseColor",new T.Float32BufferAttribute(c,3));geom.setAttribute("properties",new T.Float32BufferAttribute(props,2));
 const surround=new T.ShaderMaterial({side:T.DoubleSide,uniforms:lightU,vertexShader:"attribute vec3 baseColor;attribute vec2 properties;varying vec3 vP,vN,vC;varying vec2 vProps;void main(){vP=position;vN=normal;vC=baseColor;vProps=properties;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",fragmentShader:"varying vec3 vP,vN,vC;varying vec2 vProps;\n"+lighting+"\nvoid main(){vec3 n=normalize(vN)*(gl_FrontFacing?1.0:-1.0),v=normalize(eye-vP);vec3 rgb=vC*(1.0-vProps.y)*lightDiffuse(vP,n)+lightSpec(vP,n,v,vProps.x,mix(vec3(.04),vC,vProps.y));gl_FragColor=vec4(clamp(rgb,0.0,8.0),1.0);}"});
-const scene=new T.Scene();target.material=targetMat;scene.add(target,new T.Mesh(geom,surround));
+const scene=new T.Scene();target.material=targetMat;
+const approxMesh=new T.Mesh(geom,surround);scene.add(target,approxMesh);
+const bakedGroup=new T.Group();bakedGroup.visible=false;scene.add(bakedGroup);
+const bakedMeshes=[];
+if(bay.bakedSurround){
+  const bm=await json("/baked-surround");
+  const paper=bay.objects.find(x=>bm.retainedPaper.includes(x.object));
+  check(paper,"retained paper");
+  const pg=new T.BufferGeometry(),pp=[],pn=[],pc=[],pr=[];
+  for(let i=paper.firstVertex;i<paper.firstVertex+paper.vertexCount;i++){
+    const k=i*11;pp.push(...rows.slice(k,k+3));pn.push(...rows.slice(k+3,k+6));pc.push(...rows.slice(k+6,k+9));pr.push(rows[k+9],rows[k+10]);
+  }
+  pg.setAttribute("position",new T.Float32BufferAttribute(pp,3));pg.setAttribute("normal",new T.Float32BufferAttribute(pn,3));pg.setAttribute("baseColor",new T.Float32BufferAttribute(pc,3));pg.setAttribute("properties",new T.Float32BufferAttribute(pr,2));
+  const pm=new T.Mesh(pg,surround);pm.name=paper.object;bakedGroup.add(pm);
+  for(const item of bm.objects){
+    const [vertices,rgba]=await Promise.all([floats("/"+item.id+".f32"),floats("/"+item.id+".rgba32f")]);
+    check(vertices.length===item.vertices*5&&rgba.length===item.width*item.height*4,"baked array sizes");
+    const p=[],uv=[];for(let i=0;i<vertices.length;i+=5){p.push(...vertices.slice(i,i+3));uv.push(...vertices.slice(i+3,i+5));}
+    const g=new T.BufferGeometry();g.setAttribute("position",new T.Float32BufferAttribute(p,3));g.setAttribute("uv",new T.Float32BufferAttribute(uv,2));
+    const texture=tex(rgba,item.width,item.height,T.FloatType);
+    const mat=new T.ShaderMaterial({side:T.DoubleSide,toneMapped:false,uniforms:{map:{value:texture},sz:{value:new T.Vector2(item.width,item.height)}},
+      vertexShader:"varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+      fragmentShader:["varying vec2 vUv;uniform sampler2D map;uniform vec2 sz;",
+      "vec3 at(vec2 p){return texture2D(map,(clamp(p,vec2(0.0),sz-1.0)+.5)/sz).rgb;}",
+      "void main(){vec2 p=vUv*sz-.5,i=floor(p),f=fract(p);vec3 a=mix(at(i),at(i+vec2(1,0)),f.x),b=mix(at(i+vec2(0,1)),at(i+1.0),f.x);gl_FragColor=vec4(mix(a,b,f.y),1.0);}"].join("\n")});
+    const mesh=new T.Mesh(g,mat);mesh.name=item.object;mesh.userData.bake={rgba,width:item.width,height:item.height};bakedMeshes.push(mesh);bakedGroup.add(mesh);
+  }
+  check(bakedMeshes.length===9,"baked mesh count");
+}
 const lut=tex(lutRaw,a.lut.width,a.lut.height,T.UnsignedByteType);
 const shader=new T.ShaderMaterial({toneMapped:false,depthTest:false,depthWrite:false,uniforms:{source:{value:floatRT.texture},lut:{value:lut},size:{value:a.lut.size},atlas:{value:new T.Vector2(a.lut.width,a.lut.height)},shaperK:{value:a.lut.shaperK},limit:{value:a.lut.domain[1]}},vertexShader:"varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.0,1.0);}",fragmentShader:[
 "precision highp float;varying vec2 vUv;uniform sampler2D source,lut;uniform float size,shaperK,limit;uniform vec2 atlas;",
@@ -104,15 +154,54 @@ canvas.addEventListener("pointerdown",e=>{drag=[e.clientX,e.clientY];canvas.setP
 canvas.addEventListener("wheel",e=>{e.preventDefault();zoom=Math.max(.65,Math.min(1.5,zoom+e.deltaY*.001));render(canvas.width,canvas.height);},{passive:false});
 document.querySelector("#reset").onclick=()=>{yaw=0;pitch=.025;zoom=1;render(canvas.width,canvas.height);};
 window.__capture=capture;window.__resize=(cw,ch)=>render(cw,ch);
+window.__setBaked=flag=>{check(bakedMeshes.length===9,"baked package unavailable");approxMesh.visible=!flag;bakedGroup.visible=flag;render(canvas.width,canvas.height);};
+window.__checkBaked=()=>{
+  check(bakedGroup.visible&&!approxMesh.visible,"baked mode");
+  const w=canvas.width,h=canvas.height,pixels=new Float32Array(w*h*4);
+  R.readRenderTargetPixels(floatRT,0,0,w,h,pixels);check(gl.getError()===gl.NO_ERROR,"baked framebuffer readback");
+  const raycaster=new T.Raycaster(),objects=[target,...bakedGroup.children],result={tested:0,bad:0,maxAbs:0,perObject:{}};
+  for(const m of bakedMeshes)result.perObject[m.name]=0;
+  const pt=new T.Vector3(),a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3(),bc=new T.Vector3();
+  for(let iy=0;iy<36;iy++)for(let ix=0;ix<48;ix++){
+    const x=Math.floor((ix+.5)*w/48),y=Math.floor((iy+.5)*h/36);
+    raycaster.setFromCamera(new T.Vector2(2*(x+.5)/w-1,2*(y+.5)/h-1),cam);
+    const hit=raycaster.intersectObjects(objects,false)[0];
+    if(!hit||!hit.object.userData.bake||!hit.uv||!hit.face)continue;
+    const g=hit.object.geometry.attributes.position;
+    a.fromBufferAttribute(g,hit.face.a);b.fromBufferAttribute(g,hit.face.b);c.fromBufferAttribute(g,hit.face.c);
+    pt.copy(hit.point);hit.object.worldToLocal(pt);T.Triangle.getBarycoord(pt,a,b,c,bc);
+    if(Math.min(bc.x,bc.y,bc.z)<.025)continue;
+    const q=hit.object.userData.bake,k=(y*w+x)*4;let delta=0;
+    for(let ch=0;ch<3;ch++)delta=Math.max(delta,Math.abs(sample(q.rgba,[hit.uv.x,hit.uv.y],q.width,q.height,4,false,ch)-pixels[k+ch]));
+    check(Number.isFinite(delta),"non-finite baked sample");result.maxAbs=Math.max(result.maxAbs,delta);
+    result.tested++;result.perObject[hit.object.name]++;if(delta>.01)result.bad++;
+  }
+  return result;
+};
 render();window.__result={status:"PASS_BAY_BINDING",metrics,triangles:bay.triangles,objects:bay.objects.length,actualBay:true,sourceRoughness:true,agxLive:true,geometryBudgetOnly:true,artisticApproval:false,physicalDeviceQualified:false,publishable:false};
 })().catch(e=>window.__result={status:"FAIL",error:String(e),metrics:window.__metrics||null});`;
 const files=new Map([["/",["text/html",Buffer.from(html)]],["/style.css",["text/css",Buffer.from(css)]],["/bay.js",["application/javascript",Buffer.from(js)]],["/three.js",["application/javascript",engine]],...[[ "/binding",src,"surface-binding.json"],["/package",src,"material-package.json"],["/bay",bayDir,"bay.json"],["/oracle",ctx,"context-oracle.json"],["/agx",agx,"agx-lut.json"]].map(([url,d,n])=>[url,["application/json",read(d,n)]]),...[[ "/texture",texture],["/rough",rough],["/rows",rows],["/occ",occ],["/lut",lutBytes]].map(([url,data])=>[url,["application/octet-stream",data]])]);
+if(bakedManifest){files.set("/bay",["application/json",Buffer.from(JSON.stringify({...bay,bakedSurround:true}))]);for(const [url,value] of bakedFiles)files.set(url,value);}
 const server=createServer((req,res)=>{res.setHeader("Content-Security-Policy","default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; object-src 'none'; base-uri 'none'");res.setHeader("X-Content-Type-Options","nosniff");const f=files.get(req.url);if(!f){res.writeHead(404);res.end();return;}res.writeHead(200,{"Content-Type":f[0],"Cache-Control":"no-store"});res.end(f[1]);});
 let browser;const report={schema:"atlas.asc01.bay-browser/v1",revision:process.env.ATLAS_EXACT_HEAD,sourceRevision:b.revision,masterSha256:b.masterSha256,packageSha256:f.packageSha256,baySha256:bay.sha256,externalRequests:[],pageErrors:[],status:"PENDING",views:{}};
 try{await new Promise((ok,fail)=>{server.once("error",fail);server.listen(0,"127.0.0.1",ok);});const origin="http://127.0.0.1:"+server.address().port;
 browser=await chromium.launch({headless:true,args:["--use-gl=angle","--use-angle=swiftshader","--enable-unsafe-swiftshader"]});const c=await browser.newContext({viewport:{width:800,height:650}});await c.route("**/*",r=>{if(new URL(r.request().url()).origin!==origin){report.externalRequests.push(r.request().url());return r.abort();}return r.continue();});const page=await c.newPage();page.on("pageerror",e=>report.pageErrors.push(String(e)));await page.goto(origin+"/");await page.waitForFunction(()=>window.__result,{},{timeout:180000});report.result=await page.evaluate(()=>window.__result);assert.equal(report.result.status,"PASS_BAY_BINDING",JSON.stringify(report.result));
 async function capture(name){const v=await page.evaluate(()=>window.__capture());const raw=Buffer.from(v.png.split(",")[1],"base64");writeFileSync(join(out,name+".png"),raw);report.views[name]={sha256:sha(raw),width:v.width,height:v.height,lit:v.lit};assert(v.lit>v.width*v.height*.04,"empty preview");}
-await capture("reference");const box=await page.locator("canvas").boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await page.mouse.move(box.x+box.width/2+70,box.y+box.height/2+10,{steps:4});await page.mouse.up();await capture("rotated");assert.notEqual(report.views.reference.sha256,report.views.rotated.sha256,"pointer navigation");
+if(bakedManifest){
+  await capture("approximate");
+  await page.evaluate(()=>window.__setBaked(true));
+  report.surround={manifestSha256:sha(read(surroundDir,"baked-surround.json")),objects:bakedManifest.objects.length,retainedPaper:bakedManifest.retainedPaper,reference:await page.evaluate(()=>window.__checkBaked())};
+  assert(report.surround.reference.tested>=100&&report.surround.reference.bad===0,JSON.stringify(report.surround.reference));
+}
+await capture("reference");
+if(bakedManifest)assert.notEqual(report.views.approximate.sha256,report.views.reference.sha256,"baked material has no visible effect");
+const box=await page.locator("canvas").boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await page.mouse.move(box.x+box.width/2+70,box.y+box.height/2+10,{steps:4});await page.mouse.up();await capture("rotated");assert.notEqual(report.views.reference.sha256,report.views.rotated.sha256,"pointer navigation");
+if(bakedManifest){
+  report.surround.rotated=await page.evaluate(()=>window.__checkBaked());
+  assert(report.surround.rotated.tested>=100&&report.surround.rotated.bad===0,JSON.stringify(report.surround.rotated));
+  report.surround.visibleObjects=Object.keys(report.surround.reference.perObject).filter(k=>report.surround.reference.perObject[k]+report.surround.rotated.perObject[k]>0);
+  assert(report.surround.visibleObjects.length>=3,"insufficient visible surface coverage");
+}
 await page.locator("#reset").click();await capture("restored");assert.equal(report.views.reference.sha256,report.views.restored.sha256,"camera restore");
-await page.evaluate(()=>window.__resize(320,240));await capture("mobile");assert.equal(report.views.mobile.width,320);assert.deepEqual(report.externalRequests,[]);assert.deepEqual(report.pageErrors,[]);report.status="PASS_NAVIGABLE_BAY_PREVIEW";
+await page.evaluate(()=>window.__resize(320,240));await capture("mobile");assert.equal(report.views.mobile.width,320);assert.deepEqual(report.externalRequests,[]);assert.deepEqual(report.pageErrors,[]);report.status=bakedManifest?"PASS_BAKED_BAY_PREVIEW":"PASS_NAVIGABLE_BAY_PREVIEW";
 }catch(e){report.status="FAIL";report.error=String(e);throw e;}finally{writeFileSync(join(out,"bay-browser.json"),JSON.stringify(report,null,2)+"\n");console.log("ASC BAY BROWSER",JSON.stringify(report));if(browser)await browser.close();server.close();}
