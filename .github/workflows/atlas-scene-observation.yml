@@ -8,6 +8,7 @@ on:
       - 'scripts/art-learn-transfer-lighting.py'
       - 'scripts/art-learn-surface-direction.py'
       - 'scripts/art-learn-limestone.py'
+      - 'scripts/art-learn-book-scenography.py'
       - 'ops/atlas-scene-director/art-learn-01.md'
       - 'ops/atlas-scene-director/**'
       - 'docs/atlas-gateway/ASI-01-ASD-01.md'
@@ -390,5 +391,76 @@ jobs:
         with:
           name: atlas-art-learn-04-limestone
           path: ${{ runner.temp }}/art-learn-limestone/
+          retention-days: 7
+          if-no-files-found: warn
+
+  art-learn-book-scenography:
+    name: ART-LEARN-05A original paired books and spine details
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-scene-consolidated' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify pinned Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - name: Recover prior evidence and immutable master
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/art-learn-books-input"
+          mkdir -p "$p" "$RUNNER_TEMP/art-learn-books"
+          for spec in "14497991405 4f54efeaa39f3b913893ac345435ee40856112d23e7c4878fba2682c92e7276d prior" "14444143410 c7154de191cb6d25890a2881f470f6d6eeba74b2dcab897842f4753403e685c6 master"; do
+            read -r id sha name <<< "$spec"
+            curl --fail --silent --show-error --location --retry 3 --max-time 120 --proto '=https' --proto-redir '=https' -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" -o "$p/$name.zip.part"
+            printf '%s  %s\n' "$sha" "$p/$name.zip.part" | sha256sum --strict --check
+            mv "$p/$name.zip.part" "$p/$name.zip"
+          done
+          unzip -p "$p/prior.zip" limestone-study.json > "$p/prior.json"
+          unzip -p "$p/master.zip" Atlas-Scene-Master.blend > "$p/Atlas-Scene-Master.blend"
+          printf '%s  %s\n' f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab "$p/Atlas-Scene-Master.blend" | sha256sum --strict --check
+          chmod a-w "$p/Atlas-Scene-Master.blend" "$p/prior.json"
+      - name: Construct original book variants and render eleven comparisons
+        shell: bash
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/art-learn-books-input"
+          out="$RUNNER_TEMP/art-learn-books"
+          timeout 1500 "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$p/Atlas-Scene-Master.blend" --python-exit-code 1 --python scripts/art-learn-book-scenography.py -- "$p/Atlas-Scene-Master.blend" "$p/prior.json" "$out" 2>&1 | tee "$out/run.log"
+      - name: Verify paired books, image evidence, rollback and scope
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import pathlib,os,json,hashlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"art-learn-books"
+          r=json.loads((p/"scenography-study.json").read_text())
+          assert r["status"]=="PASS_BOOK_SCENOGRAPHY_CANDIDATES"
+          assert r["revision"]==os.environ["ATLAS_EXACT_HEAD"] and r["sourceUnchanged"] and r["protectedStateUnchanged"] and r["sharedMeshesRestored"]
+          assert not any(r[k] for k in ("masterModified","artisticApproval","publishable","studentAuthorized","crossWorldQualified","webglQualified"))
+          assert len(r["bookInventory"])==308 and len({(b["bay"],b["index"]) for b in r["bookInventory"]})==308
+          assert all(.83<=b["heightFactor"]<=1 for b in r["bookInventory"])
+          expected={v+"-"+c for v in ("atrium","closeup") for c in ("01-reference","04-combined","05-restored")}|{"detail-"+c for c in ("01-reference","02-shape","03-spines","04-combined","05-restored")}
+          assert set(r["renders"])==expected
+          for n,e in r["renders"].items():assert hashlib.sha256((p/(n+".png")).read_bytes()).hexdigest()==e["sha256"]
+          for v in ("atrium","detail","closeup"):assert r["comparisons"][v+"-05-restored"]["meanAbsoluteRGBDelta"]<.0002
+          assert r["renders"]["detail-04-combined"]["changedMeshes"]==28 and r["renders"]["detail-04-combined"]["ornamentMeshes"]==4
+          print("ART-LEARN-05A verified; artistic and WebGL review remain separate")
+          PY
+      - name: Preserve book inventory, visual comparisons and diagnostic log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-learn-05a-books
+          path: ${{ runner.temp }}/art-learn-books/
           retention-days: 7
           if-no-files-found: warn
