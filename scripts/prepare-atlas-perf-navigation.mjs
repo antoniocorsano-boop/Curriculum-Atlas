@@ -49,7 +49,7 @@ if(mode==="navigation-first"){
  p=replace(p,'if (assetController.signal.aborted) return;\n            window.clearTimeout(timer);','if (assetController.signal.aborted || nativeDeparting.current) return;\n            window.clearTimeout(timer);');
  p=replace(p,'navigateNative(portal.href + "/");\n          } else router.push','navigateNative(portal.href + "/", scene.channel);\n          } else router.push');
  p=replace(p,'navigateNative("/");','navigateNative("/", scene?.channel);');
- p=replace(p,'navigateNative(portal.href + "/");\n             }','navigateNative(portal.href + "/", scene?.channel);\n             }');
+ p=replace(p,'navigateNative(portal.href + "/");','navigateNative(portal.href + "/", scene?.channel);');
  // The opaque child trusts only its real parent, exact parent origin and
  // ephemeral channel. No new destination or network access is accepted.
  const marker='addEventListener("resize",()=>{if(ready&&!closing){setCamera();render()}},events);';
