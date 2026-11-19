@@ -6,6 +6,7 @@ on:
       - 'scripts/test-atlas-bay-material-webgl.mjs'
       - 'scripts/atlas-export-bay-preview.py'
       - 'scripts/atlas-bake-bay-surround.py'
+      - 'scripts/atlas-replay-bay-surround.py'
       - 'scripts/atlas_uv_pack.py'
       - '.github/workflows/atlas-library-bay-completion.yml'
       - 'docs/atlas-gateway/ATLAS-LIBRARY-COMPLETION.md'
@@ -22,6 +23,7 @@ jobs:
     timeout-minutes: 55
     env:
       ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+      ATLAS_BAKE_REPLAY: "1"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,7 +36,7 @@ jobs:
       - name: Verify pinned Blender and syntax
         run: |
           bash scripts/atlas-gateway-c3/bootstrap-blender.sh
-          python3 -m py_compile scripts/atlas-export-bay-preview.py scripts/atlas-bake-bay-surround.py scripts/atlas_uv_pack.py
+          python3 -m py_compile scripts/atlas-export-bay-preview.py scripts/atlas-bake-bay-surround.py scripts/atlas_uv_pack.py scripts/atlas-replay-bay-surround.py
           node --check scripts/test-atlas-bay-material-webgl.mjs
       - name: Recover exact master, material, context and AgX artifacts
         env:
@@ -43,7 +45,7 @@ jobs:
           set -euo pipefail
           p="$RUNNER_TEMP/asc-live-input"
           mkdir -p "$p"/{finish,context,agx,bay,surround} "$RUNNER_TEMP/asc-live-evidence"
-          for spec in "14444143410 c7154de191cb6d25890a2881f470f6d6eeba74b2dcab897842f4753403e685c6 master" "14550684753 b0bfa200423cdb3b58e0b7bcfcefec6be68a8adbf6f93ca47817d76d8a80f633 finish" "14541319689 d1abd91c141ff35286d2ec005bcdf2a6556126aedcc29040b38e4ba5957fb225 context" "14542267386 508a424f41059a3b1cfaa30eff2315746545f866479235e5b5f2e915cce350e4 agx" "14555037601 0ed60e141ce891e4026f4fb477549782c68d5cc319390a9df2eb1b80940be582 prior"; do
+          for spec in "14444143410 c7154de191cb6d25890a2881f470f6d6eeba74b2dcab897842f4753403e685c6 master" "14550684753 b0bfa200423cdb3b58e0b7bcfcefec6be68a8adbf6f93ca47817d76d8a80f633 finish" "14541319689 d1abd91c141ff35286d2ec005bcdf2a6556126aedcc29040b38e4ba5957fb225 context" "14542267386 508a424f41059a3b1cfaa30eff2315746545f866479235e5b5f2e915cce350e4 agx" "14555037601 0ed60e141ce891e4026f4fb477549782c68d5cc319390a9df2eb1b80940be582 prior" "14561365109 b397dfdbff8a61d753df8b7a7896950b9c65892073a132e6f70e1e65a230e2f6 baked"; do
             read -r id sha name <<< "$spec"
             curl --fail --silent --show-error --location --retry 3 --max-time 180 --proto '=https' --proto-redir '=https' -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" -o "$p/$name.zip"
             printf '%s  %s\n' "$sha" "$p/$name.zip" | sha256sum --strict --check
@@ -79,12 +81,18 @@ jobs:
           p="$RUNNER_TEMP/asc-live-input"
           "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$p/Atlas-Scene-Master.blend" --python-exit-code 1 --python scripts/atlas-export-bay-preview.py -- "$p/Atlas-Scene-Master.blend" "$p/finish" "$p/bay"
           cp "$p/bay/bay.json" "$RUNNER_TEMP/asc-live-evidence/"
-      - name: Bake nine original visible surfaces
+      - name: Recover nine exact baked surfaces without rebaking
         run: |
           set -euo pipefail
           p="$RUNNER_TEMP/asc-live-input"
-          "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$p/Atlas-Scene-Master.blend" --python-exit-code 1 --python scripts/atlas-bake-bay-surround.py -- "$p/Atlas-Scene-Master.blend" "$p/bay" "$p/surround" 2>&1 | tee "$RUNNER_TEMP/asc-live-evidence/bake.log"
-          cp "$p/surround/baked-surround.json" "$RUNNER_TEMP/asc-live-evidence/"
+          unzip -p "$p/baked.zip" asc-live-input/surround/baked-surround.json > "$p/surround/baked-surround.json"
+          for i in {00..08}; do
+            for ext in exr f32; do
+              unzip -p "$p/baked.zip" "asc-live-input/surround/surface-$i.$ext" > "$p/surround/surface-$i.$ext"
+            done
+          done
+          "$BLENDER_BIN" --background --factory-startup --disable-autoexec --python-exit-code 1 --python scripts/atlas-replay-bay-surround.py -- "$p/surround" 2>&1 | tee "$RUNNER_TEMP/asc-live-evidence/replay.log"
+          cp "$p/surround/"{baked-surround,replay}.json "$RUNNER_TEMP/asc-live-evidence/"
       - name: Compare approximate and baked bay, test actual navigation
         run: |
           p="$RUNNER_TEMP/asc-live-input"
@@ -108,7 +116,14 @@ jobs:
           assert not b["publishable"] and not r["externalRequests"] and not r["pageErrors"]
           assert set(r["views"])=={"approximate","reference","rotated","restored","mobile"}
           q=json.loads((p/"baked-surround.json").read_text())
-          assert q["status"]=="PASS_BAY_SURROUND_PACKAGE" and q["revision"]==r["revision"] and q["masterUnchanged"] and q["bindingsRestored"]
+          assert q["status"]=="PASS_BAY_SURROUND_PACKAGE" and q["revision"]=="34bd5bbd3281abdcbc1a9fbe4c5de59dc750020e" and q["masterUnchanged"] and q["bindingsRestored"]
+          replay=json.loads((p/"replay.json").read_text())
+          assert replay["status"]=="PASS_EXACT_BAKE_REPLAY" and not replay["rebaked"] and replay["sourceRevision"]==q["revision"]
+          assert replay["manifestSha256"]==hashlib.sha256((p/"baked-surround.json").read_bytes()).hexdigest()
+          assert r["surround"]["replayed"] and r["surround"]["sourceRevision"]==q["revision"]
+          assert len(replay["objects"])==9
+          for old,new in zip(q["objects"],replay["objects"]):
+              assert new["id"]==old["id"] and new["geometrySha256"]==old["geometrySha256"] and new["textureSha256"]==old["textureSha256"] and new["exrSha256"]==old["transfer"]["sha256"]
           assert q["preflight"]["passed"] and len(q["objects"])==9 and len(q["retainedPaper"])==1
           mb=q["materialBindingPreflight"]
           assert mb["passed"] and all(mb["synthetic"][k] for k in ("passed","sharedMesh","mixedDataAndObject","distinctOverrides","siblingUnchanged","rollback"))
@@ -138,6 +153,7 @@ jobs:
           assert all(o["state"]=="PASS_BAKED_SURFACE" and o["transfer"]["outsideTolerance"]==0 and o["uv"]["overlapTexels"]==0 for o in q["objects"])
           for v in ("reference","rotated"):
               assert r["surround"][v]["tested"]>=100 and r["surround"][v]["bad"]==0 and r["surround"][v]["maxAbs"]<=.01
+              assert r["surround"][v]["gpuSamples"]>=100 and r["surround"][v]["gpuBad"]==0 and r["surround"][v]["gpuMaxAbs"]<=.01
           assert len(r["surround"]["visibleObjects"])>=3
           assert r["views"]["approximate"]["sha256"]!=r["views"]["reference"]["sha256"]
           for name,v in r["views"].items():
