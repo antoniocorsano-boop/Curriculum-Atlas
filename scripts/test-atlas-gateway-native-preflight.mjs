@@ -229,6 +229,10 @@ print(json.dumps({k:m["make_plan"](c,r,m["request_for"](c,r,"webgl",v,False,Fals
  delete report.art100.result.images;
  report.art100.status="PASS_COMPARISON_ONLY";
  // PERF-05A only on the explicitly isolated geometry experiment.
+ if(process.env.ATLAS_PERF_BAY_DEPTH==="true"){
+   const {runBayDepthProbe}=await import("./atlas-perf-bay-depth-probe.mjs");
+   report.bayDepth=await runBayDepthProbe({page,frame,out:join(out,"perf-bay-depth"),manifest});
+ }
  if(process.env.ATLAS_PERF_BAY_PROXY==="true"){
    const {runBayProxyProbe}=await import("./atlas-perf-bay-proxy-probe.mjs");
    report.bayProxy=await runBayProxyProbe({page,frame,out:join(out,"perf-bay-proxy"),manifest});
