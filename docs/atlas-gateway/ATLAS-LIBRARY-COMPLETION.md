@@ -14,3 +14,11 @@ Estendere il laboratorio #146 senza alterare il percorso precedente: confronto f
 La sequenza è un criterio di completamento, non prova del suo conseguimento. Priorità alla biblioteca; non aprire ulteriori studi su World Composer da questa linea. Gli artefatti temporanei CI non costituiscono archivio durevole.
 
 Stato: implementazione LBC-01, da collaudare.
+
+
+## LBC-01/RCA-02 — Identità materica per istanza
+Evidenza negativa: revisione 572ee0ca, run 44576299297, job 135744587096, artefatto 14557551408 (SHA-256 72999cf1a19c7c01395ba7e49ef555248e161605a9aaf65c44aff9086a46cf33). Recupero master, inventario ed ambiente completati; il primo libro `Library bay 04-0-Bay Book 0` ha causato l'arresto `object material override` prima del bake. L'assunzione esclusiva DATA era errata: Blender consente anche OBJECT e le assegnazioni effettive possono differire fra utenti della stessa mesh.
+
+Decisione dell'ideatore: preservare geometria condivisa e identità materica dei libri, adattare l'elaborazione. Prima di duplicare temporaneamente la mesh, rilevare per ciascuno slot il link DATA/OBJECT, il materiale effettivo, il materiale della mesh e il numero di facce. Copiare solo i materiali effettivi sulla mesh derivata, rendere esplicito il link DATA della copia, verificare gli indici di materiale per faccia; al termine ripristinare la mesh sorgente e i link e puntatori OBJECT senza riscrivere i materiali condivisi DATA. Verifica di tutte le associazioni degli oggetti mesh della scena e dei materiali delle mesh sorgenti dopo ogni prova e bake. Preflight sintetico: due oggetti con stessa mesh, un materiale DATA e due override OBJECT distinti, isolamento del fratello e ripristino; preflight reale sui nove bersagli, prima del bake. Ricevute obbligatorie nel gate CI. La nuova elaborazione conserva le assegnazioni, ma la geometria esportata dal laboratorio resta espansa per vertice e le texture specifiche per oggetto: non dimostra istanziazione GPU, risparmio di memoria o equivalenza artistica. Nessuna modifica al master o a World Composer.
+
+Stato: correzione implementata, nuova qualificazione non ancora verificata.
