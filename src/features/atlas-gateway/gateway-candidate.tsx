@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { PORTALS, readSceneMessage, resolvePortal } from "./gateway-policy";
 import { nativeRequest, verifiedNativeBytes, type NativeManifest } from "./native-asset-policy";
 import "./gateway.css";
@@ -16,10 +17,37 @@ export function GatewayCandidate({ preparedScene, nativeManifest = null }: { pre
   const [notice, setNotice] = useState("");
   const [show3D, setShow3D] = useState(true);
 
-  // Native scenes own an expensive graphics context. A full document
-  // navigation avoids keeping that iframe mounted during React/RSC transition.
+  // NAV-STAB-01: separate the opaque WebGL frame lifetime from the
+  // top-level document transition. Use one path for portals, direct links
+  // and Home. The caller supplies only a canonical policy-owned destination.
+  const navigateNative = useCallback((href: string) => {
+    if (nativeDeparting.current) return;
+    nativeDeparting.current = true;
+    // Commit React-owned removal now, not concurrently with location.assign.
+    // Effect cleanup aborts pending transfers and invalidates the channel.
+    // Never force GPU disposal or a context-loss handshake on the click path.
+    flushSync(() => {
+      setShow3D(false);
+      setScene(null);
+      setReady(false);
+      setNotice("Apertura dell’ambiente Atlas…");
+    });
+    if (iframe.current !== null) {
+      nativeDeparting.current = false;
+      setNotice("Usa gli accessi della sala per proseguire.");
+      return;
+    }
+    console.info("ATLAS_NATIVE_FRAME_DETACHED");
+    // A separate browser task after committed DOM removal; no fixed delay,
+    // no GPU fence, no external URL, no RSC transition.
+    window.setTimeout(() => {
+      console.info("ATLAS_NATIVE_DOCUMENT_NAV_START");
+      window.location.assign(href);
+    }, 0);
+  }, []);
+
   // If the browser restores a departed document from BFCache, recreate the
-  // scene/channel rather than reuse a quiesced iframe.
+  // scene/channel rather than reuse a quiesced iframe or departure state.
   useEffect(() => {
     if (!nativeManifest) return;
     const restore = (event: PageTransitionEvent) => {
@@ -110,13 +138,11 @@ export function GatewayCandidate({ preparedScene, nativeManifest = null }: { pre
         if (portal?.href) {
           if (nativeManifest) {
             if (!nativeReady || nativeDeparting.current) return;
-            nativeDeparting.current = true;
             window.clearTimeout(timer);
             assetController.abort();
             console.info("ATLAS_NATIVE_NAV_ACCEPT " + portal.id);
-            // Only the canonical policy path can reach this point. No href
-            // from the sandbox, no external target, no RSC transition.
-            window.location.assign(portal.href + "/");
+            // Only a canonical policy path can reach this point.
+            navigateNative(portal.href + "/");
           } else router.push(portal.href);
         } else if (portal?.id === "studio") setNotice("Studio Atlas: accesso professionale non ancora abilitato.");
       }
@@ -127,7 +153,7 @@ export function GatewayCandidate({ preparedScene, nativeManifest = null }: { pre
       assetController.abort();
       window.removeEventListener("message", receive);
     };
-  }, [scene, router, nativeManifest]);
+  }, [scene, router, nativeManifest, navigateNative]);
 
   const immersive = Boolean(preparedScene && show3D);
   const nativeImmersive = Boolean(nativeManifest && immersive);
@@ -137,8 +163,7 @@ export function GatewayCandidate({ preparedScene, nativeManifest = null }: { pre
         <p>Tre ambienti, un unico accesso.</p></div><div className="atlas-gateway-header-actions">{nativeImmersive ? <Link href="/" prefetch={false} aria-label="Torna alla pagina iniziale attuale" onClick={event => {
         if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
           event.preventDefault();
-          nativeDeparting.current = true;
-          window.location.assign("/");
+          navigateNative("/");
         }
       }}>← Home Atlas</Link> : <Link href="/" aria-label="Torna alla pagina iniziale attuale">← Home Atlas</Link>}
       {preparedScene && <button className="atlas-gateway-toggle" type="button" onClick={() => {
@@ -155,8 +180,7 @@ export function GatewayCandidate({ preparedScene, nativeManifest = null }: { pre
           portal.href ? (nativeImmersive ? <Link key={portal.id} className="atlas-gateway-direct" data-portal={portal.id} href={portal.href + "/"} prefetch={false} onClick={event => {
             if (event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
               event.preventDefault();
-              nativeDeparting.current = true;
-              window.location.assign(portal.href + "/");
+              navigateNative(portal.href + "/");
             }
           }}>{portal.label}<span aria-hidden="true">→</span></Link> : <Link key={portal.id} className="atlas-gateway-direct" data-portal={portal.id} href={portal.href}>{portal.label}<span aria-hidden="true">→</span></Link>) :
             <button key={portal.id} type="button" className="atlas-gateway-direct" data-portal={portal.id} onClick={() => setNotice("Studio Atlas: accesso professionale non ancora abilitato.")}>{portal.label}<span aria-hidden="true">ⓘ</span></button>
