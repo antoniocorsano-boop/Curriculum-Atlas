@@ -6,7 +6,8 @@ import {join} from "node:path";
 import {performance} from "node:perf_hooks";
 import {chromium} from "playwright";
 import {parseNativeManifest} from "../src/features/atlas-gateway/native-asset-policy.ts";
-const [bundle,out]=process.argv.slice(2);
+const [bundle,out,navMode="detach-first"]=process.argv.slice(2);
+assert(["detach-first","navigation-first"].includes(navMode));
 mkdirSync(out,{recursive:true});
 const manifest=parseNativeManifest(JSON.parse(readFileSync(join(bundle,"native-manifest.json"),"utf8")));
 assert(manifest);
@@ -113,8 +114,14 @@ for(const scenario of scenarios){
    const detached=r.events.findIndex(e=>e.kind==="console"&&e.text==="ATLAS_NATIVE_FRAME_DETACHED");
    const start=r.events.findIndex(e=>e.kind==="console"&&e.text==="ATLAS_NATIVE_DOCUMENT_NAV_START");
    const request=r.events.findIndex(e=>e.kind==="cdp-document-request");
-   assert(detached>=0&&detached<start&&start<request,"Expected committed frame removal before full document request");
-   r.checkpoints.detachedBeforeDocument=true;
+   if(navMode==="navigation-first"){
+    const retained=r.events.findIndex(e=>e.kind==="console"&&e.text==="ATLAS_NATIVE_FRAME_RETAINED");
+    assert(retained>=0&&retained<start&&start<request&&detached<0,"Expected actual document request without prior frame removal");
+    r.checkpoints.navigationBeforeDetach=true;
+   }else{
+    assert(detached>=0&&detached<start&&start<request,"Expected committed frame removal before full document request");
+    r.checkpoints.detachedBeforeDocument=true;
+   }
   }
   assert.deepEqual(r.errors,[]);assert.deepEqual(r.external,[]);
   r.status="PASS";
@@ -131,7 +138,7 @@ for(const scenario of scenarios){
   record(r,"before-cleanup");
   try{await limit(browser?.close()??Promise.resolve(),10000)}catch(e){r.cleanupFailure=String(e)}
   record(r,"after-cleanup");delete r.started;
-  writeFileSync(join(out,"navigation-differential.json"),JSON.stringify({schema:"atlas.gateway.navigation-differential/v1",scope:"diagnosis only",results,studentAuthorized:false,publishable:false},null,2)+"\n");
+  writeFileSync(join(out,"navigation-differential.json"),JSON.stringify({schema:"atlas.gateway.navigation-differential/v1",scope:"diagnosis only",navMode,results,studentAuthorized:false,publishable:false},null,2)+"\n");
   console.log("ATLAS_NAV_DIFFERENTIAL "+JSON.stringify(r));
  }
 }
