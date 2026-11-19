@@ -1,0 +1,475 @@
+{
+  "schema": "atlas.awc.evidence-index/v1",
+  "version": "0.1.0",
+  "mode": "OBSERVATION_ONLY",
+  "masterSha256": "f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab",
+  "catalogVersion": "0.1.0",
+  "archives": {
+    "geometry": {
+      "pr": 133,
+      "revision": "b9bff7378eb6b7337efb16e734711906b5fdd328",
+      "run": 44532708279,
+      "artifact": 14535186361,
+      "sha256": "dd4d39defc5b5395ba13a34a2ef98606a7f88acf049efbb949bd2ab7b52fa2f0"
+    },
+    "micro": {
+      "pr": 142,
+      "revision": "aeeab27f48fc69b75d6fae2be68fa4ae215378db",
+      "run": 44559936883,
+      "artifact": 14551020167,
+      "sha256": "85614d397c2e7faeea78e97228946ac17bf04ff2f91be90fdad87a8583958b14"
+    },
+    "finish": {
+      "pr": 145,
+      "revision": "52804c49858aafb643f11bff10772a32a0c5e14f",
+      "run": 44565254487,
+      "artifact": 14550684753,
+      "sha256": "b0bfa200423cdb3b58e0b7bcfcefec6be68a8adbf6f93ca47817d76d8a80f633"
+    },
+    "agx": {
+      "pr": 140,
+      "revision": "89c5a2556e86ad311c3b89a70fdd05ff7f5ba8e9",
+      "run": 44552444973,
+      "artifact": 14542299308,
+      "sha256": "0e27ddcfed94a39be33af84862318e29111a129ad7acc2b1f94af56c8c6acfb8"
+    },
+    "bay": {
+      "pr": 146,
+      "revision": "abfb83b9c9cf17d5c3e46c79eaa7ac9dab96e3cc",
+      "run": 44572827217,
+      "artifact": 14555037601,
+      "sha256": "0ed60e141ce891e4026f4fb477549782c68d5cc319390a9df2eb1b80940be582"
+    }
+  },
+  "receipts": {
+    "pages": {
+      "archive": "geometry",
+      "file": "page-extension.json",
+      "sha256": "0fb0e34c8cb587c157b88ba374a3adcad2991fc62647638a5ceeed8d68a7b81d",
+      "schema": "atlas.asc01.page-extension/v1",
+      "status": "PASS_EXTENSION_COMPARISON"
+    },
+    "micro": {
+      "archive": "micro",
+      "file": "microstructure.json",
+      "sha256": "f94dd6db50060088883876142b69ef81f2d476d588af1230433076c0012ab19c",
+      "schema": "atlas.asc01.microstructure-ablation/v1",
+      "status": "PASS_MICROSTRUCTURE_ABLATION"
+    },
+    "finish": {
+      "archive": "finish",
+      "file": "material-finish.json",
+      "sha256": "07dd3820861fd2bf9179cb2819f3ab20c87efbae765e400aa1eec6673b35d5be",
+      "schema": "atlas.asc01.material-finish/v1",
+      "status": "PASS_FINISH_PACKAGE"
+    },
+    "bake": {
+      "archive": "finish",
+      "file": "diffuse-bake.json",
+      "sha256": "0c252df3ef5db9419f1b4623eaa9d13f9b8474019d34852ab15249326820adca",
+      "schema": "atlas.asc01.diffuse-bake/v1",
+      "status": "PASS_DIFFUSE_BAKE_PROBE"
+    },
+    "agx": {
+      "archive": "agx",
+      "file": "live-agx.json",
+      "sha256": "cbdb611c36cac5c56b98c13390636f7f489cf2645e538e86201f5c75cb11009b",
+      "schema": "atlas.asc01.live-agx/v1",
+      "status": "PASS_LIVE_AGX_PASS"
+    },
+    "agxRef": {
+      "archive": "agx",
+      "file": "live-agx-reference.json",
+      "sha256": "761963b329fe8a0ea01a89b3559c863e8c87507fdc269d5a9f0102c6de76670d",
+      "schema": "atlas.asc01.live-agx-reference/v1",
+      "status": "PASS_LIVE_AGX_REFERENCE"
+    },
+    "bay": {
+      "archive": "bay",
+      "file": "bay.json",
+      "sha256": "0deddc03571ee1d84b63152c6626e140b99dc8e71d528171a65ac5552724e605",
+      "schema": "atlas.asc01.bay-preview/v1",
+      "status": null
+    },
+    "browser": {
+      "archive": "bay",
+      "file": "bay-browser.json",
+      "sha256": "29c581d6584e0edd45aee9ded6f86826a67d4f2e5c5c593f3727d851fbd501f7",
+      "schema": "atlas.asc01.bay-browser/v1",
+      "status": "PASS_NAVIGABLE_BAY_PREVIEW"
+    }
+  },
+  "profiles": [
+    {
+      "id": "library.pages.reduction",
+      "entry": "library.architecture",
+      "state": "OBSERVED_BOUNDED",
+      "scope": "45 paper instances, three fixed master views; witness detects change; not adopted in navigable bay",
+      "dependencies": [],
+      "targets": [
+        "blender"
+      ],
+      "facts": {
+        "sourceTriangles": [
+          "pages",
+          "/theoreticalTriangles/source",
+          374220
+        ],
+        "candidateTriangles": [
+          "pages",
+          "/theoreticalTriangles/candidate",
+          41580
+        ],
+        "savedTriangles": [
+          "pages",
+          "/theoreticalTriangles/saved",
+          332640
+        ],
+        "atriumChanged": [
+          "pages",
+          "/comparisons/atrium-candidate/changedPixels",
+          0
+        ],
+        "detailChanged": [
+          "pages",
+          "/comparisons/detail-candidate/changedPixels",
+          0
+        ],
+        "contextChanged": [
+          "pages",
+          "/comparisons/context-candidate/changedPixels",
+          0
+        ],
+        "witnessChanged": [
+          "pages",
+          "/comparisons/witness-candidate/changedPixels",
+          48872
+        ],
+        "restored": [
+          "pages",
+          "/sharedMeshesRestored",
+          true
+        ]
+      },
+      "limitations": [
+        "No global LOD approval",
+        "Keep paper if navigable view exposes it"
+      ]
+    },
+    {
+      "id": "library.walnut.microstructure",
+      "entry": "library.materials",
+      "state": "OBSERVED_BOUNDED",
+      "scope": "Single walnut surface, camera-ray specular ablation at fixed baked diffuse",
+      "dependencies": [],
+      "targets": [
+        "blender"
+      ],
+      "facts": {
+        "fullMean": [
+          "micro",
+          "/cases/micro-full-texture/mean",
+          0.02033242955803871
+        ],
+        "mapMean": [
+          "micro",
+          "/cases/micro-map-texture/mean",
+          0.020114563405513763
+        ],
+        "flatMean": [
+          "micro",
+          "/cases/micro-flat-texture/mean",
+          0.019955448806285858
+        ],
+        "constantMean": [
+          "micro",
+          "/cases/micro-full-constant/mean",
+          0.027426501736044884
+        ],
+        "repeatNoise": [
+          "micro",
+          "/repeatNoise",
+          0
+        ],
+        "decisionMargin": [
+          "micro",
+          "/decisionMargin",
+          0.001
+        ],
+        "mapClassification": [
+          "micro",
+          "/comparisons/micro-map-texture/classification",
+          "WITHIN_MARGIN"
+        ],
+        "constantClassification": [
+          "micro",
+          "/comparisons/micro-full-constant/classification",
+          "WORSE"
+        ]
+      },
+      "limitations": [
+        "Retain variable roughness",
+        "Normal and bump retained in master; no automatic removal",
+        "Close-up visual review and source license pending"
+      ]
+    },
+    {
+      "id": "library.walnut.lightmap",
+      "entry": "library.materials",
+      "state": "OBSERVED_BOUNDED",
+      "scope": "Corrected matched UV and linear diffuse bake for 108-triangle recessed walnut",
+      "dependencies": [
+        "library.walnut.microstructure"
+      ],
+      "targets": [
+        "blender"
+      ],
+      "facts": {
+        "triangles": [
+          "finish",
+          "/spacing/triangles",
+          108
+        ],
+        "textureResolution": [
+          "finish",
+          "/spacing/resolution",
+          512
+        ],
+        "islands": [
+          "finish",
+          "/spacing/islands",
+          6
+        ],
+        "gapPixels": [
+          "bake",
+          "/uv/productionPacking/gapPixels",
+          20
+        ],
+        "collisionsRadius8": [
+          "finish",
+          "/spacing/squareDilation/8/collisionTexels",
+          0
+        ],
+        "occupiedTexels": [
+          "finish",
+          "/spacing/occupiedTexels",
+          117292
+        ],
+        "bakeSamples": [
+          "finish",
+          "/bakeSamples",
+          128
+        ],
+        "transferSamples": [
+          "bake",
+          "/transfer/samples",
+          786432
+        ],
+        "transferErrors": [
+          "bake",
+          "/transfer/outsideTolerance",
+          0
+        ],
+        "colorSpace": [
+          "bake",
+          "/transfer/space",
+          "Linear Rec.709"
+        ],
+        "priorMean": [
+          "finish",
+          "/priorMean",
+          0.02033242955803871
+        ],
+        "newMean": [
+          "finish",
+          "/newMean",
+          0.006116129923611879
+        ],
+        "relativeGain": [
+          "finish",
+          "/relativeGain",
+          0.6991933548249387
+        ],
+        "restoredChanged": [
+          "bake",
+          "/comparisons/restored/changedPixels",
+          0
+        ]
+      },
+      "limitations": [
+        "Not full material or library qualification",
+        "No mipmap bleeding qualification",
+        "No distribution license granted"
+      ]
+    },
+    {
+      "id": "library.agx.display",
+      "entry": "library.lighting",
+      "state": "OBSERVED_BOUNDED",
+      "scope": "Three.js r128 live GPU pass, four frames versus Blender offline AgX",
+      "dependencies": [],
+      "targets": [
+        "webgl"
+      ],
+      "facts": {
+        "profile": [
+          "bake",
+          "/color/viewTransform",
+          "AgX"
+        ],
+        "look": [
+          "bake",
+          "/color/look",
+          "AgX - Medium High Contrast"
+        ],
+        "exposure": [
+          "bake",
+          "/color/exposure",
+          0
+        ],
+        "gamma": [
+          "bake",
+          "/color/gamma",
+          1
+        ],
+        "referenceMax": [
+          "agxRef",
+          "/cases/reference/all/max",
+          1
+        ],
+        "shiftedMax": [
+          "agxRef",
+          "/cases/shifted/all/max",
+          1
+        ],
+        "mobileMax": [
+          "agxRef",
+          "/cases/mobile/all/max",
+          1
+        ],
+        "restoredMax": [
+          "agxRef",
+          "/cases/restored/all/max",
+          1
+        ],
+        "engine": [
+          "agx",
+          "/result/webglRevision",
+          "128"
+        ],
+        "liveGPU": [
+          "agx",
+          "/result/gpuRenderTargetSource",
+          true
+        ]
+      },
+      "limitations": [
+        "Bounded LUT approximation, not general AgX equivalence",
+        "No optical or physical device qualification",
+        "LUT size and redistribution unresolved"
+      ]
+    },
+    {
+      "id": "library.bay.navigation",
+      "entry": "library.camera",
+      "state": "OBSERVED_BOUNDED",
+      "scope": "Actual bay 04-0, isolated orbit preview; walnut optimized, other materials approximate",
+      "dependencies": [
+        "library.walnut.lightmap",
+        "library.agx.display"
+      ],
+      "targets": [
+        "webgl"
+      ],
+      "facts": {
+        "triangles": [
+          "bay",
+          "/triangles",
+          19008
+        ],
+        "objects": [
+          "browser",
+          "/result/objects",
+          11
+        ],
+        "targetTriangles": [
+          "bay",
+          "/targetTriangles",
+          108
+        ],
+        "stableSamples": [
+          "browser",
+          "/result/metrics/stable",
+          5961
+        ],
+        "testedSamples": [
+          "browser",
+          "/result/metrics/tested",
+          1068
+        ],
+        "badVisibility": [
+          "browser",
+          "/result/metrics/badVisibility",
+          0
+        ],
+        "badSamples": [
+          "browser",
+          "/result/metrics/badSamples",
+          0
+        ],
+        "maxUV": [
+          "browser",
+          "/result/metrics/maxUV",
+          0.000019420755967669567
+        ],
+        "maxDiffuse": [
+          "browser",
+          "/result/metrics/maxDiffuse",
+          0.0004787073965788202
+        ],
+        "maxRoughness": [
+          "browser",
+          "/result/metrics/maxRoughness",
+          0.0045721027784697
+        ],
+        "viewportWidth": [
+          "browser",
+          "/views/mobile/width",
+          320
+        ],
+        "viewportHeight": [
+          "browser",
+          "/views/mobile/height",
+          240
+        ],
+        "referenceSha": [
+          "browser",
+          "/views/reference/sha256",
+          "1d843ed08449d56150dbe2e598eb8026429b268ff327431c79c3ffe3244b42ef"
+        ],
+        "restoredSha": [
+          "browser",
+          "/views/restored/sha256",
+          "1d843ed08449d56150dbe2e598eb8026429b268ff327431c79c3ffe3244b42ef"
+        ]
+      },
+      "limitations": [
+        "Geometry budget only, not full performance",
+        "No final library materials, artistic or physical device approval",
+        "No production runtime deployment"
+      ]
+    }
+  ],
+  "authority": {
+    "execute": false,
+    "parameterWrite": false,
+    "masterWrite": false,
+    "runtimeWrite": false,
+    "artisticApproval": false,
+    "physicalDeviceQualified": false,
+    "publishable": false,
+    "studentAuthorized": false,
+    "licenseQualified": false,
+    "autoPromotion": false
+  }
+}
