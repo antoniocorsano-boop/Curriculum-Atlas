@@ -1,0 +1,94 @@
+name: Atlas — ASC-01 P2C2A browser transfer
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/atlas-scene-compiler-browser-input.py'
+      - 'scripts/test-atlas-scene-compiler-browser-transfer.mjs'
+      - '.github/workflows/atlas-scene-compiler-browser-transfer.yml'
+      - 'docs/atlas-gateway/ASC-01-P2C2A-BROWSER.md'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-asc-p2c2-${{ github.event.pull_request.head.ref }}
+  cancel-in-progress: true
+jobs:
+  transfer:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-production-standard-p2c2' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify pinned Blender and prepare qualified input
+        run: |
+          bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+          python3 -m py_compile scripts/atlas-scene-compiler-browser-input.py scripts/atlas_linear_texture_contract.py
+      - name: Recover exact P2C1 evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/asc-p2c2-source"
+          mkdir -p "$p" "$RUNNER_TEMP/asc-p2c2-input" "$RUNNER_TEMP/asc-p2c2-evidence"
+          curl --fail --silent --show-error --location --retry 3 --max-time 180 --proto '=https' --proto-redir '=https' -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/14537109005/zip" -o "$p/p2c1.zip"
+          printf '%s  %s\n' c3e8ae8ca0a6309f4cbfd42d63374d29eebe986c70b6cd18bb30ae199d7205b5 "$p/p2c1.zip" | sha256sum --strict --check
+          for name in diffuse-bake.json canary-linear.exr diffuse-linear.exr; do
+            unzip -p "$p/p2c1.zip" "$name" > "$p/$name"
+          done
+          "$BLENDER_BIN" --background --factory-startup --disable-autoexec --python-exit-code 1 --python scripts/atlas-scene-compiler-browser-input.py -- "$p" "$RUNNER_TEMP/asc-p2c2-input"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Install existing application dependencies and verified engine
+        run: |
+          pnpm install --frozen-lockfile
+          node scripts/build-atlas-gateway-local.mjs "$RUNNER_TEMP/asc-p2c2-engine"
+          node --check scripts/test-atlas-scene-compiler-browser-transfer.mjs
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Compare linear float and sRGB GPU readback
+        run: |
+          node scripts/test-atlas-scene-compiler-browser-transfer.mjs "$RUNNER_TEMP/asc-p2c2-input" "$RUNNER_TEMP/asc-p2c2-engine/three.min.js" "$RUNNER_TEMP/asc-p2c2-evidence"
+      - name: Verify browser receipt
+        run: |
+          python3 - <<'PY'
+          import os,json,pathlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])
+          m=json.loads((p/"asc-p2c2-input/browser-input.json").read_text())
+          r=json.loads((p/"asc-p2c2-evidence/browser-transfer.json").read_text())
+          assert m["revision"]==r["revision"]==os.environ["ATLAS_EXACT_HEAD"]
+          assert r["status"]=="PASS_GPU_TRANSFER_PROBE" and not r["externalRequests"] and not r["pageErrors"]
+          x=r["result"];assert x["revision"]=="128" and x["webgl2"]
+          assert not any(x[k] for k in ("physicalDeviceQualified","artisticApproval","sceneBindingQualified","publishable"))
+          for key,info in m["images"].items():
+              a=x["records"][key];n=info["width"]*info["height"]*4
+              assert a["linear"]["samples"]==a["display"]["samples"]==n
+              assert a["linear"]["outsideTolerance"]==a["display"]["outsideTolerance"]==0
+              assert (p/"asc-p2c2-evidence"/(key+"-gpu.png")).stat().st_size>0
+          print("ASC-P2C2A transport only verified; scene binding and artistic quality remain open.")
+          PY
+      - name: Preserve browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-asc-p2c2a-browser-transfer
+          path: |
+            ${{ runner.temp }}/asc-p2c2-input/browser-input.json
+            ${{ runner.temp }}/asc-p2c2-evidence/
+            ${{ runner.temp }}/asc-p2c2-engine/manifest.json
+          retention-days: 7
+          if-no-files-found: warn
