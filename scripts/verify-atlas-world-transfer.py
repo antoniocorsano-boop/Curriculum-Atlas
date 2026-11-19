@@ -14,7 +14,7 @@ def png_pixel_stream_sha(path):
     # Blender may add different non-pixel EXIF/text metadata at each render.
     # Compare lossless PNG image payload, while file hashes remain separately
     # pinned for provenance. This fixture uses stable 8-bit RGB PNG encoding.
-    raw=path.read_bytes();need(raw[:8]==b"\\x89PNG\\r\\n\\x1a\\n","PNG signature")
+    raw=path.read_bytes();need(raw[:8]==b"\x89PNG\r\n\x1a\n","PNG signature")
     pos=8;chunks=[];kind=None
     while pos<len(raw):
         need(pos+12<=len(raw),"truncated PNG")
@@ -25,7 +25,7 @@ def png_pixel_stream_sha(path):
         if name==b"IDAT":chunks.append(raw[start:end])
         pos=end+4
         if name==b"IEND":break
-    need(kind is not None and kind[8:10]==b"\\x08\\x02" and chunks,"expected RGB 8-bit PNG")
+    need(kind is not None and kind[8:10]==b"\x08\x02" and chunks,"expected RGB 8-bit PNG")
     return hashlib.sha256(b"".join(chunks)).hexdigest()
 
 def check(out,story,prior,revision):
