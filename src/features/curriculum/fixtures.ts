@@ -3,4 +3,6 @@ export {
   instituteCurriculumFixture,
   arenaCurriculumAuthority,
   findObjective,
+  legacyObjectiveMatches,
+  legacyObjectiveRouteIds,
 } from "./arena-projected";
