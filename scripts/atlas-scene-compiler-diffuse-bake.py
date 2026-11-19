@@ -96,9 +96,6 @@ try:
     finish=os.environ.get("ATLAS_P2C3_FINISH")=="1"
     result=bpy.ops.uv.smart_project(island_margin=.025)
     require("FINISHED" in result,"UV smart project did not finish")
-    if finish:
-        result=bpy.ops.uv.pack_islands(rotate=True,rotate_method="CARDINAL",scale=True,margin_method="FRACTION",margin=.04,shape_method="AABB")
-        require("FINISHED" in result,"production UV pack failed")
     bpy.ops.object.mode_set(mode="OBJECT")
     # Edit-mode conversion can replace the mesh CustomData storage. Never reuse
     # an RNA layer handle obtained before this conversion.
@@ -117,6 +114,13 @@ try:
     factor=(1-2*border)/float(span.max())
     fitted=(raw-(lo_uv+hi_uv)/2)*factor+.5
     report["uv"]={"rawMin":lo_uv.tolist(),"rawMax":hi_uv.tolist(),"rawSpan":span.tolist(),"uniformScale":factor,"outerBorderPixels":8,"fitMethod":"reacquire-after-edit-and-uniform-fit","islandMarginRequested":.025}
+    if finish:
+        from atlas_uv_pack import pack
+        fitted,packing=pack(fitted,[tuple(t.loops) for t in derived.loop_triangles],
+                            [l.vertex_index for l in derived.loops],size=size)
+        require(packing["islands"]==6,"source island count")
+        report["uv"].update(fitMethod=packing["method"],outerBorderPixels=packing["borderPixels"],
+                            uniformScale=factor*packing["relativeScale"],productionPacking=packing)
     write()
     require(np.isfinite(fitted).all() and fitted.min()>=border-1e-7 and fitted.max()<=1-border+1e-7,"fitted UV bounds")
     for loop,coord in zip(uv.data,fitted):
