@@ -6,6 +6,7 @@ on:
       - 'scripts/atlas-gateway-integration/observe-and-test-blender.py'
       - 'scripts/art-learn-observe-blender.py'
       - 'scripts/art-learn-transfer-lighting.py'
+      - 'scripts/art-learn-surface-direction.py'
       - 'ops/atlas-scene-director/art-learn-01.md'
       - 'ops/atlas-scene-director/**'
       - 'docs/atlas-gateway/ASI-01-ASD-01.md'
@@ -249,5 +250,75 @@ jobs:
         with:
           name: atlas-art-learn-02-lighting-transfer
           path: ${{ runner.temp }}/art-learn-transfer/
+          retention-days: 7
+          if-no-files-found: warn
+
+  art-learn-surface-direction:
+    name: ART-LEARN-03 surface response and oblique sunlight
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-scene-consolidated' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify pinned Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - name: Recover exact source evidence, prior transfer and immutable master
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/art-learn-surface-input"
+          mkdir -p "$p" "$RUNNER_TEMP/art-learn-surface"
+          for spec in "14494956906 70b85168db65060fdfbd120b3ae84dad85564e31903e9705fd1402c0be4ad450 study" "14494883566 db2600e87275d12ff234933824f23bfc2a12514693ce962809c8b3287a45284b prior" "14444143410 c7154de191cb6d25890a2881f470f6d6eeba74b2dcab897842f4753403e685c6 master"; do
+            read -r id sha name <<< "$spec"
+            curl --fail --silent --show-error --location --retry 3 --max-time 120 --proto '=https' --proto-redir '=https' -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" -o "$p/$name.zip.part"
+            printf '%s  %s\n' "$sha" "$p/$name.zip.part" | sha256sum --strict --check
+            mv "$p/$name.zip.part" "$p/$name.zip"
+          done
+          unzip -p "$p/study.zip" reference/observation.json > "$p/reference.json"
+          unzip -p "$p/study.zip" atlas/observation.json > "$p/atlas.json"
+          unzip -p "$p/prior.zip" transfer.json > "$p/prior.json"
+          unzip -p "$p/master.zip" Atlas-Scene-Master.blend > "$p/Atlas-Scene-Master.blend"
+          printf '%s  %s\n' f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab "$p/Atlas-Scene-Master.blend" | sha256sum --strict --check
+          chmod a-w "$p/Atlas-Scene-Master.blend" "$p/reference.json" "$p/atlas.json" "$p/prior.json"
+      - name: Render ten controlled comparisons across atrium and detail cameras
+        shell: bash
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/art-learn-surface-input"
+          out="$RUNNER_TEMP/art-learn-surface"
+          timeout 960 "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$p/Atlas-Scene-Master.blend" --python-exit-code 1 --python scripts/art-learn-surface-direction.py -- "$p/Atlas-Scene-Master.blend" "$p/reference.json" "$p/atlas.json" "$p/prior.json" "$out" 2>&1 | tee "$out/run.log"
+      - name: Verify controlled evidence and immutable source
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os,pathlib,json,hashlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"art-learn-surface"
+          r=json.loads((p/"surface-study.json").read_text())
+          assert r["status"]=="PASS_SURFACE_DIRECTION_CANDIDATES"
+          assert r["revision"]==os.environ["ATLAS_EXACT_HEAD"] and r["sourceUnchanged"] and r["protectedStateUnchanged"]
+          assert len(r["bindings"])==14
+          assert not any(r[k] for k in ("masterModified","artisticApproval","publishable","studentAuthorized","crossWorldQualified"))
+          assert set(r["renders"])=={v+"-"+c for v in ("atrium","detail") for c in ("01-reference","02-surface","03-oblique-sun","04-combined","05-restored")}
+          for n,e in r["renders"].items():assert hashlib.sha256((p/(n+".png")).read_bytes()).hexdigest()==e["sha256"]
+          for v in ("atrium","detail"):assert r["comparisons"][v+"-05-restored"]["meanAbsoluteRGBDelta"]<.0002
+          print("ART-LEARN-03 controlled evidence verified; no artistic approval")
+          PY
+      - name: Preserve surface and direction evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-learn-03-surface-direction
+          path: ${{ runner.temp }}/art-learn-surface/
           retention-days: 7
           if-no-files-found: warn
