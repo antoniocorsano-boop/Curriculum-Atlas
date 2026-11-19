@@ -20,12 +20,13 @@ concurrency:
   cancel-in-progress: true
 jobs:
   qualify-native-gateway:
-    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && (github.event.pull_request.head.ref == 'work/atlas-gateway-native-preview' || github.event.pull_request.head.ref == 'work/atlas-scene-consolidated') && github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && (github.event.pull_request.head.ref == 'work/atlas-gateway-native-preview' || github.event.pull_request.head.ref == 'work/atlas-scene-consolidated' || github.event.pull_request.head.ref == 'work/atlas-library-web-delivery') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
       ATLAS_GATEWAY_PREVIEW: "true"
       ATLAS_GATEWAY_NATIVE_PREVIEW: "true"
+      ATLAS_LIBRARY_WEB_DELIVERY: ${{ github.event.pull_request.head.ref == 'work/atlas-library-web-delivery' && 'true' || 'false' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -84,10 +85,27 @@ jobs:
           node --experimental-strip-types scripts/test-atlas-gateway-native-preflight.mjs "$RUNNER_TEMP/native-gateway" "$RUNNER_TEMP/native-gateway/evidence/preflight"
       - name: Build local native Gateway candidate
         run: pnpm build
+      - name: Package runnable Web library
+        if: env.ATLAS_LIBRARY_WEB_DELIVERY == 'true'
+        run: |
+          set -euo pipefail
+          test -f .next/standalone/server.js
+          cp -a .next/standalone "$RUNNER_TEMP/atlas-web"
+          mkdir -p "$RUNNER_TEMP/atlas-web/.next" "$RUNNER_TEMP/atlas-web/gateway-package"
+          cp -a .next/static "$RUNNER_TEMP/atlas-web/.next/static"
+          cp -a public "$RUNNER_TEMP/atlas-web/public"
+          cp "$RUNNER_TEMP/native-gateway/"{scene.html,native-manifest.json,native-build-receipt.json,THREE-LICENSE.txt} "$RUNNER_TEMP/atlas-web/gateway-package/"
+          cp scripts/atlas-library-start.mjs "$RUNNER_TEMP/atlas-web/start-atlas.mjs"
+          cp docs/atlas-gateway/ATLAS-LIBRARY-WEB-DELIVERY.md "$RUNNER_TEMP/atlas-web/LEGGIMI.md"
+          tar -C "$RUNNER_TEMP" -czf "$RUNNER_TEMP/atlas-web-linux-x64.tar.gz" atlas-web
       - name: Exercise actual route, portals, isolated assets and fallbacks
         run: |
           set -euo pipefail
-          pnpm start --hostname 127.0.0.1 > "$RUNNER_TEMP/native-gateway/server.log" 2>&1 &
+          if [[ "$ATLAS_LIBRARY_WEB_DELIVERY" == true ]]; then
+            node "$RUNNER_TEMP/atlas-web/start-atlas.mjs" > "$RUNNER_TEMP/native-gateway/server.log" 2>&1 &
+          else
+            pnpm start --hostname 127.0.0.1 > "$RUNNER_TEMP/native-gateway/server.log" 2>&1 &
+          fi
           trap 'kill $! 2>/dev/null || true' EXIT
           for i in {1..60}; do
             if curl -fsS http://127.0.0.1:3000/gateway/ >/dev/null; then
@@ -112,6 +130,14 @@ jobs:
             ${{ runner.temp }}/native-gateway/evidence/
           if-no-files-found: ignore
           retention-days: 7
+      - name: Deliver complete runnable local Web package
+        if: success() && env.ATLAS_LIBRARY_WEB_DELIVERY == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-library-web-linux-x64
+          path: ${{ runner.temp }}/atlas-web-linux-x64.tar.gz
+          if-no-files-found: error
+          retention-days: 30
       - name: Remove staging
         if: always()
         run: rm -rf public/atlas-gateway-native
