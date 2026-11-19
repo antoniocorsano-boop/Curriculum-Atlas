@@ -1,0 +1,26 @@
+name: Atlas — AWC-A semantic catalog contract
+on:
+  pull_request:
+    paths:
+      - 'ops/atlas-scene-package/awc-catalog.json'
+      - 'ops/atlas-scene-director/parameters.json'
+      - 'ops/atlas-scene-package/asc01-production-policy.json'
+      - 'ops/atlas-scene-package/editable-master-receipt-summary.json'
+      - 'scripts/scene-director.py'
+      - 'scripts/atlas-scene-compiler-plan.py'
+      - 'scripts/atlas-world-catalog.py'
+      - 'scripts/test-atlas-world-catalog.py'
+      - '.github/workflows/atlas-world-catalog.yml'
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run source contracts and catalog tests
+        run: |
+          python3 scripts/test-atlas-scene-compiler-plan.py
+          python3 scripts/test-atlas-world-catalog.py
+          python3 scripts/atlas-world-catalog.py
