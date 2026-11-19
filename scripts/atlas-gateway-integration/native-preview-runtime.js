@@ -276,7 +276,7 @@ addEventListener("resize",()=>{if(ready&&!closing){setCamera();render()}},events
 addEventListener("pagehide",e=>{if(e.persisted)stopMotion(false);else quiesce()},events);
 addEventListener("pageshow",e=>{if(e.persisted&&ready&&!closing){setCamera();render()}},events);
 async function init(){
- renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});
+ renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:false});
  renderer.setPixelRatio(1);renderer.outputEncoding=THREE.sRGBEncoding;
  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.82;
  canvas.addEventListener("webglcontextlost",e=>{e.preventDefault();fail(Error("WebGL context lost"))},{once:true,signal:lifecycle.signal});
