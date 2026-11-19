@@ -245,9 +245,9 @@ jobs:
           cmp "$RUNNER_TEMP/atlas-library-scene" preview/biblioteca/scene.html
           cmp "$RUNNER_TEMP/atlas-library-manifest" preview/biblioteca/native-manifest.json
           curl -fsSL "$URL/esperienze/" -o "$RUNNER_TEMP/atlas-experiences"
-          curl -fsSL "$URL/curricolo/" -o "$RUNNER_TEMP/atlas-curriculum"
+          curl -fsSL "$URL/curricolo/" -o "$RUNNER_TEMP/atlas-curricolo"
           grep -qi '<html' "$RUNNER_TEMP/atlas-experiences"
-          grep -qi '<html' "$RUNNER_TEMP/atlas-curriculum"
+          grep -qi '<html' "$RUNNER_TEMP/atlas-curricolo"
           {
             echo "### Biblioteca Atlas: anteprima Web pubblicata"
             echo "Indirizzo verificato: $URL/biblioteca/"
