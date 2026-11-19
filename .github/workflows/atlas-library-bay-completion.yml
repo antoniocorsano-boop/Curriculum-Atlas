@@ -109,6 +109,17 @@ jobs:
           q=json.loads((p/"baked-surround.json").read_text())
           assert q["status"]=="PASS_BAY_SURROUND_PACKAGE" and q["revision"]==r["revision"] and q["masterUnchanged"] and q["bindingsRestored"]
           assert q["preflight"]["passed"] and len(q["objects"])==9 and len(q["retainedPaper"])==1
+          mb=q["materialBindingPreflight"]
+          assert mb["passed"] and all(mb["synthetic"][k] for k in ("passed","sharedMesh","mixedDataAndObject","distinctOverrides","siblingUnchanged","rollback"))
+          assert q["objectMaterialBindingsRestored"] and len(mb["real"])==9
+          assert any(slot["link"]=="OBJECT" for obj in mb["real"] for slot in obj["slots"])
+          inventory={obj["object"]:obj for obj in mb["real"]}
+          for obj in q["objects"]:
+              original=inventory[obj["object"]]
+              assert original["rollback"] and obj["materialBindingsRestored"]
+              assert obj["materialSlots"]==original["slots"]
+              assert obj["sourceMaterials"]==[slot["effectiveMaterial"] for slot in original["slots"]]
+              assert original["isolatedCloneCount"]==len(original["slots"])
           assert r["surround"]["manifestSha256"]==hashlib.sha256((p/"baked-surround.json").read_bytes()).hexdigest()
           assert all(o["state"]=="PASS_BAKED_SURFACE" and o["transfer"]["outsideTolerance"]==0 and o["uv"]["overlapTexels"]==0 for o in q["objects"])
           for v in ("reference","rotated"):
