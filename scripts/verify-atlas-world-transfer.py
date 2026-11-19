@@ -10,6 +10,24 @@ def sha(path):return transfer.hashfile(path)
 def png_dims(p):
     b=p.read_bytes()[:24];need(b[:8]==b"\x89PNG\r\n\x1a\n","not PNG")
     return struct.unpack(">II",b[16:24])
+def png_pixel_stream_sha(path):
+    # Blender may add different non-pixel EXIF/text metadata at each render.
+    # Compare lossless PNG image payload, while file hashes remain separately
+    # pinned for provenance. This fixture uses stable 8-bit RGB PNG encoding.
+    raw=path.read_bytes();need(raw[:8]==b"\\x89PNG\\r\\n\\x1a\\n","PNG signature")
+    pos=8;chunks=[];kind=None
+    while pos<len(raw):
+        need(pos+12<=len(raw),"truncated PNG")
+        n=struct.unpack(">I",raw[pos:pos+4])[0]
+        name=raw[pos+4:pos+8];start=pos+8;end=start+n
+        need(end+4<=len(raw),"PNG chunk bounds")
+        if name==b"IHDR":kind=raw[start:end]
+        if name==b"IDAT":chunks.append(raw[start:end])
+        pos=end+4
+        if name==b"IEND":break
+    need(kind is not None and kind[8:10]==b"\\x08\\x02" and chunks,"expected RGB 8-bit PNG")
+    return hashlib.sha256(b"".join(chunks)).hexdigest()
+
 def check(out,story,prior,revision):
     t=read(out/"transfer-plan.json");expected=transfer.make_transfer(read(transfer.SPEC),story,prior)
     need(t==expected,"transfer plan drift")
@@ -36,7 +54,7 @@ def check(out,story,prior,revision):
         seen.append(name)
     mob=b["frames"]["mobile"]
     need(png_dims(out/"museo-web-mobile.png")==(320,240) and sha(out/"museo-web-mobile.png")==mob["sha256"],"mobile preview")
-    need(a["frames"]["reference"]["sha256"]==a["frames"]["restored"]["sha256"],"Blender exact image rollback")
+    need(png_pixel_stream_sha(out/"museo-art-reference.png")==png_pixel_stream_sha(out/"museo-art-restored.png"),"Blender exact image rollback")
     need(b["frames"]["reference"]["sha256"]==b["frames"]["restored"]["sha256"],"WebGL exact image rollback")
     need(a["frames"]["reference"]["sha256"]!=a["frames"]["rotated"]["sha256"] and b["frames"]["reference"]["sha256"]!=b["frames"]["rotated"]["sha256"],"orbit not effective")
     need(a["frames"]["reference"]["sha256"]!=a["frames"]["cue-B"]["sha256"] and b["frames"]["reference"]["sha256"]!=b["frames"]["cue-B"]["sha256"],"simulated cue not effective")
