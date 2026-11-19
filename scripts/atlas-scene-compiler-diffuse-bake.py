@@ -93,8 +93,12 @@ try:
     require(uv.name=="ASC_Lightmap","UV name conflict")
     derived.uv_layers.active=uv;uv.active_render=True
     bpy.ops.object.mode_set(mode="EDIT");bpy.ops.mesh.select_all(action="SELECT")
+    finish=os.environ.get("ATLAS_P2C3_FINISH")=="1"
     result=bpy.ops.uv.smart_project(island_margin=.025)
     require("FINISHED" in result,"UV smart project did not finish")
+    if finish:
+        result=bpy.ops.uv.pack_islands(rotate=True,rotate_method="CARDINAL",scale=True,margin_method="FRACTION",margin=.04,shape_method="AABB")
+        require("FINISHED" in result,"production UV pack failed")
     bpy.ops.object.mode_set(mode="OBJECT")
     # Edit-mode conversion can replace the mesh CustomData storage. Never reuse
     # an RNA layer handle obtained before this conversion.
@@ -143,6 +147,11 @@ try:
     report["uv"].update(layer=uv.name,size=size,triangles=len(derived.loop_triangles),minTriangleArea=min_area,sampledOccupiedTexels=occupied,sampledOverlapTexels=overlap,marginRequested=.025,bakeMarginPixels=4,exactOverlapProven=False)
     write()
     require(occupied>100 and overlap==0,"UV sampled overlap or empty coverage")
+    if finish:
+        from atlas_microstructure_ablation import island_spacing
+        spacing=island_spacing(derived,uv,size)
+        report["uv"]["productionSpacing"]=spacing;write()
+        require(spacing["crossIslandOverlap"]==0 and spacing["squareDilation"]["8"]["collisionTexels"]==0 and spacing["edgeClearanceTexels"]>=8,"production UV guard")
     image=bpy.data.images.new("ASC P2C diffuse linear",width=size,height=size,alpha=True,float_buffer=True)
     image.colorspace_settings.name="Linear Rec.709"
     for i,m in enumerate(source_mats):
@@ -157,14 +166,20 @@ try:
                 for node in list(tree.nodes):
                     if node.type=="TEX_IMAGE" and not node.inputs["Vector"].is_linked:
                         tree.links.new(uvnode.outputs["UV"],node.inputs["Vector"])
+                    if finish and node.type=="NORMAL_MAP" and node.space=="TANGENT" and not node.uv_map:
+                        node.uv_map=original_uv.name
         node=tree.nodes.new("ShaderNodeTexImage");node.image=image
         for n in tree.nodes:n.select=False
         node.select=True;tree.nodes.active=node
     bpy.context.view_layer.update()
-    bpy.ops.object.bake(type="DIFFUSE",pass_filter={"DIRECT","INDIRECT","COLOR"},margin=4,use_clear=True)
+    previous_samples=s.cycles.samples
+    if finish:s.cycles.samples=128
+    try:
+        bpy.ops.object.bake(type="DIFFUSE",pass_filter={"DIRECT","INDIRECT","COLOR"},margin=4,use_clear=True)
+    finally:s.cycles.samples=previous_samples
     data=pixels(image).copy();rgb=data[:,:,:3]
     require(np.isfinite(data).all() and float(rgb.max())>0 and float(rgb.std())>1e-6,"empty or invalid bake")
-    report["bake"]={"type":"DIFFUSE_DIRECT_INDIRECT_COLOR","width":size,"height":size,"rgbMin":float(rgb.min()),"rgbMax":float(rgb.max()),"rgbStd":float(rgb.std()),"containsSpecular":False}
+    report["bake"]={"samples":128 if finish else previous_samples,"type":"DIFFUSE_DIRECT_INDIRECT_COLOR","width":size,"height":size,"rgbMin":float(rgb.min()),"rgbMax":float(rgb.max()),"rgbStd":float(rgb.std()),"containsSpecular":False}
     write()
     # Reproduce the previously failing route on the actual bake, collecting
     # numeric evidence by alpha group. Use a snapshot, not the mutable image.
@@ -176,7 +191,7 @@ try:
     report["bake"].update(sha256=transfer["sha256"],bytes=transfer["bytes"],reloadMaxRGBDelta=transfer["maxAbs"])
     write()
     require(transfer["outsideTolerance"]==0,"explicit RGB FLOAT32 transfer drift")
-    if os.environ.get("ATLAS_CAPTURE_BINDING") == "1":
+    if os.environ.get("ATLAS_CAPTURE_BINDING") == "1" or finish:
         from atlas_surface_binding import capture
         capture(out,s,o,derived,uv,transferred,report)
     preview=bpy.data.materials.new("ASC P2C baked preview");preview.use_nodes=True
@@ -191,6 +206,9 @@ try:
     if os.environ.get("ATLAS_P2C3_ORACLE"):
         from atlas_material_ablation import run as material_ablation
         material_ablation(out,s,o,source,derived,uv,transferred,ref,render,report)
+    if finish:
+        from atlas_finish_material import run as finish_material
+        finish_material(out,s,o,source,derived,uv,transferred,ref,render,report)
     o.data=source;bpy.context.view_layer.update();restored=render("native-restored")
     report["comparisons"]={"candidate":compare(ref,cand),"restored":compare(ref,restored)}
     q=report["comparisons"]["restored"]
