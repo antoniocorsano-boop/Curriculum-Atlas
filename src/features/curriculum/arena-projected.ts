@@ -68,7 +68,6 @@ function shortTitle(text: string, fallback: string): string {
 }
 
 function objectiveFromBand(
-  discipline: ArenaDiscipline,
   band: ArenaBand,
   text: string,
   index: number,
@@ -78,30 +77,38 @@ function objectiveFromBand(
     id: `${base}-o${index + 1}`,
     code: `${band.id.toUpperCase()}.O${index + 1}`,
     title: shortTitle(text, `Progressione ${band.gradeLabel}`),
-    description: text || band.progression || band.sourceText || "",
-    knowledge: band.knowledge ?? [],
-    skills: band.competences ?? [],
+    description: text,
+    knowledge: [],
+    skills: [],
     prerequisites: [],
-    connections: band.connections ?? [],
+    connections: [],
     sourceLabel: `Arena · ${source.curriculum.masterId} · ${source.authorityState}`,
     sourceVersion: `${source.curriculum.masterVersion} · ${source.structuralFingerprint.hash}`,
   };
 }
 
 function bandFromArena(discipline: ArenaDiscipline, band: ArenaBand): CurricoloBand {
-  const objectiveTexts = band.objectives?.length
-    ? band.objectives
-    : [band.progression || band.sourceText || `Progressione ${band.gradeLabel}`];
+  const objectiveTexts = band.objectives ?? [];
 
   return {
     id: band.id,
     schoolStage: band.schoolStage,
     gradeLabel: band.gradeLabel,
     subtitle: [band.regime, band.progression].filter(Boolean).join(" · "),
+    context: {
+      kind: "ordinary",
+      sourceSection: band.sourceSection,
+      regime: band.regime,
+      progression: band.progression,
+      competences: band.competences ?? [],
+      knowledge: band.knowledge ?? [],
+      evidence: band.evidence ?? [],
+      connections: band.connections ?? [],
+    },
     topics: [{
       id: `${band.id}-progressione`,
       title: discipline.label,
-      objectives: objectiveTexts.map((text, index) => objectiveFromBand(discipline, band, text, index)),
+      objectives: objectiveTexts.map((text, index) => objectiveFromBand(band, text, index)),
     }],
   };
 }
@@ -120,6 +127,7 @@ function axisToDiscipline(axis: ArenaAxis): CurricoloDiscipline {
       schoolStage: "Secondaria di primo grado",
       gradeLabel: "Percorso 3–14",
       subtitle: axis.kind === "TRANSVERSAL_AXIS" ? "Asse trasversale d’istituto" : "Percorso integrato",
+      context: { kind: "axis", sourceSection: axis.sourceSection },
       topics: [{
         id: `${axis.id}-quadro`,
         title: axis.label,
