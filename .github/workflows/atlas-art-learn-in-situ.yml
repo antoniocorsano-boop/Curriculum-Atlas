@@ -1,0 +1,81 @@
+name: Atlas — ART-LEARN-05E library in situ
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/art-learn-books-in-situ.py'
+      - '.github/workflows/atlas-art-learn-in-situ.yml'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-art-in-situ-${{ github.event.pull_request.head.ref }}
+  cancel-in-progress: true
+jobs:
+  in-situ:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-art-learn-05e-in-situ' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify pinned Blender and script syntax
+        run: |
+          bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+          python3 -m py_compile scripts/art-learn-books-in-situ.py
+      - name: Recover immutable master and exact 05D library
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/in-situ-input"
+          mkdir -p "$p" "$RUNNER_TEMP/in-situ-evidence"
+          for spec in "14444143410 c7154de191cb6d25890a2881f470f6d6eeba74b2dcab897842f4753403e685c6 master" "14528332050 c26c4e33c02422ff710b9fbc54dcac8b5a35515cb4e4c029d0ce213d2d6b9e54 books"; do
+            read -r id sha name <<< "$spec"
+            curl --fail --silent --show-error --location --retry 3 --max-time 120 --proto '=https' --proto-redir '=https' -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" -o "$p/$name.zip"
+            printf '%s  %s\n' "$sha" "$p/$name.zip" | sha256sum --strict --check
+          done
+          unzip -p "$p/master.zip" Atlas-Scene-Master.blend > "$p/Atlas-Scene-Master.blend"
+          unzip -p "$p/books.zip" Atlas-Material-Collection.blend > "$p/Atlas-Material-Collection.blend"
+          unzip -p "$p/books.zip" material-study.json > "$p/material-study.json"
+          printf '%s  %s\n' f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab "$p/Atlas-Scene-Master.blend" | sha256sum --strict --check
+          chmod a-w "$p/Atlas-Scene-Master.blend" "$p/Atlas-Material-Collection.blend" "$p/material-study.json"
+      - name: Render eight measured placements in three native-context views
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/in-situ-input"
+          out="$RUNNER_TEMP/in-situ-evidence"
+          timeout 1650 "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$p/Atlas-Scene-Master.blend" --python-exit-code 1 --python scripts/art-learn-books-in-situ.py -- "$p/Atlas-Scene-Master.blend" "$p/Atlas-Material-Collection.blend" "$p/material-study.json" "$out" 2>&1 | tee "$out/run.log"
+      - name: Validate measured placement, protected source and comparative images
+        run: |
+          python3 - <<'PY'
+          import json,os,pathlib,hashlib,collections
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"in-situ-evidence"
+          r=json.loads((p/"in-situ-study.json").read_text())
+          assert r["status"]=="PASS_IN_SITU_CANDIDATE" and r["revision"]==os.environ["ATLAS_EXACT_HEAD"]
+          assert r["sourceUnchanged"] and r["protectedStateUnchanged"] and r["sharedMeshesRestored"]
+          assert len(r["bookInventory"])==77 and len(r["placements"])==8
+          assert set(collections.Counter(x["title"] for x in r["placements"]).values())=={2}
+          assert all(x["sourceEnvelopeVerified"] for x in r["placements"])
+          assert not any(r[k] for k in ("masterModified","artisticApproval","webglQualified","publishable","studentAuthorized"))
+          assert set(r["renders"])=={v+"-"+m for v in ("atrium","detail","context") for m in ("baseline","candidate","restored")}
+          for k,v in r["renders"].items():assert hashlib.sha256((p/(k+".png")).read_bytes()).hexdigest()==v["sha256"]
+          assert r["comparisons"]["context-candidate"]["changedPixels"]>0
+          print("ART-LEARN-05E comparison only; artist review required")
+          PY
+      - name: Preserve native-context comparisons and receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-learn-05e-in-situ
+          path: ${{ runner.temp }}/in-situ-evidence/
+          retention-days: 7
+          if-no-files-found: warn
