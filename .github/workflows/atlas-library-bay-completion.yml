@@ -4,6 +4,7 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'scripts/test-atlas-bay-material-webgl.mjs'
+      - 'scripts/atlas-raster-oracle.mjs'
       - 'scripts/atlas-export-bay-preview.py'
       - 'scripts/atlas-bake-bay-surround.py'
       - 'scripts/atlas-replay-bay-surround.py'
@@ -38,6 +39,7 @@ jobs:
           bash scripts/atlas-gateway-c3/bootstrap-blender.sh
           python3 -m py_compile scripts/atlas-export-bay-preview.py scripts/atlas-bake-bay-surround.py scripts/atlas_uv_pack.py scripts/atlas-replay-bay-surround.py
           node --check scripts/test-atlas-bay-material-webgl.mjs
+          node --check scripts/atlas-raster-oracle.mjs
       - name: Recover exact master, material, context and AgX artifacts
         env:
           GH_TOKEN: ${{ github.token }}
@@ -152,8 +154,21 @@ jobs:
           assert r["surround"]["manifestSha256"]==hashlib.sha256((p/"baked-surround.json").read_bytes()).hexdigest()
           assert all(o["state"]=="PASS_BAKED_SURFACE" and o["transfer"]["outsideTolerance"]==0 and o["uv"]["overlapTexels"]==0 for o in q["objects"])
           for v in ("reference","rotated"):
-              assert r["surround"][v]["tested"]>=100 and r["surround"][v]["bad"]==0 and r["surround"][v]["maxAbs"]<=.01
-              assert r["surround"][v]["gpuSamples"]>=100 and r["surround"][v]["gpuBad"]==0 and r["surround"][v]["gpuMaxAbs"]<=.01
+              sample=r["surround"][v]
+              assert sample["tested"]>=100 and sample["gpuSamples"]>=100 and sample["gpuBad"]==0 and sample["gpuMaxAbs"]<=.01
+              # Legacy ideal-ray RGB differences remain visible, but cannot
+              # define the GPU raster contract: verify coverage, depth and UV
+              # independently with a precision-derived screen-space envelope.
+              g=sample["raster"]
+              assert g["method"]=="independent-projected-interval-v1" and g["triangles"]==b["triangles"]
+              assert g["points"]==1728 and g["bad"]==0 and g["baked"]==sample["gpuSamples"]
+              assert g["definite"]>=100 and g["definite"]+g["ambiguous"]+g["background"]==g["points"]
+              assert 4<=g["subpixelBits"]<=16 and 16<=g["depthBits"]<=32 and g["step"]==2**-g["subpixelBits"]
+              assert g["maxScreenUncertainty"]<=g["step"]+.01 and g["varyingEps"]==2e-6
+              assert all(g["negativeCanaries"][k] for k in ("wrongFace","wrongUV","wrongDepth","falseBackground"))
+              assert sum(int(t["legacyBad"]) for t in g["legacyDetails"])==sample["bad"]
+              assert sum(int(t["legacyIdentityMismatch"]) for t in g["legacyDetails"])==sample["identityMismatch"]
+              assert all(t["result"]["ok"] for t in g["legacyDetails"])
           assert len(r["surround"]["visibleObjects"])>=3
           assert r["views"]["approximate"]["sha256"]!=r["views"]["reference"]["sha256"]
           for name,v in r["views"].items():
