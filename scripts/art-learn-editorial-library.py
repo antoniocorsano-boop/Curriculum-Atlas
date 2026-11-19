@@ -97,7 +97,7 @@ def assign_uv(o,mat,side):
             v=mesh.vertices[mesh.loops[j].vertex_index].co
             k=0 if side=="spine" else 1
             u=(v[k]-lo[k])/(hi[k]-lo[k]);z=(v.z-lo[2])/(hi[2]-lo[2])
-            if side=="cover" and sign>0:u=1-u
+            if side=="cover" and sign<0:u=1-u
             uv.data[j].uv=(u,z)
     req(n>0,"no editorial faces: "+o.name)
     return n
