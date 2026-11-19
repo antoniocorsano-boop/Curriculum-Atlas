@@ -58,7 +58,9 @@ def main():
     s=bpy.context.scene; deps=bpy.context.evaluated_depsgraph_get()
     target=s.objects.get(b["target"]["object"])
     require(target and target.type=="MESH" and target.data.name==b["target"]["mesh"],"target identity")
-    original=triangle_rows(target.data,target.matrix_world)
+    target.data.calc_loop_triangles()
+    original=np.array([list(target.matrix_world @ target.data.vertices[target.data.loops[loop].vertex_index].co)
+                       for tri in target.data.loop_triangles for loop in tri.loops],dtype="<f4")
     require(canonical_triangles(original)==canonical_triangles(p),"B1 geometry differs from original")
     # Same active view layer, render-visible collections; opaque geometric proxy.
     visible={}
@@ -117,8 +119,8 @@ def main():
             ends.append(Vector(q[:3])/q.w)
         origin,end=ends;delta=end-origin
         hit,normal,index,distance=bvh.ray_cast(origin,delta.normalized(),delta.length)
-        if index is None:return ("background",None)
-        if index>=n:return ("occluder",None)
+        if index is None:return ("background",None,None)
+        if index>=n:return ("occluder",None,index)
         tri=p[3*index:3*index+3].astype(np.float64)
         v0,v1=tri[1]-tri[0],tri[2]-tri[0];v2=np.array(hit)-tri[0]
         d00,d01,d11=np.dot(v0,v0),np.dot(v0,v1),np.dot(v1,v1)
@@ -127,16 +129,17 @@ def main():
         beta=(d11*np.dot(v2,v0)-d01*np.dot(v2,v1))/den
         gamma=(d00*np.dot(v2,v1)-d01*np.dot(v2,v0))/den
         uv=(1-beta-gamma)*u[3*index]+beta*u[3*index+1]+gamma*u[3*index+2]
-        return ("target",[float(q) for q in uv])
+        return ("target",[float(q) for q in uv],index)
     samples=[];counts={"target":0,"occluder":0,"background":0,"unstable":0}
     for gy in range(64):
         for gx in range(96):
             x=int((gx+.5)*w/96);y=int((gy+.5)*h/64)
-            kind,uv=trace(x+.5,y+.5)
-            neighbors=[trace(x+.5+dx,y+.5+dy)[0] for dx,dy in ((-1,0),(1,0),(0,-1),(0,1))]
-            stable=all(k==kind for k in neighbors)
+            kind,uv,index=trace(x+.5,y+.5)
+            neighbors=[trace(x+.5+dx,y+.5+dy) for dx,dy in ((-1,0),(1,0),(0,-1),(0,1))]
+            stable=all(k==kind for k,_,_ in neighbors)
+            stable_uv=stable and kind=="target" and all(i==index for _,_,i in neighbors)
             counts[kind if stable else "unstable"]+=1
-            samples.append({"x":x,"y":y,"kind":kind,"stable":stable,"uv":uv})
+            samples.append({"x":x,"y":y,"kind":kind,"stable":stable,"stableUV":stable_uv,"uv":uv})
     require(counts["target"]>=100 and counts["occluder"]>=100,"insufficient visible/occluded samples")
     require(sum(counts.values())==6144,"sample inventory")
     write(out/"context-oracle.json",{
