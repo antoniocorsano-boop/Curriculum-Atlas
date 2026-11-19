@@ -16,7 +16,14 @@ assert r["transfer"]["outsideTolerance"]==0 and r["transfer"]["channels"]=={"R":
 assert "legacyTransfer" in r
 assert hashlib.sha256((p/"canary-linear.exr").read_bytes()).hexdigest()==r["transferPreflight"]["explicit"]["sha256"]
 assert hashlib.sha256((p/"diffuse-linear.exr").read_bytes()).hexdigest()==r["bake"]["sha256"]
-assert set(r["renders"])=={"native-baseline","native-baked-preview","native-restored","material-control","material-diffuse-camera","material-hybrid-camera"}
+expected_images={"native-baseline","native-baked-preview","native-restored","material-control","material-diffuse-camera","material-hybrid-camera"}
+if len(sys.argv)==4:
+    assert sys.argv[3]=="--microstructure"
+    expected_images.update({"micro-"+n+"-"+q for n in ("full","map","flat") for q in ("texture","constant")})
+    expected_images.add("micro-full-repeat")
+else:
+    assert len(sys.argv)==3
+assert set(r["renders"])==expected_images
 for name,m in r["renders"].items():
     assert hashlib.sha256((p/(name+".png")).read_bytes()).hexdigest()==m["sha256"]
 assert r["comparisons"]["restored"]["meanAbsoluteRGBDelta"]<.0002
