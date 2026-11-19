@@ -47,6 +47,7 @@ export default async function ObjectivePage({ params }: { params: Promise<{ id: 
   }
 
   const { discipline, band, topic, objective } = found;
+  const context = band.context;
 
   return (
     <AppShell>
@@ -68,30 +69,52 @@ export default async function ObjectivePage({ params }: { params: Promise<{ id: 
 
       <div className="atlas-objective-layout">
         <article className="atlas-panel atlas-objective-content">
-          <section>
-            <h2>Conoscenze essenziali</h2>
-            <ul>{objective.knowledge.map(item => <li key={item}>{item}</li>)}</ul>
-          </section>
-          <section>
-            <h2>Abilità</h2>
-            <ul>{objective.skills.map(item => <li key={item}>{item}</li>)}</ul>
-          </section>
-          <section>
-            <h2>Prerequisiti</h2>
-            <div className="atlas-chip-row">{objective.prerequisites.map(item => <span key={item} className="atlas-chip">{item}</span>)}</div>
-          </section>
-          <section>
-            <h2>Raccordi</h2>
-            <div className="atlas-chip-row">{objective.connections.map(item => <span key={item} className="atlas-chip">{item}</span>)}</div>
-          </section>
+          {context?.kind === "ordinary" ? (
+            <>
+              <section>
+                <h2>Contesto della fascia curricolare</h2>
+                <p>Le informazioni seguenti riguardano {band.schoolStage} · {band.gradeLabel}, non sono associazioni specifiche convalidate per il singolo obiettivo.</p>
+                {context.regime && <p>Quadro indicato da Arena: {context.regime}</p>}
+                {context.sourceSection && <p>Sezione di fonte: {context.sourceSection}</p>}
+                <h3>Progressione</h3>
+                <p>{context.progression || "Non esplicitata nel pacchetto ricevuto."}</p>
+              </section>
+              {([
+                ["Competenze della fascia", context.competences],
+                ["Conoscenze della fascia", context.knowledge],
+                ["Evidenze previste per la fascia", context.evidence],
+                ["Raccordi della fascia", context.connections],
+              ] as const).map(([label, values]) => (
+                <section key={label}>
+                  <h2>{label}</h2>
+                  {values.length ? <ul>{values.map((item, index) => <li key={index}>{item}</li>)}</ul> : <p>Non esplicitate nel pacchetto ricevuto.</p>}
+                </section>
+              ))}
+              <section>
+                <h2>Riferimenti da approfondire</h2>
+                <p>Il pacchetto non distingue abilità, prerequisiti, nuclei fondanti, Profilo dello studente e obiettivi generali come riferimenti autonomi per questo obiettivo. Atlas non li ricava automaticamente.</p>
+              </section>
+            </>
+          ) : context?.kind === "axis" ? (
+            <section>
+              <h2>Quadro del percorso</h2>
+              <p>Questa voce presenta un quadro trasversale o integrato, non un singolo OSA.</p>
+              {context.sourceSection && <p>Sezione di fonte: {context.sourceSection}</p>}
+            </section>
+          ) : (
+            <section>
+              <h2>Contesto non disponibile</h2>
+              <p>Non sono disponibili riferimenti di fascia verificabili.</p>
+            </section>
+          )}
         </article>
         <div className="atlas-curriculum-rail">
           <ProvenancePanel label={objective.sourceLabel} version={objective.sourceVersion} />
           <section className="atlas-panel">
             <h3>Collegamenti rapidi</h3>
             <div className="atlas-quick-list">
-              <Link className="atlas-quick-link" href="/risorse"><span>Risorse collegate</span><span>→</span></Link>
-              <Link className="atlas-quick-link" href="/percorsi"><span>Percorsi correlati</span><span>→</span></Link>
+              <Link className="atlas-quick-link" href="/risorse"><span>Catalogo risorse</span><span>→</span></Link>
+              <Link className="atlas-quick-link" href="/percorsi"><span>Catalogo percorsi</span><span>→</span></Link>
             </div>
           </section>
         </div>
