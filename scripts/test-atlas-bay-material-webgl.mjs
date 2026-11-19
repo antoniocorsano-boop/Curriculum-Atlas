@@ -15,9 +15,16 @@ const bay=json(bayDir,"bay.json"),oracle=json(ctx,"context-oracle.json"),lut=jso
 const texture=read(src,"binding.rgba32f"),rough=read(src,"roughness.rgb8"),rows=read(bayDir,"bay.f32"),occ=read(ctx,"occluders.f32"),lutBytes=read(agx,"lut.rgba8");
 const bakedManifest=surroundDir?json(surroundDir,"baked-surround.json"):null;
 const bakedFiles=new Map();
+const bakedReplay=bakedManifest&&process.env.ATLAS_BAKE_REPLAY==='1'?json(surroundDir,'replay.json'):null;
 if(bakedManifest){
   assert.equal(bakedManifest.status,"PASS_BAY_SURROUND_PACKAGE");
-  assert.equal(bakedManifest.revision,bay.revision);
+  if(bakedReplay){
+    assert.equal(bakedReplay.status,"PASS_EXACT_BAKE_REPLAY");
+    assert.equal(bakedReplay.rebaked,false);
+    assert.equal(bakedReplay.sourceRevision,bakedManifest.revision);
+    assert.equal(bakedManifest.revision,"34bd5bbd3281abdcbc1a9fbe4c5de59dc750020e");
+    assert.equal(bakedReplay.manifestSha256,sha(read(surroundDir,"baked-surround.json")));
+  }else assert.equal(bakedManifest.revision,bay.revision);
   assert.equal(bakedManifest.baySha256,bay.sha256);
   assert.equal(bakedManifest.retainedTarget,bay.target);
   assert.equal(bakedManifest.objects.length,9);
@@ -121,18 +128,20 @@ if(bay.bakedSurround){
   }
   pg.setAttribute("position",new T.Float32BufferAttribute(pp,3));pg.setAttribute("normal",new T.Float32BufferAttribute(pn,3));pg.setAttribute("baseColor",new T.Float32BufferAttribute(pc,3));pg.setAttribute("properties",new T.Float32BufferAttribute(pr,2));
   const pm=new T.Mesh(pg,surround);pm.name=paper.object;bakedGroup.add(pm);
-  for(const item of bm.objects){
+  for(const [surfaceIndex,item] of bm.objects.entries()){
     const [vertices,rgba]=await Promise.all([floats("/"+item.id+".f32"),floats("/"+item.id+".rgba32f")]);
     check(vertices.length===item.vertices*5&&rgba.length===item.width*item.height*4,"baked array sizes");
     const p=[],uv=[];for(let i=0;i<vertices.length;i+=5){p.push(...vertices.slice(i,i+3));uv.push(...vertices.slice(i+3,i+5));}
     const g=new T.BufferGeometry();g.setAttribute("position",new T.Float32BufferAttribute(p,3));g.setAttribute("uv",new T.Float32BufferAttribute(uv,2));
+    const faceIds=Float32Array.from({length:item.vertices},(_,i)=>Math.floor(i/3)+1);
+    g.setAttribute("faceId",new T.BufferAttribute(faceIds,1));
     const texture=tex(rgba,item.width,item.height,T.FloatType);
     const mat=new T.ShaderMaterial({side:T.DoubleSide,toneMapped:false,uniforms:{map:{value:texture},sz:{value:new T.Vector2(item.width,item.height)}},
       vertexShader:"varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
       fragmentShader:["varying vec2 vUv;uniform sampler2D map;uniform vec2 sz;",
       "vec3 at(vec2 p){return texture2D(map,(clamp(p,vec2(0.0),sz-1.0)+.5)/sz).rgb;}",
       "void main(){vec2 p=vUv*sz-.5,i=floor(p),f=fract(p);vec3 a=mix(at(i),at(i+vec2(1,0)),f.x),b=mix(at(i+vec2(0,1)),at(i+1.0),f.x);gl_FragColor=vec4(mix(a,b,f.y),1.0);}"].join("\n")});
-    const mesh=new T.Mesh(g,mat);mesh.name=item.object;mesh.userData.bake={rgba,width:item.width,height:item.height};bakedMeshes.push(mesh);bakedGroup.add(mesh);
+    const mesh=new T.Mesh(g,mat);mesh.name=item.object;mesh.userData.bake={rgba,width:item.width,height:item.height,id:surfaceIndex+1};bakedMeshes.push(mesh);bakedGroup.add(mesh);
   }
   check(bakedMeshes.length===9,"baked mesh count");
 }
@@ -159,22 +168,62 @@ window.__checkBaked=()=>{
   check(bakedGroup.visible&&!approxMesh.visible,"baked mode");
   const w=canvas.width,h=canvas.height,pixels=new Float32Array(w*h*4);
   R.readRenderTargetPixels(floatRT,0,0,w,h,pixels);check(gl.getError()===gl.NO_ERROR,"baked framebuffer readback");
-  const raycaster=new T.Raycaster(),objects=[target,...bakedGroup.children],result={tested:0,bad:0,maxAbs:0,perObject:{}};
+  // Second pass: identical geometry, order, camera, depth and vertex transform;
+  // encode UV + object + face rather than texture color. Do not infer identity
+  // from a color match. Retain the original independent CPU ray gate.
+  const objects=[target,...bakedGroup.children],old=objects.map(o=>o.material);
+  const ids=new Float32Array(w*h*4),masks=[];
+  try{
+    for(const o of objects){
+      const q=o.userData.bake;
+      const mat=new T.ShaderMaterial({side:T.DoubleSide,toneMapped:false,uniforms:{surfaceId:{value:q?q.id:-1}},
+        vertexShader:q?"attribute float faceId;varying vec2 vUv;varying float vFace;void main(){vUv=uv;vFace=faceId;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}":"void main(){gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+        fragmentShader:q?"varying vec2 vUv;varying float vFace;uniform float surfaceId;void main(){gl_FragColor=vec4(vUv,surfaceId,vFace);}":"uniform float surfaceId;void main(){gl_FragColor=vec4(0.0,0.0,surfaceId,0.0);}"});
+      masks.push(mat);o.material=mat;
+    }
+    R.setRenderTarget(floatRT);R.render(scene,cam);R.readRenderTargetPixels(floatRT,0,0,w,h,ids);
+    check(gl.getError()===gl.NO_ERROR,"baked UV identity pass");
+  }finally{
+    objects.forEach((o,i)=>o.material=old[i]);masks.forEach(m=>m.dispose());render(w,h);
+  }
+  const raycaster=new T.Raycaster(),result={tested:0,bad:0,maxAbs:0,perObject:{},gpuSamples:0,gpuBad:0,gpuMaxAbs:0,identityMismatch:0,maxUV:0,anomalies:[],worst:null};
   for(const m of bakedMeshes)result.perObject[m.name]=0;
   const pt=new T.Vector3(),a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3(),bc=new T.Vector3();
+  function sampled(q,uv){return [0,1,2].map(ch=>sample(q.rgba,uv,q.width,q.height,4,false,ch));}
+  function delta(a,b){return Math.max(...a.map((v,i)=>Math.abs(v-b[i])));}
   for(let iy=0;iy<36;iy++)for(let ix=0;ix<48;ix++){
-    const x=Math.floor((ix+.5)*w/48),y=Math.floor((iy+.5)*h/36);
+    const x=Math.floor((ix+.5)*w/48),y=Math.floor((iy+.5)*h/36),k=(y*w+x)*4;
+    const gpuId=Math.round(ids[k+2]),gpuFace=Math.round(ids[k+3])-1,gpuUV=[ids[k],ids[k+1]],gpuRGB=Array.from(pixels.slice(k,k+3));
+    const gm=bakedMeshes.find(m=>m.userData.bake.id===gpuId);
+    let gpuExpected=null,gpuError=null;
+    if(gm){
+      check(gpuFace>=0&&gpuFace<gm.geometry.attributes.position.count/3&&gpuUV.every(v=>Number.isFinite(v)&&v>=0&&v<=1),"invalid raster identity");
+      gpuExpected=sampled(gm.userData.bake,gpuUV);gpuError=delta(gpuExpected,gpuRGB);
+      result.gpuSamples++;result.gpuMaxAbs=Math.max(result.gpuMaxAbs,gpuError);if(gpuError>.01)result.gpuBad++;
+    }
     raycaster.setFromCamera(new T.Vector2(2*(x+.5)/w-1,2*(y+.5)/h-1),cam);
-    const hit=raycaster.intersectObjects(objects,false)[0];
+    const hits=raycaster.intersectObjects(objects,false),hit=hits[0];
     if(!hit||!hit.object.userData.bake||!hit.uv||!hit.face)continue;
     const g=hit.object.geometry.attributes.position;
     a.fromBufferAttribute(g,hit.face.a);b.fromBufferAttribute(g,hit.face.b);c.fromBufferAttribute(g,hit.face.c);
     pt.copy(hit.point);hit.object.worldToLocal(pt);T.Triangle.getBarycoord(pt,a,b,c,bc);
     if(Math.min(bc.x,bc.y,bc.z)<.025)continue;
-    const q=hit.object.userData.bake,k=(y*w+x)*4;let delta=0;
-    for(let ch=0;ch<3;ch++)delta=Math.max(delta,Math.abs(sample(q.rgba,[hit.uv.x,hit.uv.y],q.width,q.height,4,false,ch)-pixels[k+ch]));
-    check(Number.isFinite(delta),"non-finite baked sample");result.maxAbs=Math.max(result.maxAbs,delta);
-    result.tested++;result.perObject[hit.object.name]++;if(delta>.01)result.bad++;
+    const q=hit.object.userData.bake,cpuUV=[hit.uv.x,hit.uv.y],cpuRGB=sampled(q,cpuUV),error=delta(cpuRGB,gpuRGB);
+    const identity=q.id===gpuId&&hit.faceIndex===gpuFace;
+    const uvError=identity?delta(cpuUV,gpuUV):null;
+    if(identity)result.maxUV=Math.max(result.maxUV,uvError);else result.identityMismatch++;
+    check(Number.isFinite(error),"non-finite baked sample");result.maxAbs=Math.max(result.maxAbs,error);
+    result.tested++;result.perObject[hit.object.name]++;if(error>.01)result.bad++;
+    if(error>.01||!identity||gpuError>.01||!result.worst||error>result.worst.error){
+      const neighborIds=[];
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+        if(x+dx<0||x+dx>=w||y+dy<0||y+dy>=h)continue;
+        const j=((y+dy)*w+x+dx)*4;neighborIds.push({dx,dy,id:Math.round(ids[j+2]),face:Math.round(ids[j+3])-1});
+      }
+      const detail={x,y,object:hit.object.name,cpuId:q.id,cpuFace:hit.faceIndex,cpuUV,cpuRGB,barycentric:bc.toArray(),gpuId,gpuFace,gpuUV,gpuRGB,gpuExpected,gpuError,identity,uvError,error,neighborIds,rayHits:hits.slice(0,3).map(h=>({object:h.object.name,face:h.faceIndex,distance:h.distance}))};
+      if(!result.worst||error>result.worst.error)result.worst=detail;
+      if(error>.01||!identity||gpuError>.01)result.anomalies.push(detail);
+    }
   }
   return result;
 };
@@ -190,18 +239,24 @@ async function capture(name){const v=await page.evaluate(()=>window.__capture())
 if(bakedManifest){
   await capture("approximate");
   await page.evaluate(()=>window.__setBaked(true));
-  report.surround={manifestSha256:sha(read(surroundDir,"baked-surround.json")),objects:bakedManifest.objects.length,retainedPaper:bakedManifest.retainedPaper,reference:await page.evaluate(()=>window.__checkBaked())};
-  assert(report.surround.reference.tested>=100&&report.surround.reference.bad===0,JSON.stringify(report.surround.reference));
+  report.surround={manifestSha256:sha(read(surroundDir,"baked-surround.json")),sourceRevision:bakedManifest.revision,replayed:!!bakedReplay,objects:bakedManifest.objects.length,retainedPaper:bakedManifest.retainedPaper,reference:await page.evaluate(()=>window.__checkBaked())};
 }
 await capture("reference");
 if(bakedManifest)assert.notEqual(report.views.approximate.sha256,report.views.reference.sha256,"baked material has no visible effect");
 const box=await page.locator("canvas").boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await page.mouse.move(box.x+box.width/2+70,box.y+box.height/2+10,{steps:4});await page.mouse.up();await capture("rotated");assert.notEqual(report.views.reference.sha256,report.views.rotated.sha256,"pointer navigation");
 if(bakedManifest){
   report.surround.rotated=await page.evaluate(()=>window.__checkBaked());
-  assert(report.surround.rotated.tested>=100&&report.surround.rotated.bad===0,JSON.stringify(report.surround.rotated));
+
   report.surround.visibleObjects=Object.keys(report.surround.reference.perObject).filter(k=>report.surround.reference.perObject[k]+report.surround.rotated.perObject[k]>0);
   assert(report.surround.visibleObjects.length>=3,"insufficient visible surface coverage");
 }
 await page.locator("#reset").click();await capture("restored");assert.equal(report.views.reference.sha256,report.views.restored.sha256,"camera restore");
-await page.evaluate(()=>window.__resize(320,240));await capture("mobile");assert.equal(report.views.mobile.width,320);assert.deepEqual(report.externalRequests,[]);assert.deepEqual(report.pageErrors,[]);report.status=bakedManifest?"PASS_BAKED_BAY_PREVIEW":"PASS_NAVIGABLE_BAY_PREVIEW";
+await page.evaluate(()=>window.__resize(320,240));await capture("mobile");assert.equal(report.views.mobile.width,320);assert.deepEqual(report.externalRequests,[]);assert.deepEqual(report.pageErrors,[]);
+if(bakedManifest){
+  for(const v of ["reference","rotated"]){
+    const x=report.surround[v];
+    assert(x.tested>=100&&x.gpuSamples>=100&&x.bad===0&&x.gpuBad===0,JSON.stringify({view:v,tested:x.tested,bad:x.bad,gpuBad:x.gpuBad,worst:x.worst,anomalies:x.anomalies}));
+  }
+}
+report.status=bakedManifest?"PASS_BAKED_BAY_PREVIEW":"PASS_NAVIGABLE_BAY_PREVIEW";
 }catch(e){report.status="FAIL";report.error=String(e);throw e;}finally{writeFileSync(join(out,"bay-browser.json"),JSON.stringify(report,null,2)+"\n");console.log("ASC BAY BROWSER",JSON.stringify(report));if(browser)await browser.close();server.close();}
