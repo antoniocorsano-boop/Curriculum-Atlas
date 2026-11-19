@@ -1,0 +1,88 @@
+name: Atlas — ART-PERF-05F volumetric L1
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/art-perf-l1-*.py'
+      - '.github/workflows/atlas-art-perf-l1.yml'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-art-perf-l1-${{ github.event.pull_request.head.ref }}
+  cancel-in-progress: true
+jobs:
+  editorial:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-art-perf-05f-l1' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify pinned Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - name: Verify Python syntax
+        run: python3 -m py_compile scripts/art-perf-l1-library.py
+      - name: Recover exact qualified source library
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/l1-input"
+          mkdir -p "$p" "$RUNNER_TEMP/l1-evidence"
+          curl --fail --silent --show-error --location --retry 4 --retry-delay 2 --max-time 120 --proto '=https' --proto-redir '=https' -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/14528332050/zip" -o "$p/source.zip"
+          printf '%s  %s\n' c26c4e33c02422ff710b9fbc54dcac8b5a35515cb4e4c029d0ce213d2d6b9e54 "$p/source.zip" | sha256sum --strict --check
+          unzip -p "$p/source.zip" Atlas-Material-Collection.blend > "$p/Atlas-Material-Collection.blend"
+          unzip -p "$p/source.zip" material-study.json > "$p/material-study.json"
+      - name: Simplify measured volumes and render eleven paired studio images
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/l1-input"
+          out="$RUNNER_TEMP/l1-evidence"
+          timeout 1350 "$BLENDER_BIN" --background --factory-startup --disable-autoexec --python-exit-code 1 --python scripts/art-perf-l1-library.py -- "$p/Atlas-Material-Collection.blend" "$p/material-study.json" "$out" 2>&1 | tee "$out/render.log"
+      - name: Append four new assets into an independent Blender project
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/l1-evidence"
+          timeout 120 "$BLENDER_BIN" --background --factory-startup --disable-autoexec --python-exit-code 1 --python scripts/art-perf-l1-library.py -- verify "$out/Atlas-L1-Collection.blend" "$out/l1-study.json" 2>&1 | tee "$out/append.log"
+      - name: Reopen with both candidate and original libraries unavailable
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/l1-evidence"
+          p="$RUNNER_TEMP/l1-input"
+          mv "$out/Atlas-L1-Collection.blend" "$RUNNER_TEMP/05f-hidden.blend"
+          mv "$p/Atlas-Material-Collection.blend" "$RUNNER_TEMP/05f-source-hidden.blend"
+          trap 'mv "$RUNNER_TEMP/05f-hidden.blend" "$out/Atlas-L1-Collection.blend"; mv "$RUNNER_TEMP/05f-source-hidden.blend" "$p/Atlas-Material-Collection.blend"' EXIT
+          timeout 120 "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$out/Atlas-L1-Offline.blend" --python-exit-code 1 --python scripts/art-perf-l1-library.py -- reopen "$out/Atlas-L1-Offline.blend" "$out/Atlas-L1-Collection.blend" "$p/Atlas-Material-Collection.blend" 2>&1 | tee "$out/reopen.log"
+      - name: Verify candidate evidence and no publication authorization
+        run: |
+          python3 - <<'PY'
+          import json,os,pathlib,hashlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"l1-evidence"
+          r=json.loads((p/"l1-study.json").read_text())
+          assert r["status"]=="PASS_L1_CANDIDATES" and r["sourceUnchanged"]
+          assert len(r["assets"])==4 and len(r["maps"])==16 and len(r["renders"])==11
+          assert all(v["candidate"]["triangles"]<v["baseline"]["triangles"] and v["maxEnvelopeDeltaMetres"]<.002 for v in r["assets"].values())
+          print("Evaluated triangle reduction:", {k:round(v["savingFraction"]*100,2) for k,v in r["assets"].items()})
+          print("All books meet 50% target:", r["allMeet50PercentTarget"])
+          assert all(not r[k] for k in ("artisticApproval","webglQualified","publishable","studentAuthorized"))
+          assert all(hashlib.sha256((p/(k+".png")).read_bytes()).hexdigest()==v["sha256"] for k,v in r["renders"].items())
+          assert json.loads((p/"offline-reopen.json").read_text())["sourceUnavailable"]
+          print("ART-PERF-05F CANDIDATES ONLY: artist review required")
+          PY
+      - name: Preserve comparative images, models and receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-perf-05f-l1
+          path: ${{ runner.temp }}/l1-evidence/
+          retention-days: 7
+          if-no-files-found: warn
