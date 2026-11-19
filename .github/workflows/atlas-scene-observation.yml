@@ -515,6 +515,14 @@ jobs:
           set -euo pipefail
           out="$RUNNER_TEMP/art-learn-book-library"
           timeout 120 "$BLENDER_BIN" --background --factory-startup --disable-autoexec --python-exit-code 1 --python scripts/art-learn-book-library.py -- verify-library "$out/Atlas-Book-Collection.blend" "$out/book-library-study.json" 2>&1 | tee "$out/roundtrip.log"
+      - name: Reopen saved project with source library unavailable
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/art-learn-book-library"
+          mv "$out/Atlas-Book-Collection.blend" "$RUNNER_TEMP/Atlas-Book-Collection.hidden"
+          trap 'mv "$RUNNER_TEMP/Atlas-Book-Collection.hidden" "$out/Atlas-Book-Collection.blend"' EXIT
+          timeout 120 "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$out/Atlas-Book-Offline-Test.blend" --python-exit-code 1 --python scripts/art-learn-book-library.py -- verify-offline "$out/Atlas-Book-Offline-Test.blend" "$out/book-library-study.json" "$out/Atlas-Book-Collection.blend" 2>&1 | tee "$out/offline.log"
       - name: Verify original asset inventory, library and rendering evidence
         shell: bash
         run: |
@@ -529,7 +537,7 @@ jobs:
           assert r["sourceBookCount"]==77 and len(r["profiles"])==4
           assert set(r["assets"])=={"AL05B "+n for n in ("ATLANTE","NATURA","STORIA","GEOMETRIA")}
           assert all(any(o["type"]=="FONT" and o["body"]==v["title"] for o in v["objects"]) and any("curved binding" in o["name"] for o in v["objects"]) and any("page block" in o["name"] for o in v["objects"]) for v in r["assets"].values())
-          assert q["status"]=="PASS" and q["objectInventoriesEqual"] and not q["externalDependencies"]
+          assert q["status"]=="PASS" and q["objectInventoriesEqual"] and not q["externalDependencies"] and q["sourceUnavailableOnReopen"]
           assert q["librarySha256"]==r["librarySha256"]==hashlib.sha256((p/"Atlas-Book-Collection.blend").read_bytes()).hexdigest()
           assert set(r["renders"])=={v+"-"+m for v in ("spines","pages") for m in ("baseline","candidate","restored")}|{"macro-baseline","macro-candidate"}
           for n,e in r["renders"].items():assert hashlib.sha256((p/(n+".png")).read_bytes()).hexdigest()==e["sha256"]
@@ -543,5 +551,63 @@ jobs:
         with:
           name: atlas-art-learn-05b-book-library
           path: ${{ runner.temp }}/art-learn-book-library/
+          retention-days: 7
+          if-no-files-found: warn
+
+  art-learn-book-roundtrip-repair:
+    name: ART-LEARN-05B focused recovery of exact existing library
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-scene-consolidated' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify pinned Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - name: Recover exact already rendered candidate without regeneration
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/art-learn-book-repair"
+          mkdir -p "$out"
+          curl --fail --silent --show-error --location --retry 3 --max-time 120 --proto '=https' --proto-redir '=https' -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/14499809497/zip" -o "$RUNNER_TEMP/book-repair.zip"
+          printf '%s  %s\n' 8cb7e8a768fa1d1c9e2d14d3017c48524afdd77a199e881a5491ec861bbdca5b "$RUNNER_TEMP/book-repair.zip" | sha256sum --strict --check
+          unzip -p "$RUNNER_TEMP/book-repair.zip" Atlas-Book-Collection.blend > "$out/Atlas-Book-Collection.blend"
+          unzip -p "$RUNNER_TEMP/book-repair.zip" book-library-study.json > "$out/book-library-study.json"
+          python3 - <<'PY'
+          import json,os,pathlib,hashlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"art-learn-book-repair"
+          r=json.loads((p/"book-library-study.json").read_text())
+          assert r["status"]=="PASS_ORIGINAL_BOOK_ASSET_CANDIDATES" and r["revision"]=="6f54d32a38058c49b58200c7d2742d52c07acfd6"
+          assert r["librarySha256"]==hashlib.sha256((p/"Atlas-Book-Collection.blend").read_bytes()).hexdigest()
+          PY
+      - name: Audit actual dependencies and save independent project
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/art-learn-book-repair"
+          timeout 120 "$BLENDER_BIN" --background --factory-startup --disable-autoexec --python-exit-code 1 --python scripts/art-learn-book-library.py -- verify-library "$out/Atlas-Book-Collection.blend" "$out/book-library-study.json" 2>&1 | tee "$out/roundtrip.log"
+      - name: Reopen independent project with original file removed from its path
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/art-learn-book-repair"
+          mv "$out/Atlas-Book-Collection.blend" "$RUNNER_TEMP/Atlas-Book-Repair.hidden"
+          trap 'mv "$RUNNER_TEMP/Atlas-Book-Repair.hidden" "$out/Atlas-Book-Collection.blend"' EXIT
+          timeout 120 "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$out/Atlas-Book-Offline-Test.blend" --python-exit-code 1 --python scripts/art-learn-book-library.py -- verify-offline "$out/Atlas-Book-Offline-Test.blend" "$out/book-library-study.json" "$out/Atlas-Book-Collection.blend" 2>&1 | tee "$out/offline.log"
+      - name: Preserve audit and offline proof even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-learn-05b-roundtrip-repair
+          path: ${{ runner.temp }}/art-learn-book-repair/
           retention-days: 7
           if-no-files-found: warn
