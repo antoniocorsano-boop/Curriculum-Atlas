@@ -125,6 +125,9 @@ def run(out,scene,obj,source,derived,uv,transferred,reference,render,report):
         result["imageSha256"]={n:report["renders"][n]["sha256"] for n in ("material-control","material-diffuse-camera","material-hybrid-camera")}
         write()
         print("ASC-P2C3A",json.dumps(result),flush=True)
+        if os.environ.get("ATLAS_P2C3_MICROSTRUCTURE")=="1":
+            from atlas_microstructure_ablation import run as microstructure
+            microstructure(out,source,derived,uv,transferred,reference,render,report,coords,result["material-hybrid-camera"])
     except Exception as e:
         result.update(status="FAIL",error=repr(e));write();raise
     finally:
