@@ -1,0 +1,93 @@
+name: Atlas — ART-LEARN-05C editorial identities
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/art-learn-editorial-*.py'
+      - '.github/workflows/atlas-art-learn-editorial.yml'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-art-editorial-${{ github.event.pull_request.head.ref }}
+  cancel-in-progress: true
+jobs:
+  editorial:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-art-learn-05c-editorial' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify pinned Blender
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - name: Verify and prepare free local vector renderer
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends python3-cairosvg fonts-dejavu-core
+          /usr/bin/python3 -c 'import cairosvg; print(cairosvg.__version__)'
+          /usr/bin/python3 -m py_compile scripts/art-learn-editorial-plates.py scripts/art-learn-editorial-library.py
+      - name: Recover exact qualified source library
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/editorial-input"
+          mkdir -p "$p" "$RUNNER_TEMP/editorial-evidence"
+          curl --fail --silent --show-error --location --retry 4 --retry-delay 2 --max-time 120 --proto '=https' --proto-redir '=https' -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/14505875148/zip" -o "$p/source.zip"
+          printf '%s  %s\n' 9d78d8cfa993b3b22aa5b3075ea6b38488462768bf9a1af56afa4f6cc0cf4324 "$p/source.zip" | sha256sum --strict --check
+          unzip -p "$p/source.zip" Atlas-Book-Collection.blend > "$p/Atlas-Book-Collection.blend"
+          unzip -p "$p/source.zip" book-library-study.json > "$p/book-library-study.json"
+      - name: Create original vector plates and raster maps
+        run: |
+          set -euo pipefail
+          /usr/bin/python3 scripts/art-learn-editorial-plates.py "$RUNNER_TEMP/editorial-evidence/plates"
+      - name: Apply UV maps and render nine paired studio images
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/editorial-input"
+          out="$RUNNER_TEMP/editorial-evidence"
+          timeout 1200 "$BLENDER_BIN" --background --factory-startup --disable-autoexec --python-exit-code 1 --python scripts/art-learn-editorial-library.py -- "$p/Atlas-Book-Collection.blend" "$p/book-library-study.json" "$out/plates" "$out" 2>&1 | tee "$out/render.log"
+      - name: Append four new assets into an independent Blender project
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/editorial-evidence"
+          timeout 120 "$BLENDER_BIN" --background --factory-startup --disable-autoexec --python-exit-code 1 --python scripts/art-learn-editorial-library.py -- verify "$out/Atlas-Editorial-Collection.blend" "$out/editorial-study.json" 2>&1 | tee "$out/append.log"
+      - name: Reopen without external texture files or source library
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/editorial-evidence"
+          mv "$out/Atlas-Editorial-Collection.blend" "$RUNNER_TEMP/05c-hidden.blend"
+          mv "$out/plates" "$RUNNER_TEMP/05c-hidden-plates"
+          trap 'mv "$RUNNER_TEMP/05c-hidden.blend" "$out/Atlas-Editorial-Collection.blend"; mv "$RUNNER_TEMP/05c-hidden-plates" "$out/plates"' EXIT
+          timeout 120 "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$out/Atlas-Editorial-Offline.blend" --python-exit-code 1 --python scripts/art-learn-editorial-library.py -- reopen "$out/Atlas-Editorial-Offline.blend" "$out/Atlas-Editorial-Collection.blend" "$out/plates" 2>&1 | tee "$out/reopen.log"
+      - name: Verify candidate evidence and no publication authorization
+        run: |
+          python3 - <<'PY'
+          import json,os,pathlib,hashlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"editorial-evidence"
+          r=json.loads((p/"editorial-study.json").read_text())
+          assert r["status"]=="PASS_EDITORIAL_CANDIDATES" and r["sourceUnchanged"]
+          assert len(r["assets"])==4 and len(r["maps"])==16 and len(r["renders"])==9
+          assert all(not r[k] for k in ("artisticApproval","webglQualified","publishable","studentAuthorized"))
+          assert all(hashlib.sha256((p/(k+".png")).read_bytes()).hexdigest()==v["sha256"] for k,v in r["renders"].items())
+          assert json.loads((p/"offline-reopen.json").read_text())["sourceUnavailable"]
+          print("ART-LEARN-05C CANDIDATES ONLY: artist review required")
+          PY
+      - name: Preserve vector sources, maps, images, models and receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-learn-05c-editorial
+          path: ${{ runner.temp }}/editorial-evidence/
+          retention-days: 7
+          if-no-files-found: warn
