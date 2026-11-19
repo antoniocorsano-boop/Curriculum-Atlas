@@ -17,11 +17,26 @@ export type CurriculumTopic = {
   objectives: CurriculumObjective[];
 };
 
+// Contesto documentale della fascia: nessuna relazione puntuale inferita.
+export type CurricoloBandContext =
+  | {
+      kind: "ordinary";
+      sourceSection?: string;
+      regime?: string;
+      progression?: string;
+      competences: string[];
+      knowledge: string[];
+      evidence: string[];
+      connections: string[];
+    }
+  | { kind: "axis"; sourceSection?: string };
+
 export type CurriculumBand = {
   id: string;
   schoolStage: "Infanzia" | "Primaria" | "Secondaria di primo grado";
   gradeLabel: string;
   subtitle: string;
+  context?: CurricoloBandContext;
   topics: CurriculumTopic[];
 };
 

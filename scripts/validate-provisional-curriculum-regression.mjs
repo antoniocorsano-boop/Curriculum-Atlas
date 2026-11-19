@@ -188,6 +188,35 @@ req(graph.nodes.filter(n => n.kind === "objective").length === current.length, "
 req(sync.includes("legacyObjectiveMatches,") && sync.includes("legacyObjectiveRouteIds,"), "sync loses historical route support");
 console.log(JSON.stringify({gate:"CURR-REF-01/F-R0", objectives:current.length, distinct:new Set(current.map(x=>x.o.id)).size, legacyRoutes:legacyIds.length, ambiguousHistoricalRoutes:ambiguous.length, graphNodes:graph.nodes.length, graphEdges:graph.edges.length}));
 
+
+// F-R1: exact source-category preservation, no invented objective or mapping.
+const ordinaryBands = arenaExport.curriculum.disciplines.flatMap(d => d.bands);
+const projectedBands = projection.curricoloIstitutoFixture.disciplines.flatMap(d => d.bands);
+const equal = (a,b) => JSON.stringify(a) === JSON.stringify(b);
+for (const raw of ordinaryBands) {
+  const band = projectedBands.find(b => b.id === raw.id);
+  req(band?.context?.kind === "ordinary", "missing source band context: " + raw.id);
+  if (!band?.context || band.context.kind !== "ordinary") continue;
+  for (const field of ["competences","knowledge","evidence","connections"]) {
+    req(equal(band.context[field],raw[field] ?? []), "source category loss: " + field + " " + raw.id);
+  }
+  for (const field of ["sourceSection","regime","progression"]) {
+    req(band.context[field] === raw[field], "source metadata loss: " + field + " " + raw.id);
+  }
+  const objectives = band.topics.flatMap(t => t.objectives);
+  req(equal(objectives.map(o => o.description),raw.objectives ?? []), "objective text/order changed: " + raw.id);
+  req(objectives.every(o => !o.skills.length && !o.knowledge.length && !o.connections.length && !o.prerequisites.length), "inferred objective-level mapping: " + raw.id);
+}
+req(graph.edges.filter(e => e.relation === "connects").every(e => e.source.startsWith("band:")), "connection not scoped to source band");
+req(graph.nodes.filter(n => n.kind === "objective").every(n => n.bandId && graph.edges.some(e => e.relation === "contains" && e.source === "band:" + n.bandId && e.target === n.id)), "objective not attached to exact band");
+req(relationExplorer.includes("objective.bandId === stageNode.bandId"), "layout may duplicate objectives across same-stage bands");
+req(objectivePage.includes("Competenze della fascia") && objectivePage.includes("Evidenze previste per la fascia") && !objectivePage.includes("<h2>Abilità</h2>"), "semantic labels not preserved");
+const altered = JSON.parse(JSON.stringify(arenaExport));
+altered.curriculum.disciplines[0].bands[0].objectives = [];
+const emptyProjection = loadModel(arenaProjected, { arenaExport:altered }, ["curricoloIstitutoFixture"]);
+req(emptyProjection.curricoloIstitutoFixture.disciplines[0].bands[0].topics[0].objectives.length === 0, "synthetic objective created from absent source");
+console.log(JSON.stringify({gate:"CURR-REF-01/F-R1", ordinaryBands:ordinaryBands.length, evidenceBands:ordinaryBands.filter(b=>b.evidence?.length).length, progressionBands:ordinaryBands.filter(b=>b.progression?.trim()).length, bandScopedEdges:graph.edges.filter(e=>e.relation==="connects").length}));
+
 if (errors.length) {
   console.error(errors.map((error) => "ERROR: " + error).join("\n"));
   process.exit(1);
