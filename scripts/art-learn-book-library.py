@@ -22,7 +22,7 @@ def vec(v):return [round(float(x),8) for x in v]
 def inventory(collection):
     rows=[]
     for o in sorted(collection.all_objects,key=lambda o:o.name):
-        d={"name":o.name,"type":o.type,"matrix":[vec(r) for r in o.matrix_local]}
+        d={"name":o.name,"type":o.type,"location":vec(o.location),"rotation":vec(o.rotation_euler),"scale":vec(o.scale)}
         if o.type=="MESH":
             m=o.data;m.calc_loop_triangles()
             d.update(vertices=len(m.vertices),faces=len(m.polygons),baseTriangles=len(m.loop_triangles),materials=[x.name for x in m.materials],modifiers=[{"type":x.type,"name":x.name} for x in o.modifiers])
@@ -41,6 +41,7 @@ if args[0]=="verify-library":
         require(c and inventory(c)==r["assets"][c.name]["objects"],"asset roundtrip drift "+str(c))
         require(all(not o.library for o in c.all_objects),"unexpected linked asset")
     require(not bpy.data.libraries,"external library dependency")
+    require(all(c.asset_data for c in dst.collections),"asset metadata not preserved")
     require(not any(i.source=="FILE" for i in bpy.data.images),"external image dependency")
     (receipt.parent/"library-roundtrip.json").write_text(json.dumps({"status":"PASS","librarySha256":sha(path),"assets":sorted(r["assets"]),"objectInventoriesEqual":True,"externalDependencies":False},indent=2)+"\n")
     print("ART_LEARN_05B_LIBRARY_ROUNDTRIP PASS",flush=True)
@@ -196,7 +197,7 @@ for i,(name,profile,binding,flat) in enumerate(zip(names,profiles,detailed_mats,
     cover=min(.0035,w*.09);inset=min(.006,d*.035,h*.025);curve=min(d*.045,w*.16)
     # Baseline and detail share nominal extent w,d,h. Move the spine origin
     # to +curve, using a local collection offset via object translation.
-    c=bpy.data.collections.new("AL05B "+name);c.asset_mark()
+    c=bpy.data.collections.new("AL05B "+name);c.asset_mark();c.asset_data.description="Original Studio Atlas book binding; measured nominal dimensions; candidate, not released."
     base=bpy.data.collections.new("AL05B baseline "+name)
     assets.append(c);baselines.append(base)
     for coll,mat,pm,detail in ((c,binding,paper_mat,True),(base,flat,simple_paper,False)):
