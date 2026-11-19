@@ -1,0 +1,168 @@
+{
+  "schema": "atlas.awc.catalog/v1",
+  "version": "0.1.0",
+  "mode": "PLAN_ONLY",
+  "sources": {
+    "asdRegistry": "de054d1d5d1c1092514c7d5e127b8ed3248b9cb7",
+    "ascPolicy": "f1a06c43725a274583464511bae76628c1fad632",
+    "masterReceipt": "d7883f6e0c7b74323cfec9b800e2f046e1eac01a",
+    "asdPlanner": "2ad58beef07b7cf6924373af767f947e144b99fb",
+    "ascPlanner": "79d7c9d7b48b0f1fe4dd9888bd0209871b38c008"
+  },
+  "entries": [
+    {
+      "id": "library.reference",
+      "version": "1.0.0",
+      "family": "world",
+      "state": "REFERENCE_ONLY",
+      "source": "masterReceipt",
+      "dependencies": [],
+      "targets": [
+        "blender",
+        "webgl"
+      ],
+      "parameters": [],
+      "evidence": [
+        "PR-130",
+        "PR-131"
+      ],
+      "licenseStatus": "INTERNAL_REVIEW_REQUIRED"
+    },
+    {
+      "id": "library.camera",
+      "version": "1.0.0",
+      "family": "camera",
+      "state": "CANDIDATE",
+      "source": "asdRegistry",
+      "dependencies": [
+        "library.reference"
+      ],
+      "targets": [
+        "blender",
+        "webgl"
+      ],
+      "parameters": [
+        "camera.active",
+        "camera.mode",
+        "camera.orbit",
+        "camera.tilt",
+        "camera.distance"
+      ],
+      "evidence": [
+        "ASD-01/P1"
+      ],
+      "licenseStatus": "INTERNAL_REVIEW_REQUIRED"
+    },
+    {
+      "id": "library.lighting",
+      "version": "1.0.0",
+      "family": "lighting",
+      "state": "CANDIDATE",
+      "source": "asdRegistry",
+      "dependencies": [
+        "library.reference"
+      ],
+      "targets": [
+        "webgl"
+      ],
+      "parameters": [
+        "lighting.exposure",
+        "lighting.skyFill",
+        "lighting.sun",
+        "lighting.frontFill"
+      ],
+      "evidence": [
+        "ASD-01/P1"
+      ],
+      "licenseStatus": "INTERNAL_REVIEW_REQUIRED"
+    },
+    {
+      "id": "library.astral",
+      "version": "1.0.0",
+      "family": "interaction",
+      "state": "CANDIDATE",
+      "source": "asdRegistry",
+      "dependencies": [
+        "library.reference"
+      ],
+      "targets": [
+        "blender",
+        "webgl"
+      ],
+      "parameters": [
+        "astral.visible",
+        "astral.motion"
+      ],
+      "evidence": [
+        "ASD-01/P1",
+        "ASI-L2"
+      ],
+      "licenseStatus": "INTERNAL_REVIEW_REQUIRED"
+    },
+    {
+      "id": "library.architecture",
+      "version": "1.0.0",
+      "family": "architecture",
+      "state": "BLOCKED",
+      "source": "masterReceipt",
+      "dependencies": [
+        "library.reference"
+      ],
+      "targets": [],
+      "parameters": [],
+      "evidence": [
+        "PR-132",
+        "PR-133"
+      ],
+      "licenseStatus": "INTERNAL_REVIEW_REQUIRED"
+    },
+    {
+      "id": "library.materials",
+      "version": "1.0.0",
+      "family": "materials",
+      "state": "BLOCKED",
+      "source": "masterReceipt",
+      "dependencies": [
+        "library.reference"
+      ],
+      "targets": [],
+      "parameters": [],
+      "evidence": [
+        "PR-134",
+        "PR-135"
+      ],
+      "licenseStatus": "INTERNAL_REVIEW_REQUIRED"
+    }
+  ],
+  "presets": [
+    {
+      "id": "library.reference",
+      "version": "1.0.0",
+      "state": "REFERENCE_ONLY",
+      "world": "library.reference",
+      "entries": [
+        "library.reference",
+        "library.camera",
+        "library.lighting",
+        "library.astral"
+      ],
+      "intent": "Preserve the master and reference the existing ASD parameter registry; no changes or renderer execution."
+    }
+  ],
+  "concepts": [
+    {
+      "id": "aurelia",
+      "state": "CONCEPT_ONLY",
+      "world": "futuristic_city",
+      "style": "painterly",
+      "lighting": "warm_afternoon",
+      "atmosphere": "bright",
+      "outputs": [
+        "artistic",
+        "interactive"
+      ],
+      "seed": 2401,
+      "notes": "Future case; no bindings or executable preset. Preserve Museo Zero as the already planned ASD transfer experiment."
+    }
+  ]
+}
