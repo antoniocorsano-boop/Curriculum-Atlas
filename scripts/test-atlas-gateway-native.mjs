@@ -37,9 +37,11 @@ async function inspect(page,device){
    const baseline=capture(),calls=renderer.info.render.calls,triangles=renderer.info.render.triangles;
    function effect(o){o.visible=false;const b=capture();o.visible=true;let count=0;for(let i=0;i<b.length;i+=4)if(Math.abs(b[i]-baseline[i])+Math.abs(b[i+1]-baseline[i+1])+Math.abs(b[i+2]-baseline[i+2])>12)count++;return count}
    const cupola=effect(groupMap.cupola),stars=effect(starGroup),lights=effect(als.object);capture();
-   return {revision:THREE.REVISION,stats,calls,triangles,meshes,vertices,points:als.object.geometry.attributes.position.count,cupola,stars,lights,sky:!!scene.background,centers,hits,controls,motion,decoded:nativeDecoded,phase:nativePhase};
+   return {revision:THREE.REVISION,stats,calls,triangles,meshes,vertices,points:als.object.geometry.attributes.position.count,cupola,stars,lights,sky:!!scene.background,centers,hits,controls,motion,decoded:nativeDecoded,phase:nativePhase,raster:{...renderBudget},actualBuffer:[w,h],css:[innerWidth,innerHeight],canvasRect:[canvas.getBoundingClientRect().width,canvas.getBoundingClientRect().height]};
  });
- assert.equal(m.phase,"ready");assert.deepEqual(Object.keys(m.decoded),["shell","scenography","cupola","portals","bays","stars"]);assert(m.decoded.shell.images>0&&m.decoded.shell.textures>0);assert(Object.values(m.decoded).every(d=>d.decoder==="TextureLoader"));
+ assert.equal(m.phase,"ready");
+ assert.equal(m.raster.maxPixels,1048576);const [cw,ch]=m.css,[bw,bh]=m.actualBuffer;const scale=Math.min(1,Math.sqrt(1048576/(cw*ch)));
+ assert.deepEqual([bw,bh],[Math.max(1,Math.floor(cw*scale)),Math.max(1,Math.floor(ch*scale))]);assert.deepEqual(m.canvasRect,m.css);assert.equal(m.raster.bufferWidth,bw);assert.equal(m.raster.bufferHeight,bh);assert(bw*bh<=1048576);assert.equal(m.raster.fenceSupported,true,"Chromium WebGL2 fence unavailable");assert.deepEqual(Object.keys(m.decoded),["shell","scenography","cupola","portals","bays","stars"]);assert(m.decoded.shell.images>0&&m.decoded.shell.textures>0);assert(Object.values(m.decoded).every(d=>d.decoder==="TextureLoader"));
  assert.equal(m.revision,"128");assert.equal(m.meshes,3);assert.equal(m.vertices,9956);assert.equal(m.points,18);
  assert.equal(m.stats.total,495);assert(m.stats.culled>0);assert(m.triangles<1101794);assert(m.calls>0&&m.calls<=100);
  assert(m.cupola>0&&m.stars>0&&m.lights>0&&m.sky);assert(m.centers.every(c=>c.inFrame),JSON.stringify(m.centers));assert(m.hits.every(h=>h.hit===h.id),JSON.stringify(m.hits));assert(m.controls.every(c=>c.h>=44&&c.reachable));assert.equal(m.motion,false);
@@ -71,7 +73,7 @@ try{
   page.on("requestfailed",r=>routeEvents.push({url:r.url(),failure:r.failure()?.errorText}));
   page.on("crash",()=>routeEvents.push({crash:true}));
   page.on("pageerror",e=>errors.push(e.message));
-  page.on("console",m=>{const t=m.text();if(m.type()==="error"||t.startsWith("ATLAS_NATIVE_"))diagnostics.push(t);if(t==="ATLAS_NATIVE_FRAME_DETACHED"||t==="ATLAS_NATIVE_DOCUMENT_NAV_START")routeEvents.push({checkpoint:t,at:Date.now()});});
+  page.on("console",m=>{const t=m.text();if(m.type()==="error"||t.startsWith("ATLAS_NATIVE_"))diagnostics.push(t);if(t==="ATLAS_NATIVE_FRAME_DETACHED"||t==="ATLAS_NATIVE_DOCUMENT_NAV_START"||t==="ATLAS_NATIVE_DETACH_BEGIN"||t==="ATLAS_NATIVE_CLOSED"||t.startsWith("ATLAS_NATIVE_NAV_ACCEPT "))routeEvents.push({checkpoint:t,at:Date.now()});});
   // Observe local requests passively. Routing every local response changes
   // Chromium request scheduling and disables its HTTP cache.
   page.on("request",req=>{const u=new URL(req.url());if(u.origin===origin&&u.pathname.startsWith("/atlas-gateway-native/"))assets.push(u.pathname);if(u.origin===origin&&req.isNavigationRequest()&&req.resourceType()==="document"&&["/esperienze/","/curricolo/"].includes(u.pathname))routeEvents.push({checkpoint:"document-request",path:u.pathname,at:Date.now()});});
@@ -90,7 +92,8 @@ try{
    if(name.startsWith("large")){
      const toggle=frame.locator("#atlas-astral-toggle");await toggle.click();assert.equal(await toggle.getAttribute("aria-pressed"),"true");
    }
-   const transitionStarted=Date.now();
+   // Keep the original five full readbacks and all interaction/departure deadlines.
+    const transitionStarted=Date.now();
    routeEvents.push({checkpoint:"portal-action",at:transitionStarted});
    await Promise.all([page.waitForURL("**/esperienze/",{waitUntil:"commit",timeout:30000}),frame.locator("canvas").click({position:{x:esperienze.x,y:esperienze.y}})]);
    routeEvents.push({checkpoint:"commit-observed",at:Date.now(),url:page.url()});
