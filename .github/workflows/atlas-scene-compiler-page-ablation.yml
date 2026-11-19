@@ -1,0 +1,82 @@
+name: Atlas — ASC-01 P2A page geometry
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/atlas-scene-compiler-page-ablation.py'
+      - '.github/workflows/atlas-scene-compiler-page-ablation.yml'
+      - 'docs/atlas-gateway/ASC-01-P2A-PAGINE.md'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-asc-p2a-${{ github.event.pull_request.head.ref }}
+  cancel-in-progress: true
+jobs:
+  compare:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-production-standard-p2a' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify pinned Blender and syntax
+        run: |
+          bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+          python3 -m py_compile scripts/atlas-scene-compiler-page-ablation.py
+      - name: Recover verified master and P1 evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/asc-p2a-input"
+          mkdir -p "$p" "$RUNNER_TEMP/asc-p2a-evidence"
+          for spec in "14444143410 c7154de191cb6d25890a2881f470f6d6eeba74b2dcab897842f4753403e685c6 master" "14532419098 d9265cc68d178b2eec7f5f8655cacf5ce6631fdc5afd99267b715e5660ecbfde baseline"; do
+            read -r id sha name <<< "$spec"
+            curl --fail --silent --show-error --location --retry 3 --max-time 180 --proto '=https' --proto-redir '=https' -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" -o "$p/$name.zip"
+            printf '%s  %s\n' "$sha" "$p/$name.zip" | sha256sum --strict --check
+          done
+          unzip -p "$p/master.zip" Atlas-Scene-Master.blend > "$p/Atlas-Scene-Master.blend"
+          unzip -p "$p/baseline.zip" asc-p1-baseline.json > "$p/asc-p1-baseline.json"
+          printf '%s  %s\n' f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab "$p/Atlas-Scene-Master.blend" | sha256sum --strict --check
+          chmod a-w "$p/Atlas-Scene-Master.blend" "$p/asc-p1-baseline.json"
+      - name: Compare original and two geometric derivatives
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/asc-p2a-input"
+          out="$RUNNER_TEMP/asc-p2a-evidence"
+          timeout 1650 "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$p/Atlas-Scene-Master.blend" --python-exit-code 1 --python scripts/atlas-scene-compiler-page-ablation.py -- "$p/Atlas-Scene-Master.blend" "$p/asc-p1-baseline.json" "$out" 2>&1 | tee "$out/run.log"
+      - name: Validate geometry, evidence and rollback
+        run: |
+          python3 - <<'PY'
+          import json,os,pathlib,hashlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"asc-p2a-evidence"
+          r=json.loads((p/"page-ablation.json").read_text())
+          assert r["status"]=="PASS_GEOMETRY_COMPARISON" and r["revision"]==os.environ["ATLAS_EXACT_HEAD"]
+          assert r["masterUnchanged"] and r["sharedMeshesRestored"] and r["sourceTriangles"]==8316
+          assert r["variants"]["box"]["triangles"]==924 and 924<r["variants"]["bevel"]["triangles"]<8316
+          assert all(v["components"]==77 and v["localBoundsPreserved"] for v in r["variants"].values())
+          assert set(r["renders"])=={v+"-"+m for v in ("atrium","context") for m in ("baseline","box","bevel","restored")}
+          for key,v in r["renders"].items():assert hashlib.sha256((p/(key+".png")).read_bytes()).hexdigest()==v["sha256"]
+          for v in ("atrium","context"):
+              q=r["comparisons"][v+"-restored"]["full"]
+              assert q["meanAbsoluteRGBDelta"]<.0002 and q["changedPixels"]<=max(1,int(q["pixels"]*.001))
+          assert not any(r[k] for k in ("masterModified","runtimeModified","studentAuthorized","publishable","artisticApproval","webglQualified"))
+          print("ASC-P2A verified controlled comparison; artistic selection and bake not qualified.")
+          PY
+      - name: Preserve comparisons and receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-asc-p2a-page-ablation
+          path: ${{ runner.temp }}/asc-p2a-evidence/
+          retention-days: 7
+          if-no-files-found: warn
