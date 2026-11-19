@@ -1,0 +1,81 @@
+{
+  "schema": "atlas.asc01.production-policy/v1",
+  "status": "PLAN_ONLY",
+  "recordedOn": "2026-11-19",
+  "baseCommit": "900ff114c75709b33a72a44a3525826aa167dc0f",
+  "pilot": {
+    "id": "atlas-library-bay",
+    "masterSha256": "f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab",
+    "receipt": "ops/atlas-scene-package/editable-master-receipt-summary.json",
+    "artCandidateCommit": "aa7ee147ea65250543cafc16b060d788d4ea9a6e",
+    "artCandidatePr": 127,
+    "renderer": "three.js-r128",
+    "artCandidateIntegrated": false
+  },
+  "variants": [
+    {
+      "id": "A",
+      "kind": "master-reference"
+    },
+    {
+      "id": "B",
+      "kind": "baked-unlit"
+    },
+    {
+      "id": "C",
+      "kind": "hybrid-pbr-lightmap"
+    }
+  ],
+  "profiles": {
+    "mobile": {
+      "activeFpsTarget": 30,
+      "initial3dBytesTarget": 5000000,
+      "visibleTrianglesTarget": 100000,
+      "drawCallsTarget": 100,
+      "textureMiBTarget": 64
+    },
+    "desktop": {
+      "activeFpsTarget": 60,
+      "initial3dBytesTarget": 10000000,
+      "visibleTrianglesTarget": 300000,
+      "drawCallsTarget": 200,
+      "textureMiBTarget": 128
+    }
+  },
+  "tools": [
+    "Blender/Cycles",
+    "glTF Transform",
+    "meshoptimizer",
+    "KTX-Software",
+    "glTF Validator"
+  ],
+  "stages": [
+    "P1-baseline",
+    "P2-lighting-color",
+    "P3-tool-compatibility",
+    "P4-compile-qualification",
+    "P5-review-reuse"
+  ],
+  "requiredEvidence": [
+    "master-byte-hash",
+    "art-05e-review",
+    "same-camera-images",
+    "identity-map",
+    "tool-version-license-hash",
+    "loader-csp-compatibility",
+    "six-format-regression",
+    "physical-device-metrics",
+    "ART-100-human-review",
+    "rollback",
+    "ASP-TRAMA-decision"
+  ],
+  "authority": {
+    "masterWrite": false,
+    "runtimeWrite": false,
+    "studentAuthorized": false,
+    "publishable": false,
+    "paidServices": false,
+    "externalRuntimeRequests": false,
+    "autoPromotion": false
+  }
+}
