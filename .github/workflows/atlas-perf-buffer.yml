@@ -85,12 +85,12 @@ jobs:
           const source=readFileSync(p,"utf8"),r=JSON.parse(readFileSync(q,"utf8"));
           const sha=x=>createHash("sha256").update(x).digest("hex");
           if(sha(source)!==r.sceneSha256)throw Error("baseline hash");
-          const token="preserveDrawingBuffer:true";
+          const token="preserveDrawingBuffer:false";
           if(source.split(token).length!==2)throw Error("expected exactly one context setting");
           const mode=process.env.ATLAS_PERF_BUFFER;
           if(!["retained","transient"].includes(mode))throw Error("experiment mode");
-          const candidate=mode==="transient"?source.replace(token,"preserveDrawingBuffer:false"):source;
-          const evidence={mode,baselineSceneSha256:r.sceneSha256,variantSceneSha256:sha(candidate),changedAttribute:"preserveDrawingBuffer",changed:mode==="transient",manifestSha256:r.manifestSha256,publishable:false,studentAuthorized:false};
+          const candidate=mode==="retained"?source.replace(token,"preserveDrawingBuffer:true"):source;
+          const evidence={mode,baselineSceneSha256:r.sceneSha256,variantSceneSha256:sha(candidate),changedAttribute:"preserveDrawingBuffer",changed:mode==="retained",baselineMode:"transient",manifestSha256:r.manifestSha256,publishable:false,studentAuthorized:false};
           writeFileSync(p,candidate);r.sceneSha256=sha(candidate);r.perfBufferExperiment=evidence;
           writeFileSync(q,JSON.stringify(r,null,2)+"\n");
           writeFileSync(join(dir,"perf-buffer-variant.json"),JSON.stringify(evidence,null,2)+"\n");
