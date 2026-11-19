@@ -1,0 +1,110 @@
+name: Atlas — ASC-01 P2C2B-B2a contextual binding
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/atlas-scene-compiler-context-oracle.py'
+      - 'scripts/test-atlas-scene-compiler-context.mjs'
+      - 'scripts/atlas-scene-compiler-context-display.py'
+      - '.github/workflows/atlas-scene-compiler-context.yml'
+      - 'docs/atlas-gateway/ASC-01-P2C2B-CONTEXT.md'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-asc-p2c2b-context-${{ github.event.pull_request.head.ref }}
+  cancel-in-progress: true
+jobs:
+  context:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-production-standard-p2c2b-context' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify pinned Blender and syntax
+        run: |
+          bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+          python3 -m py_compile scripts/atlas-scene-compiler-context-oracle.py scripts/atlas-scene-compiler-context-display.py
+      - name: Recover exact B1 and master artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/asc-context-input"
+          mkdir -p "$p" "$RUNNER_TEMP/asc-context-evidence"
+          for spec in "14444143410 c7154de191cb6d25890a2881f470f6d6eeba74b2dcab897842f4753403e685c6 master" "14541562562 0a8adec476e1db1161a551182fe7c0a0cdce820189d8ed27cc8865072a724857 b1"; do
+            read -r id sha name <<< "$spec"
+            curl --fail --silent --show-error --location --retry 3 --max-time 180 --proto '=https' --proto-redir '=https' -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" -o "$p/$name.zip"
+            printf '%s  %s\n' "$sha" "$p/$name.zip" | sha256sum --strict --check
+          done
+          unzip -p "$p/master.zip" Atlas-Scene-Master.blend > "$p/Atlas-Scene-Master.blend"
+          printf '%s  %s\n' f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab "$p/Atlas-Scene-Master.blend" | sha256sum --strict --check
+          for f in surface-binding.json surface-browser.json diffuse-bake.json binding.rgba32f; do
+            unzip -p "$p/b1.zip" "$f" > "$p/$f"
+          done
+          chmod a-w "$p/Atlas-Scene-Master.blend" "$p/"*.json "$p/binding.rgba32f"
+      - name: Extract opaque context and independent Blender ray oracle
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/asc-context-input"
+          "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$p/Atlas-Scene-Master.blend" --python-exit-code 1 --python scripts/atlas-scene-compiler-context-oracle.py -- "$p/Atlas-Scene-Master.blend" "$p" "$RUNNER_TEMP/asc-context-evidence"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Prepare existing verified WebGL engine
+        run: |
+          pnpm install --frozen-lockfile
+          node scripts/build-atlas-gateway-local.mjs "$RUNNER_TEMP/asc-context-engine"
+          node --check scripts/test-atlas-scene-compiler-context.mjs
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Compare contextual visibility, UV and linear color
+        run: |
+          node scripts/test-atlas-scene-compiler-context.mjs "$RUNNER_TEMP/asc-context-input" "$RUNNER_TEMP/asc-context-evidence" "$RUNNER_TEMP/asc-context-engine/three.min.js"
+      - name: Apply pinned Blender AgX reference offline
+        run: |
+          p="$RUNNER_TEMP/asc-context-input"
+          "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$p/Atlas-Scene-Master.blend" --python-exit-code 1 --python scripts/atlas-scene-compiler-context-display.py -- "$p/Atlas-Scene-Master.blend" "$RUNNER_TEMP/asc-context-evidence"
+      - name: Verify contextual and display evidence without promotion
+        run: |
+          python3 - <<'PY'
+          import json,os,pathlib,hashlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"asc-context-evidence"
+          o,b,d=(json.loads((p/name).read_text()) for name in ("context-oracle.json","context-browser.json","context-display.json"))
+          assert o["revision"]==b["revision"]==d["revision"]==os.environ["ATLAS_EXACT_HEAD"]
+          assert o["masterUnchanged"] and d["masterUnchanged"]
+          assert b["status"]=="PASS_OPAQUE_CONTEXT_BINDING" and d["status"]=="PASS_OFFLINE_AGX_REFERENCE"
+          assert not b["externalRequests"] and not b["pageErrors"]
+          x=b["result"];m=x["metrics"]
+          assert m["stableTarget"]>=100 and m["stableOccluder"]>=100
+          assert m["stable"]+m["unstable"]==6144 and m["testedUV"]>=100 and m["testedColor"]>=50
+          assert m["badVisibility"]==m["badUV"]==m["badColor"]==0
+          assert not any(x[k] for k in ("agxRuntimeQualified","opticalTransparencyQualified","artisticApproval","physicalDeviceQualified","publishable"))
+          assert not any(d[k] for k in ("agxRuntimeQualified","fullBeautyRenderQualified","artisticApproval","publishable"))
+          assert d["chartMaxReadbackDelta"]<=1/255+1e-6 and d["hdrAgxVsStandardMaxReadbackDelta"]>0.02
+          for name,digest in d["images"].items():
+              assert hashlib.sha256((p/name).read_bytes()).hexdigest()==digest
+          print("ASC B2a opaque contextual binding and offline display reference only.")
+          PY
+      - name: Preserve contextual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-asc-p2c2b-context
+          path: |
+            ${{ runner.temp }}/asc-context-evidence/
+          retention-days: 7
+          if-no-files-found: warn
