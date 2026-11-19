@@ -6,6 +6,7 @@ on:
       - 'scripts/test-atlas-bay-material-webgl.mjs'
       - 'scripts/atlas-export-bay-preview.py'
       - 'scripts/atlas-bake-bay-surround.py'
+      - 'scripts/atlas_uv_pack.py'
       - '.github/workflows/atlas-library-bay-completion.yml'
       - 'docs/atlas-gateway/ATLAS-LIBRARY-COMPLETION.md'
 permissions:
@@ -33,7 +34,7 @@ jobs:
       - name: Verify pinned Blender and syntax
         run: |
           bash scripts/atlas-gateway-c3/bootstrap-blender.sh
-          python3 -m py_compile scripts/atlas-export-bay-preview.py scripts/atlas-bake-bay-surround.py
+          python3 -m py_compile scripts/atlas-export-bay-preview.py scripts/atlas-bake-bay-surround.py scripts/atlas_uv_pack.py
           node --check scripts/test-atlas-bay-material-webgl.mjs
       - name: Recover exact master, material, context and AgX artifacts
         env:
@@ -120,6 +121,19 @@ jobs:
               assert obj["materialSlots"]==original["slots"]
               assert obj["sourceMaterials"]==[slot["effectiveMaterial"] for slot in original["slots"]]
               assert original["isolatedCloneCount"]==len(original["slots"])
+          uv=q["uvPreflight"]
+          assert uv["passed"] and uv["synthetic"]["passed"] and uv["synthetic"]["islands"]==64
+          assert uv["synthetic"]["method"]=="deterministic-aabb-shelf" and uv["synthetic"]["minimumRectangleGap"]>=20-1e-7
+          assert len(uv["real"])==9 and uv["totalTexels"]==sum(o["size"]**2 for o in uv["real"])<=uv["maxTotalTexels"]==12*1024*1024
+          uv_inventory={obj["object"]:obj for obj in uv["real"]}
+          for obj in q["objects"]:
+              u=obj["uv"];v=uv_inventory[obj["object"]]
+              assert v["rollback"] and u=={k:v[k] for k in u}
+              assert u["size"] in (512,1024,2048) and obj["width"]==obj["height"]==u["size"]
+              assert u["packing"]["method"] in ("deterministic-aabb-bottom-left","deterministic-aabb-shelf")
+              assert u["minimumRectangleGap"]>=20-1e-7 and u["borderPixels"]>=9 and u["bakeMarginPixels"]==4
+              assert u["emptyIslandRectangles"]==u["overlapTexels"]==0 and u["occupiedTexels"]>100
+              assert len(u["uvSha256"])==64 and u["attempts"][-1]["status"]=="PASS"
           assert r["surround"]["manifestSha256"]==hashlib.sha256((p/"baked-surround.json").read_bytes()).hexdigest()
           assert all(o["state"]=="PASS_BAKED_SURFACE" and o["transfer"]["outsideTolerance"]==0 and o["uv"]["overlapTexels"]==0 for o in q["objects"])
           for v in ("reference","rotated"):
