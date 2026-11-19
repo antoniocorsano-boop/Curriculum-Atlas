@@ -15,7 +15,7 @@ concurrency:
 jobs:
   perf-bay-depth:
     name: PERF-05B P3 depth mesh and baseline navigation
-    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-perf-05b-depth-proxy' && github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && (github.event.pull_request.head.ref == 'work/atlas-perf-05b-depth-proxy' || github.event.pull_request.head.ref == 'work/atlas-ci-chromium-stability') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
@@ -75,7 +75,7 @@ jobs:
           echo "ATLAS_GATEWAY_NATIVE_MANIFEST=$RUNNER_TEMP/native-gateway/native-manifest.json" >> "$GITHUB_ENV"
           echo "ATLAS_GATEWAY_NATIVE_MANIFEST_SHA256=$(sha256sum "$RUNNER_TEMP/native-gateway/native-manifest.json" | cut -d' ' -f1)" >> "$GITHUB_ENV"
       - name: Install Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        run: bash scripts/atlas-ci-chromium.sh
       - name: Preflight exact native scene and teardown before application build
         run: |
           node --experimental-strip-types scripts/test-atlas-gateway-native-preflight.mjs "$RUNNER_TEMP/native-gateway" "$RUNNER_TEMP/native-gateway/evidence/preflight"
