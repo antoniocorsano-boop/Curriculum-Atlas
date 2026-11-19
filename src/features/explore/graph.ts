@@ -9,6 +9,7 @@ export type ExploreNode = {
   subtitle?: string;
   disciplineId?: string;
   stage?: string;
+  bandId?: string;
   objectiveId?: string;
 };
 
@@ -62,7 +63,8 @@ export function buildExploreGraph(): ExploreGraph {
         kind: "stage",
         subtitle: band.schoolStage,
         disciplineId: discipline.id,
-        stage: band.schoolStage
+        stage: band.schoolStage,
+        bandId: band.id
       });
       edges.push({
         id: "edge:" + discipline.id + ":" + band.id,
@@ -91,6 +93,7 @@ export function buildExploreGraph(): ExploreGraph {
             subtitle: objective.code + " · " + topic.title,
             disciplineId: discipline.id,
             stage: band.schoolStage,
+            bandId: band.id,
             objectiveId: objective.id
           });
           edges.push({
@@ -100,26 +103,28 @@ export function buildExploreGraph(): ExploreGraph {
             relation: "contains"
           });
 
-          for (const connection of objective.connections) {
-            const key = connection.trim().toLowerCase();
-            let connectionNodeId = relationNodes.get(key);
-            if (!connectionNodeId) {
-              connectionNodeId = "connection:" + key.replace(/\s+/g, "-");
-              relationNodes.set(key, connectionNodeId);
-              nodes.push({
-                id: connectionNodeId,
-                label: connection,
-                kind: "connection",
-                subtitle: "Raccordo interdisciplinare"
-              });
-            }
-            edges.push({
-              id: "edge:connect:" + objective.id + ":" + connectionNodeId,
-              source: objectiveNodeId,
-              target: connectionNodeId,
-              relation: "connects"
-            });
-          }
+        }
+      }
+
+      // I raccordi documentati riguardano la fascia, non ogni suo obiettivo.
+      const connections = band.context?.kind === "ordinary" ? band.context.connections : [];
+      for (const connection of new Set(connections)) {
+        const key = connection.trim();
+        if (!key) continue;
+        let connectionNodeId = relationNodes.get(key);
+        if (!connectionNodeId) {
+          connectionNodeId = "connection:" + encodeURIComponent(key);
+          relationNodes.set(key, connectionNodeId);
+          nodes.push({
+            id: connectionNodeId,
+            label: connection,
+            kind: "connection",
+            subtitle: "Raccordo documentale di fascia"
+          });
+        }
+        const id = "edge:connect:" + band.id + ":" + connectionNodeId;
+        if (!edges.some(edge => edge.id === id)) {
+          edges.push({ id, source: bandNodeId, target: connectionNodeId, relation: "connects" });
         }
       }
     }
