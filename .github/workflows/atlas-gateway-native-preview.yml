@@ -6,6 +6,7 @@ on:
       - "scripts/build-atlas-gateway-native.mjs"
       - "scripts/test-atlas-gateway-native.mjs"
       - "scripts/test-atlas-gateway-native-preflight.mjs"
+      - "scripts/test-atlas-gateway-navigation-differential.mjs"
       - "scripts/atlas-gateway-integration/native-preview-runtime.js"
       - "src/features/atlas-gateway/**"
       - "src/app/gateway/**"
@@ -19,7 +20,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   qualify-native-gateway:
-    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-gateway-native-preview' && github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && (github.event.pull_request.head.ref == 'work/atlas-gateway-native-preview' || github.event.pull_request.head.ref == 'work/atlas-scene-consolidated') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
@@ -28,6 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
       - uses: pnpm/action-setup@v4
         with:
@@ -89,6 +91,7 @@ jobs:
           trap 'kill $! 2>/dev/null || true' EXIT
           for i in {1..60}; do
             if curl -fsS http://127.0.0.1:3000/gateway/ >/dev/null; then
+              node --experimental-strip-types scripts/test-atlas-gateway-navigation-differential.mjs "$RUNNER_TEMP/native-gateway" "$RUNNER_TEMP/native-gateway/evidence/differential"
               node --experimental-strip-types scripts/test-atlas-gateway-native.mjs "$RUNNER_TEMP/native-gateway" "$RUNNER_TEMP/native-gateway/evidence"
               exit 0
             fi

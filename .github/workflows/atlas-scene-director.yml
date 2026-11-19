@@ -6,10 +6,15 @@ on:
       - 'ops/atlas-scene-package/**'
       - 'scripts/scene-director.py'
       - 'scripts/test-scene-director.py'
+      - 'scripts/test-world-art-parameters.py'
+      - 'scripts/engine01-gaffer-probe.py'
+      - 'scripts/engine01-export-library-sample.py'
+      - 'scripts/engine01-gaffer-library-sample.py'
       - 'docs/atlas-gateway/ASI-01-ASD-01.md'
       - '.github/workflows/atlas-scene-director.yml'
 permissions:
   contents: read
+  actions: read
 jobs:
   parametric-plans:
     runs-on: ubuntu-latest
@@ -20,6 +25,8 @@ jobs:
           persist-credentials: false
       - name: Verify constraints, rollback and negative cases
         run: python3 scripts/test-scene-director.py -v
+      - name: Verify ART-100 world-scoped plans and cross-world rejection
+        run: python3 scripts/test-world-art-parameters.py -v
       - name: Generate and verify candidate plans
         run: |
           python3 scripts/scene-director.py --example webgl > "$RUNNER_TEMP/asd-webgl-plan.json"
@@ -43,3 +50,158 @@ jobs:
             ${{ runner.temp }}/asd-webgl-plan.json
             ${{ runner.temp }}/asd-blender-plan.json
           retention-days: 7
+  engine01-gaffer-cpu:
+    name: ART-100 ENGINE-01 Gaffer Cycles CPU
+    concurrency:
+      group: atlas-art-engine01-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    # ENGINE-01 bounded recovery cycle 1/2: explicit GCC11-era LTS runner.
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-scene-consolidated' && github.event.pull_request.head.repo.full_name == github.repository
+    env:
+      GAFFER_VERSION: '1.6.21.6'
+      QT_QPA_PLATFORM: offscreen
+      ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Initialize runner-local evidence directory
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/engine01-evidence"
+          printf 'ATLAS_ENGINE_EVIDENCE=%s\n' "$RUNNER_TEMP/engine01-evidence" >> "$GITHUB_ENV"
+      - name: Recover exact upstream Linux archive and verify published digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$ATLAS_ENGINE_EVIDENCE" "$RUNNER_TEMP/gaffer"
+          python3 - <<'PY'
+          import json, os, pathlib
+          # Exact lock recovered from verified upstream download in run
+          # 44374272185, artifact 14460471719 (upstream-lock.json).
+          lock={"tag":"1.6.21.6","releaseId":388803021,"assetId":564902348,"url":"https://github.com/GafferHQ/gaffer/releases/download/1.6.21.6/gaffer-1.6.21.6-linux-gcc11.tar.gz","bytes":515209139,"digest":"sha256:836bf63e644e8a4c31b2ed9754017d563504a875cafb18a54999ec9c71797a70"}
+          assert os.environ["GAFFER_VERSION"]==lock["tag"]
+          (pathlib.Path(os.environ["ATLAS_ENGINE_EVIDENCE"])/"upstream-lock.json").write_text(json.dumps(lock,indent=2))
+          print("Using exact previously verified upstream asset",lock["assetId"])
+          PY
+          url=$(python3 -c 'import json,os; print(json.load(open(os.environ["ATLAS_ENGINE_EVIDENCE"]+"/upstream-lock.json"))["url"])')
+          digest=$(python3 -c 'import json,os; print(json.load(open(os.environ["ATLAS_ENGINE_EVIDENCE"]+"/upstream-lock.json"))["digest"].split(":")[1])')
+          curl --proto '=https' --proto-redir '=https' --fail --location --retry 2 --max-time 300 --max-filesize 2500000000 "$url" -o "$RUNNER_TEMP/gaffer.tar.gz"
+          test "$(stat -c %s "$RUNNER_TEMP/gaffer.tar.gz")" = 515209139
+          echo "$digest  $RUNNER_TEMP/gaffer.tar.gz" | sha256sum -c -
+          tar -xf "$RUNNER_TEMP/gaffer.tar.gz" -C "$RUNNER_TEMP/gaffer" --strip-components=1 --no-same-owner
+          test -x "$RUNNER_TEMP/gaffer/bin/gaffer"
+      - name: Prepare Linux graphics runtime and check native dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libglu1-mesa libgl1 libegl1 libglx-mesa0 libx11-6 libxext6 libxi6 libxrender1 libxkbcommon0 libfontconfig1 libfreetype6 libxcb1 libsm6 libice6
+          # ldd is diagnostic only: the Gaffer launcher sets its own library
+          # paths and the real import below is the authoritative test.
+          {
+            cat /etc/os-release
+            ldd --version
+            dpkg-query -W libglu1-mesa libgl1 libegl1 libglx-mesa0
+            for module in GafferScene GafferCycles GafferImage; do
+              so="$RUNNER_TEMP/gaffer/python/$module/_$module.so"
+              test -f "$so"
+              echo "=== $module ==="
+              LD_LIBRARY_PATH="$RUNNER_TEMP/gaffer/lib:$RUNNER_TEMP/gaffer/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" ldd "$so" || echo "ldd diagnostic failed for $module"
+            done
+          } > "$ATLAS_ENGINE_EVIDENCE/native-dependencies.txt" 2>&1
+          cat > "$RUNNER_TEMP/engine01-imports.py" <<'PY'
+          import sys
+          import Gaffer
+          import GafferScene
+          import GafferCycles
+          import GafferImage
+          print("ENGINE-01 native imports PASS", sys.version)
+          node = GafferCycles.CyclesOptions()
+          assert node["options"]["cycles:device"]["value"].getValue() == "CPU"
+          print("ENGINE-01 Cycles CPU options PASS")
+          PY
+          timeout 60 "$RUNNER_TEMP/gaffer/bin/gaffer" python -file "$RUNNER_TEMP/engine01-imports.py" 2>&1 | tee "$ATLAS_ENGINE_EVIDENCE/imports.log"
+          grep -F 'ENGINE-01 Cycles CPU options PASS' "$ATLAS_ENGINE_EVIDENCE/imports.log"
+      - name: Render reference, variant and restored state on CPU
+        shell: bash
+        run: |
+          set -euo pipefail
+          export GITHUB_SHA="$ATLAS_EXACT_HEAD"
+          /usr/bin/time -v timeout 420 "$RUNNER_TEMP/gaffer/bin/gaffer" python -file scripts/engine01-gaffer-probe.py 2>&1 | tee "$ATLAS_ENGINE_EVIDENCE/probe.log"
+          python3 - <<'PY'
+          import json,os
+          r=json.load(open(os.environ["ATLAS_ENGINE_EVIDENCE"]+"/report.json"))
+          assert r["status"]=="PASS_SYNTHETIC_ONLY"
+          assert r["sourceRevision"]==os.environ["ATLAS_EXACT_HEAD"]
+          assert not any(r[k] for k in ("masterModified","runtimeAuthorized","studentAuthorized","publishable","artisticApproval"))
+          assert set(r["renders"])=={"reference","variant","restored"}
+          PY
+      - name: Preserve P0 evidence before sample import
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-engine01-gaffer-p0-qualified
+          path: ${{ runner.temp }}/engine01-evidence/
+          retention-days: 7
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Restore and verify Blender for P1A
+        run: bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - name: Recover immutable master for bounded P1A sample
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/engine01-master" "$RUNNER_TEMP/engine01-sample"
+          printf 'ATLAS_ENGINE_SAMPLE=%s\n' "$RUNNER_TEMP/engine01-sample" >> "$GITHUB_ENV"
+          p="$RUNNER_TEMP/engine01-master"
+          curl --fail --silent --show-error --location --retry 3 --retry-delay 2 --max-time 120 -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/14444143410/zip" -o "$p/master.zip.part"
+          printf '%s  %s\n' c7154de191cb6d25890a2881f470f6d6eeba74b2dcab897842f4753403e685c6 "$p/master.zip.part" | sha256sum --strict --check
+          mv "$p/master.zip.part" "$p/master.zip"
+          unzip -p "$p/master.zip" Atlas-Scene-Master.blend > "$p/Atlas-Scene-Master.blend"
+          printf '%s  %s\n' f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab "$p/Atlas-Scene-Master.blend" | sha256sum --strict --check
+          chmod a-w "$p/Atlas-Scene-Master.blend"
+      - name: Export real Atlas sample and render Blender reference
+        shell: bash
+        run: |
+          set -euo pipefail
+          master="$RUNNER_TEMP/engine01-master/Atlas-Scene-Master.blend"
+          /usr/bin/time -v timeout 480 "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$master" --python-exit-code 1 --python scripts/engine01-export-library-sample.py -- "$master" "$ATLAS_ENGINE_SAMPLE" 2>&1 | tee "$ATLAS_ENGINE_SAMPLE/blender-export.log"
+          printf '%s  %s\n' f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab "$master" | sha256sum --strict --check
+      - name: Read USD sample and render Gaffer baseline, light variant and rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          /usr/bin/time -v timeout 480 "$RUNNER_TEMP/gaffer/bin/gaffer" python -file scripts/engine01-gaffer-library-sample.py 2>&1 | tee "$ATLAS_ENGINE_SAMPLE/gaffer-probe.log"
+          python3 - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path(os.environ["ATLAS_ENGINE_SAMPLE"])
+          m=json.loads((p/"sample.json").read_text()); r=json.loads((p/"gaffer-report.json").read_text())
+          assert r["status"]=="PASS_SAMPLE_GEOMETRY_PROXY_ONLY"
+          assert r["sourceRevision"]==m["sourceRevision"]==os.environ["ATLAS_EXACT_HEAD"]
+          assert r["meshCount"]==len(m["objects"])==54
+          assert not any(r[k] for k in ("masterModified","studentAuthorized","publishable","artisticApproval","materialFidelityQualified"))
+          assert set(r["renders"])=={"gaffer-baseline","gaffer-light-01","gaffer-restored"}
+          PY
+      - name: Preserve P1A sample evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-engine01-p1a-library-sample
+          path: ${{ runner.temp }}/engine01-sample/
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Preserve bounded evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-engine01-gaffer-probe
+          path: ${{ runner.temp }}/engine01-evidence/
+          retention-days: 7
+          if-no-files-found: warn

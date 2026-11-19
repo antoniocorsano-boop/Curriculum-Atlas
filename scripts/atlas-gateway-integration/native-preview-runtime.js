@@ -1,9 +1,50 @@
 /* Local native master candidate. No independent navigation or deployment. */
-let renderer,scene,camera,visibility,als,starGroup,portalGroup,failed=false,ready=false,motion=false;
-let frameId=0,angle=0,tilt=0,distance=1,closing=false;
+let renderer,scene,camera,visibility,als,starGroup,portalGroup,environmentTarget,failed=false,ready=false,motion=false;
+let frameId=0,angle=0,tilt=0,distance=1,closing=false,released=false;
+// NAV-STAB-02: cap physical raster work, not CSS layout or geometry.
+// 1 Mi pixels: preserve native resolution on smaller views; bound wide views.
+const NATIVE_MAX_RASTER_PIXELS=1048576;
+let rasterWidth=0,rasterHeight=0,frameFence=null;
+const renderBudget={maxPixels:NATIVE_MAX_RASTER_PIXELS,cssWidth:0,cssHeight:0,bufferWidth:0,bufferHeight:0,scale:1,frames:0,animationFrames:0,backpressureSkips:0,fenceSupported:false,lastSubmitMs:0};
+function resizeRaster(w,h){
+  if(rasterWidth===w&&rasterHeight===h)return;
+  const scale=Math.min(1,Math.sqrt(NATIVE_MAX_RASTER_PIXELS/(w*h)));
+  // CSS fills the stage; camera and hit-testing keep CSS-pixel coordinates.
+  // A single setSize with physical dimensions avoids a transient full buffer.
+  const bw=Math.max(1,Math.floor(w*scale)),bh=Math.max(1,Math.floor(h*scale));
+  renderer.setSize(bw,bh,false);
+  rasterWidth=w;rasterHeight=h;
+  const gl=renderer.getContext();
+  Object.assign(renderBudget,{cssWidth:w,cssHeight:h,bufferWidth:gl.drawingBufferWidth,bufferHeight:gl.drawingBufferHeight,scale:Math.min(bw/w,bh/h),fenceSupported:typeof gl.fenceSync==="function"&&typeof gl.clientWaitSync==="function"});
+  if(renderBudget.bufferWidth*renderBudget.bufferHeight>NATIVE_MAX_RASTER_PIXELS)throw Error("Native raster budget exceeded");
+  console.info("ATLAS_NATIVE_RENDER_BUDGET "+JSON.stringify(renderBudget));
+}
+// Nonblocking WebGL2 backpressure: no sync wait, readback or resource
+// disposal on navigation. WebGL1 retains the bounded animation cadence.
+function animationSlot(){
+  if(!frameFence)return true;
+  const gl=renderer.getContext();
+  const status=gl.clientWaitSync(frameFence,0,0);
+  if(status===gl.TIMEOUT_EXPIRED){renderBudget.backpressureSkips++;return false}
+  gl.deleteSync(frameFence);frameFence=null;
+  if(status===gl.WAIT_FAILED){renderBudget.fenceSupported=false}
+  return true;
+}
+function recordSubmission(){
+  if(!renderBudget.fenceSupported)return;
+  const gl=renderer.getContext();
+  if(frameFence)gl.deleteSync(frameFence);
+  frameFence=gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE,0);
+  if(!frameFence){renderBudget.fenceSupported=false;return}
+  // Submit, never wait for completion. The next animation tick polls once.
+  gl.flush();
+}
 const lifecycle=new AbortController(),events={signal:lifecycle.signal};
 function assertActive(){if(closing||failed)throw Error("Native scene inactive");}
-function cancelFrame(){if(frameId)cancelAnimationFrame(frameId);frameId=0;}
+function cancelFrame(){if(frameId)clearTimeout(frameId);frameId=0;}
+// ALS optical breathing has periods above 3.5 seconds. Bound the render
+// cadence to avoid saturating software/mobile graphics and the event queue.
+function scheduleFrame(){if(!frameId&&ready&&!failed&&!closing&&motion&&!document.hidden&&!down)frameId=setTimeout(()=>loop(performance.now()),100);}
 const groupMap={};
 const reduced=matchMedia("(prefers-reduced-motion: reduce)");
 const canvas=document.querySelector("canvas");
@@ -131,29 +172,51 @@ function setCamera(){
   // generous vertical field rather than cropping the original cupola.
   camera.fov=Math.max(55,THREE.MathUtils.radToDeg(2*Math.atan(36/view.lensMm/(aspect>=1?aspect:1)/2)));
   camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
-  if(canvas.width!==w||canvas.height!==h)renderer.setSize(w,h);visibility.update(camera);
+  resizeRaster(w,h);visibility.update(camera);
 }
 function render(t=0){
   if(!ready||failed||closing)return;
   visibility.update(camera);
-  als.update(Math.max(0,t/1000),{viewportWidth:innerWidth,viewportHeight:innerHeight,pixelRatio:renderer.getPixelRatio(),backdrop:"light",paused:!motion||document.hidden,reducedMotion:reduced.matches});
-  renderer.render(scene,camera);
+  als.update(Math.max(0,t/1000),{viewportWidth:innerWidth,viewportHeight:innerHeight,pixelRatio:renderBudget.scale,backdrop:"light",paused:!motion||document.hidden,reducedMotion:reduced.matches});
+  const start=performance.now();renderer.render(scene,camera);recordSubmission();
+  renderBudget.frames++;renderBudget.lastSubmitMs=Math.round(performance.now()-start);
 }
 function loop(t){
   frameId=0;if(!ready||failed||closing||!motion||document.hidden)return;
-  render(t);if(ready&&!failed&&!closing&&motion&&!document.hidden)frameId=requestAnimationFrame(loop);
+  if(down)return;
+  if(animationSlot()){render(t);renderBudget.animationFrames++}scheduleFrame();
 }
 function stopMotion(redraw=true){
   cancelFrame();motion=false;
   motionButton.textContent="Anima luci";motionButton.setAttribute("aria-pressed","false");
   if(redraw&&!closing&&!document.hidden)render();
 }
-function shutdown(){
+function quiesce(){
   if(closing)return;
-  // Set the terminal state before cancelling listeners or disposing objects.
   closing=true;ready=false;motion=false;nativePhase="closed";cancelFrame();
-  lifecycle.abort();down=null;als?.dispose();renderer?.dispose();
+  lifecycle.abort();down=null;
   console.info("ATLAS_NATIVE_CLOSED");
+  console.info("ATLAS_NATIVE_RENDER_FINAL "+JSON.stringify(renderBudget));
+}
+function shutdown(){
+  quiesce();if(released)return;released=true;
+  // Explicit resource release is for an isolated, retained document only.
+  // Do not force synchronous GPU operations during navigation or unload.
+  // Explicitly release scene-owned GPU resources, once per shared object.
+  // renderer.dispose alone does not dispose geometry, materials or textures.
+  const geometries=new Set(),materials=new Set(),textures=new Set();
+  scene?.traverse(o=>{
+    if(o.geometry)geometries.add(o.geometry);
+    for(const m of Array.isArray(o.material)?o.material:o.material?[o.material]:[])materials.add(m);
+  });
+  if(als){geometries.delete(als.object.geometry);materials.delete(als.object.material);als.dispose();}
+  for(const m of materials){for(const value of Object.values(m))if(value?.isTexture)textures.add(value);m.dispose();}
+  for(const g of geometries)g.dispose();
+  if(scene?.background?.isTexture)textures.add(scene.background);
+  for(const texture of textures)texture.dispose();
+  environmentTarget?.dispose();environmentTarget=null;
+  if(renderer){if(frameFence){renderer.getContext().deleteSync(frameFence);frameFence=null}renderer.dispose();renderer.forceContextLoss();}
+  console.info("ATLAS_NATIVE_RESOURCES_RELEASED");
 }
 function reset(){angle=0;tilt=0;distance=1;setCamera();render()}
 function change(action){
@@ -179,7 +242,14 @@ function hitPortal(x,y){
   return portalBoxes.find(p=>p.box.clone().expandByScalar(.02).containsPoint(hits[0].point))?.id??null;
 }
 let down=null;
-canvas.addEventListener("pointerdown",e=>{if(!ready||closing)return;down={x:e.clientX,y:e.clientY,angle,tilt};canvas.setPointerCapture(e.pointerId)},events);
+function requestPortal(id){
+  if(!ready||closing)return;
+  if(id==="studio"){send("atlas-open",{id});scheduleFrame();return;}
+  // No rendering, disposal or GPU synchronization on the interaction path.
+  // Parent validates the request and initiates a normal document navigation.
+  quiesce();console.info("ATLAS_NATIVE_NAV_REQUEST "+id);send("atlas-open",{id});
+}
+canvas.addEventListener("pointerdown",e=>{if(!ready||closing)return;cancelFrame();down={x:e.clientX,y:e.clientY,angle,tilt};canvas.setPointerCapture(e.pointerId)},events);
 canvas.addEventListener("pointermove",e=>{
  if(!down||!ready)return;
  if(Math.hypot(e.clientX-down.x,e.clientY-down.y)<8)return;
@@ -188,29 +258,30 @@ canvas.addEventListener("pointermove",e=>{
 },events);
 canvas.addEventListener("pointerup",e=>{
  if(!down||closing||!ready)return;
- if(Math.hypot(e.clientX-down.x,e.clientY-down.y)<8){
-  const id=hitPortal(e.clientX,e.clientY);
-  if(id){if(id!=="studio")stopMotion(false);send("atlas-open",{id})}
- }
+ const tap=Math.hypot(e.clientX-down.x,e.clientY-down.y)<8;
  down=null;
+ if(tap){const id=hitPortal(e.clientX,e.clientY);if(id){requestPortal(id);return}}
+ scheduleFrame();
 },events);
-canvas.addEventListener("pointercancel",()=>{down=null},events);
+canvas.addEventListener("pointercancel",()=>{down=null;scheduleFrame()},events);
 for(const button of document.querySelectorAll("[data-action]"))button.addEventListener("click",()=>change(button.dataset.action),events);
-motionButton.addEventListener("click",()=>{if(!ready||closing||reduced.matches)return;if(motion)stopMotion();else{motion=true;motionButton.textContent="Ferma luci";motionButton.setAttribute("aria-pressed","true");frameId=requestAnimationFrame(loop)}},events);
+motionButton.addEventListener("click",()=>{if(!ready||closing||reduced.matches)return;if(motion)stopMotion();else{motion=true;motionButton.textContent="Ferma luci";motionButton.setAttribute("aria-pressed","true");scheduleFrame()}},events);
 reduced.addEventListener("change",()=>{if(reduced.matches)stopMotion();motionButton.disabled=reduced.matches},events);
 document.addEventListener("visibilitychange",()=>{if(document.hidden)stopMotion(false);else if(ready&&!closing)render()},events);
 addEventListener("resize",()=>{if(ready&&!closing){setCamera();render()}},events);
 // A persisted pagehide (back/forward cache) pauses rather than destroys
 // the scene. A real unload is terminal and idempotent.
-addEventListener("pagehide",e=>{if(e.persisted)stopMotion(false);else shutdown()},events);
+// The browser owns the lifetime of a departing iframe and its context.
+// Synchronous forceContextLoss/disposal here can block the parent transition.
+addEventListener("pagehide",e=>{if(e.persisted)stopMotion(false);else quiesce()},events);
 addEventListener("pageshow",e=>{if(e.persisted&&ready&&!closing){setCamera();render()}},events);
 async function init(){
- renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});
+ renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:false});
  renderer.setPixelRatio(1);renderer.outputEncoding=THREE.sRGBEncoding;
  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.82;
  canvas.addEventListener("webglcontextlost",e=>{e.preventDefault();fail(Error("WebGL context lost"))},{once:true,signal:lifecycle.signal});
  scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(65,1,.05,150);
- nativePhase="sky";scene.background=await loadSky();assertActive();nativePhase="ambient";const env=await loadHDR();assertActive();scene.environment=env.texture;
+ nativePhase="sky";scene.background=await loadSky();assertActive();nativePhase="ambient";const env=await loadHDR();if(closing||failed){env.dispose();assertActive();}environmentTarget=env;scene.environment=env.texture;
  const hemi=new THREE.HemisphereLight(0xfff3dc,0x746b57,.22);scene.add(hemi);
  const sun=new THREE.DirectionalLight(0xffffff,1.05);sun.color.setRGB(1,.91,.79);
  const elevation=THREE.MathUtils.degToRad(NATIVE_LIGHTING.sunElevationDeg),azimuth=THREE.MathUtils.degToRad(NATIVE_LIGHTING.sunRotationDeg);

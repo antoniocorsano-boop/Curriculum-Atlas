@@ -23,6 +23,21 @@ class EvidenceTest(unittest.TestCase):
         d=self.run_projection(tags=["repeated-meshes"])
         self.assertEqual([x["id"] for x in d["findings"]],["ASI-K001"])
         self.assertFalse(d["findings"][0]["nextCandidateAction"]["authorized"])
+    def test_navigation_current_qualification_preserves_negative_history(self):
+        d=self.run_projection(tags=["navigation"])
+        self.assertEqual(len(d["findings"]),1)
+        f=d["findings"][0]
+        self.assertTrue(f["negativeKnowledge"])
+        self.assertIn("qualificata nella candidata Chromium locale esatta",f["finding"])
+        self.assertTrue(any(r["record"]=="ASP-H034" and r["status"]=="completed" for r in f["sourceRefs"]))
+        self.assertTrue(any(r["record"]=="ASP-H032" and r["status"]=="partial-pass" for r in f["sourceRefs"]))
+        self.assertFalse(f["nextCandidateAction"]["authorized"])
+    def test_blender_real_observation_evidence(self):
+        d=self.run_projection(tags=["astral-lights"])
+        f=d["findings"][0]
+        self.assertIn("zero dopo ripristino",f["finding"])
+        self.assertTrue(any(r["record"]=="ASP-H030" and r["status"]=="completed" for r in f["sourceRefs"]))
+        self.assertFalse(f["nextCandidateAction"]["authorized"])
     def test_changed_source_blocks(self):
         rows=list(asi.read_history(self.h).values())
         rows[7]["commit"]="b"*40
