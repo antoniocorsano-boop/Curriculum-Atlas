@@ -229,6 +229,10 @@ print(json.dumps({k:m["make_plan"](c,r,m["request_for"](c,r,"webgl",v,False,Fals
  delete report.art100.result.images;
  report.art100.status="PASS_COMPARISON_ONLY";
  // PERF-05A only on the explicitly isolated geometry experiment.
+ if(process.env.ATLAS_PERF_BOOK_PROXY==="true"){
+   const {runBookProxyProbe}=await import("./atlas-perf-book-proxy-probe.mjs");
+   report.bookProxy=await runBookProxyProbe({page,frame,out:join(out,"perf-book-proxy"),manifest});
+ }
  if(process.env.ATLAS_PERF_GEOMETRY==="true"){
    const {runGeometryProbe}=await import("./atlas-perf-geometry-probe.mjs");
    report.geometry=await runGeometryProbe({page,frame,out:join(out,"perf-geometry"),manifest});
