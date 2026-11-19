@@ -3,6 +3,8 @@ import bpy, hashlib, json, os, sys
 from pathlib import Path
 from mathutils import Vector
 import numpy as np
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+from atlas_linear_texture_contract import preflight, export_opaque_rgb, legacy_probe
 
 master, p2a, p2b, out = map(lambda p: Path(p).resolve(), sys.argv[sys.argv.index("--")+1:])
 MASTER = "f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab"
@@ -56,7 +58,7 @@ report={"schema":"atlas.asc01.diffuse-bake/v1","status":"PENDING","revision":os.
 def write():
     (out/"diffuse-bake.json").write_text(json.dumps(report,indent=2,ensure_ascii=False,allow_nan=False)+"\n")
 write()
-derived=None; clones=[]; image=None; preview=None; cam=None; camdata=None
+derived=None; clones=[]; image=None; transferred=None; preview=None; cam=None; camdata=None
 def render(key):
     p=out/(key+".png")
     s.render.filepath=str(p)
@@ -66,6 +68,9 @@ def render(key):
     report["renders"][key]={"sha256":sha(p),"width":int(data.shape[1]),"height":int(data.shape[0])}
     return data
 try:
+    report["transferPreflight"]=preflight(out)
+    write()
+    require(report["transferPreflight"]["passed"],"linear EXR transfer canary failed before production")
     if view=="context":
         camdata=bpy.data.cameras.new("ASC P2C context")
         cam=bpy.data.objects.new("ASC P2C context",camdata);s.collection.objects.link(cam)
@@ -157,17 +162,24 @@ try:
         node.select=True;tree.nodes.active=node
     bpy.context.view_layer.update()
     bpy.ops.object.bake(type="DIFFUSE",pass_filter={"DIRECT","INDIRECT","COLOR"},margin=4,use_clear=True)
-    data=pixels(image);rgb=data[:,:,:3]
+    data=pixels(image).copy();rgb=data[:,:,:3]
     require(np.isfinite(data).all() and float(rgb.max())>0 and float(rgb.std())>1e-6,"empty or invalid bake")
-    path=out/"diffuse-linear.exr";image.filepath_raw=str(path);image.file_format="OPEN_EXR";image.save()
-    loaded=file_pixels(path);require(loaded.shape==data.shape and np.isfinite(loaded).all() and loaded[:,:,:3].max()>0,"EXR reload")
-    delta=float(np.max(np.abs(loaded[:,:,:3]-rgb)))
-    report["bake"]={"type":"DIFFUSE_DIRECT_INDIRECT_COLOR","sha256":sha(path),"bytes":path.stat().st_size,"width":size,"height":size,"rgbMin":float(rgb.min()),"rgbMax":float(rgb.max()),"rgbStd":float(rgb.std()),"reloadMaxRGBDelta":delta,"containsSpecular":False}
-    require(delta<max(.01,float(rgb.max())*.005),"EXR linear reload drift")
+    report["bake"]={"type":"DIFFUSE_DIRECT_INDIRECT_COLOR","width":size,"height":size,"rgbMin":float(rgb.min()),"rgbMax":float(rgb.max()),"rgbStd":float(rgb.std()),"containsSpecular":False}
+    write()
+    # Reproduce the previously failing route on the actual bake, collecting
+    # numeric evidence by alpha group. Use a snapshot, not the mutable image.
+    report["legacyTransfer"]=legacy_probe(image,data,out/"diffuse-legacy.exr")
+    write()
+    path=out/"diffuse-linear.exr"
+    transferred,transfer=export_opaque_rgb(data,path)
+    report["transfer"]=transfer
+    report["bake"].update(sha256=transfer["sha256"],bytes=transfer["bytes"],reloadMaxRGBDelta=transfer["maxAbs"])
+    write()
+    require(transfer["outsideTolerance"]==0,"explicit RGB FLOAT32 transfer drift")
     preview=bpy.data.materials.new("ASC P2C baked preview");preview.use_nodes=True
     tree=preview.node_tree;tree.nodes.clear()
     uvnode=tree.nodes.new("ShaderNodeUVMap");uvnode.uv_map=uv.name
-    tex=tree.nodes.new("ShaderNodeTexImage");tex.image=image;tex.extension="EXTEND"
+    tex=tree.nodes.new("ShaderNodeTexImage");tex.image=transferred;tex.extension="EXTEND"
     em=tree.nodes.new("ShaderNodeEmission");output=tree.nodes.new("ShaderNodeOutputMaterial")
     tree.links.new(uvnode.outputs["UV"],tex.inputs["Vector"]);tree.links.new(tex.outputs["Color"],em.inputs["Color"]);tree.links.new(em.outputs[0],output.inputs["Surface"])
     for i in range(len(derived.materials)):derived.materials[i]=preview
@@ -189,6 +201,7 @@ finally:
     if derived:bpy.data.meshes.remove(derived)
     if preview:bpy.data.materials.remove(preview)
     for m in clones:bpy.data.materials.remove(m)
+    if transferred:bpy.data.images.remove(transferred)
     if image:bpy.data.images.remove(image)
     if cam:bpy.data.objects.remove(cam,do_unlink=True)
     if camdata:bpy.data.cameras.remove(camdata)
