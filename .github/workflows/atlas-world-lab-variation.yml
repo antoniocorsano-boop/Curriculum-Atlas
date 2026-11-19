@@ -1,4 +1,4 @@
-name: Atlas — AWC-D isolated reversible variation
+name: Atlas — AWC-D/E isolated dual derivation
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -19,7 +19,7 @@ jobs:
   live:
     if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/asc-world-composer-consolidation' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 55
     env:
       ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
     steps:
@@ -39,7 +39,7 @@ jobs:
       - name: Verify pinned Blender and syntax
         run: |
           bash scripts/atlas-gateway-c3/bootstrap-blender.sh
-          python3 -m py_compile scripts/atlas-world-lab-variation.py scripts/verify-atlas-world-lab-variation.py
+          python3 -m py_compile scripts/atlas-world-lab-variation.py scripts/verify-atlas-world-lab-variation.py scripts/atlas-world-artistic-derivative.py scripts/atlas-world-dual-derivation.py
           python3 scripts/test-atlas-world-compose.py
           test "$(git -C producer rev-parse HEAD)" = abfb83b9c9cf17d5c3e46c79eaa7ac9dab96e3cc
           node --check producer/scripts/test-atlas-bay-material-webgl.mjs
@@ -108,11 +108,26 @@ jobs:
           python3 scripts/verify-atlas-world-lab-variation.py --out "$RUNNER_TEMP/asc-live-evidence" --archives "$RUNNER_TEMP/awc-evidence" --master "$RUNNER_TEMP/asc-live-input/Atlas-Scene-Master.blend" --revision "$ATLAS_EXACT_HEAD"
           git diff --exit-code
           git -C producer diff --exit-code
-      - name: Preserve actual variation evidence
+      - name: Render matched artistic derivative in Blender
+        run: |
+          p="$RUNNER_TEMP/asc-live-input"
+          "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$p/Atlas-Scene-Master.blend" --python-exit-code 1 --python scripts/atlas-world-artistic-derivative.py -- "$p/Atlas-Scene-Master.blend" "$RUNNER_TEMP/asc-live-evidence"
+      - name: Verify dual derivation and historical D repeatability
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/asc-live-input"
+          curl --fail --silent --show-error --location --retry 3 --max-time 180 --proto '=https' --proto-redir '=https' -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/14558434125/zip" -o "$p/awc-d.zip"
+          printf '%s  %s\n' 2e196875a1f913959e2dcc7c7e2550fd2d7affe5520428a0496d5aa82e695b28 "$p/awc-d.zip" | sha256sum --strict --check
+          python3 scripts/atlas-world-dual-derivation.py --out "$RUNNER_TEMP/asc-live-evidence" --prior "$p/awc-d.zip" --master "$p/Atlas-Scene-Master.blend" --revision "$ATLAS_EXACT_HEAD"
+          git diff --exit-code
+          git -C producer diff --exit-code
+      - name: Preserve dual derivation evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: atlas-awc-d-isolated-orbit
+          name: atlas-awc-e-dual-derivation
           path: ${{ runner.temp }}/asc-live-evidence/
           retention-days: 7
           if-no-files-found: warn
