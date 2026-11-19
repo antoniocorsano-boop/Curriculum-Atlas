@@ -24,7 +24,13 @@ require(len(g["views"])==5 and all(v["visual"]["changedPixels"]==0 and v["restor
 atr=next(v for v in g["views"] if v["id"]=="atrium")
 require(atr["candidate"]["counts"]["triangles"]==594842,"PERF baseline drift")
 groups=atr["inventory"]
-require(sum(x["trianglesAttributed"] for x in groups)==594842,"PERF attribution")
+# The probe samples root inventory AFTER shot("sphere") rollback, not shot("box").
+# Root deltas do not form an exact partition; retain the observed residual.
+reference_triangles=atr["rollback"]["counts"]["triangles"]
+require(reference_triangles==atr["reference"]["counts"]["triangles"]==601646,"PERF attribution baseline")
+attributed=sum(x["trianglesAttributed"] for x in groups)
+residual=reference_triangles-attributed
+require(attributed==601634 and residual==12,"PERF attribution evidence drift")
 require(next(x for x in groups if x["id"]=="bay-instances")["trianglesAttributed"]==355212,"PERF bay contribution")
 scene=bpy.context.scene
 require(not bpy.data.libraries and scene.camera.name=="atrium","scene identity")
@@ -55,7 +61,7 @@ report={"schema":"atlas.asc01.baseline/v1","status":"PASS_OBSERVATION_ONLY","rev
         "masterSha256":MASTER,"masterBytesVerified":True,"masterUnchanged":sha(master)==MASTER,
         "artEvidence":{"revision":ART,"status":a["status"],"receiptSha256":sha(art),"books":77,"placements":8,"artisticApproval":False},
         "webglEvidence":{"receiptSha256":sha(perf),"status":g["status"],"views":[{"id":v["id"],"reference":v["reference"]["counts"],"candidate":v["candidate"]["counts"]} for v in g["views"]],
-                         "groups":groups,"hardwareQualified":False},
+                         "groups":groups,"attributionMode":"sphere-rollback","attributionReferenceTriangles":reference_triangles,"attributedTriangles":attributed,"unattributedTriangles":residual,"hardwareQualified":False},
         "sourceObjects":sorted([object_stats(o) for o in meshes],key=lambda r:r["object"]),
         "uniqueMeshStats":sorted(stats.values(),key=lambda r:r["mesh"]),
         "bayMeshRanking":ranking,"pilotObjects":pilot,"lights":lights,"cameras":cameras,
