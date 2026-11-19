@@ -4,7 +4,7 @@ import {createHash} from "node:crypto";
 import {readFileSync,writeFileSync} from "node:fs";
 import {resolve,join} from "node:path";
 import {chromium} from "playwright";
-const [src,ctx,agx,bayDir,out,enginePath]=process.argv.slice(2).map(resolvePath=>resolve(resolvePath));
+const [src,ctx,agx,bayDir,out,enginePath,surroundDir]=process.argv.slice(2).map(resolvePath=>resolve(resolvePath));
 const sha=b=>createHash("sha256").update(b).digest("hex");
 const read=(d,n)=>readFileSync(join(d,n));
 const json=(d,n)=>JSON.parse(read(d,n));
@@ -13,6 +13,35 @@ assert.equal(createHash("sha1").update(Buffer.concat([Buffer.from("blob "+engine
 const b=json(src,"surface-binding.json"),m=json(src,"material-package.json"),f=json(src,"material-finish.json");
 const bay=json(bayDir,"bay.json"),oracle=json(ctx,"context-oracle.json"),lut=json(agx,"agx-lut.json"),prior=json(agx,"agx-browser.json");
 const texture=read(src,"binding.rgba32f"),rough=read(src,"roughness.rgb8"),rows=read(bayDir,"bay.f32"),occ=read(ctx,"occluders.f32"),lutBytes=read(agx,"lut.rgba8");
+const bakedManifest=surroundDir?json(surroundDir,"baked-surround.json"):null;
+const bakedFiles=new Map();
+const bakedReplay=bakedManifest&&process.env.ATLAS_BAKE_REPLAY==='1'?json(surroundDir,'replay.json'):null;
+if(bakedManifest){
+  assert.equal(bakedManifest.status,"PASS_BAY_SURROUND_PACKAGE");
+  if(bakedReplay){
+    assert.equal(bakedReplay.status,"PASS_EXACT_BAKE_REPLAY");
+    assert.equal(bakedReplay.rebaked,false);
+    assert.equal(bakedReplay.sourceRevision,bakedManifest.revision);
+    assert.equal(bakedManifest.revision,"34bd5bbd3281abdcbc1a9fbe4c5de59dc750020e");
+    assert.equal(bakedReplay.manifestSha256,sha(read(surroundDir,"baked-surround.json")));
+  }else assert.equal(bakedManifest.revision,bay.revision);
+  assert.equal(bakedManifest.baySha256,bay.sha256);
+  assert.equal(bakedManifest.retainedTarget,bay.target);
+  assert.equal(bakedManifest.objects.length,9);
+  assert.equal(bakedManifest.retainedPaper.length,1);
+  assert.deepEqual(new Set(bakedManifest.objects.map(x=>x.object)),new Set(bay.objects.map(x=>x.object).filter(n=>n!==bay.target&&!bakedManifest.retainedPaper.includes(n))));
+  for(const item of bakedManifest.objects){
+    assert.match(item.id,/^surface-\d{2}$/);
+    assert.equal(item.state,"PASS_BAKED_SURFACE");
+    assert.equal(item.transfer.outsideTolerance,0);
+    const g=read(surroundDir,item.id+".f32"),t=read(surroundDir,item.id+".rgba32f");
+    assert.equal(sha(g),item.geometrySha256);assert.equal(sha(t),item.textureSha256);
+    assert.equal(g.length,item.vertices*5*4);assert.equal(t.length,item.width*item.height*16);
+    bakedFiles.set("/"+item.id+".f32",["application/octet-stream",g]);
+    bakedFiles.set("/"+item.id+".rgba32f",["application/octet-stream",t]);
+  }
+  bakedFiles.set("/baked-surround",["application/json",read(surroundDir,"baked-surround.json")]);
+}
 assert.equal(b.revision,"52804c49858aafb643f11bff10772a32a0c5e14f");
 assert.equal(b.revision,m.revision);assert.equal(f.status,"PASS_FINISH_PACKAGE");
 assert.equal(m.bindingSha256,sha(read(src,"surface-binding.json")));assert.equal(f.packageSha256,sha(read(src,"material-package.json")));
@@ -24,7 +53,8 @@ assert.equal(prior.status,"PASS_BOUNDED_AGX_GPU_APPROXIMATION");assert.equal(pri
 for(let i=0;i<rough.length;i+=3)assert(rough[i]===rough[i+1]&&rough[i]===rough[i+2],"roughness must be grayscale");
 const html='<!doctype html><html lang="it"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Atlas — Campata 04-0</title><link rel="stylesheet" href="/style.css"><body><header><strong>Atlas · Campata 04-0</strong><span>Anteprima locale · trascina per ruotare</span><button id="reset">Ripristina</button></header><main id="view"></main><script src="/three.js"></script><script src="/bay.js"></script></body></html>';
 const css='body{margin:0;background:#191512;color:#f1e7d5;font:14px system-ui}header{display:flex;gap:16px;align-items:center;padding:12px;flex-wrap:wrap}header span{color:#cbbba4}button{background:#493c31;color:#fff;border:1px solid #a18a6d;border-radius:6px;padding:6px 12px}canvas{display:block;max-width:100%;height:auto;touch-action:none;cursor:grab}main{display:flex;justify-content:center}';
-const js=String.raw`
+const rasterOracleSource=readFileSync(new URL("./atlas-raster-oracle.mjs",import.meta.url),"utf8").replace("export function rasterOracle","function rasterOracle");
+const js=rasterOracleSource+String.raw`
 (async()=>{
 const T=window.THREE,check=(x,m)=>{if(!x)throw Error(m);};
 const json=async u=>{const r=await fetch(u);check(r.ok,u);return r.json();};
@@ -85,7 +115,37 @@ const geom=new T.BufferGeometry(),p=[],n=[],c=[],props=[];
 for(const obj of bay.objects){if(obj.object===bay.target)continue;for(let i=obj.firstVertex;i<obj.firstVertex+obj.vertexCount;i++){const k=i*11;p.push(...rows.slice(k,k+3));n.push(...rows.slice(k+3,k+6));c.push(...rows.slice(k+6,k+9));props.push(rows[k+9],rows[k+10]);}}
 geom.setAttribute("position",new T.Float32BufferAttribute(p,3));geom.setAttribute("normal",new T.Float32BufferAttribute(n,3));geom.setAttribute("baseColor",new T.Float32BufferAttribute(c,3));geom.setAttribute("properties",new T.Float32BufferAttribute(props,2));
 const surround=new T.ShaderMaterial({side:T.DoubleSide,uniforms:lightU,vertexShader:"attribute vec3 baseColor;attribute vec2 properties;varying vec3 vP,vN,vC;varying vec2 vProps;void main(){vP=position;vN=normal;vC=baseColor;vProps=properties;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",fragmentShader:"varying vec3 vP,vN,vC;varying vec2 vProps;\n"+lighting+"\nvoid main(){vec3 n=normalize(vN)*(gl_FrontFacing?1.0:-1.0),v=normalize(eye-vP);vec3 rgb=vC*(1.0-vProps.y)*lightDiffuse(vP,n)+lightSpec(vP,n,v,vProps.x,mix(vec3(.04),vC,vProps.y));gl_FragColor=vec4(clamp(rgb,0.0,8.0),1.0);}"});
-const scene=new T.Scene();target.material=targetMat;scene.add(target,new T.Mesh(geom,surround));
+const scene=new T.Scene();target.material=targetMat;
+const approxMesh=new T.Mesh(geom,surround);scene.add(target,approxMesh);
+const bakedGroup=new T.Group();bakedGroup.visible=false;scene.add(bakedGroup);
+const bakedMeshes=[];
+if(bay.bakedSurround){
+  const bm=await json("/baked-surround");
+  const paper=bay.objects.find(x=>bm.retainedPaper.includes(x.object));
+  check(paper,"retained paper");
+  const pg=new T.BufferGeometry(),pp=[],pn=[],pc=[],pr=[];
+  for(let i=paper.firstVertex;i<paper.firstVertex+paper.vertexCount;i++){
+    const k=i*11;pp.push(...rows.slice(k,k+3));pn.push(...rows.slice(k+3,k+6));pc.push(...rows.slice(k+6,k+9));pr.push(rows[k+9],rows[k+10]);
+  }
+  pg.setAttribute("position",new T.Float32BufferAttribute(pp,3));pg.setAttribute("normal",new T.Float32BufferAttribute(pn,3));pg.setAttribute("baseColor",new T.Float32BufferAttribute(pc,3));pg.setAttribute("properties",new T.Float32BufferAttribute(pr,2));
+  const pm=new T.Mesh(pg,surround);pm.name=paper.object;bakedGroup.add(pm);
+  for(const [surfaceIndex,item] of bm.objects.entries()){
+    const [vertices,rgba]=await Promise.all([floats("/"+item.id+".f32"),floats("/"+item.id+".rgba32f")]);
+    check(vertices.length===item.vertices*5&&rgba.length===item.width*item.height*4,"baked array sizes");
+    const p=[],uv=[];for(let i=0;i<vertices.length;i+=5){p.push(...vertices.slice(i,i+3));uv.push(...vertices.slice(i+3,i+5));}
+    const g=new T.BufferGeometry();g.setAttribute("position",new T.Float32BufferAttribute(p,3));g.setAttribute("uv",new T.Float32BufferAttribute(uv,2));
+    const faceIds=Float32Array.from({length:item.vertices},(_,i)=>Math.floor(i/3)+1);
+    g.setAttribute("faceId",new T.BufferAttribute(faceIds,1));
+    const texture=tex(rgba,item.width,item.height,T.FloatType);
+    const mat=new T.ShaderMaterial({side:T.DoubleSide,toneMapped:false,uniforms:{map:{value:texture},sz:{value:new T.Vector2(item.width,item.height)}},
+      vertexShader:"varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+      fragmentShader:["varying vec2 vUv;uniform sampler2D map;uniform vec2 sz;",
+      "vec3 at(vec2 p){return texture2D(map,(clamp(p,vec2(0.0),sz-1.0)+.5)/sz).rgb;}",
+      "void main(){vec2 p=vUv*sz-.5,i=floor(p),f=fract(p);vec3 a=mix(at(i),at(i+vec2(1,0)),f.x),b=mix(at(i+vec2(0,1)),at(i+1.0),f.x);gl_FragColor=vec4(mix(a,b,f.y),1.0);}"].join("\n")});
+    const mesh=new T.Mesh(g,mat);mesh.name=item.object;mesh.userData.bake={rgba,width:item.width,height:item.height,id:surfaceIndex+1};bakedMeshes.push(mesh);bakedGroup.add(mesh);
+  }
+  check(bakedMeshes.length===9,"baked mesh count");
+}
 const lut=tex(lutRaw,a.lut.width,a.lut.height,T.UnsignedByteType);
 const shader=new T.ShaderMaterial({toneMapped:false,depthTest:false,depthWrite:false,uniforms:{source:{value:floatRT.texture},lut:{value:lut},size:{value:a.lut.size},atlas:{value:new T.Vector2(a.lut.width,a.lut.height)},shaperK:{value:a.lut.shaperK},limit:{value:a.lut.domain[1]}},vertexShader:"varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.0,1.0);}",fragmentShader:[
 "precision highp float;varying vec2 vUv;uniform sampler2D source,lut;uniform float size,shaperK,limit;uniform vec2 atlas;",
@@ -104,15 +164,114 @@ canvas.addEventListener("pointerdown",e=>{drag=[e.clientX,e.clientY];canvas.setP
 canvas.addEventListener("wheel",e=>{e.preventDefault();zoom=Math.max(.65,Math.min(1.5,zoom+e.deltaY*.001));render(canvas.width,canvas.height);},{passive:false});
 document.querySelector("#reset").onclick=()=>{yaw=0;pitch=.025;zoom=1;render(canvas.width,canvas.height);};
 window.__capture=capture;window.__resize=(cw,ch)=>render(cw,ch);
+window.__setBaked=flag=>{check(bakedMeshes.length===9,"baked package unavailable");approxMesh.visible=!flag;bakedGroup.visible=flag;render(canvas.width,canvas.height);};
+window.__checkBaked=()=>{
+  check(bakedGroup.visible&&!approxMesh.visible,"baked mode");
+  const w=canvas.width,h=canvas.height,pixels=new Float32Array(w*h*4);
+  R.readRenderTargetPixels(floatRT,0,0,w,h,pixels);check(gl.getError()===gl.NO_ERROR,"baked framebuffer readback");
+  // Second pass: identical geometry, order, camera, depth and vertex transform;
+  // encode UV + object + face rather than texture color. Do not infer identity
+  // from a color match. Retain the original independent CPU ray gate.
+  const objects=[target,...bakedGroup.children],old=objects.map(o=>o.material);
+  const identity=o=>o.userData.bake?.id??(o===target?-1:-2);
+  const ids=new Float32Array(w*h*4),depths=new Float32Array(w*h*4),masks=[];
+  let depthBits=0;
+  const subpixelBits=gl.getParameter(gl.SUBPIXEL_BITS);
+  try{
+    for(const o of objects){
+      const q=o.userData.bake,g=o.geometry;
+      if(!g.attributes.faceId)g.setAttribute("faceId",new T.BufferAttribute(Float32Array.from({length:g.attributes.position.count},(_,i)=>Math.floor(i/3)+1),1));
+      const mat=new T.ShaderMaterial({side:T.DoubleSide,toneMapped:false,uniforms:{surfaceId:{value:identity(o)},depthPass:{value:false}},
+        vertexShader:"attribute float faceId;varying vec2 vUv;varying float vFace;void main(){vUv=uv;vFace=faceId;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+        fragmentShader:"varying vec2 vUv;varying float vFace;uniform float surfaceId;uniform bool depthPass;void main(){gl_FragColor=depthPass?vec4(gl_FragCoord.z,0.0,surfaceId,vFace):vec4(vUv,surfaceId,vFace);}"});
+      masks.push(mat);o.material=mat;
+    }
+    R.setRenderTarget(floatRT);R.render(scene,cam);depthBits=gl.getParameter(gl.DEPTH_BITS);
+    R.readRenderTargetPixels(floatRT,0,0,w,h,ids);
+    check(gl.getError()===gl.NO_ERROR,"baked UV identity pass");
+    for(const m of masks)m.uniforms.depthPass.value=true;
+    R.setRenderTarget(floatRT);R.render(scene,cam);R.readRenderTargetPixels(floatRT,0,0,w,h,depths);
+    check(gl.getError()===gl.NO_ERROR,"baked depth identity pass");
+  }finally{
+    objects.forEach((o,i)=>o.material=old[i]);masks.forEach(m=>m.dispose());render(w,h);
+  }
+  const raycaster=new T.Raycaster(),result={tested:0,bad:0,maxAbs:0,perObject:{},gpuSamples:0,gpuBad:0,gpuMaxAbs:0,identityMismatch:0,maxUV:0,anomalies:[],worst:null};
+  const points=[];
+  for(const m of bakedMeshes)result.perObject[m.name]=0;
+  const pt=new T.Vector3(),a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3(),bc=new T.Vector3();
+  function sampled(q,uv){return [0,1,2].map(ch=>sample(q.rgba,uv,q.width,q.height,4,false,ch));}
+  function delta(a,b){return Math.max(...a.map((v,i)=>Math.abs(v-b[i])));}
+  for(let iy=0;iy<36;iy++)for(let ix=0;ix<48;ix++){
+    const x=Math.floor((ix+.5)*w/48),y=Math.floor((iy+.5)*h/36),k=(y*w+x)*4;
+    const gpuId=Math.round(ids[k+2]),gpuFace=Math.round(ids[k+3])-1,gpuUV=[ids[k],ids[k+1]],gpuRGB=Array.from(pixels.slice(k,k+3));
+    check(Math.round(depths[k+2])===gpuId&&Math.round(depths[k+3])-1===gpuFace,"identity and depth pass mismatch");
+    const point={x,y,id:gpuId,face:gpuFace,uv:gpuId>0?gpuUV:null,depth:depths[k],legacyBad:false,legacyIdentityMismatch:false};points.push(point);
+    const gm=bakedMeshes.find(m=>m.userData.bake.id===gpuId);
+    let gpuExpected=null,gpuError=null;
+    if(gm){
+      check(gpuFace>=0&&gpuFace<gm.geometry.attributes.position.count/3&&gpuUV.every(v=>Number.isFinite(v)&&v>=0&&v<=1),"invalid raster identity");
+      gpuExpected=sampled(gm.userData.bake,gpuUV);gpuError=delta(gpuExpected,gpuRGB);
+      result.gpuSamples++;result.gpuMaxAbs=Math.max(result.gpuMaxAbs,gpuError);if(gpuError>.01)result.gpuBad++;
+    }
+    raycaster.setFromCamera(new T.Vector2(2*(x+.5)/w-1,2*(y+.5)/h-1),cam);
+    const hits=raycaster.intersectObjects(objects,false),hit=hits[0];
+    if(!hit||!hit.object.userData.bake||!hit.uv||!hit.face)continue;
+    const g=hit.object.geometry.attributes.position;
+    a.fromBufferAttribute(g,hit.face.a);b.fromBufferAttribute(g,hit.face.b);c.fromBufferAttribute(g,hit.face.c);
+    pt.copy(hit.point);hit.object.worldToLocal(pt);T.Triangle.getBarycoord(pt,a,b,c,bc);
+    if(Math.min(bc.x,bc.y,bc.z)<.025)continue;
+    const q=hit.object.userData.bake,cpuUV=[hit.uv.x,hit.uv.y],cpuRGB=sampled(q,cpuUV),error=delta(cpuRGB,gpuRGB);
+    const identity=q.id===gpuId&&hit.faceIndex===gpuFace;
+    const uvError=identity?delta(cpuUV,gpuUV):null;
+    if(identity)result.maxUV=Math.max(result.maxUV,uvError);else result.identityMismatch++;
+    check(Number.isFinite(error),"non-finite baked sample");result.maxAbs=Math.max(result.maxAbs,error);
+    result.tested++;result.perObject[hit.object.name]++;if(error>.01)result.bad++;
+    point.legacyBad=error>.01;point.legacyIdentityMismatch=!identity;
+    if(error>.01||!identity||gpuError>.01||!result.worst||error>result.worst.error){
+      const neighborIds=[];
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+        if(x+dx<0||x+dx>=w||y+dy<0||y+dy>=h)continue;
+        const j=((y+dy)*w+x+dx)*4;neighborIds.push({dx,dy,id:Math.round(ids[j+2]),face:Math.round(ids[j+3])-1});
+      }
+      const detail={x,y,object:hit.object.name,cpuId:q.id,cpuFace:hit.faceIndex,cpuUV,cpuRGB,barycentric:bc.toArray(),gpuId,gpuFace,gpuUV,gpuRGB,gpuExpected,gpuError,identity,uvError,error,neighborIds,rayHits:hits.slice(0,3).map(h=>({object:h.object.name,face:h.faceIndex,distance:h.distance}))};
+      if(!result.worst||error>result.worst.error)result.worst=detail;
+      if(error>.01||!identity||gpuError>.01)result.anomalies.push(detail);
+    }
+  }
+  const meshes=objects.map(o=>({id:identity(o),positions:o.geometry.attributes.position.array,uv:o.userData.bake?o.geometry.attributes.uv.array:null,modelView:new T.Matrix4().multiplyMatrices(cam.matrixWorldInverse,o.matrixWorld).elements,projection:cam.projectionMatrix.elements}));
+  result.raster=rasterOracle({meshes,width:w,height:h,subpixelBits,depthBits,points});
+  return result;
+};
 render();window.__result={status:"PASS_BAY_BINDING",metrics,triangles:bay.triangles,objects:bay.objects.length,actualBay:true,sourceRoughness:true,agxLive:true,geometryBudgetOnly:true,artisticApproval:false,physicalDeviceQualified:false,publishable:false};
 })().catch(e=>window.__result={status:"FAIL",error:String(e),metrics:window.__metrics||null});`;
 const files=new Map([["/",["text/html",Buffer.from(html)]],["/style.css",["text/css",Buffer.from(css)]],["/bay.js",["application/javascript",Buffer.from(js)]],["/three.js",["application/javascript",engine]],...[[ "/binding",src,"surface-binding.json"],["/package",src,"material-package.json"],["/bay",bayDir,"bay.json"],["/oracle",ctx,"context-oracle.json"],["/agx",agx,"agx-lut.json"]].map(([url,d,n])=>[url,["application/json",read(d,n)]]),...[[ "/texture",texture],["/rough",rough],["/rows",rows],["/occ",occ],["/lut",lutBytes]].map(([url,data])=>[url,["application/octet-stream",data]])]);
+if(bakedManifest){files.set("/bay",["application/json",Buffer.from(JSON.stringify({...bay,bakedSurround:true}))]);for(const [url,value] of bakedFiles)files.set(url,value);}
 const server=createServer((req,res)=>{res.setHeader("Content-Security-Policy","default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; object-src 'none'; base-uri 'none'");res.setHeader("X-Content-Type-Options","nosniff");const f=files.get(req.url);if(!f){res.writeHead(404);res.end();return;}res.writeHead(200,{"Content-Type":f[0],"Cache-Control":"no-store"});res.end(f[1]);});
 let browser;const report={schema:"atlas.asc01.bay-browser/v1",revision:process.env.ATLAS_EXACT_HEAD,sourceRevision:b.revision,masterSha256:b.masterSha256,packageSha256:f.packageSha256,baySha256:bay.sha256,externalRequests:[],pageErrors:[],status:"PENDING",views:{}};
 try{await new Promise((ok,fail)=>{server.once("error",fail);server.listen(0,"127.0.0.1",ok);});const origin="http://127.0.0.1:"+server.address().port;
 browser=await chromium.launch({headless:true,args:["--use-gl=angle","--use-angle=swiftshader","--enable-unsafe-swiftshader"]});const c=await browser.newContext({viewport:{width:800,height:650}});await c.route("**/*",r=>{if(new URL(r.request().url()).origin!==origin){report.externalRequests.push(r.request().url());return r.abort();}return r.continue();});const page=await c.newPage();page.on("pageerror",e=>report.pageErrors.push(String(e)));await page.goto(origin+"/");await page.waitForFunction(()=>window.__result,{},{timeout:180000});report.result=await page.evaluate(()=>window.__result);assert.equal(report.result.status,"PASS_BAY_BINDING",JSON.stringify(report.result));
 async function capture(name){const v=await page.evaluate(()=>window.__capture());const raw=Buffer.from(v.png.split(",")[1],"base64");writeFileSync(join(out,name+".png"),raw);report.views[name]={sha256:sha(raw),width:v.width,height:v.height,lit:v.lit};assert(v.lit>v.width*v.height*.04,"empty preview");}
-await capture("reference");const box=await page.locator("canvas").boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await page.mouse.move(box.x+box.width/2+70,box.y+box.height/2+10,{steps:4});await page.mouse.up();await capture("rotated");assert.notEqual(report.views.reference.sha256,report.views.rotated.sha256,"pointer navigation");
+if(bakedManifest){
+  await capture("approximate");
+  await page.evaluate(()=>window.__setBaked(true));
+  report.surround={manifestSha256:sha(read(surroundDir,"baked-surround.json")),sourceRevision:bakedManifest.revision,replayed:!!bakedReplay,objects:bakedManifest.objects.length,retainedPaper:bakedManifest.retainedPaper,reference:await page.evaluate(()=>window.__checkBaked())};
+}
+await capture("reference");
+if(bakedManifest)assert.notEqual(report.views.approximate.sha256,report.views.reference.sha256,"baked material has no visible effect");
+const box=await page.locator("canvas").boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await page.mouse.move(box.x+box.width/2+70,box.y+box.height/2+10,{steps:4});await page.mouse.up();await capture("rotated");assert.notEqual(report.views.reference.sha256,report.views.rotated.sha256,"pointer navigation");
+if(bakedManifest){
+  report.surround.rotated=await page.evaluate(()=>window.__checkBaked());
+
+  report.surround.visibleObjects=Object.keys(report.surround.reference.perObject).filter(k=>report.surround.reference.perObject[k]+report.surround.rotated.perObject[k]>0);
+  assert(report.surround.visibleObjects.length>=3,"insufficient visible surface coverage");
+}
 await page.locator("#reset").click();await capture("restored");assert.equal(report.views.reference.sha256,report.views.restored.sha256,"camera restore");
-await page.evaluate(()=>window.__resize(320,240));await capture("mobile");assert.equal(report.views.mobile.width,320);assert.deepEqual(report.externalRequests,[]);assert.deepEqual(report.pageErrors,[]);report.status="PASS_NAVIGABLE_BAY_PREVIEW";
+await page.evaluate(()=>window.__resize(320,240));await capture("mobile");assert.equal(report.views.mobile.width,320);assert.deepEqual(report.externalRequests,[]);assert.deepEqual(report.pageErrors,[]);
+if(bakedManifest){
+  for(const v of ["reference","rotated"]){
+    const x=report.surround[v];
+    assert(x.tested>=100&&x.gpuSamples>=100&&x.gpuBad===0&&x.raster.points===1728&&x.raster.baked===x.gpuSamples&&x.raster.bad===0&&x.raster.definite>=100&&Object.values(x.raster.negativeCanaries).every(Boolean),JSON.stringify({view:v,tested:x.tested,legacyBad:x.bad,gpuBad:x.gpuBad,raster:x.raster}));
+  }
+}
+report.status=bakedManifest?"PASS_BAKED_BAY_PREVIEW":"PASS_NAVIGABLE_BAY_PREVIEW";
 }catch(e){report.status="FAIL";report.error=String(e);throw e;}finally{writeFileSync(join(out,"bay-browser.json"),JSON.stringify(report,null,2)+"\n");console.log("ASC BAY BROWSER",JSON.stringify(report));if(browser)await browser.close();server.close();}

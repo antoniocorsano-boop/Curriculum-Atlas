@@ -1,0 +1,192 @@
+name: Atlas — Library bay visible material completion
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/test-atlas-bay-material-webgl.mjs'
+      - 'scripts/atlas-raster-oracle.mjs'
+      - 'scripts/atlas-export-bay-preview.py'
+      - 'scripts/atlas-bake-bay-surround.py'
+      - 'scripts/atlas-replay-bay-surround.py'
+      - 'scripts/atlas_uv_pack.py'
+      - '.github/workflows/atlas-library-bay-completion.yml'
+      - 'docs/atlas-gateway/ATLAS-LIBRARY-COMPLETION.md'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-library-completion-${{ github.event.pull_request.head.ref }}
+  cancel-in-progress: true
+jobs:
+  live:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-library-bay-material-completion' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+      ATLAS_BAKE_REPLAY: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify pinned Blender and syntax
+        run: |
+          bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+          python3 -m py_compile scripts/atlas-export-bay-preview.py scripts/atlas-bake-bay-surround.py scripts/atlas_uv_pack.py scripts/atlas-replay-bay-surround.py
+          node --check scripts/test-atlas-bay-material-webgl.mjs
+          node --check scripts/atlas-raster-oracle.mjs
+      - name: Recover exact master, material, context and AgX artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/asc-live-input"
+          mkdir -p "$p"/{finish,context,agx,bay,surround} "$RUNNER_TEMP/asc-live-evidence"
+          for spec in "14444143410 c7154de191cb6d25890a2881f470f6d6eeba74b2dcab897842f4753403e685c6 master" "14550684753 b0bfa200423cdb3b58e0b7bcfcefec6be68a8adbf6f93ca47817d76d8a80f633 finish" "14541319689 d1abd91c141ff35286d2ec005bcdf2a6556126aedcc29040b38e4ba5957fb225 context" "14542267386 508a424f41059a3b1cfaa30eff2315746545f866479235e5b5f2e915cce350e4 agx" "14555037601 0ed60e141ce891e4026f4fb477549782c68d5cc319390a9df2eb1b80940be582 prior" "14561365109 b397dfdbff8a61d753df8b7a7896950b9c65892073a132e6f70e1e65a230e2f6 baked"; do
+            read -r id sha name <<< "$spec"
+            curl --fail --silent --show-error --location --retry 3 --max-time 180 --proto '=https' --proto-redir '=https' -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" -o "$p/$name.zip"
+            printf '%s  %s\n' "$sha" "$p/$name.zip" | sha256sum --strict --check
+          done
+          unzip -p "$p/master.zip" Atlas-Scene-Master.blend > "$p/Atlas-Scene-Master.blend"
+          printf '%s  %s\n' f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab "$p/Atlas-Scene-Master.blend" | sha256sum --strict --check
+          for f in surface-binding.json binding.rgba32f material-package.json material-finish.json roughness.rgb8; do unzip -p "$p/finish.zip" "$f" > "$p/finish/$f"; done
+          for f in context-oracle.json occluders.f32; do unzip -p "$p/context.zip" "$f" > "$p/context/$f"; done
+          for f in agx-lut.json agx-browser.json lut.rgba8; do unzip -p "$p/agx.zip" "$f" > "$p/agx/$f"; done
+          unzip -p "$p/prior.zip" bay-browser.json > "$p/prior-browser.json"
+          python3 - "$p/prior-browser.json" <<'PY'
+          import json,sys
+          r=json.load(open(sys.argv[1]))
+          assert r["revision"]=="abfb83b9c9cf17d5c3e46c79eaa7ac9dab96e3cc" and r["status"]=="PASS_NAVIGABLE_BAY_PREVIEW"
+          assert r["baySha256"]=="74edac6cc8e4a2a7f6a13b5345731eb2c6ab8e837cd1662d19bc6f811ff953ab"
+          PY
+          chmod a-w "$p/Atlas-Scene-Master.blend" "$p"/{finish,context,agx}/*
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Prepare existing verified WebGL engine
+        run: |
+          pnpm install --frozen-lockfile
+          node scripts/build-atlas-gateway-local.mjs "$RUNNER_TEMP/asc-live-engine"
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Export actual bay and source material inventory
+        run: |
+          p="$RUNNER_TEMP/asc-live-input"
+          "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$p/Atlas-Scene-Master.blend" --python-exit-code 1 --python scripts/atlas-export-bay-preview.py -- "$p/Atlas-Scene-Master.blend" "$p/finish" "$p/bay"
+          cp "$p/bay/bay.json" "$RUNNER_TEMP/asc-live-evidence/"
+      - name: Recover nine exact baked surfaces without rebaking
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/asc-live-input"
+          unzip -p "$p/baked.zip" asc-live-input/surround/baked-surround.json > "$p/surround/baked-surround.json"
+          for i in {00..08}; do
+            for ext in exr f32; do
+              unzip -p "$p/baked.zip" "asc-live-input/surround/surface-$i.$ext" > "$p/surround/surface-$i.$ext"
+            done
+          done
+          "$BLENDER_BIN" --background --factory-startup --disable-autoexec --python-exit-code 1 --python scripts/atlas-replay-bay-surround.py -- "$p/surround" 2>&1 | tee "$RUNNER_TEMP/asc-live-evidence/replay.log"
+          cp "$p/surround/"{baked-surround,replay}.json "$RUNNER_TEMP/asc-live-evidence/"
+      - name: Compare approximate and baked bay, test actual navigation
+        run: |
+          p="$RUNNER_TEMP/asc-live-input"
+          node scripts/test-atlas-bay-material-webgl.mjs "$p/finish" "$p/context" "$p/agx" "$p/bay" "$RUNNER_TEMP/asc-live-evidence" "$RUNNER_TEMP/asc-live-engine/three.min.js" "$p/surround"
+      - name: Verify preview receipts
+        run: |
+          python3 - <<'PY'
+          import json,os,pathlib,hashlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"asc-live-evidence"
+          b,r=[json.loads((p/n).read_text()) for n in ("bay.json","bay-browser.json")]
+          assert b["revision"]==r["revision"]==os.environ["ATLAS_EXACT_HEAD"]
+          assert b["masterUnchanged"] and b["sourceRevision"]==r["sourceRevision"]=="52804c49858aafb643f11bff10772a32a0c5e14f"
+          assert b["materialPackageSha256"]==r["packageSha256"] and b["sha256"]==r["baySha256"]
+          assert r["status"]=="PASS_BAKED_BAY_PREVIEW" and r["result"]["status"]=="PASS_BAY_BINDING"
+          x=r["result"];m=x["metrics"]
+          assert b["triangles"]==x["triangles"]<100000 and x["objects"]==11 and b["targetTriangles"]==108
+          assert m["stable"]==5961 and m["target"]==1068 and m["tested"]>=100 and m["badVisibility"]==m["badSamples"]==0
+          assert m["maxUV"]<=.0002 and m["maxDiffuse"]<=.003 and m["maxRoughness"]<=.006
+          assert x["actualBay"] and x["sourceRoughness"] and x["agxLive"] and x["geometryBudgetOnly"]
+          assert not any(x[k] for k in ("artisticApproval","physicalDeviceQualified","publishable"))
+          assert not b["publishable"] and not r["externalRequests"] and not r["pageErrors"]
+          assert set(r["views"])=={"approximate","reference","rotated","restored","mobile"}
+          q=json.loads((p/"baked-surround.json").read_text())
+          assert q["status"]=="PASS_BAY_SURROUND_PACKAGE" and q["revision"]=="34bd5bbd3281abdcbc1a9fbe4c5de59dc750020e" and q["masterUnchanged"] and q["bindingsRestored"]
+          replay=json.loads((p/"replay.json").read_text())
+          assert replay["status"]=="PASS_EXACT_BAKE_REPLAY" and not replay["rebaked"] and replay["sourceRevision"]==q["revision"]
+          assert replay["manifestSha256"]==hashlib.sha256((p/"baked-surround.json").read_bytes()).hexdigest()
+          assert r["surround"]["replayed"] and r["surround"]["sourceRevision"]==q["revision"]
+          assert len(replay["objects"])==9
+          for old,new in zip(q["objects"],replay["objects"]):
+              assert new["id"]==old["id"] and new["geometrySha256"]==old["geometrySha256"] and new["textureSha256"]==old["textureSha256"] and new["exrSha256"]==old["transfer"]["sha256"]
+          assert q["preflight"]["passed"] and len(q["objects"])==9 and len(q["retainedPaper"])==1
+          mb=q["materialBindingPreflight"]
+          assert mb["passed"] and all(mb["synthetic"][k] for k in ("passed","sharedMesh","mixedDataAndObject","distinctOverrides","siblingUnchanged","rollback"))
+          assert q["objectMaterialBindingsRestored"] and len(mb["real"])==9
+          assert any(slot["link"]=="OBJECT" for obj in mb["real"] for slot in obj["slots"])
+          inventory={obj["object"]:obj for obj in mb["real"]}
+          for obj in q["objects"]:
+              original=inventory[obj["object"]]
+              assert original["rollback"] and obj["materialBindingsRestored"]
+              assert obj["materialSlots"]==original["slots"]
+              assert obj["sourceMaterials"]==[slot["effectiveMaterial"] for slot in original["slots"]]
+              assert original["isolatedCloneCount"]==len(original["slots"])
+          uv=q["uvPreflight"]
+          assert uv["passed"] and uv["synthetic"]["passed"] and uv["synthetic"]["islands"]==64
+          assert uv["synthetic"]["method"]=="deterministic-aabb-shelf" and uv["synthetic"]["minimumRectangleGap"]>=20-1e-7
+          assert len(uv["real"])==9 and uv["totalTexels"]==sum(o["size"]**2 for o in uv["real"])<=uv["maxTotalTexels"]==12*1024*1024
+          uv_inventory={obj["object"]:obj for obj in uv["real"]}
+          for obj in q["objects"]:
+              u=obj["uv"];v=uv_inventory[obj["object"]]
+              assert v["rollback"] and u=={k:v[k] for k in u}
+              assert u["size"] in (512,1024,2048) and obj["width"]==obj["height"]==u["size"]
+              assert u["packing"]["method"] in ("deterministic-aabb-bottom-left","deterministic-aabb-shelf")
+              assert u["minimumRectangleGap"]>=20-1e-7 and u["borderPixels"]>=9 and u["bakeMarginPixels"]==4
+              assert u["emptyIslandRectangles"]==u["overlapTexels"]==0 and u["occupiedTexels"]>100
+              assert len(u["uvSha256"])==64 and u["attempts"][-1]["status"]=="PASS"
+          assert r["surround"]["manifestSha256"]==hashlib.sha256((p/"baked-surround.json").read_bytes()).hexdigest()
+          assert all(o["state"]=="PASS_BAKED_SURFACE" and o["transfer"]["outsideTolerance"]==0 and o["uv"]["overlapTexels"]==0 for o in q["objects"])
+          for v in ("reference","rotated"):
+              sample=r["surround"][v]
+              assert sample["tested"]>=100 and sample["gpuSamples"]>=100 and sample["gpuBad"]==0 and sample["gpuMaxAbs"]<=.01
+              # Legacy ideal-ray RGB differences remain visible, but cannot
+              # define the GPU raster contract: verify coverage, depth and UV
+              # independently with a precision-derived screen-space envelope.
+              g=sample["raster"]
+              assert g["method"]=="independent-projected-interval-v1" and g["triangles"]==b["triangles"]
+              assert g["points"]==1728 and g["bad"]==0 and g["baked"]==sample["gpuSamples"]
+              assert g["definite"]>=100 and g["definite"]+g["ambiguous"]+g["background"]==g["points"]
+              assert 4<=g["subpixelBits"]<=16 and 16<=g["depthBits"]<=32 and g["step"]==2**-g["subpixelBits"]
+              assert g["maxScreenUncertainty"]<=g["step"]+.01 and g["varyingEps"]==2e-6
+              assert all(g["negativeCanaries"][k] for k in ("wrongFace","wrongUV","wrongDepth","falseBackground"))
+              assert sum(int(t["legacyBad"]) for t in g["legacyDetails"])==sample["bad"]
+              assert sum(int(t["legacyIdentityMismatch"]) for t in g["legacyDetails"])==sample["identityMismatch"]
+              assert all(t["result"]["ok"] for t in g["legacyDetails"])
+          assert len(r["surround"]["visibleObjects"])>=3
+          assert r["views"]["approximate"]["sha256"]!=r["views"]["reference"]["sha256"]
+          for name,v in r["views"].items():
+              assert hashlib.sha256((p/(name+".png")).read_bytes()).hexdigest()==v["sha256"]
+              assert v["lit"]>v["width"]*v["height"]*.04
+          assert r["views"]["reference"]["sha256"]==r["views"]["restored"]["sha256"]!=r["views"]["rotated"]["sha256"]
+          assert r["views"]["mobile"]["width"]==320 and r["views"]["mobile"]["height"]==240
+          print("Baked surrounding surfaces and bay navigation verified; no full-scene or artistic approval.")
+          PY
+      - name: Preserve actual bay preview evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-library-bay-completion
+          path: |
+            ${{ runner.temp }}/asc-live-evidence/
+            ${{ runner.temp }}/asc-live-input/surround/baked-surround.json
+            ${{ runner.temp }}/asc-live-input/surround/surface-*.exr
+            ${{ runner.temp }}/asc-live-input/surround/surface-*.f32
+          retention-days: 7
+          if-no-files-found: warn
