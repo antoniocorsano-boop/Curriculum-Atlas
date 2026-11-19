@@ -32,3 +32,21 @@ Workflow Atlas Scene Observation — ASI-01 L2 Blender, job ART-LEARN-01. Artefa
 ## Criterio di promozione
 
 PASS_REFERENCE_STUDY_ONLY attesta il primo studio e non la qualità di Atlas. Il repertorio contiene solo osservazioni e candidati fino a quando una prova su Atlas dimostra effetto, fedeltà, reversibilità e beneficio percepibile. La scelta di un ulteriore riferimento (Barcelona Pavilion o altra scena con licenza verificata) dipende dagli esiti, non da una promessa di fotorealismo. Nessuna autorizzazione a scrivere sul master, al rilascio o all'uso studenti.
+
+## ART-LEARN-02 — Trasferimento controllato della gerarchia luminosa
+
+Decisione basata sullo studio ART-LEARN-01 qualificato alla revisione bca6ac4c07ce3d38a3737ca79f6d57e267528e6a, esecuzione 44392517820, artefatto 14467907953 (SHA-256 7fc44fa16faf32ff1db6f72a03c96d32981049d389582212abe6b9e76284031d). Classroom: ablazione del sole con variazione di 174.589 su 225.348 pixel e ripristino con MAE zero. Atlas: 47 sorgenti, di cui 36 scaffali, 8 corona, 1 sole, 1 cielo, 1 riempimento frontale. Il numero di luci non è un indice di qualità.
+
+**Ipotesi AL-LIGHT-01:** gerarchia funzionale delle luci, con contributo naturale identificabile e luce pratica subordinata. Non trasferire i watt della scena Classroom.
+
+| Prova | Sole | Cielo | Scaffali | Corona | Frontale |
+|---|---:|---:|---:|---:|---:|
+| 01 Riferimento | 1 | 1 | 1 | 1 | 1 |
+| 02 Ablazione sole | nascosto | 1 | 1 | 1 | 1 |
+| 03 Gerarchia pratica | 1 | 1 | 0,40 | 0,35 | 0,25 |
+| 04 Gerarchia direzionale | 1,35 | 0,75 | 0,40 | 0,35 | 0,25 |
+| 05 Ripristino | 1 | 1 | 1 | 1 | 1 |
+
+Moltiplicatori relativi alla configurazione Atlas, proposti per la prova e non qualificati come ricetta universale. Prova 04 modifica insieme sole e cielo: è un confronto composito, non attribuibile separatamente ai due fattori. Nessuna modifica di geometria, camera, materiali, ambiente o esposizione. I cinque rendering usano lo stesso campionamento, risoluzione e gestione del colore. Misure di variazione RGB, luminanza e ripristino, impronte SHA-256 e inventario delle luci vengono conservati in transfer.json. Il master non è salvato e viene verificato a fine prova. Nessun asset Classroom trasferito.
+
+**Stato:** implementato, collaudo e riesame artistico ancora necessari. PASS_CONTROLLED_TRANSFER_CANDIDATES indica solo prova tecnica; prima della promozione al repertorio ASD occorre confrontare le immagini effettive, verificare leggibilità degli elementi educativi, profondità, naturalezza, qualità delle superfici e stabilità delle altre inquadrature. Il principio è riutilizzabile come ipotesi; la configurazione numerica è specifica del mondo biblioteca. Nessuna pubblicazione, approvazione artistica o autorizzazione studenti.
