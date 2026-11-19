@@ -176,6 +176,9 @@ try:
     report["bake"].update(sha256=transfer["sha256"],bytes=transfer["bytes"],reloadMaxRGBDelta=transfer["maxAbs"])
     write()
     require(transfer["outsideTolerance"]==0,"explicit RGB FLOAT32 transfer drift")
+    if os.environ.get("ATLAS_CAPTURE_BINDING") == "1":
+        from atlas_surface_binding import capture
+        capture(out,s,o,derived,uv,transferred,report)
     preview=bpy.data.materials.new("ASC P2C baked preview");preview.use_nodes=True
     tree=preview.node_tree;tree.nodes.clear()
     uvnode=tree.nodes.new("ShaderNodeUVMap");uvnode.uv_map=uv.name
