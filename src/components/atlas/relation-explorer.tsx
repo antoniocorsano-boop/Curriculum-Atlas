@@ -26,7 +26,7 @@ const kindLabel: Record<ExploreNodeKind, string> = {
   discipline: "Disciplina",
   stage: "Ordine / annualità",
   objective: "Obiettivo",
-  connection: "Raccordo",
+  connection: "Raccordo di fascia",
 };
 
 type AtlasMapNodeData = {
@@ -89,7 +89,7 @@ function buildLayout(nodes: ExploreNode[], compact = false): Node[] {
       });
 
       const relatedObjectives = objectives.filter(
-        objective => objective.disciplineId === node.disciplineId && objective.stage === stageNode.stage
+        objective => objective.bandId === stageNode.bandId
       );
       relatedObjectives.forEach((objective, objectiveIndex) => {
         result.push({
@@ -291,7 +291,7 @@ export function RelationExplorer() {
                 </Link>
               ) : null}
               <div className="atlas-context-note">
-                Dati dimostrativi F2 derivati dalle fixture governate. Arena resta la fonte curricolare prevista.
+                Dati proiettati da Arena. Le linee tra fasce consecutive indicano la successione di consultazione, non una progressione pedagogica validata. I raccordi appartengono alla fascia, non al singolo obiettivo.
               </div>
             </>
           ) : null}
