@@ -61,7 +61,7 @@ try{
   destinationControl={status:response.status(),title:await p.locator("h1").innerText(),url:p.url()};
   assert.equal(destinationControl.status,200);
  }finally{await control.close()}
- for(const device of [{name:"large",viewport:{width:1920,height:1080}},{name:"compact",viewport:{width:320,height:568},isMobile:true,hasTouch:true},{name:"phone",viewport:{width:393,height:873},isMobile:true,hasTouch:true},{name:"landscape",viewport:{width:873,height:393},isMobile:true,hasTouch:true},{name:"tablet",viewport:{width:768,height:1024},isMobile:true,hasTouch:true},{name:"desktop",viewport:{width:1440,height:1000}}]){
+ for(const device of [...["large","large-repeat-2","large-repeat-3"].map(name=>({name,viewport:{width:1920,height:1080}})),{name:"compact",viewport:{width:320,height:568},isMobile:true,hasTouch:true},{name:"phone",viewport:{width:393,height:873},isMobile:true,hasTouch:true},{name:"landscape",viewport:{width:873,height:393},isMobile:true,hasTouch:true},{name:"tablet",viewport:{width:768,height:1024},isMobile:true,hasTouch:true},{name:"desktop",viewport:{width:1440,height:1000}}]){
   // Isolate each format in its own Chromium process, as in the differential test.
   // Keep the combined graphics + navigation workload and the same deadlines.
   const deviceBrowser=await launch();
@@ -71,10 +71,10 @@ try{
   page.on("requestfailed",r=>routeEvents.push({url:r.url(),failure:r.failure()?.errorText}));
   page.on("crash",()=>routeEvents.push({crash:true}));
   page.on("pageerror",e=>errors.push(e.message));
-  page.on("console",m=>{const t=m.text();if(m.type()==="error"||t.startsWith("ATLAS_NATIVE_"))diagnostics.push(t);});
+  page.on("console",m=>{const t=m.text();if(m.type()==="error"||t.startsWith("ATLAS_NATIVE_"))diagnostics.push(t);if(t==="ATLAS_NATIVE_FRAME_DETACHED"||t==="ATLAS_NATIVE_DOCUMENT_NAV_START")routeEvents.push({checkpoint:t,at:Date.now()});});
   // Observe local requests passively. Routing every local response changes
   // Chromium request scheduling and disables its HTTP cache.
-  page.on("request",req=>{const u=new URL(req.url());if(u.origin===origin&&u.pathname.startsWith("/atlas-gateway-native/"))assets.push(u.pathname);});
+  page.on("request",req=>{const u=new URL(req.url());if(u.origin===origin&&u.pathname.startsWith("/atlas-gateway-native/"))assets.push(u.pathname);if(u.origin===origin&&req.isNavigationRequest()&&req.resourceType()==="document"&&["/esperienze/","/curricolo/"].includes(u.pathname))routeEvents.push({checkpoint:"document-request",path:u.pathname,at:Date.now()});});
   await context.route(/^https?:\/\/(?!127\.0\.0\.1:3000(?:\/|$))/,route=>{external.push(route.request().url());return route.abort()});
   page.on("framenavigated",f=>{if(f===page.mainFrame())routeEvents.push({checkpoint:"main-frame",url:f.url(),at:Date.now()})});
   page.on("domcontentloaded",()=>routeEvents.push({checkpoint:"domcontentloaded",url:page.url(),at:Date.now()}));
@@ -87,7 +87,7 @@ try{
    await page.getByRole("status").filter({hasText:"accesso professionale non ancora abilitato"}).waitFor({timeout:15000});
    const esperienze=m.hits.find(h=>h.id==="esperienze");
    // Reproduce the previous large-screen failure with animation still active.
-   if(name==="large"){
+   if(name.startsWith("large")){
      const toggle=frame.locator("#atlas-astral-toggle");await toggle.click();assert.equal(await toggle.getAttribute("aria-pressed"),"true");
    }
    const transitionStarted=Date.now();
@@ -106,8 +106,15 @@ try{
    assert(diagnostics.includes("ATLAS_NATIVE_CLOSED"),"Native scene did not quiesce");
    assert(diagnostics.includes("ATLAS_NATIVE_NAV_REQUEST esperienze"),"Native portal did not send the request");
    assert(diagnostics.includes("ATLAS_NATIVE_NAV_ACCEPT esperienze"),"Parent did not accept the portal request");
+   function assertDetachedBeforeDocument(path){
+     const request=routeEvents.findIndex(e=>e.checkpoint==="document-request"&&e.path===path);
+     const start=routeEvents.findLastIndex((e,i)=>i<request&&e.checkpoint==="ATLAS_NATIVE_DOCUMENT_NAV_START");
+     const detached=routeEvents.findLastIndex((e,i)=>i<start&&e.checkpoint==="ATLAS_NATIVE_FRAME_DETACHED");
+     assert(detached>=0&&detached<start&&start<request,"Expected committed frame removal before document request: "+path);
+   }
+   assertDetachedBeforeDocument("/esperienze/");
    assert(routeEvents.some(e=>e.resourceType==="document"&&e.status===200&&new URL(e.url).pathname==="/esperienze/"),"Expected full document navigation");
-   if(name==="large"){
+   if(name.startsWith("large")){
      await page.goBack({waitUntil:"domcontentloaded",timeout:30000});
      await page.waitForURL("**/gateway/",{waitUntil:"domcontentloaded",timeout:30000});
      const backFrame=page.frameLocator("iframe[title='Biblioteca Atlas tridimensionale']");
@@ -119,6 +126,7 @@ try{
      await Promise.all([page.waitForURL("**/curricolo/",{waitUntil:"domcontentloaded",timeout:30000}),page.locator("a[data-portal='curricolo']").click()]);
      await page.getByRole("heading",{name:"Il curricolo dell’istituto",exact:true}).waitFor({state:"visible",timeout:15000});
      assert(routeEvents.some(e=>e.resourceType==="document"&&e.status===200&&new URL(e.url).pathname==="/curricolo/"));
+     assertDetachedBeforeDocument("/curricolo/");
      assert.equal(await page.locator("iframe[title='Biblioteca Atlas tridimensionale']").count(),0);
      assert.deepEqual(errors,[]);assert.equal(external.length,0);
    }
@@ -127,7 +135,7 @@ try{
   finally{try{await context.close()}finally{await deviceBrowser.close()}}
   // Stop after the previously failing large-screen case; do not repeat five
   // expensive runs while the targeted regression remains unresolved.
-  if(name==="large"&&failures.length)throw Error("Targeted large-screen regression failed");
+  if(name.startsWith("large")&&failures.length)throw Error("Targeted large-screen regression failed");
  }
  // Integrity rejection exercises the real parent fallback, not a mocked
  // renderer. A one-byte modification preserves length but fails SHA-256.
@@ -149,4 +157,4 @@ try{
  writeFileSync(out+"/native-gateway-receipt.json",JSON.stringify({status:failures.length?"FAIL":"PASS",scope:"local-native-P1-spatial",studentAuthorized:false,publishable:false,destinationControl,results,failures},null,2)+"\n");
  console.log(JSON.stringify({destinationControl,results,failures}));
 }
-assert.equal(failures.length,0,JSON.stringify(failures));assert.equal(results.length,8);
+assert.equal(failures.length,0,JSON.stringify(failures));assert.equal(results.length,10);
