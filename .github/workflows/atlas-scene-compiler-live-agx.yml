@@ -1,0 +1,102 @@
+name: Atlas — ASC-01 P2C2B-B2c live AgX pass
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/test-atlas-scene-compiler-live-agx.mjs'
+      - 'scripts/atlas-scene-compiler-live-agx-reference.py'
+      - '.github/workflows/atlas-scene-compiler-live-agx.yml'
+      - 'docs/atlas-gateway/ASC-01-P2C2B-LIVE.md'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-asc-p2c2b-live-${{ github.event.pull_request.head.ref }}
+  cancel-in-progress: true
+jobs:
+  live:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-production-standard-p2c2b-live' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify pinned Blender and syntax
+        run: |
+          bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+          python3 -m py_compile scripts/atlas-scene-compiler-live-agx-reference.py
+          node --check scripts/test-atlas-scene-compiler-live-agx.mjs
+      - name: Recover exact master, B1, B2a and B2b artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/asc-live-input"
+          mkdir -p "$p"/{b1,context,agx} "$RUNNER_TEMP/asc-live-evidence"
+          for spec in "14444143410 c7154de191cb6d25890a2881f470f6d6eeba74b2dcab897842f4753403e685c6 master" "14541562562 0a8adec476e1db1161a551182fe7c0a0cdce820189d8ed27cc8865072a724857 b1" "14541319689 d1abd91c141ff35286d2ec005bcdf2a6556126aedcc29040b38e4ba5957fb225 context" "14542267386 508a424f41059a3b1cfaa30eff2315746545f866479235e5b5f2e915cce350e4 agx"; do
+            read -r id sha name <<< "$spec"
+            curl --fail --silent --show-error --location --retry 3 --max-time 180 --proto '=https' --proto-redir '=https' -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" -o "$p/$name.zip"
+            printf '%s  %s\n' "$sha" "$p/$name.zip" | sha256sum --strict --check
+          done
+          unzip -p "$p/master.zip" Atlas-Scene-Master.blend > "$p/Atlas-Scene-Master.blend"
+          printf '%s  %s\n' f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab "$p/Atlas-Scene-Master.blend" | sha256sum --strict --check
+          for f in surface-binding.json binding.rgba32f; do unzip -p "$p/b1.zip" "$f" > "$p/b1/$f"; done
+          for f in context-oracle.json occluders.f32 gpu.rgba32f; do unzip -p "$p/context.zip" "$f" > "$p/context/$f"; done
+          for f in agx-lut.json agx-browser.json lut.rgba8; do unzip -p "$p/agx.zip" "$f" > "$p/agx/$f"; done
+          chmod a-w "$p/Atlas-Scene-Master.blend" "$p"/{b1,context,agx}/*
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Prepare existing verified WebGL engine
+        run: |
+          pnpm install --frozen-lockfile
+          node scripts/build-atlas-gateway-local.mjs "$RUNNER_TEMP/asc-live-engine"
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Render live context and apply AgX directly on GPU
+        run: |
+          p="$RUNNER_TEMP/asc-live-input"
+          node scripts/test-atlas-scene-compiler-live-agx.mjs "$p/b1" "$p/context" "$p/agx" "$RUNNER_TEMP/asc-live-evidence" "$RUNNER_TEMP/asc-live-engine/three.min.js"
+      - name: Independently compare every live frame to Blender AgX
+        run: |
+          p="$RUNNER_TEMP/asc-live-input"
+          "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$p/Atlas-Scene-Master.blend" --python-exit-code 1 --python scripts/atlas-scene-compiler-live-agx-reference.py -- "$p/Atlas-Scene-Master.blend" "$p/agx" "$RUNNER_TEMP/asc-live-evidence"
+      - name: Verify receipts and non-promotion
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"asc-live-evidence"
+          b,r=(json.loads((p/n).read_text()) for n in ("live-agx.json","live-agx-reference.json"))
+          assert b["revision"]==r["revision"]==os.environ["ATLAS_EXACT_HEAD"]
+          assert b["status"]=="PASS_LIVE_AGX_PASS" and r["status"]=="PASS_LIVE_AGX_REFERENCE" and r["masterUnchanged"]
+          assert r["browserReceiptSha256"]==hashlib.sha256((p/"live-agx.json").read_bytes()).hexdigest()
+          assert not b["externalRequests"] and not b["pageErrors"]
+          x=b["result"];m=x["contextMetrics"]
+          assert x["gpuRenderTargetSource"] and x["webglRevision"]=="128"
+          assert m["badVisibility"]==m["badUV"]==m["badColor"]==0
+          assert not any(y[k] for y in (x,r) for k in ("fullBeautyRenderQualified","physicalDeviceQualified","opticalTransparencyQualified","artisticApproval","publishable"))
+          assert set(r["cases"])=={"reference","shifted","mobile","restored"}
+          for c in r["cases"].values():
+              assert all(c[k]["max"]<=4 and c[k]["p99"]<=2 for k in ("all","nonblack"))
+          print("Live contextual AgX pass verified in bounded laboratory; no runtime publication.")
+          PY
+      - name: Preserve live frame evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-asc-p2c2b-live-agx
+          path: ${{ runner.temp }}/asc-live-evidence/
+          retention-days: 7
+          if-no-files-found: warn
