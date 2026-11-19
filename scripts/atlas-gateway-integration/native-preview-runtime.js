@@ -46,6 +46,7 @@ function cancelFrame(){if(frameId)clearTimeout(frameId);frameId=0;}
 // cadence to avoid saturating software/mobile graphics and the event queue.
 function scheduleFrame(){if(!frameId&&ready&&!failed&&!closing&&motion&&!document.hidden&&!down)frameId=setTimeout(()=>loop(performance.now()),100);}
 const groupMap={};
+let nativeMaterialBridge=null;
 const reduced=matchMedia("(prefers-reduced-motion: reduce)");
 const canvas=document.querySelector("canvas");
 const status=document.querySelector("#native-status");
@@ -294,8 +295,14 @@ async function init(){
  nativePhase="bay-compaction";scene.updateMatrixWorld(true);buildBays();
  als=ATLAS_ASTRAL.createAstralLights(THREE,NATIVE_ANCHORS);scene.add(als.object);
  if(als.object.geometry.attributes.position.count!==18)throw Error("ALS topology");
- // P1 is the last qualified material baseline. M1/M2 are intentionally
- // not applied while their separate qualification is unresolved.
+ // Web delivery: use the already tested M2 material bridge on the same
+ // native GLB resources; no new textures, no changes to portal geometry.
+ if(typeof ATLAS_MATERIAL_STUDY!=="undefined"&&ATLAS_MATERIAL_STUDY){
+   nativePhase="material-detail";
+   const groups=Object.fromEntries(["shell","scenography","cupola","portals","bays"].map(id=>["library-"+id+".glb",groupMap[id]]));
+   nativeMaterialBridge=materialBridge(THREE,groups,ATLAS_MATERIAL_STUDY);
+   nativeMaterialBridge.apply("micro");
+ }
  nativePhase="first-render";ready=true;setCamera();render();
  if(renderer.info.render.calls<1)throw Error("Native renderer empty");
  status.hidden=true;document.querySelector("#native-controls").hidden=false;
