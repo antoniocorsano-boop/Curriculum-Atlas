@@ -53,7 +53,8 @@ assert.equal(prior.status,"PASS_BOUNDED_AGX_GPU_APPROXIMATION");assert.equal(pri
 for(let i=0;i<rough.length;i+=3)assert(rough[i]===rough[i+1]&&rough[i]===rough[i+2],"roughness must be grayscale");
 const html='<!doctype html><html lang="it"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Atlas — Campata 04-0</title><link rel="stylesheet" href="/style.css"><body><header><strong>Atlas · Campata 04-0</strong><span>Anteprima locale · trascina per ruotare</span><button id="reset">Ripristina</button></header><main id="view"></main><script src="/three.js"></script><script src="/bay.js"></script></body></html>';
 const css='body{margin:0;background:#191512;color:#f1e7d5;font:14px system-ui}header{display:flex;gap:16px;align-items:center;padding:12px;flex-wrap:wrap}header span{color:#cbbba4}button{background:#493c31;color:#fff;border:1px solid #a18a6d;border-radius:6px;padding:6px 12px}canvas{display:block;max-width:100%;height:auto;touch-action:none;cursor:grab}main{display:flex;justify-content:center}';
-const js=String.raw`
+const rasterOracleSource=readFileSync(new URL("./atlas-raster-oracle.mjs",import.meta.url),"utf8").replace("export function rasterOracle","function rasterOracle");
+const js=rasterOracleSource+String.raw`
 (async()=>{
 const T=window.THREE,check=(x,m)=>{if(!x)throw Error(m);};
 const json=async u=>{const r=await fetch(u);check(r.ok,u);return r.json();};
@@ -172,21 +173,30 @@ window.__checkBaked=()=>{
   // encode UV + object + face rather than texture color. Do not infer identity
   // from a color match. Retain the original independent CPU ray gate.
   const objects=[target,...bakedGroup.children],old=objects.map(o=>o.material);
-  const ids=new Float32Array(w*h*4),masks=[];
+  const identity=o=>o.userData.bake?.id??(o===target?-1:-2);
+  const ids=new Float32Array(w*h*4),depths=new Float32Array(w*h*4),masks=[];
+  let depthBits=0;
+  const subpixelBits=gl.getParameter(gl.SUBPIXEL_BITS);
   try{
     for(const o of objects){
-      const q=o.userData.bake;
-      const mat=new T.ShaderMaterial({side:T.DoubleSide,toneMapped:false,uniforms:{surfaceId:{value:q?q.id:-1}},
-        vertexShader:q?"attribute float faceId;varying vec2 vUv;varying float vFace;void main(){vUv=uv;vFace=faceId;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}":"void main(){gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
-        fragmentShader:q?"varying vec2 vUv;varying float vFace;uniform float surfaceId;void main(){gl_FragColor=vec4(vUv,surfaceId,vFace);}":"uniform float surfaceId;void main(){gl_FragColor=vec4(0.0,0.0,surfaceId,0.0);}"});
+      const q=o.userData.bake,g=o.geometry;
+      if(!g.attributes.faceId)g.setAttribute("faceId",new T.BufferAttribute(Float32Array.from({length:g.attributes.position.count},(_,i)=>Math.floor(i/3)+1),1));
+      const mat=new T.ShaderMaterial({side:T.DoubleSide,toneMapped:false,uniforms:{surfaceId:{value:identity(o)},depthPass:{value:false}},
+        vertexShader:"attribute float faceId;varying vec2 vUv;varying float vFace;void main(){vUv=uv;vFace=faceId;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+        fragmentShader:"varying vec2 vUv;varying float vFace;uniform float surfaceId;uniform bool depthPass;void main(){gl_FragColor=depthPass?vec4(gl_FragCoord.z,0.0,surfaceId,vFace):vec4(vUv,surfaceId,vFace);}"});
       masks.push(mat);o.material=mat;
     }
-    R.setRenderTarget(floatRT);R.render(scene,cam);R.readRenderTargetPixels(floatRT,0,0,w,h,ids);
+    R.setRenderTarget(floatRT);R.render(scene,cam);depthBits=gl.getParameter(gl.DEPTH_BITS);
+    R.readRenderTargetPixels(floatRT,0,0,w,h,ids);
     check(gl.getError()===gl.NO_ERROR,"baked UV identity pass");
+    for(const m of masks)m.uniforms.depthPass.value=true;
+    R.setRenderTarget(floatRT);R.render(scene,cam);R.readRenderTargetPixels(floatRT,0,0,w,h,depths);
+    check(gl.getError()===gl.NO_ERROR,"baked depth identity pass");
   }finally{
     objects.forEach((o,i)=>o.material=old[i]);masks.forEach(m=>m.dispose());render(w,h);
   }
   const raycaster=new T.Raycaster(),result={tested:0,bad:0,maxAbs:0,perObject:{},gpuSamples:0,gpuBad:0,gpuMaxAbs:0,identityMismatch:0,maxUV:0,anomalies:[],worst:null};
+  const points=[];
   for(const m of bakedMeshes)result.perObject[m.name]=0;
   const pt=new T.Vector3(),a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3(),bc=new T.Vector3();
   function sampled(q,uv){return [0,1,2].map(ch=>sample(q.rgba,uv,q.width,q.height,4,false,ch));}
@@ -194,6 +204,8 @@ window.__checkBaked=()=>{
   for(let iy=0;iy<36;iy++)for(let ix=0;ix<48;ix++){
     const x=Math.floor((ix+.5)*w/48),y=Math.floor((iy+.5)*h/36),k=(y*w+x)*4;
     const gpuId=Math.round(ids[k+2]),gpuFace=Math.round(ids[k+3])-1,gpuUV=[ids[k],ids[k+1]],gpuRGB=Array.from(pixels.slice(k,k+3));
+    check(Math.round(depths[k+2])===gpuId&&Math.round(depths[k+3])-1===gpuFace,"identity and depth pass mismatch");
+    const point={x,y,id:gpuId,face:gpuFace,uv:gpuId>0?gpuUV:null,depth:depths[k],legacyBad:false,legacyIdentityMismatch:false};points.push(point);
     const gm=bakedMeshes.find(m=>m.userData.bake.id===gpuId);
     let gpuExpected=null,gpuError=null;
     if(gm){
@@ -214,6 +226,7 @@ window.__checkBaked=()=>{
     if(identity)result.maxUV=Math.max(result.maxUV,uvError);else result.identityMismatch++;
     check(Number.isFinite(error),"non-finite baked sample");result.maxAbs=Math.max(result.maxAbs,error);
     result.tested++;result.perObject[hit.object.name]++;if(error>.01)result.bad++;
+    point.legacyBad=error>.01;point.legacyIdentityMismatch=!identity;
     if(error>.01||!identity||gpuError>.01||!result.worst||error>result.worst.error){
       const neighborIds=[];
       for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
@@ -225,6 +238,8 @@ window.__checkBaked=()=>{
       if(error>.01||!identity||gpuError>.01)result.anomalies.push(detail);
     }
   }
+  const meshes=objects.map(o=>({id:identity(o),positions:o.geometry.attributes.position.array,uv:o.userData.bake?o.geometry.attributes.uv.array:null,modelView:new T.Matrix4().multiplyMatrices(cam.matrixWorldInverse,o.matrixWorld).elements,projection:cam.projectionMatrix.elements}));
+  result.raster=rasterOracle({meshes,width:w,height:h,subpixelBits,depthBits,points});
   return result;
 };
 render();window.__result={status:"PASS_BAY_BINDING",metrics,triangles:bay.triangles,objects:bay.objects.length,actualBay:true,sourceRoughness:true,agxLive:true,geometryBudgetOnly:true,artisticApproval:false,physicalDeviceQualified:false,publishable:false};
@@ -255,7 +270,7 @@ await page.evaluate(()=>window.__resize(320,240));await capture("mobile");assert
 if(bakedManifest){
   for(const v of ["reference","rotated"]){
     const x=report.surround[v];
-    assert(x.tested>=100&&x.gpuSamples>=100&&x.bad===0&&x.gpuBad===0,JSON.stringify({view:v,tested:x.tested,bad:x.bad,gpuBad:x.gpuBad,worst:x.worst,anomalies:x.anomalies}));
+    assert(x.tested>=100&&x.gpuSamples>=100&&x.gpuBad===0&&x.raster.points===1728&&x.raster.baked===x.gpuSamples&&x.raster.bad===0&&x.raster.definite>=100&&Object.values(x.raster.negativeCanaries).every(Boolean),JSON.stringify({view:v,tested:x.tested,legacyBad:x.bad,gpuBad:x.gpuBad,raster:x.raster}));
   }
 }
 report.status=bakedManifest?"PASS_BAKED_BAY_PREVIEW":"PASS_NAVIGABLE_BAY_PREVIEW";
