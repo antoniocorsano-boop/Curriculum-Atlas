@@ -109,6 +109,13 @@ for(const scenario of scenarios){
    for(const marker of ["ATLAS_NATIVE_CLOSED","ATLAS_NATIVE_NAV_REQUEST esperienze","ATLAS_NATIVE_NAV_ACCEPT esperienze"])
     assert(r.events.some(e=>e.kind==="console"&&e.text===marker),marker);
   }
+  if(scenario.id!=="simplified"){
+   const detached=r.events.findIndex(e=>e.kind==="console"&&e.text==="ATLAS_NATIVE_FRAME_DETACHED");
+   const start=r.events.findIndex(e=>e.kind==="console"&&e.text==="ATLAS_NATIVE_DOCUMENT_NAV_START");
+   const request=r.events.findIndex(e=>e.kind==="cdp-document-request");
+   assert(detached>=0&&detached<start&&start<request,"Expected committed frame removal before full document request");
+   r.checkpoints.detachedBeforeDocument=true;
+  }
   assert.deepEqual(r.errors,[]);assert.deepEqual(r.external,[]);
   r.status="PASS";
  }catch(e){
