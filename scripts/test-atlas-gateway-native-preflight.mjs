@@ -90,6 +90,13 @@ try{
   return {phase:nativePhase,decoded:nativeDecoded,revision:THREE.REVISION,calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,stats:visibility.update(camera),sky:!!scene.background,cupola:!!groupMap.cupola,contextLost:gl.isContextLost(),glError:gl.getError()};
  });
  assert.equal(report.render.phase,"ready");
+ if(receipt.materialDetailApplied){
+   const material=await frame.evaluate(()=>nativeMaterialBridge?.evidence()??null);
+   assert(material&&new Set(material.map(x=>x.name)).size===7,"integrated material inventory");
+   assert(material.filter(x=>x.corrected).length===1,"brass correction");
+   assert(material.some(x=>x.compiled>0),"material shaders actually compiled");
+   report.materialDetail=material;
+ }
  assert.deepEqual(Object.keys(report.render.decoded),["shell","scenography","cupola","portals","bays","stars"]);
  assert(report.render.decoded.shell.images>0&&report.render.decoded.shell.textures>0);
  assert(Object.values(report.render.decoded).every(m=>m.decoder==="TextureLoader"));
