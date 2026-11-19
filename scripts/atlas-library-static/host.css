@@ -1,0 +1,27 @@
+:root{color-scheme:dark;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#101a23;color:#eee8dd}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:radial-gradient(ellipse at top,#304c5e 0%,#172837 42%,#111b24 100%)}
+a,button{color:inherit}
+a:focus-visible,button:focus-visible{outline:3px solid #e8c17c;outline-offset:3px}
+.shell{max-width:1600px;margin:auto;padding:0 max(14px,env(safe-area-inset-right)) 32px}
+.header{min-height:74px;display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid #a8a19236}
+.brand{display:flex;align-items:center;gap:14px;text-decoration:none;font-weight:750;letter-spacing:.15em}
+.brand small{display:block;font-size:11px;letter-spacing:.075em;font-weight:450;color:#c4ccce;margin-top:4px}
+.mark{display:grid;place-items:center;height:38px;width:38px;border:1px solid #dabd83;border-radius:12px;color:#dcb982;font:700 26px Georgia,serif}
+.actions{display:flex;align-items:center;gap:10px}
+.actions a,.actions button{background:#1b3141;border:1px solid #73828b;color:#fff;text-decoration:none;border-radius:9px;padding:10px 13px;font-size:13px;cursor:pointer;min-height:42px}
+.intro{padding:24px 0 14px;text-align:center}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.2em;color:#e4c58d;font-weight:650}
+h1{font:clamp(25px,3.2vw,43px)/1.13 Georgia,"Times New Roman",serif;font-weight:normal;letter-spacing:-.02em;margin:0 auto 8px}
+.intro>p:last-child{font-size:14px;color:#bdcacf;margin:0 auto}
+.status{font-size:13px;text-align:center;min-height:24px;color:#e1c78f;margin:7px auto}
+.scene{height:clamp(360px,65vh,780px);border:1px solid #9a89747a;border-radius:16px;background:linear-gradient(125deg,#1a3040,#273b46);overflow:hidden;position:relative;box-shadow:0 16px 48px #02050975}
+.scene iframe{width:100%;height:100%;border:0;display:block}
+.scene:empty{display:none}
+.portals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px auto 0}
+.portals a,.portals button{background:#1f3543;border:1px solid #73828b90;border-radius:11px;text-decoration:none;padding:14px 16px;min-height:80px;text-align:left;cursor:pointer;font:inherit}
+.portals span{display:block;color:#f6ead2;font-weight:650;margin-bottom:6px}
+.portals small{display:block;color:#bbc8ce;font-size:12px}
+footer{text-align:center;font-size:11px;color:#b1bbc2;padding-top:24px}
+body.simplified .scene{display:none}
+@media(max-width:650px){.shell{padding:0 10px 20px}.header{min-height:60px}.brand{font-size:13px;letter-spacing:.08em}.brand small{font-size:10px}.home{display:none}.intro{padding:18px 0 8px}.intro>p:last-child{font-size:12px}.scene{height:min(67dvh,600px);min-height:300px;border-radius:12px}.portals{grid-template-columns:1fr;gap:8px}.portals a,.portals button{min-height:59px;padding:9px 12px}.portals span{margin-bottom:2px}.actions a,.actions button{padding:8px 10px;font-size:11px}}
