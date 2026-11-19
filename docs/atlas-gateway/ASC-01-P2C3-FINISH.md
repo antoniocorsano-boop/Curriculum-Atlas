@@ -1,6 +1,6 @@
 # ASC-01/P2C3 — Completamento produttivo del materiale
 
-19 novembre 2026. Base #142 aeeab27f48fc69b75d6fae2be68fa4ae215378db, 5/5 controlli eseguiti positivi. Run 44559936883, artifact 14551020167 SHA-256 85614d397c2e7faeea78e97228946ac17bf04ff2f91be90fdad87a8583958b14, copia verificata archiviata nella cartella privata Curriculum Atlas (Drive id 1O_avFiUKBAPNITwZ46Vapg1V2ohr2yFi).
+19 novembre 2026. Base #142 aeeab27f48fc69b75d6fae2be68fa4ae215378db, 5/5 controlli eseguiti positivi. Run 44559936883, artifact 14551020167 SHA-256 85614d397c2e7faeea78e97228946ac17bf04ff2f91be90fdad87a8583958b14, copia verificata archiviata nella cartella privata di progetto.
 ## Decisione produttiva
 Le immagini reali della campata mostrano un fondo ligneo granuloso nel bake, meno uniforme del master. Non confondere il miglioramento speculare con approvazione artistica. P2C3B: mantenere rugosità variabile; normali e bump rimangono nel master, nessuna eliminazione automatica. Distanza isole precedente: 486 collisioni a raggio 2, 4635 a raggio 4, 13131 a raggio 8.
 In un solo incremento: pack UV con margine frazionario .04, controllo a 8 texel prima del bake, medesima risoluzione 512 e 108 triangoli; esplicitare la UV primaria anche sul nodo Normal Map tangente durante il bake (le immagini già utilizzano la UV primaria); elevare i campioni del bake da 16 a 128, mantenere il profilo delle immagini comparative e il ripristino. Le modifiche sono opt-in: le prove precedenti restano invariate salvo aggiunta del campo samples alla ricevuta.
