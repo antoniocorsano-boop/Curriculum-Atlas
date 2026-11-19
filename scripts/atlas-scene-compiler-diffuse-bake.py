@@ -88,10 +88,39 @@ try:
     require(uv.name=="ASC_Lightmap","UV name conflict")
     derived.uv_layers.active=uv;uv.active_render=True
     bpy.ops.object.mode_set(mode="EDIT");bpy.ops.mesh.select_all(action="SELECT")
-    bpy.ops.uv.smart_project(island_margin=.025)
-    bpy.ops.object.mode_set(mode="OBJECT");derived.calc_loop_triangles()
-    # Sample triangle interiors at texel centers: diagnostic overlap, not an exact polygon proof.
+    result=bpy.ops.uv.smart_project(island_margin=.025)
+    require("FINISHED" in result,"UV smart project did not finish")
+    bpy.ops.object.mode_set(mode="OBJECT")
+    # Edit-mode conversion can replace the mesh CustomData storage. Never reuse
+    # an RNA layer handle obtained before this conversion.
+    derived.update();derived.calc_loop_triangles()
+    uv=derived.uv_layers.get("ASC_Lightmap")
+    require(uv is not None and len(uv.data)==len(derived.loops),"UV layer missing after unwrap")
+    derived.uv_layers.active=uv;uv.active_render=True
     size=512
+    raw=np.array([tuple(loop.uv) for loop in uv.data],dtype=np.float64)
+    require(raw.shape==(len(derived.loops),2) and np.isfinite(raw).all(),"invalid UV coordinates")
+    lo_uv=raw.min(axis=0);hi_uv=raw.max(axis=0);span=hi_uv-lo_uv
+    require(float(span.min())>1e-8,"degenerate UV atlas extent")
+    # Uniform affine fit preserves island layout, proportions and overlaps.
+    # Reserve eight texels at the outside for the four-texel bake dilation.
+    border=8/size
+    factor=(1-2*border)/float(span.max())
+    fitted=(raw-(lo_uv+hi_uv)/2)*factor+.5
+    report["uv"]={"rawMin":lo_uv.tolist(),"rawMax":hi_uv.tolist(),"rawSpan":span.tolist(),"uniformScale":factor,"outerBorderPixels":8,"fitMethod":"reacquire-after-edit-and-uniform-fit","islandMarginRequested":.025}
+    write()
+    require(np.isfinite(fitted).all() and fitted.min()>=border-1e-7 and fitted.max()<=1-border+1e-7,"fitted UV bounds")
+    for loop,coord in zip(uv.data,fitted):
+        loop.uv=tuple(coord)
+    derived.update()
+    uv=derived.uv_layers.get("ASC_Lightmap")
+    require(uv is not None,"UV layer missing after fit")
+    derived.uv_layers.active=uv;uv.active_render=True
+    actual=np.array([tuple(loop.uv) for loop in uv.data],dtype=np.float64)
+    require(float(np.max(np.abs(actual-fitted)))<1e-6,"UV writeback drift")
+    report["uv"].update(fittedMin=actual.min(axis=0).tolist(),fittedMax=actual.max(axis=0).tolist())
+    write()
+    # Sample triangle interiors at texel centers: diagnostic overlap, not an exact polygon proof.
     occupancy=np.zeros((size,size),np.int32);min_area=1.0
     for tri in derived.loop_triangles:
         p=np.array([tuple(uv.data[i].uv) for i in tri.loops],dtype=np.float64)
@@ -106,7 +135,8 @@ try:
         mask=(u>1e-7)&(t>1e-7)&(u+t<1-1e-7)
         occupancy[lo[1]:hi[1]+1,lo[0]:hi[0]+1]+=mask.astype(np.int32)
     occupied=int(np.count_nonzero(occupancy));overlap=int(np.count_nonzero(occupancy>1))
-    report["uv"]={"layer":uv.name,"size":size,"triangles":len(derived.loop_triangles),"minTriangleArea":min_area,"sampledOccupiedTexels":occupied,"sampledOverlapTexels":overlap,"marginRequested":.025,"bakeMarginPixels":4,"exactOverlapProven":False}
+    report["uv"].update(layer=uv.name,size=size,triangles=len(derived.loop_triangles),minTriangleArea=min_area,sampledOccupiedTexels=occupied,sampledOverlapTexels=overlap,marginRequested=.025,bakeMarginPixels=4,exactOverlapProven=False)
+    write()
     require(occupied>100 and overlap==0,"UV sampled overlap or empty coverage")
     image=bpy.data.images.new("ASC P2C diffuse linear",width=size,height=size,alpha=True,float_buffer=True)
     image.colorspace_settings.name="Linear Rec.709"
