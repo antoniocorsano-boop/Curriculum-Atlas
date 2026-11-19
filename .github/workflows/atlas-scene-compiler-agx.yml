@@ -1,0 +1,120 @@
+name: Atlas — ASC-01 P2C2B-B2b AgX display approximation
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/atlas-scene-compiler-agx-lut.py'
+      - 'scripts/test-atlas-scene-compiler-agx.mjs'
+      - '.github/workflows/atlas-scene-compiler-agx.yml'
+      - 'docs/atlas-gateway/ASC-01-P2C2B-AGX.md'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-asc-p2c2b-agx-${{ github.event.pull_request.head.ref }}
+  cancel-in-progress: true
+jobs:
+  agx:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-production-standard-p2c2b-agx' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify pinned Blender and syntax
+        run: |
+          bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+          python3 -m py_compile scripts/atlas-scene-compiler-agx-lut.py
+          node --check scripts/test-atlas-scene-compiler-agx.mjs
+      - name: Recover exact master and B2a artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/asc-agx-input"
+          mkdir -p "$p" "$RUNNER_TEMP/asc-agx-evidence"
+          for spec in "14444143410 c7154de191cb6d25890a2881f470f6d6eeba74b2dcab897842f4753403e685c6 master" "14541319689 d1abd91c141ff35286d2ec005bcdf2a6556126aedcc29040b38e4ba5957fb225 context"; do
+            read -r id sha name <<< "$spec"
+            curl --fail --silent --show-error --location --retry 3 --max-time 180 --proto '=https' --proto-redir '=https' -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" -o "$p/$name.zip"
+            printf '%s  %s\n' "$sha" "$p/$name.zip" | sha256sum --strict --check
+          done
+          unzip -p "$p/master.zip" Atlas-Scene-Master.blend > "$p/Atlas-Scene-Master.blend"
+          printf '%s  %s\n' f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab "$p/Atlas-Scene-Master.blend" | sha256sum --strict --check
+          for f in context-oracle.json context-browser.json context-display.json gpu.rgba32f; do
+            unzip -p "$p/context.zip" "$f" > "$p/$f"
+          done
+          chmod a-w "$p/Atlas-Scene-Master.blend" "$p/"*.json "$p/gpu.rgba32f"
+      - name: Generate bounded AgX LUT and independent references
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/asc-agx-input"
+          "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$p/Atlas-Scene-Master.blend" --python-exit-code 1 --python scripts/atlas-scene-compiler-agx-lut.py -- "$p/Atlas-Scene-Master.blend" "$p" "$RUNNER_TEMP/asc-agx-evidence"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Prepare existing verified WebGL engine
+        run: |
+          pnpm install --frozen-lockfile
+          node scripts/build-atlas-gateway-local.mjs "$RUNNER_TEMP/asc-agx-engine"
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Compare shader display bytes against Blender
+        run: |
+          node scripts/test-atlas-scene-compiler-agx.mjs "$RUNNER_TEMP/asc-agx-evidence" "$RUNNER_TEMP/asc-agx-engine/three.min.js"
+      - name: Independently verify raw byte results and source integrity
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,math,os,pathlib,struct
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"asc-agx-evidence"
+          m,b=(json.loads((p/n).read_text()) for n in ("agx-lut.json","agx-browser.json"))
+          digest=lambda x:hashlib.sha256(x.read_bytes()).hexdigest()
+          assert m["revision"]==b["revision"]==os.environ["ATLAS_EXACT_HEAD"]
+          assert m["masterUnchanged"] and not m["artisticApproval"] and not m["publishable"]
+          assert b["manifestSha256"]==digest(p/"agx-lut.json") and b["status"]=="PASS_BOUNDED_AGX_GPU_APPROXIMATION"
+          assert not b["externalRequests"] and not b["pageErrors"]
+          for n,r in m["files"].items():
+              assert digest(p/n)==r["sha256"] and (p/n).stat().st_size==r["bytes"]
+          x=b["result"]
+          assert not any(x[k] for k in ("fullBeautyRenderQualified","physicalDeviceQualified","opticalTransparencyQualified","artisticApproval","publishable"))
+          assert x["webglRevision"]=="128"
+          for name,limits in (("holdout",(10,3)),("frame",(4,2))):
+              n=m["cases"][name]["samples"]
+              expected=(p/(name+".rgb8")).read_bytes()
+              actual=(p/(name+"-gpu.rgba8")).read_bytes()
+              source=(p/(name+".rgba32f")).read_bytes()
+              all_errors=[];lit_errors=[]
+              assert len(actual)*3==len(expected)*4 and len(source)==len(actual)*4
+              for i in range(n):
+                  rgb=struct.unpack_from("<fff",source,16*i)
+                  assert actual[4*i+3]==255
+                  errors=[abs(actual[4*i+j]-expected[3*i+j]) for j in range(3)]
+                  all_errors.extend(errors)
+                  if max(rgb)>1e-6:lit_errors.extend(errors)
+              for key,errors in (("all",all_errors),("nonblack",lit_errors)):
+                  errors.sort();max_error=errors[-1];p99=errors[math.ceil(.99*len(errors))-1]
+                  assert (len(errors),max_error,p99)==tuple(x["metrics"][name][key][k] for k in ("count","max","p99"))
+                  assert max_error<=limits[0] and p99<=limits[1]
+              image=p/(name+"-gpu-agx.png")
+              assert digest(image)==b["images"][name]["sha256"]
+          print("B2b bounded display approximation independently verified; no full scene or artistic promotion.")
+          PY
+      - name: Preserve evidence and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-asc-p2c2b-agx
+          path: ${{ runner.temp }}/asc-agx-evidence/
+          retention-days: 7
+          if-no-files-found: warn
