@@ -2,22 +2,49 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { AppShell } from "@/components/atlas/app-shell";
 import { ProvenancePanel } from "@/components/atlas/provenance-panel";
-import { findObjective, curricoloIstitutoFixture } from "@/features/curriculum/fixtures";
+import { findObjective, curricoloIstitutoFixture, legacyObjectiveMatches, legacyObjectiveRouteIds } from "@/features/curriculum/fixtures";
 
 export function generateStaticParams() {
-  return curricoloIstitutoFixture.disciplines.flatMap(discipline =>
+  const current = curricoloIstitutoFixture.disciplines.flatMap(discipline =>
     discipline.bands.flatMap(band =>
       band.topics.flatMap(topic =>
         topic.objectives.map(objective => ({ id: objective.id }))
       )
     )
   );
+  return [...current, ...legacyObjectiveRouteIds().map(id => ({ id }))];
 }
 
 export default async function ObjectivePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const found = findObjective(id);
-  if (!found) notFound();
+  if (!found) {
+    const candidates = legacyObjectiveMatches(id);
+    if (!candidates.length) notFound();
+    return (
+      <AppShell>
+        <header className="atlas-page-heading">
+          <div>
+            <h1>Riferimento curricolare precedente</h1>
+            <p>Il collegamento usa un identificativo storico. Seleziona la voce pertinente nella versione corrente; non è garantita una corrispondenza con il contenuto storico.</p>
+          </div>
+        </header>
+        <section className="atlas-panel">
+          <h2>Possibili corrispondenze</h2>
+          <ul>
+            {candidates.map(({ discipline, band, objective }) => (
+              <li key={objective.id}>
+                <Link href={`/obiettivi/${objective.id}`}>
+                  {discipline.label} · {band.schoolStage} · {band.gradeLabel} · {objective.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <Link href="/curricolo">Consulta il curricolo completo</Link>
+        </section>
+      </AppShell>
+    );
+  }
 
   const { discipline, band, topic, objective } = found;
 

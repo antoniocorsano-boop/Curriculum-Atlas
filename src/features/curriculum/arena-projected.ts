@@ -73,10 +73,10 @@ function objectiveFromBand(
   text: string,
   index: number,
 ): CurricoloObjective {
-  const base = `${discipline.id}-${slug(band.gradeLabel)}`;
+  const base = band.id;
   return {
     id: `${base}-o${index + 1}`,
-    code: `${discipline.id.toUpperCase().slice(0, 8)}.${slug(band.gradeLabel).toUpperCase()}.${index + 1}`,
+    code: `${band.id.toUpperCase()}.O${index + 1}`,
     title: shortTitle(text, `Progressione ${band.gradeLabel}`),
     description: text || band.progression || band.sourceText || "",
     knowledge: band.knowledge ?? [],
@@ -99,7 +99,7 @@ function bandFromArena(discipline: ArenaDiscipline, band: ArenaBand): CurricoloB
     gradeLabel: band.gradeLabel,
     subtitle: [band.regime, band.progression].filter(Boolean).join(" · "),
     topics: [{
-      id: `${discipline.id}-${slug(band.gradeLabel)}-progressione`,
+      id: `${band.id}-progressione`,
       title: discipline.label,
       objectives: objectiveTexts.map((text, index) => objectiveFromBand(discipline, band, text, index)),
     }],
@@ -163,14 +163,59 @@ export const arenaCurriculumAuthority = {
   fingerprint: source.structuralFingerprint.hash,
 } as const;
 
-export function findObjective(id: string) {
-  for (const discipline of curricoloIstitutoFixture.disciplines) {
-    for (const band of discipline.bands) {
-      for (const topic of band.topics) {
-        const objective = topic.objectives.find((item) => item.id === id);
-        if (objective) return { discipline, band, topic, objective };
-      }
+type ObjectiveMatch = {
+  discipline: CurricoloDiscipline;
+  band: CurricoloBand;
+  topic: CurricoloBand["topics"][number];
+  objective: CurricoloObjective;
+};
+
+const objectiveIndex = new Map<string, ObjectiveMatch>();
+const legacyIndex = new Map<string, ObjectiveMatch[]>();
+const seenBands = new Set<string>();
+const seenTopics = new Set<string>();
+const seenDisciplines = new Set<string>();
+const seenCodes = new Set<string>();
+
+function addUnique(seen: Set<string>, id: string) {
+  if (!id || seen.has(id)) throw new Error("Identità curricolare duplicata o vuota: " + id);
+  seen.add(id);
+}
+
+for (const discipline of curricoloIstitutoFixture.disciplines) {
+  addUnique(seenDisciplines, discipline.id);
+  for (const band of discipline.bands) {
+    addUnique(seenBands, band.id);
+    for (const topic of band.topics) {
+      addUnique(seenTopics, topic.id);
+      topic.objectives.forEach((objective, index) => {
+        if (objectiveIndex.has(objective.id)) {
+          throw new Error("Obiettivo duplicato: " + objective.id);
+        }
+        addUnique(seenCodes, objective.code);
+        const match = { discipline, band, topic, objective };
+        objectiveIndex.set(objective.id, match);
+        if (ordinary.includes(discipline)) {
+          const oldId = `${discipline.id}-${slug(band.gradeLabel)}-o${index + 1}`;
+          const matches = legacyIndex.get(oldId) ?? [];
+          matches.push(match);
+          legacyIndex.set(oldId, matches);
+        }
+      });
     }
   }
-  return null;
+}
+
+// Exact current-projection IDs only. Historical aliases never resolve silently.
+export function findObjective(id: string): ObjectiveMatch | null {
+  return objectiveIndex.get(id) ?? null;
+}
+
+export function legacyObjectiveMatches(id: string): readonly ObjectiveMatch[] {
+  if (objectiveIndex.has(id)) return [];
+  return legacyIndex.get(id) ?? [];
+}
+
+export function legacyObjectiveRouteIds(): string[] {
+  return [...legacyIndex.keys()].filter(id => !objectiveIndex.has(id));
 }

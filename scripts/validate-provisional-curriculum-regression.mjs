@@ -1,4 +1,6 @@
 import fs from "node:fs";
+import vm from "node:vm";
+import { stripTypeScriptTypes } from "node:module";
 
 const read = (path) => fs.readFileSync(path, "utf8");
 const errors = [];
@@ -143,6 +145,48 @@ if (arenaExport.authorityState === "APPROVED") {
     && /^[0-9a-f]{64}$/.test(arenaExport.integrityDigest?.hash || ""),
     "REGRESSION: approved export requires valid SHA-256 digest");
 }
+
+// Execute the actual projection and graph (type erasure only, no dependencies).
+// The authority workflow runs on Node 22.
+const loadModel = (sourceText, bindings, exports) => {
+  const stripped = stripTypeScriptTypes(sourceText, { mode: "strip" });
+  const executable = stripped
+    .replace(/^import[^;]+;\s*/gm, "")
+    .replace(/\bexport\s+(?=(const|function)\b)/g, "");
+  return vm.runInNewContext(executable + "\n({" + exports.join(",") + "})", bindings);
+};
+const projection = loadModel(arenaProjected, { arenaExport }, [
+  "curricoloIstitutoFixture", "findObjective", "legacyObjectiveMatches", "legacyObjectiveRouteIds"
+]);
+const current = projection.curricoloIstitutoFixture.disciplines.flatMap(d =>
+  d.bands.flatMap(b => b.topics.flatMap(t => t.objectives.map(o => ({ d, b, t, o })))));
+const unique = (values) => new Set(values).size === values.length;
+req(unique(current.map(x => x.o.id)), "duplicate projected objective IDs");
+req(unique(current.map(x => x.o.code)), "duplicate projected objective codes");
+req(unique(projection.curricoloIstitutoFixture.disciplines.flatMap(d => d.bands.flatMap(b => b.topics.map(t => t.id)))), "duplicate projected topic IDs");
+req(current.every(x => {
+  const match = projection.findObjective(x.o.id);
+  return match?.objective === x.o && match.band === x.b && match.discipline === x.d;
+}), "objective route does not resolve to exact band");
+const legacyIds = projection.legacyObjectiveRouteIds();
+req(unique([...current.map(x => x.o.id), ...legacyIds]), "duplicate static routes");
+const ambiguous = legacyIds.filter(id => projection.legacyObjectiveMatches(id).length > 1);
+req(ambiguous.every(id => projection.findObjective(id) === null), "ambiguous historical ID resolves silently");
+req(legacyIds.every(id => projection.legacyObjectiveMatches(id).every(x => projection.findObjective(x.objective.id)?.band === x.band)), "historical route has dangling candidate");
+const example = projection.legacyObjectiveMatches("tecnologia-classe-i-o1");
+req(example.length === 2 && new Set(example.map(x => x.band.schoolStage)).size === 2, "Technology I primary/secondary regression");
+req(projection.findObjective("tech-s2-1") === null, "unverified historical fixture linked silently");
+req(objectivePage.includes("legacyObjectiveRouteIds()") && objectivePage.includes("legacyObjectiveMatches(id)") && objectivePage.includes("Possibili corrispondenze"), "historical route selector missing");
+const catalog = read("src/components/atlas/resource-catalog.tsx");
+req(catalog.includes("findObjective(id)") && catalog.includes("Raccordo da verificare"), "unresolved resource references rendered as links");
+const graph = loadModel(exploreGraph, { curricoloIstitutoFixture: projection.curricoloIstitutoFixture }, ["exploreGraph"]).exploreGraph;
+const graphNodes = new Set(graph.nodes.map(n => n.id));
+req(graphNodes.size === graph.nodes.length, "duplicate graph nodes");
+req(unique(graph.edges.map(e => e.id)), "duplicate graph edges");
+req(graph.edges.every(e => graphNodes.has(e.source) && graphNodes.has(e.target)), "dangling graph edge");
+req(graph.nodes.filter(n => n.kind === "objective").length === current.length, "graph objective coverage mismatch");
+req(sync.includes("legacyObjectiveMatches,") && sync.includes("legacyObjectiveRouteIds,"), "sync loses historical route support");
+console.log(JSON.stringify({gate:"CURR-REF-01/F-R0", objectives:current.length, distinct:new Set(current.map(x=>x.o.id)).size, legacyRoutes:legacyIds.length, ambiguousHistoricalRoutes:ambiguous.length, graphNodes:graph.nodes.length, graphEdges:graph.edges.length}));
 
 if (errors.length) {
   console.error(errors.map((error) => "ERROR: " + error).join("\n"));
