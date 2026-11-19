@@ -31,7 +31,7 @@ if(existsSync(destination))throw Error("Library route must be new, not overwritt
 mkdirSync(destination,{recursive:true});
 const sources=["index.html","host.js","host.css"];
 for(const file of sources)copyFileSync(join("scripts","atlas-library-static",file),join(destination,file));
-for(const [src,dest] of [["scene.html","scene.html"],["native-manifest.json","native-manifest.json"],["native-build-receipt.json","native-build-receipt.json"]]){
+for(const [src,dest] of [["scene.html","scene.html"],["native-manifest.json","native-manifest.json"],["native-build-receipt.json","native-build-receipt.json"],["THREE-LICENSE.txt","THREE-LICENSE.txt"]]){
   copyFileSync(join(nativeDir,src),join(destination,dest));
 }
 writeFileSync(join(exportDir,"_headers"),"/*\n  X-Robots-Tag: noindex, nofollow, noarchive\n  Referrer-Policy: no-referrer\n  X-Content-Type-Options: nosniff\n");
