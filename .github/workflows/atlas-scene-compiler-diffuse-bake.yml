@@ -4,6 +4,7 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'scripts/atlas-scene-compiler-diffuse-bake.py'
+      - 'scripts/atlas_linear_texture_contract.py'
       - '.github/workflows/atlas-scene-compiler-diffuse-bake.yml'
       - 'docs/atlas-gateway/ASC-01-P2C1-TRASFERIMENTO.md'
 permissions:
@@ -31,7 +32,7 @@ jobs:
       - name: Verify pinned Blender and syntax
         run: |
           bash scripts/atlas-gateway-c3/bootstrap-blender.sh
-          python3 -m py_compile scripts/atlas-scene-compiler-diffuse-bake.py
+          python3 -m py_compile scripts/atlas-scene-compiler-diffuse-bake.py scripts/atlas_linear_texture_contract.py
       - name: Recover exact immutable inputs
         env:
           GH_TOKEN: ${{ github.token }}
@@ -66,6 +67,11 @@ jobs:
           assert r["target"]["firstHits"]>0 and r["target"]["sampledRays"]==6144
           assert r["uv"]["sampledOverlapTexels"]==0 and r["uv"]["sampledOccupiedTexels"]>100
           assert r["bake"]["rgbMax"]>0 and r["bake"]["rgbStd"]>0
+          assert r["transferPreflight"]["passed"] and r["transferPreflight"]["explicit"]["outsideTolerance"]==0
+          assert r["transferPreflight"]["explicit"]["channels"]=={"R":2,"G":2,"B":2}
+          assert r["transfer"]["outsideTolerance"]==0 and r["transfer"]["channels"]=={"R":2,"G":2,"B":2}
+          assert "legacyTransfer" in r
+          assert hashlib.sha256((p/"canary-linear.exr").read_bytes()).hexdigest()==r["transferPreflight"]["explicit"]["sha256"]
           assert hashlib.sha256((p/"diffuse-linear.exr").read_bytes()).hexdigest()==r["bake"]["sha256"]
           assert set(r["renders"])=={"native-baseline","native-baked-preview","native-restored"}
           for name,m in r["renders"].items():
