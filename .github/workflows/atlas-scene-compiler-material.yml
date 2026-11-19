@@ -6,6 +6,7 @@ on:
       - 'scripts/atlas-scene-compiler-diffuse-bake.py'
       - 'scripts/atlas_linear_texture_contract.py'
       - 'scripts/atlas_material_ablation.py'
+      - 'scripts/verify-atlas-material-ablation.py'
       - '.github/workflows/atlas-scene-compiler-material.yml'
       - 'docs/atlas-gateway/ASC-01-P2C3-MATERIAL.md'
 permissions:
@@ -26,6 +27,20 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
+      - name: Replay historical material evidence before rendering
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/asc-material-replay"
+          mkdir -p "$p/evidence"
+          curl --fail --silent --show-error --location --retry 3 --max-time 180 --proto '=https' --proto-redir '=https' -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/14543459519/zip" -o "$p/prior.zip"
+          printf '%s  %s\n' e23d61a63c5bab2fe214b7bd0cc0483244fe08827555c40fe146cfc75c4f4551 "$p/prior.zip" | sha256sum --strict --check
+          for name in diffuse-bake.json material-ablation.json canary-linear.exr diffuse-linear.exr native-baseline.png native-baked-preview.png native-restored.png material-control.png material-diffuse-camera.png material-hybrid-camera.png; do
+            unzip -p "$p/prior.zip" "$name" > "$p/evidence/$name"
+          done
+          python3 scripts/verify-atlas-material-ablation.py "$p/evidence" fcc90984d1915cc021f059eae394254896c6199e
+          echo "Historical replay passed: receipt naming regression resolved before costly rendering."
       - uses: actions/cache/restore@v4
         with:
           path: ${{ runner.temp }}/atlas-blender-cache
@@ -33,7 +48,7 @@ jobs:
       - name: Verify pinned Blender and syntax
         run: |
           bash scripts/atlas-gateway-c3/bootstrap-blender.sh
-          python3 -m py_compile scripts/atlas-scene-compiler-diffuse-bake.py scripts/atlas_linear_texture_contract.py scripts/atlas_material_ablation.py
+          python3 -m py_compile scripts/atlas-scene-compiler-diffuse-bake.py scripts/atlas_linear_texture_contract.py scripts/atlas_material_ablation.py scripts/verify-atlas-material-ablation.py
       - name: Recover exact immutable inputs
         env:
           GH_TOKEN: ${{ github.token }}
@@ -69,38 +84,7 @@ jobs:
           timeout 2700 "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$p/Atlas-Scene-Master.blend" --python-exit-code 1 --python scripts/atlas-scene-compiler-diffuse-bake.py -- "$p/Atlas-Scene-Master.blend" "$p/page-ablation.json" "$p/page-extension.json" "$out" 2>&1 | tee "$out/run.log"
       - name: Verify linear texture receipt and rollback
         run: |
-          python3 - <<'PY'
-          import json,os,pathlib,hashlib
-          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"asc-p2c-evidence"
-          r=json.loads((p/"diffuse-bake.json").read_text())
-          assert r["status"]=="PASS_DIFFUSE_BAKE_PROBE" and r["revision"]==os.environ["ATLAS_EXACT_HEAD"]
-          assert r["masterUnchanged"] and r["bindingsRestored"]
-          assert r["target"]["firstHits"]>0 and r["target"]["sampledRays"]==6144
-          assert r["uv"]["sampledOverlapTexels"]==0 and r["uv"]["sampledOccupiedTexels"]>100
-          assert r["bake"]["rgbMax"]>0 and r["bake"]["rgbStd"]>0
-          assert r["transferPreflight"]["passed"] and r["transferPreflight"]["explicit"]["outsideTolerance"]==0
-          assert r["transferPreflight"]["explicit"]["channels"]=={"R":2,"G":2,"B":2}
-          assert r["transfer"]["outsideTolerance"]==0 and r["transfer"]["channels"]=={"R":2,"G":2,"B":2}
-          assert "legacyTransfer" in r
-          assert hashlib.sha256((p/"canary-linear.exr").read_bytes()).hexdigest()==r["transferPreflight"]["explicit"]["sha256"]
-          assert hashlib.sha256((p/"diffuse-linear.exr").read_bytes()).hexdigest()==r["bake"]["sha256"]
-          assert set(r["renders"])=={"native-baseline","native-baked-preview","native-restored","material-control","material-diffuse-camera","material-hybrid-camera"}
-          for name,m in r["renders"].items():
-              assert hashlib.sha256((p/(name+".png")).read_bytes()).hexdigest()==m["sha256"]
-          assert r["comparisons"]["restored"]["meanAbsoluteRGBDelta"]<.0002
-          assert not any(r[k] for k in ("masterModified","runtimeModified","artisticApproval","webglQualified","studentAuthorized","publishable","lightmapTransferQualified"))
-          a=json.loads((p/"material-ablation.json").read_text())
-          assert a["revision"]==r["revision"] and a["status"]=="PASS_MATERIAL_ABLATION"
-          assert a["masterSha256"]==r["masterSha256"] and a["target"]==r["target"]
-          assert a["control"]["frameMean"]<=.0002 and a["control"]["mean"]<=.001
-          for name in ("material-control","material-diffuse-camera","material-hybrid-camera"):
-              assert a["imageSha256"][name]==r["renders"][name]["sha256"]
-              assert a[name]["samples"]==1068
-          d,h=a["material-diffuse-camera"]["mean"],a["material-hybrid-camera"]["mean"]
-          assert a["decision"]==("CANDIDATE_FOR_VISUAL_REVIEW" if d>1e-12 and h<d*.95 else "NO_DEMONSTRATED_IMPROVEMENT")
-          assert not any(a[k] for k in ("artisticApproval","webglQualified","publishable"))
-          print("P2C3A diagnostic verified; material decision:",a["decision"])
-          PY
+          python3 scripts/verify-atlas-material-ablation.py "$RUNNER_TEMP/asc-p2c-evidence" "$ATLAS_EXACT_HEAD"
       - name: Preserve bake and comparison evidence
         if: always()
         uses: actions/upload-artifact@v4
