@@ -1,0 +1,22 @@
+name: Atlas — ASC-01 production plan
+on:
+  pull_request:
+    paths:
+      - 'docs/atlas-gateway/ASC-01-STANDARD-PRODUZIONE-3D.md'
+      - 'ops/atlas-scene-package/asc01-production-policy.json'
+      - 'ops/atlas-scene-package/editable-master-receipt-summary.json'
+      - 'scripts/atlas-scene-compiler-plan.py'
+      - 'scripts/test-atlas-scene-compiler-plan.py'
+      - '.github/workflows/atlas-scene-compiler-plan.yml'
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify plan and negative cases
+        run: |
+          python3 scripts/test-atlas-scene-compiler-plan.py
+          python3 scripts/atlas-scene-compiler-plan.py
