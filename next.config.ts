@@ -12,7 +12,7 @@ if (existsSync("public/atlas-gateway-native") && (process.env.ATLAS_GATEWAY_PREV
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  output: isGitHubPages || isAtlasPreviewRootScoped ? "export" : undefined,
+  output: isGitHubPages || isAtlasPreviewRootScoped ? "export" : process.env.ATLAS_LIBRARY_WEB_DELIVERY === "true" ? "standalone" : undefined,
   trailingSlash: true,
   images: {
     unoptimized: isGitHubPages || isAtlasPreviewRootScoped,
