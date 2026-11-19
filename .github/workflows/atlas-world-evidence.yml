@@ -1,0 +1,63 @@
+name: Atlas — AWC-B bounded production evidence
+on:
+  pull_request:
+    paths:
+      - 'ops/atlas-scene-package/awc-evidence-index.json'
+      - 'ops/atlas-scene-package/awc-catalog.json'
+      - 'scripts/atlas-world-evidence.py'
+      - 'scripts/test-atlas-world-evidence.py'
+      - 'scripts/atlas-world-catalog.py'
+      - '.github/workflows/atlas-world-evidence.yml'
+      - 'docs/atlas-gateway/ASC-01-AWC-CONSOLIDAMENTO.md'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Validate source catalog and observations without execution
+        run: |
+          python3 scripts/test-atlas-world-catalog.py
+          python3 scripts/test-atlas-world-evidence.py
+          python3 scripts/atlas-world-evidence.py
+  replay:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/asc-world-composer-consolidation' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Recover exact producer artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/awc-evidence"
+          mkdir -p "$p"
+          python3 - <<'PY' > "$p/manifest.tsv"
+          import json
+          a=json.load(open("ops/atlas-scene-package/awc-evidence-index.json"))["archives"]
+          for k,v in sorted(a.items()):
+              print(v["artifact"],v["sha256"])
+          PY
+          while read -r id sha; do
+            curl --fail --silent --show-error --location --retry 3 --max-time 180 --proto '=https' --proto-redir '=https' -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" -o "$p/$id.zip"
+            printf '%s  %s\n' "$sha" "$p/$id.zip" | sha256sum --strict --check
+          done < "$p/manifest.tsv"
+      - name: Replay all observed facts and producer lineage
+        run: python3 scripts/atlas-world-evidence.py --archives "$RUNNER_TEMP/awc-evidence" --report "$RUNNER_TEMP/awc-evidence-report.json"
+      - name: Preserve derived receipt only
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-awc-b-evidence
+          path: ${{ runner.temp }}/awc-evidence-report.json
+          retention-days: 7
+          if-no-files-found: error
