@@ -26,6 +26,7 @@ export function GatewayCandidate({ preparedScene, nativeManifest = null }: { pre
     // Commit React-owned removal now, not concurrently with location.assign.
     // Effect cleanup aborts pending transfers and invalidates the channel.
     // Never force GPU disposal or a context-loss handshake on the click path.
+    console.info("ATLAS_NATIVE_DETACH_BEGIN");
     flushSync(() => {
       setShow3D(false);
       setScene(null);
