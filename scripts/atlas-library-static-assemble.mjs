@@ -34,6 +34,8 @@ for(const file of sources)copyFileSync(join("scripts","atlas-library-static",fil
 for(const [src,dest] of [["scene.html","scene.html"],["native-manifest.json","native-manifest.json"],["native-build-receipt.json","native-build-receipt.json"]]){
   copyFileSync(join(nativeDir,src),join(destination,dest));
 }
+writeFileSync(join(exportDir,"_headers"),"/*\n  X-Robots-Tag: noindex, nofollow, noarchive\n  Referrer-Policy: no-referrer\n  X-Content-Type-Options: nosniff\n");
+writeFileSync(join(exportDir,"robots.txt"),"User-agent: *\nDisallow: /\n");
 writeFileSync(join(exportDir,"EXACT_HEAD.txt"),head+"\n");
 writeFileSync(join(exportDir,"PREVIEW-MANIFEST.json"),JSON.stringify({exactHead:head,channel:"artifact-only",studentAuthorized:false,
   product:"atlas-library-full-web",materialProfile:receipt.profile,sceneSha256:receipt.sceneSha256,assetsSha256:receipt.manifestSha256},null,2)+"\n");
