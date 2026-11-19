@@ -33,7 +33,23 @@ def pack(raw, triangles, vertices, size=512, border=9, gap=20):
         assert np.all(span>0),"degenerate island"
         rects.append((idx,lo,span*size))
     order=sorted(range(len(rects)),key=lambda i:(-float(np.prod(rects[i][2])),-float(max(rects[i][2])),i))
+    # The qualified bottom-left search is retained for small atlases. For
+    # many islands use a bounded deterministic shelf strategy: the original
+    # Cartesian candidate search grows too quickly for repeated book meshes.
+    shelf_order=sorted(range(len(rects)),key=lambda i:(-float(rects[i][2][1]),-float(rects[i][2][0]),i))
+    use_shelf=len(rects)>32
+    def shelf_place(scale):
+        placed={};x=float(border);y=float(border);row_height=0.
+        for i in shelf_order:
+            w,h=rects[i][2]*scale
+            if x+w>size-border+1e-9:
+                x=float(border);y+=row_height+gap;row_height=0.
+            if x+w>size-border+1e-9 or y+h>size-border+1e-9:return None
+            placed[i]=(x,y,w,h)
+            x+=w+gap;row_height=max(row_height,h)
+        return placed
     def place(scale):
+        if use_shelf:return shelf_place(scale)
         placed={}
         for i in order:
             w,h=rects[i][2]*scale
@@ -62,5 +78,5 @@ def pack(raw, triangles, vertices, size=512, border=9, gap=20):
         x,y,_,_=best[i]
         result[idx]=(raw[idx]-origin)*lo+np.array([x,y])/size
     assert np.isfinite(result).all() and result.min()>=border/size-1e-9 and result.max()<=1-border/size+1e-9
-    return result,{"method":"deterministic-aabb-bottom-left","islands":len(islands),"relativeScale":lo,
+    return result,{"method":"deterministic-aabb-shelf" if use_shelf else "deterministic-aabb-bottom-left","islands":len(islands),"relativeScale":lo,
                    "borderPixels":border,"gapPixels":gap,"rectangles":[list(best[i]) for i in range(len(rects))]}
