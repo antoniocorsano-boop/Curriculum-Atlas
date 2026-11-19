@@ -64,6 +64,18 @@ export default function PercorsiLabLibraryPage() {
         })}
       </nav>
 
+      <section className="pathwayLibrary__prototypeReview" aria-labelledby="experience-review-title">
+        <p className="pathwayLibrary__eyebrow">Experience Quality Review</p>
+        <h2 id="experience-review-title">Prototipo non registrato · Stesso obiettivo, strategia diversa</h2>
+        <p>
+          Superficie di laboratorio per valutare messa in scena, identità visiva, ritmo e continuità prima
+          dell’eventuale registrazione del terzo Percorso. Non fa parte della libreria candidata e non è autorizzata agli studenti.
+        </p>
+        <Link href="/percorsi/lab/pw-strategy-selection-01">
+          Apri il tavolo di lavoro sperimentale
+        </Link>
+      </section>
+
       <footer className="pathwayLibrary__footer">
         <strong>Stato:</strong> anteprima di progettazione. Nessun Percorso è autorizzato all’uso pubblico con studenti.
       </footer>

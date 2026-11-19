@@ -426,3 +426,312 @@ test.describe("PW-MISSING public-surface runtime readiness", () => {
     expect(localKeys).toEqual([]);
   });
 });
+
+
+test.describe("PW-STRATEGY-SELECTION experience-quality lab prototype", () => {
+  test("uses genuine source-hidden retrieval and awards strategy-goal fit only after applied recall", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-strategy-selection-01");
+    await expect(page.getByText("PROTOTIPO · NON AUTORIZZATO AGLI STUDENTI")).toBeVisible();
+
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
+    await page.getByRole("button", { name: /Creo una sequenza di parole chiave/ }).click();
+    await page.getByRole("button", { name: "Inizia la prova" }).click();
+
+    await expect(page.getByText("Fonte coperta")).toBeVisible();
+    await expect(page.getByText("Il gruppo parte dalla stazione sul campo.")).toHaveCount(0);
+
+    for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+
+    await expect(page.getByText("Hai scelto un modo per prepararti e lo hai usato nella prova.")).toBeVisible();
+    await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(1);
+  });
+
+  test("gates revision and transfer evidence on strategy choice plus applied construction", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-strategy-selection-01");
+
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
+    await page.getByRole("button", { name: /Creo una sequenza di parole chiave/ }).click();
+    await page.getByRole("button", { name: "Inizia la prova" }).click();
+    for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await page.getByRole("button", { name: "Continua", exact: true }).click();
+    await page.getByRole("button", { name: "Scegli come affrontare la nuova domanda" }).click();
+
+    await page.getByRole("button", { name: /Cerco cause e conseguenze/ }).click();
+    for (const token of ["pioggia intensa", "sentiero basso inutilizzabile", "percorso di cresta più lungo", "arrivo più tardi"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(2);
+    await page.getByRole("button", { name: "Continua", exact: true }).click();
+    await page.getByRole("button", { name: "Prova in una situazione nuova" }).click();
+
+    await page.getByRole("button", { name: /Tabella di confronto/ }).click();
+    await expect(page.locator(".strategyWorkbench__rail strong")).toHaveText("Tabella di confronto");
+    await page.getByLabel("Durata, percorso Blu").selectOption({ label: "45 min" });
+    await page.getByLabel("Durata, percorso Verde").selectOption({ label: "30 min" });
+    await page.getByLabel("Accesso, percorso Blu").selectOption({ label: "ascensore" });
+    await page.getByLabel("Accesso, percorso Verde").selectOption({ label: "solo scale" });
+    await page.getByLabel("Attività pratiche, percorso Blu").selectOption({ label: "1 attività pratica" });
+    await page.getByLabel("Attività pratiche, percorso Verde").selectOption({ label: "2 attività pratiche" });
+    await page.getByRole("button", { name: "Controlla il confronto" }).click();
+
+    await expect(page.getByText("In una situazione nuova hai trovato un modo chiaro per confrontare i dati.")).toBeVisible();
+    await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(3);
+  });
+
+  test("remains volatile, emits no learner writes and reflows on mobile", async ({ page }) => {
+    const writes: string[] = [];
+    page.on("request", (request) => {
+      if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method())) writes.push(request.method());
+    });
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/percorsi/lab/pw-strategy-selection-01");
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
+    await page.getByRole("button", { name: /Rileggo tutto/ }).click();
+    await page.getByRole("button", { name: "Ho riletto · inizia la prova" }).click();
+
+    expect(writes).toEqual([]);
+    expect(await page.evaluate(() => Object.keys(localStorage).filter((key) => key.includes("strategy-selection")))).toEqual([]);
+    const width = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(width).toBeLessThanOrEqual(390);
+  });
+});
+
+
+test.describe("PW-STRATEGY-SELECTION interaction regression guards", () => {
+  test("moves focus to the heading of each newly rendered scene", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-strategy-selection-01");
+
+    await expect(page.getByRole("heading", { name: "Che cosa è successo durante il percorso?" })).toBeFocused();
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
+    await expect(page.getByRole("heading", { name: "Prima della prova, cosa vuoi fare?" })).toBeFocused();
+
+    await page.getByRole("button", { name: /Creo una sequenza di parole chiave/ }).click();
+    await expect(page.getByRole("heading", { name: "Crea una traccia di cinque parole. Poi prova senza guardare." })).toBeFocused();
+
+    await page.getByRole("button", { name: "Inizia la prova" }).click();
+    await expect(page.getByRole("heading", { name: "Le frasi sono coperte. Rimetti questi cinque elementi nell’ordine in cui sono accaduti." })).toBeFocused();
+  });
+
+  test("requires a fresh validation after editing a failed order construction", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-strategy-selection-01");
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
+    await page.getByRole("button", { name: /Creo una sequenza di parole chiave/ }).click();
+    await page.getByRole("button", { name: "Inizia la prova" }).click();
+
+    for (const token of ["ponte", "stazione", "pioggia", "cresta", "osservazione"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await expect(page.getByText(/L’ordine non coincide ancora con la fonte/)).toBeVisible();
+
+    await page.getByRole("button", { name: "Svuota" }).click();
+    for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+
+    await expect(page.getByRole("button", { name: "Continua", exact: true })).toHaveCount(0);
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Continua", exact: true })).toBeVisible();
+    await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(1);
+  });
+
+  test("requires a fresh validation after editing a failed cause construction", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-strategy-selection-01");
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
+    await page.getByRole("button", { name: /Creo una sequenza di parole chiave/ }).click();
+    await page.getByRole("button", { name: "Inizia la prova" }).click();
+    for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await page.getByRole("button", { name: "Continua", exact: true }).click();
+    await page.getByRole("button", { name: "Scegli come affrontare la nuova domanda" }).click();
+    await page.getByRole("button", { name: /Cerco cause e conseguenze/ }).click();
+
+    for (const token of ["arrivo più tardi", "pioggia intensa", "sentiero basso inutilizzabile", "percorso di cresta più lungo"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await expect(page.getByText(/La catena non rende ancora corretta/)).toBeVisible();
+
+    await page.getByRole("button", { name: "Svuota" }).click();
+    for (const token of ["pioggia intensa", "sentiero basso inutilizzabile", "percorso di cresta più lungo", "arrivo più tardi"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+
+    await expect(page.getByRole("button", { name: "Continua", exact: true })).toHaveCount(0);
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Continua", exact: true })).toBeVisible();
+    await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(2);
+  });
+});
+
+
+test.describe("PW-STRATEGY-SELECTION transfer validation invalidation", () => {
+  test("revokes transfer evidence when a validated comparison is edited", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-strategy-selection-01");
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
+    await page.getByRole("button", { name: /Creo una sequenza di parole chiave/ }).click();
+    await page.getByRole("button", { name: "Inizia la prova" }).click();
+
+    for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await page.getByRole("button", { name: "Continua", exact: true }).click();
+    await page.getByRole("button", { name: "Scegli come affrontare la nuova domanda" }).click();
+    await page.getByRole("button", { name: /Cerco cause e conseguenze/ }).click();
+
+    for (const token of ["pioggia intensa", "sentiero basso inutilizzabile", "percorso di cresta più lungo", "arrivo più tardi"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await page.getByRole("button", { name: "Continua", exact: true }).click();
+    await page.getByRole("button", { name: "Prova in una situazione nuova" }).click();
+    await page.getByRole("button", { name: /Tabella di confronto/ }).click();
+
+    await page.getByLabel("Durata, percorso Blu").selectOption({ label: "45 min" });
+    await page.getByLabel("Durata, percorso Verde").selectOption({ label: "30 min" });
+    await page.getByLabel("Accesso, percorso Blu").selectOption({ label: "ascensore" });
+    await page.getByLabel("Accesso, percorso Verde").selectOption({ label: "solo scale" });
+    await page.getByLabel("Attività pratiche, percorso Blu").selectOption({ label: "1 attività pratica" });
+    await page.getByLabel("Attività pratiche, percorso Verde").selectOption({ label: "2 attività pratiche" });
+    await page.getByRole("button", { name: "Controlla il confronto" }).click();
+
+    await expect(page.getByRole("button", { name: "Concludi" })).toBeVisible();
+    await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(3);
+
+    await page.getByLabel("Durata, percorso Verde").selectOption({ label: "45 min" });
+
+    await expect(page.getByRole("button", { name: "Concludi" })).toHaveCount(0);
+    await expect(page.getByText("In una situazione nuova hai trovato un modo chiaro per confrontare i dati.")).toHaveCount(0);
+    await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(2);
+
+    await page.getByRole("button", { name: "Controlla il confronto" }).click();
+    await expect(page.getByText(/Il confronto non è ancora completo o coerente/)).toBeVisible();
+  });
+});
+
+
+test.describe("PW-STRATEGY-SELECTION construction invalidation completeness", () => {
+  test("Svuota revokes a previously validated construction and its trace", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-strategy-selection-01");
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
+    await page.getByRole("button", { name: /Creo una sequenza di parole chiave/ }).click();
+    await page.getByRole("button", { name: "Inizia la prova" }).click();
+
+    for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await expect(page.getByText("Hai scelto un modo per prepararti e lo hai usato nella prova.")).toBeVisible();
+    await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(1);
+
+    await page.getByRole("button", { name: "Svuota" }).click();
+
+    await expect(page.getByText("Hai scelto un modo per prepararti e lo hai usato nella prova.")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Continua", exact: true })).toHaveCount(0);
+    await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(0);
+  });
+});
+
+
+test.describe("PW-STRATEGY-SELECTION mobile experience remediation", () => {
+  test("keeps mission and growth chrome compact without overlaying the workbench", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/percorsi/lab/pw-strategy-selection-01");
+
+    await expect(page.locator(".strategyWorkbench__top")).toBeVisible();
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
+
+    await expect(page.locator(".strategyWorkbench__top")).toBeHidden();
+
+    const mission = page.locator(".strategyWorkbench__mission");
+    const missionStyle = await mission.evaluate((element) => {
+      const style = getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      return { position: style.position, height: rect.height };
+    });
+    expect(["fixed", "sticky"]).not.toContain(missionStyle.position);
+    expect(missionStyle.height).toBeLessThan(72);
+
+    const railHeight = await page.locator(".strategyWorkbench__rail").evaluate(
+      (element) => element.getBoundingClientRect().height,
+    );
+    expect(railHeight).toBeLessThan(72);
+
+    const focusedHeading = page.getByRole("heading", {
+      name: "Prima della prova, cosa vuoi fare?",
+    });
+    await expect(focusedHeading).toBeFocused();
+    expect(await focusedHeading.evaluate((element) => getComputedStyle(element).outlineStyle)).toBe("none");
+  });
+
+  test("presents tools as compact workbench instruments on mobile", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/percorsi/lab/pw-strategy-selection-01");
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
+
+    await expect(page.locator(".strategyWorkbench__toolGlyph")).toHaveCount(3);
+    const toolButtons = page.locator(".strategyWorkbench__tools > button");
+    await expect(toolButtons).toHaveCount(3);
+
+    for (let index = 0; index < 3; index += 1) {
+      const box = await toolButtons.nth(index).boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.height).toBeLessThan(100);
+    }
+
+    const width = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(width).toBeLessThanOrEqual(390);
+  });
+});
+
+
+test.describe("PW-STRATEGY-SELECTION real method-change evidence", () => {
+  test("cannot earn 'Ho cambiato modo' unless the method actually changes after the first mission", async ({ page }) => {
+    await page.goto("/percorsi/lab/pw-strategy-selection-01");
+    await page.getByRole("button", { name: "Ho letto · continua" }).click();
+
+    // Start with cause/effect for the order mission.
+    await page.getByRole("button", { name: /Cerco cause e conseguenze/ }).click();
+    for (const token of ["pioggia intensa", "sentiero basso inutilizzabile", "percorso di cresta più lungo", "arrivo più tardi"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla la relazione" }).click();
+    await page.getByRole("button", { name: "Ora controlla l’ordine" }).click();
+
+    for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+
+    // The pathway must require a real switch to the order method before goal shift.
+    await page.getByRole("button", { name: "Prova con cinque parole in sequenza" }).click();
+    await page.getByRole("button", { name: "Inizia la prova" }).click();
+    for (const token of ["stazione", "ponte", "pioggia", "cresta", "osservazione"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+    await expect(page.locator(".strategyWorkbench__rail strong")).toHaveText("Creo una sequenza di parole chiave");
+    await page.getByRole("button", { name: "Continua", exact: true }).click();
+
+    await page.getByRole("button", { name: "Scegli come affrontare la nuova domanda" }).click();
+    await page.getByRole("button", { name: /Cerco cause e conseguenze/ }).click();
+    for (const token of ["pioggia intensa", "sentiero basso inutilizzabile", "percorso di cresta più lungo", "arrivo più tardi"]) {
+      await page.getByRole("button", { name: token, exact: true }).click();
+    }
+    await page.getByRole("button", { name: "Controlla", exact: true }).click();
+
+    await expect(page.getByText("La domanda è cambiata e tu hai cambiato modo di lavorare.")).toBeVisible();
+    await expect(page.locator('.strategyWorkbench__rail li[data-earned="true"]')).toHaveCount(2);
+  });
+});
