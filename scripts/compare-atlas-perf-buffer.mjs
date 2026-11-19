@@ -18,7 +18,7 @@ try{
  for(const mode of ["retained","transient"]){
   const dir=join(root,"atlas-perf-buffer-"+mode);
   const v=json(dir,"perf-buffer-variant.json"),r=json(dir,"native-gateway-receipt.json"),d=json(dir,"navigation-differential.json");
-  assert.equal(v.mode,mode);assert.equal(v.changed,mode==="transient");assert.equal(v.changedAttribute,"preserveDrawingBuffer");assert.equal(r.perfBufferMode,mode);
+  assert.equal(v.mode,mode);assert.equal(v.changed,mode==="retained");assert.equal(v.baselineMode,"transient");assert.equal(v.changedAttribute,"preserveDrawingBuffer");assert.equal(r.perfBufferMode,mode);
   assert.equal(r.status,"PASS");assert.equal(r.failures.length,0);assert.equal(r.results.length,10);
   assert.equal(d.results.length,4);assert(d.results.every(s=>s.status==="PASS"));
   const rows=r.results.filter(x=>x.device);assert.deepEqual(rows.map(x=>x.device),devices);
@@ -34,8 +34,8 @@ try{
  }
  assert.equal(entries.retained.v.baselineSceneSha256,entries.transient.v.baselineSceneSha256);
  assert.equal(entries.retained.v.manifestSha256,entries.transient.v.manifestSha256);
- assert.equal(entries.retained.v.variantSceneSha256,entries.retained.v.baselineSceneSha256);
- assert.notEqual(entries.transient.v.variantSceneSha256,entries.transient.v.baselineSceneSha256);
+ assert.notEqual(entries.retained.v.variantSceneSha256,entries.retained.v.baselineSceneSha256);
+ assert.equal(entries.transient.v.variantSceneSha256,entries.transient.v.baselineSceneSha256);
  for(const device of devices){
   const a=entries.retained.rows.find(x=>x.device===device),b=entries.transient.rows.find(x=>x.device===device);
   assert.deepEqual(a.actualBuffer,b.actualBuffer);assert.deepEqual(a.css,b.css);assert.equal(a.triangles,b.triangles);assert.equal(a.calls,b.calls);
