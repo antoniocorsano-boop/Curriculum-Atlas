@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   local-webgl:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
@@ -55,7 +55,7 @@ jobs:
           echo "ATLAS_GATEWAY_SCENE_SHA256=$(sha256sum "$RUNNER_TEMP/atlas-gateway/scene.html" | cut -d' ' -f1)" >> "$GITHUB_ENV"
           echo "ATLAS_GATEWAY_EVIDENCE=$RUNNER_TEMP/atlas-gateway/evidence" >> "$GITHUB_ENV"
       - name: Install Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        run: bash scripts/atlas-ci-chromium.sh
       - name: Typecheck
         run: pnpm typecheck
       - name: Lint
