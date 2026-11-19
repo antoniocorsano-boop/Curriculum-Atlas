@@ -6,7 +6,7 @@
   "scene": "sala-zero.projection-cue",
   "status": "EXPERIMENT_ONLY",
   "storySource": {
-    "repository": "antoniocorsano-boop/Curriculum-Atlas",
+    "sourceProduct": "Atlas",
     "revision": "e1dad70bbe2e05d9ab023c8af18c748adc5e27ed",
     "pr": 83,
     "path": "src/features/escape-room/MuseoZeroEscapeRoom.tsx",
