@@ -150,42 +150,30 @@ if(BRIDGE){
   bakedRoot=new T.Group();bakedRoot.rotation.x=Math.PI/2;
   bakedRoot.add(bakedMesh);scene.add(bakedRoot);bakedRoot.updateMatrixWorld(true);bakedRoot.visible=false;
   walnutGeom.computeBoundingBox();
-  const expected=walnutGeom.boundingBox,actual=new T.Box3().setFromObject(bakedRoot);
-  const centerDelta=expected.getCenter(new T.Vector3()).sub(actual.getCenter(new T.Vector3()));
-  const sizeA=expected.getSize(new T.Vector3()),sizeB=actual.getSize(new T.Vector3());
-  const sizeDelta=Math.max(...[0,1,2].map(i=>Math.abs(sizeA.getComponent(i)-sizeB.getComponent(i))));
-  const bakedTriangles=bakedGeometry.index?bakedGeometry.index.count/3:bakedGeometry.attributes.position.count/3;
-  check(bakedTriangles===864&&sizeDelta<.0005&&centerDelta.length()<.05,
-    "GLB rigid registration failed "+JSON.stringify({sizeA:sizeA.toArray(),sizeB:sizeB.toArray(),centerDelta:centerDelta.toArray(),sizeDelta,bakedTriangles}));
-  // Blender and glTF use different scene origins. Only a verified rigid translation
-  // is permitted; reject changed silhouettes and changed source triangles.
-  bakedRoot.position.add(centerDelta);bakedRoot.updateMatrixWorld(true);
-  const aligned=new T.Box3().setFromObject(bakedRoot);
-  const boundDelta=Math.max(...[0,1,2].flatMap(i=>[
-    Math.abs(expected.min.getComponent(i)-aligned.min.getComponent(i)),
-    Math.abs(expected.max.getComponent(i)-aligned.max.getComponent(i))
-  ]));
-  function canonicalTriangles(geometry,matrix){
-    const positions=geometry.getAttribute("position"),indices=geometry.index;
-    const n=indices?indices.count:positions.count;
-    check(n%3===0&&n===864*3,"GLB indexed triangle coverage");
-    const out=[],v=new T.Vector3();
-    for(let i=0;i<n;i+=3){
-      const tri=[];
-      for(let j=0;j<3;j++){
-        const k=indices?indices.getX(i+j):i+j;
-        v.fromBufferAttribute(positions,k).applyMatrix4(matrix);
-        tri.push(v.toArray().map(x=>Math.round(x*1e4)).join(","));
-      }
-      out.push(tri.sort().join("|"));
-    }
-    return out.sort();
+  const expected=walnutGeom.boundingBox;
+  // Three r128 Box3.setFromObject transforms a *local AABB*, not the actual
+  // positions. On rotated bays it inflates bounds by centimetres. Measure
+  // every transformed vertex instead; no correction/scaling is authorized.
+  const pos=bakedGeometry.getAttribute("position"),idx=bakedGeometry.index;
+  const originalPos=walnutGeom.getAttribute("position"),transformed=new T.Vector3();
+  const actual=new T.Box3().makeEmpty(),n=idx?idx.count:pos.count;
+  check(n===originalPos.count&&n===864*3,"GLB real triangle coverage");
+  let maxVertexDelta=0;
+  for(let i=0;i<n;i++){
+    const vertexIndex=idx?idx.getX(i):i;
+    transformed.fromBufferAttribute(pos,vertexIndex).applyMatrix4(bakedMesh.matrixWorld);
+    actual.expandByPoint(transformed);
+    const src=new T.Vector3().fromBufferAttribute(originalPos,i);
+    maxVertexDelta=Math.max(maxVertexDelta,transformed.distanceTo(src));
   }
-  const originals=canonicalTriangles(walnutGeom,new T.Matrix4());
-  const imports=canonicalTriangles(bakedGeometry,bakedMesh.matrixWorld);
-  const sameTriangles=originals.length===imports.length&&originals.every((x,i)=>x===imports[i]);
-  check(boundDelta<.0005&&sameTriangles,"GLB triangle identity after rigid registration "+JSON.stringify({boundDelta,centerDelta:centerDelta.toArray(),sizeDelta,sameTriangles}));
-  bridgeInfo={object:BAKE_OBJECT,sourceTriangles:864,bakedTriangles,boundDelta,sizeDelta,translation:centerDelta.toArray(),exactTriangleIdentity:sameTriangles,
+  const boundDelta=Math.max(...[0,1,2].flatMap(i=>[
+    Math.abs(expected.min.getComponent(i)-actual.min.getComponent(i)),
+    Math.abs(expected.max.getComponent(i)-actual.max.getComponent(i))
+  ]));
+  const bakedTriangles=n/3;
+  check(bakedTriangles===864&&maxVertexDelta<.00005&&boundDelta<.00005,
+    "GLB exact world vertices "+JSON.stringify({maxVertexDelta,boundDelta,bakedTriangles}));
+  bridgeInfo={object:BAKE_OBJECT,sourceTriangles:864,bakedTriangles,boundDelta,maxVertexDelta,exactTriangleIdentity:true,
     uv2Count:uv2.count,originalMaterial:original.material.type,
     bakedMaterial:bakedMaterial.type,textureSize:[texture.image.width,texture.image.height],
     sourceOtherObjectsUnmodified:true,bakedMaterialUnaffectedByDynamicLights:true};
