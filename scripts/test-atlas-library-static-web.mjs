@@ -59,9 +59,15 @@ try{
     const frame=page.frameLocator("iframe");
     const result=await frame.locator("canvas").evaluate(el=>{
       const m=nativeMaterialBridge?.evidence()??[];
-      return {phase:nativePhase,ready,revision:THREE.REVISION,materials:new Set(m.map(r=>r.name)).size,corrected:m.filter(r=>r.corrected).length,compiled:m.filter(r=>r.compiled>0).length,sceneObjects:visibility.update(camera).total,buffer:[el.width,el.height],calls:renderer.info.render.calls};
+      return {phase:nativePhase,ready,revision:THREE.REVISION,materials:new Set(m.map(r=>r.name)).size,corrected:m.filter(r=>r.corrected).length,compiled:m.filter(r=>r.compiled>0).length,sceneObjects:visibility.update(camera).total,buffer:[el.width,el.height],calls:renderer.info.render.calls,lighting:scene.userData.atlasLighting,shadowEnabled:renderer.shadowMap.enabled,shadowType:renderer.shadowMap.type,castShadowLights:scene.children.filter(o=>o.isDirectionalLight&&o.castShadow).length,spotLights:scene.children.filter(o=>o.isSpotLight).length,renderBudgetMs:renderBudget.lastSubmitMs};
     });
     assert.equal(result.phase,"ready");assert.equal(result.ready,true);assert.equal(result.revision,"128");assert.equal(result.materials,7);assert.equal(result.corrected,1);assert(result.compiled>=1);assert.equal(result.sceneObjects,495);assert(result.calls>0);
+    assert.equal(result.lighting?.mode,"web-architectural-v1");assert.equal(result.lighting?.shelfCount,9);
+    assert.equal(result.lighting?.crownCount,dim.name==="phone"?4:8);
+    assert.equal(result.lighting?.shadowMapSize,dim.name==="phone"?512:1024);
+    assert.equal(result.spotLights,result.lighting.crownCount+result.lighting.shelfCount);
+    assert(result.shadowEnabled&&result.castShadowLights===1&&result.lighting.oneTimeShadows,"Web architectural lighting is not active");
+    assert(Number.isFinite(result.renderBudgetMs)&&result.renderBudgetMs>=0,"missing real renderer timing");
     if(dim.name==="phone"){
       const layout=await page.evaluate(()=>{
         const scene=document.querySelector(".scene").getBoundingClientRect();
