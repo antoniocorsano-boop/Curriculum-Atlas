@@ -4,6 +4,7 @@
 **Stato:** specifica di produzione salvata e versionata, **non** modello Blender già realizzato.  
 **Data:** 20 novembre 2026.  
 **Direzione artistica vincolante:** [ART-DIR-02](./ATLAS-GATEWAY-ART-DIRECTION-02.md).  
+**Sorgente geometrica obbligatoria:** [IMAGE-GEOMETRY-01](./IMAGE-GEOMETRY-01.md) — progettazione inversa dall'immagine prima di imporre la forma di qualsiasi prototipo o libreria. La vecchia geometria della PR #152 non è una base dimensionale o compositiva vincolante.  
 **Piano esecutivo:** [ART-PROD-01](./ATLAS-GATEWAY-PRODUCTION-WORKFLOW-01.md).  
 **Decisione produttiva per risorse esterne:** [ASSET-KIT-01](./ASSET-KIT-01.md) — riuso qualificato e verificabile, vincolante per la selezione degli asset; nessuna risorsa esterna considerata approvata senza distinta e prova.  
 **Orchestrazione e verifiche:** [FLOW-02](./ATLAS-GATEWAY-CLOSED-LOOP-02.md).  
