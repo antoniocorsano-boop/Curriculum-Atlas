@@ -40,6 +40,10 @@ try{
     await page.goto(origin+"/atrio/",{waitUntil:"domcontentloaded"});
     await page.waitForFunction(()=>document.querySelector("#foyer-status")?.textContent?.includes("pronto"),null,{timeout:30000});
     assert.equal(await page.locator("body.no-webgl").count(),0,"Real WebGL must start: "+dim.name);
+    if(process.env.ATLAS_FOYER_EXPECT_ART==="true"){
+      const statement=await page.locator("#foyer-status").textContent();
+      assert(statement?.includes("modello Blender verificato"),"The authored GLB must actually replace fallback geometry");
+    }
     const info=await page.evaluate(()=>{
       const canvas=document.querySelector("#foyer-canvas");
       const context=canvas.getContext("webgl2")||canvas.getContext("webgl");
