@@ -129,6 +129,18 @@ try{
       assert.equal(await diagnose.count(),1,"opt-in diagnostic should appear only with query flag");
       await page.locator("#diag-start").click();
       await diagnose.evaluate(el=>el.style.display="none");
+      // Actual pointer drags, rather than button clicks, isolate intervals
+      // in which the user is moving the scene. Idle gaps are not counted.
+      const canvasRect=await frame.locator("canvas").boundingBox();
+      assert(canvasRect&&canvasRect.width>250&&canvasRect.height>250,"canvas must receive direct pointer gestures");
+      const cx=canvasRect.x+canvasRect.width*.48,cy=canvasRect.y+canvasRect.height*.42;
+      await page.mouse.move(cx,cy);
+      await page.mouse.down();
+      for(let step=0;step<16;step++){
+        await page.mouse.move(cx+48*Math.sin(step*.26),cy+24*Math.sin(step*.19),{steps:2});
+        await page.waitForTimeout(60);
+      }
+      await page.mouse.up();
       const panel=frame.locator("#atlas-controls-panel");
       assert.equal(await panel.count(),1,"mobile camera panel must exist");
       assert.equal(await panel.evaluate(el=>el.open),false,"mobile camera panel must initially be collapsed");
@@ -157,9 +169,15 @@ try{
       const localReport=await page.locator("#diag-result").inputValue();
       const localData=JSON.parse(localReport);
       assert(localData.fotogrammi_inviati>=2,"diagnostic must observe actual render submissions");
+      assert(localData.gesti_rilevati>=1&&localData.eventi_movimento>=10,"diagnostic must recognize real pointer gestures");
+      assert(localData.intervalli_in_movimento>=3&&localData.intervallo_movimento_p95_ms!==null,
+        "diagnostic must isolate multiple submissions while the pointer is moving");
+      assert(localData.durata_movimento_rilevata_ms>=300,"diagnostic must measure active movement duration");
       assert.equal(localData.misurazione_tempo_gpu,"non disponibile","CPU submissions must not be mistaken for GPU FPS");
       assert.equal(localData.contenuto_personale,"nessuno");
       report.localDiagnostic={submissions:localData.fotogrammi_inviati,p95Ms:localData.intervallo_invio_p95_ms,
+        activeP95Ms:localData.intervallo_movimento_p95_ms,activeSubmissionRate:localData.frequenza_invio_durante_movimento_fps,
+        gestureCount:localData.gesti_rilevati,motionEvents:localData.eventi_movimento,
         gpu:localData.misurazione_tempo_gpu,bytesSentToExternalEndpoints:0};
       await diagnose.evaluate(el=>el.style.display="none");
     }
