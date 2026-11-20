@@ -43,12 +43,21 @@ try{
       });
     });
     let manifestReads=0;
-    page.on("request",request=>{if(new URL(request.url()).pathname==="/biblioteca/native-manifest.json")manifestReads++;});
+    const compressedRequests=new Set(),originalModelRequests=new Set();
+    page.on("request",request=>{
+      const path=new URL(request.url()).pathname;
+      if(path==="/biblioteca/native-manifest.json")manifestReads++;
+      if(path.startsWith("/atlas-gateway-gzip/"))compressedRequests.add(path);
+      if(path.startsWith("/atlas-gateway-native/")&&path.endsWith(".glb"))originalModelRequests.add(path);
+    });
     page.on("pageerror",e=>report.errors.push(String(e)));
     page.on("console",m=>{if(m.type()==="error")report.errors.push(m.text())});
     await page.goto(origin+"/biblioteca/",{waitUntil:"domcontentloaded"});
     await page.waitForFunction(()=>document.querySelector("#status")?.textContent?.startsWith("Biblioteca pronta"),null,{timeout:90000});
     assert.equal(manifestReads,1,"the signed manifest must be fetched once per scene startup");
+    assert.equal(compressedRequests.size,7,"seven lossless compressed resources must be served");
+    assert.equal(originalModelRequests.size,0,"compressed models must not silently fall back to full-size transport");
+    report.results.push({device:dim.name+"-network",compressedRequests:compressedRequests.size,originalModelRequests:originalModelRequests.size});
     if(dim.name==="phone"){
       const phases=await page.evaluate(()=>window.__atlasObservedPhases);
       assert(phases.includes("decode:shell"),"mobile must report the architectural decoding stage");
@@ -61,9 +70,11 @@ try{
       const m=nativeMaterialBridge?.evidence()??[];
       return {phase:nativePhase,ready,revision:THREE.REVISION,materials:new Set(m.map(r=>r.name)).size,corrected:m.filter(r=>r.corrected).length,compiled:m.filter(r=>r.compiled>0).length,sceneObjects:visibility.update(camera).total,buffer:[el.width,el.height],calls:renderer.info.render.calls,lighting:scene.userData.atlasLighting,shadowEnabled:renderer.shadowMap.enabled,shadowType:renderer.shadowMap.type,castShadowLights:scene.children.filter(o=>o.isDirectionalLight&&o.castShadow).length,spotLights:scene.children.filter(o=>o.isSpotLight).length,renderBudgetMs:renderBudget.lastSubmitMs};
     });
-    assert.equal(result.phase,"ready");assert.equal(result.ready,true);assert.equal(result.revision,"128");assert.equal(result.materials,7);assert.equal(result.corrected,1);assert(result.compiled>=1);assert.equal(result.sceneObjects,495);assert(result.calls>0);
-    assert.equal(result.lighting?.mode,"web-architectural-v1");assert.equal(result.lighting?.shelfCount,9);
-    assert.equal(result.lighting?.crownCount,dim.name==="phone"?4:8);
+    assert.equal(result.phase,"ready");assert.equal(result.ready,true);assert.equal(result.revision,"128");assert.equal(result.materials,7);assert.equal(result.corrected,1);assert(dim.name==="phone"?result.compiled===0:result.compiled>=1);assert.equal(result.sceneObjects,495);assert(result.calls>0);
+    assert.equal(result.lighting?.mode,"web-architectural-lite-v2");
+    assert.equal(result.lighting?.shelfCount,dim.name==="phone"?3:9);
+    assert.equal(result.lighting?.materialModel,dim.name==="phone"?"original-maps-scalar":"microstructure");
+    assert.equal(result.lighting?.crownCount,dim.name==="phone"?2:8);
     assert.equal(result.lighting?.shadowMapSize,dim.name==="phone"?512:1024);
     assert.equal(result.spotLights,result.lighting.crownCount+result.lighting.shelfCount);
     assert(result.shadowEnabled&&result.castShadowLights===1&&result.lighting.oneTimeShadows,"Web architectural lighting is not active");
@@ -90,9 +101,21 @@ try{
         pixelScale:renderBudget.scale,
         frameSubmissionMs:renderBudget.lastSubmitMs
       }));
-      assert(raster.pixelScale>=1.2&&raster.pixelScale<=1.36,"mobile scene should gain sharpness without excessive pixel cost");
+      assert(raster.pixelScale>=1.17&&raster.pixelScale<=1.21,"mobile scene must balance high-DPI clarity and render cost");
       assert(raster.width*raster.height<=1048576,"existing 1 Mi-pixel ceiling must be preserved");
       report.results.push({device:"phone-first-screen",layout,introHeight,raster});
+      const dragScale=await frame.locator("canvas").evaluate(()=>{
+        const resting=renderBudget.scale;
+        down={x:80,y:140,angle,tilt};
+        resizeRaster(Math.max(1,innerWidth),Math.max(1,innerHeight));
+        const moving=renderBudget.scale;
+        down=null;
+        resizeRaster(Math.max(1,innerWidth),Math.max(1,innerHeight));
+        return {resting,moving,restored:renderBudget.scale};
+      });
+      assert(dragScale.moving>=0.70&&dragScale.moving<=0.73,"drag must lower shader pixel work");
+      assert(Math.abs(dragScale.restored-dragScale.resting)<.012,"drag must restore high-detail stationary view");
+      report.dragRaster=dragScale;
     }
     if(dim.name==="phone"){
       const nativeStatus=await frame.locator("#native-status").evaluate(el=>({hidden:el.hidden,display:getComputedStyle(el).display}));
