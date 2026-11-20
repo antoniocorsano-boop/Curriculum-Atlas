@@ -50,8 +50,10 @@
   height: 13%;
   background: linear-gradient(90deg, #081625 0%, #081625 80%, transparent 100%);
   pointer-events: none;
+  display: none;
 }
 .brand {
+  display: none;
   position: absolute;
   z-index: 8;
   top: 3.2%;
@@ -87,29 +89,6 @@
   letter-spacing: .015em;
   font-weight: 400;
 }
-.podiumScreen {
-  position: absolute;
-  z-index: 1;
-  left: 45%;
-  top: 48.6%;
-  width: 10.4%;
-  height: 9.6%;
-  pointer-events: none;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at 50% 50%, #102b4b 40%, #102b4bf1 55%, #102b4b00 77%);
-}
-.podiumEmblem {
-  position: absolute;
-  z-index: 2;
-  left: 48.4%;
-  top: 49.3%;
-  width: 3.6%;
-  height: 5.7%;
-  display: grid;
-  place-items: center;
-  pointer-events: none;
-}
-.largeA { width: 100%; height: 100%; color: #f0cd8a; filter: drop-shadow(0 1px 6px #e6b36188); }
 .portals {
   position: absolute;
   z-index: 3;
@@ -164,10 +143,10 @@
   width: 18.45%;
   min-height: 5.8%;
   padding: .6em .75em;
-  border: 1px solid #fff0bc;
+  border: 1px solid transparent;
   border-radius: 13px;
-  background: linear-gradient(180deg, #ffe9b4, #ddb06a 60%, #e6bd77);
-  box-shadow: 0 0 20px #e9b36c99, inset 0 2px #fff9e7, 0 5px 13px #0007;
+  background: transparent;
+  box-shadow: none;
   color: #241a11;
   display: flex;
   align-items: center;
@@ -182,6 +161,9 @@
 .enter:hover, .enter:focus-visible { filter: brightness(1.12); box-shadow: 0 0 23px #f3cd89; }
 .enter:focus-visible { outline: 3px solid #fff9d9; outline-offset: 4px; }
 .arrow { font-size: 1.3em; line-height: 1; }
+/* The desktop photograph contains the CTA: retain only its accessible click target. */
+.enter span { opacity: 0; }
+.enter:hover { background: rgb(241 193 113 / .10); box-shadow: 0 0 15px #ffe0a066; }
 
 /* The mobile original is a coherent 9:16 scene with four smaller portals
    integrated into the same rotunda (not four detached image cards). */
@@ -198,9 +180,7 @@
     background: #081726;
   }
   .plate,
-  .portals,
-  .podiumScreen,
-  .podiumEmblem { display: none; }
+  .portals { display: none; }
   .mobileUnderlay {
     display: block;
     position: absolute;
@@ -258,17 +238,6 @@
     -webkit-tap-highlight-color: transparent;
     transition: filter 220ms ease-out, transform 220ms ease-out;
   }
-  .mobileHotspot span {
-    margin-top: 4%;
-    padding: 4px 3px;
-    border-radius: 5px;
-    color: #fff3d6;
-    background: rgb(4 21 42 / .78);
-    text-shadow: 0 1px 4px #03101e;
-    font-size: clamp(10px, 2.7vw, 13px);
-    font-weight: 700;
-    line-height: 1.2;
-  }
   .mobileHotspot[data-mobile-portal="curricolo"] {
     left: 7.1%; top: 39.3%; width: 21.5%; height: 20.6%;
   }
@@ -290,11 +259,13 @@
     transform: translateY(-2px);
   }
   .brandScreen {
+    display: block;
     width: 100%;
     height: 14%;
     background: linear-gradient(180deg,#061426f4,#061426dd 62%,transparent);
   }
   .brand {
+    display: flex;
     left: 4%;
     top: max(2%, env(safe-area-inset-top));
     gap: 8px;
@@ -304,17 +275,20 @@
   .brandDivider { margin: 0 2px; }
   .brandSubtitle { font-size: clamp(9px, 2.8vw, 13px); }
   .enter {
+    border-color: #fff0bc;
+    background: linear-gradient(180deg, #ffe9b4, #ddb06a 60%, #e6bd77);
+    box-shadow: 0 0 20px #e9b36c99, inset 0 2px #fff9e7, 0 5px 13px #0007;
     bottom: calc(2.2% + env(safe-area-inset-bottom));
     width: min(74vw, 320px);
     min-height: 49px;
     border-radius: 14px;
     font-size: clamp(16px, 4.5vw, 22px);
   }
+  .enter span { opacity: 1; }
 }
 @media (orientation: portrait) and (max-width: 350px) {
   .brandSubtitle { font-size: 9px; }
   .brandDivider { height: 1.35em; }
-  .mobileHotspot span { font-size: 10px; }
 }
 /* A rotated phone keeps the same panoramic composition as desktop;
    only the controls are moved away from the clipped edges. */
@@ -338,7 +312,6 @@
     background: transparent;
     box-shadow: none;
   }
-  .enter span { opacity: 0; }
   .enter:focus-visible { outline: 3px solid #ffe4aa; }
   .enter:hover { background: rgb(241 193 113 / .10); box-shadow: 0 0 15px #ffe0a066; }
 }
