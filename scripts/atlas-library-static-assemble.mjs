@@ -34,7 +34,7 @@ for(const file of sources)copyFileSync(join("scripts","atlas-library-static",fil
 for(const [src,dest] of [["scene.html","scene.html"],["native-manifest.json","native-manifest.json"],["native-build-receipt.json","native-build-receipt.json"],["THREE-LICENSE.txt","THREE-LICENSE.txt"]]){
   copyFileSync(join(nativeDir,src),join(destination,dest));
 }
-writeFileSync(join(exportDir,"_headers"),"/*\n  X-Robots-Tag: noindex, nofollow, noarchive\n  Referrer-Policy: no-referrer\n  X-Content-Type-Options: nosniff\n\n/atlas-gateway-native/*\n  Cache-Control: public, max-age=31536000, immutable\n");
+writeFileSync(join(exportDir,"_headers"),"/*\n  X-Robots-Tag: noindex, nofollow, noarchive\n  Referrer-Policy: no-referrer\n  X-Content-Type-Options: nosniff\n\n/biblioteca/*\n  Cache-Control: no-cache, must-revalidate\n\n/atlas-gateway-native/*\n  Cache-Control: public, max-age=31536000, immutable\n");
 writeFileSync(join(exportDir,"robots.txt"),"User-agent: *\nDisallow: /\n");
 writeFileSync(join(exportDir,"EXACT_HEAD.txt"),head+"\n");
 writeFileSync(join(exportDir,"PREVIEW-MANIFEST.json"),JSON.stringify({exactHead:head,channel:"artifact-only",studentAuthorized:false,
