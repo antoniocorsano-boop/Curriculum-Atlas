@@ -92,3 +92,16 @@ L'ideatore ha proposto una soluzione a **fondale fotografico/architettonico 2D c
 - [ATLAS-GATEWAY-HYBRID-SCHEMA-01.svg](./ATLAS-GATEWAY-HYBRID-SCHEMA-01.svg): schema vettoriale apribile e riutilizzabile.
 
 **Stato:** sola ipotesi; nessun codice di prodotto ibrido, nessun fondale modificato, nessuna revisione ART-DIR-02 approvata. Non cancellare il master 3D/SEED-03, conservare distinte le due alternative finché la qualità visiva, navigazione e compatibilità non saranno confrontate. L'immagine originale ART-DIR-02 resta necessaria e attualmente non acquisita in byte nel deposito produttivo.
+
+
+## Ingresso web effettivamente implementato (20 novembre 2026)
+
+Il percorso ibrido non è più soltanto una tavola o un esperimento con quattro pulsanti non collegati. La **radice reale `/` dell'app Next.js** è stata trasformata in una **pagina scenografica a schermo pieno**, dotata di quattro destinazioni effettive, CTA Esplora, marchio A e microinterazioni. La realizzazione è nel ramo di sviluppo collegato alla PR #152, non integrato in main né pubblicato.
+
+- [Documento di implementazione, fonti, identificativi delle immagini e prove browser](./ATLAS-GATEWAY-ENTRY-WEB-01.md)
+- [Codice della pagina](../../src/app/page.tsx), [componente interattivo](../../src/features/atlas-gateway/atlas-entry.tsx), [stili responsive](../../src/features/atlas-gateway/atlas-entry.module.css)
+- [5 risorse binarie effettivamente versionate](../../public/atlas-gateway-entry/plate-prova.jpg), derivate dalla dimostrazione precedente (non dalla fotografia canonica ART-DIR-02)
+- [GitHub Actions — prove reali desktop/mobile PASS](https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/44811398372)
+- [Drive — archivio permanente delle schermate del navigatore](https://drive.google.com/file/d/14xziEYMMsBjGeHUcblYRbJObdZKpxysN/view)
+
+**Non dichiarare conclusa la qualifica artistica:** il fondale usa inpainting da una generazione dimostrativa, i portali sono ancora porzioni di immagine trasformate via CSS, non mesh. Il sistema è tecnicamente utilizzabile per la navigazione interna alla prova, ma richiede approvazione dell'ideatore e sorgente ART-DIR-02 definitiva prima di pubblicare agli studenti.
