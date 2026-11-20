@@ -25,7 +25,7 @@ for(const button of panel.querySelectorAll("button")){
   button.style.cssText="min-height:44px;padding:7px 11px;border:1px solid #d2b778;background:#203a4a;color:white;border-radius:8px;cursor:pointer;font:inherit";
 }
 const button=id=>panel.querySelector("#"+id);
-let channel=null,frame=null,ready=false,started=false,lastReport="";
+let channel=null,frame=null,ready=false,started=false,lastReport="",readyAtMs=null;
 const setState=value=>button("diag-state").textContent=value;
 function send(type){
   if(!frame?.contentWindow||!channel)return;
@@ -59,7 +59,7 @@ function report(data){
   const out={
     tipo:"Misura locale Biblioteca Atlas",
     nota:"Frequenza dei disegni inviati, NON FPS GPU o fotogrammi effettivamente visualizzati.",
-    caricamento_sala_ms:Math.round(window.performance.now()),
+    tempo_fino_a_sala_pronta_ms:readyAtMs,
     durata_prova_ms:data.durationMs,
     fotogrammi_inviati:data.submittedFrames,
     frequenza_invio_media_fps:data.submissionRate,
@@ -81,7 +81,7 @@ function report(data){
 }
 function handleMessage(data){
   if(data.type==="atlas-3d-ready"){
-    ready=true;button("diag-start").disabled=false;setState("Biblioteca pronta. Premi «Avvia misura».");
+    ready=true;readyAtMs=Math.round(performance.now());button("diag-start").disabled=false;setState("Biblioteca pronta. Premi «Avvia misura».");
   }else if(data.type==="atlas-3d-error"){
     ready=false;started=false;button("diag-start").disabled=true;
     button("diag-stop").disabled=true;setState("La scena 3D non è disponibile.");
