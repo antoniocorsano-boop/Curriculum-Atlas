@@ -273,6 +273,36 @@
       "contains": "antoniocorsano-boop/Curriculum-Atlas",
       "reason": "Identificativo tecnico esatto della fonte nei riferimenti ASI-01; nessuna modifica al lessico di dominio.",
       "category": "historical-evidence"
+    },
+    {
+      "path": "docs/atlas-gateway/ART-REFERENCE-MANIFEST.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository address is a stable technical link; ART-DIR-02 prose uses the canonical curricolo vocabulary."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-ART-DIRECTION-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository address is a stable technical link; ART-DIR-02 prose uses the canonical curricolo vocabulary."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-ART-DIRECTION-02.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository address is a stable technical link; ART-DIR-02 prose uses the canonical curricolo vocabulary."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-PRODUCTION-WORKFLOW-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository address is a stable technical link; ART-DIR-02 prose uses the canonical curricolo vocabulary."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-CLOSED-LOOP-02.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository address is a stable technical link; ART-DIR-02 prose uses the canonical curricolo vocabulary."
     }
   ]
 }
