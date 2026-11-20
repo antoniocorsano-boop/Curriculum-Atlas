@@ -1,0 +1,103 @@
+name: Atlas — AWC-F second-world transfer
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'ops/atlas-scene-package/awc-museo-zero-transfer.json'
+      - 'scripts/atlas-world-transfer.py'
+      - 'scripts/atlas-world-museo-artistic.py'
+      - 'scripts/atlas-world-museo-webgl.mjs'
+      - 'scripts/verify-atlas-world-transfer.py'
+      - '.github/workflows/atlas-world-transfer.yml'
+      - 'docs/atlas-gateway/ASC-01-AWC-CONSOLIDAMENTO.md'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-awc-f-${{ github.event.pull_request.head.ref }}
+  cancel-in-progress: true
+jobs:
+  second-world:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/asc-world-composer-consolidation' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: e1dad70bbe2e05d9ab023c8af18c748adc5e27ed
+          path: museo-source
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: abfb83b9c9cf17d5c3e46c79eaa7ac9dab96e3cc
+          path: producer
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - name: Verify immutable sources and source contracts
+        run: |
+          set -euo pipefail
+          test "$(git -C museo-source rev-parse HEAD)" = e1dad70bbe2e05d9ab023c8af18c748adc5e27ed
+          test "$(git -C producer rev-parse HEAD)" = abfb83b9c9cf17d5c3e46c79eaa7ac9dab96e3cc
+          python3 -m py_compile scripts/atlas-world-transfer.py scripts/atlas-world-museo-artistic.py scripts/verify-atlas-world-transfer.py
+          python3 scripts/test-atlas-world-compose.py
+          node --check scripts/atlas-world-museo-webgl.mjs
+          bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+      - name: Recover immutable AWC-E evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/awc-f"
+          curl --fail --silent --show-error --location --retry 3 --max-time 180 --proto '=https' --proto-redir '=https' -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/14561219779/zip" -o "$RUNNER_TEMP/awc-f/e.zip"
+          printf '%s  %s\n' 85ebd1ed25835b2c7724ad9266eb3edc47445e949f0b7645064d8527fcef3548 "$RUNNER_TEMP/awc-f/e.zip" | sha256sum --strict --check
+      - name: Resolve transfer using the existing AWC/ASD contracts
+        run: |
+          python3 scripts/atlas-world-transfer.py --story museo-source/src/features/escape-room/MuseoZeroEscapeRoom.tsx --prior "$RUNNER_TEMP/awc-f/e.zip" --out "$RUNNER_TEMP/awc-f"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Prepare existing WebGL engine and Chromium
+        run: |
+          cd producer
+          pnpm install --frozen-lockfile
+          node scripts/build-atlas-gateway-local.mjs "$RUNNER_TEMP/awc-f/engine"
+          pnpm exec playwright install --with-deps chromium
+          cp ../scripts/atlas-world-museo-webgl.mjs scripts/.awc-f-museo.mjs
+          node --check scripts/.awc-f-museo.mjs
+      - name: Generate actual Museo Zero artistic derivative
+        run: |
+          "$BLENDER_BIN" --background --factory-startup --disable-autoexec --python-exit-code 1 --python scripts/atlas-world-museo-artistic.py -- "$RUNNER_TEMP/awc-f"
+      - name: Generate actual Museo Zero browser derivative
+        run: |
+          node producer/scripts/.awc-f-museo.mjs "$RUNNER_TEMP/awc-f" "$RUNNER_TEMP/awc-f" "$RUNNER_TEMP/awc-f/engine/three.min.js"
+      - name: Independently validate second-world reuse and rollback
+        run: |
+          python3 scripts/verify-atlas-world-transfer.py --out "$RUNNER_TEMP/awc-f" --story museo-source/src/features/escape-room/MuseoZeroEscapeRoom.tsx --prior "$RUNNER_TEMP/awc-f/e.zip" --revision "$ATLAS_EXACT_HEAD"
+          git diff --exit-code
+          git -C museo-source diff --exit-code
+          git -C producer diff --exit-code
+      - name: Preserve transfer evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-awc-f-museo-zero-transfer
+          path: |
+            ${{ runner.temp }}/awc-f/transfer-plan.json
+            ${{ runner.temp }}/awc-f/museo-*.json
+            ${{ runner.temp }}/awc-f/museo-*.png
+            ${{ runner.temp }}/awc-f/transfer-report.json
+          retention-days: 7
+          if-no-files-found: warn
