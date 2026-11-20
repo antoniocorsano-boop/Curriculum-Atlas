@@ -3,13 +3,13 @@
 
 **Data:** 20 novembre 2026. **Esito:** **NO-GO al ciclo di produzione artistica completo**; **GO alla chiusura mirata dei prerequisiti**.
 **Documenti verificati:** [ART-DIR-02](./ATLAS-GATEWAY-ART-DIRECTION-02.md), [ART-PROD-01](./ATLAS-GATEWAY-PRODUCTION-WORKFLOW-01.md), [FLOW-02](./ATLAS-GATEWAY-CLOSED-LOOP-02.md), [MASTER-BLENDER-01](./MASTER-BLENDER-01.md).  
-**Lavorazioni in corso:** [PR #152](https://github.com/antoniocorsano-boop/Curriculum-Atlas/pull/152) aperta in bozza, basata sulla PR #148.
+**Lavorazioni in corso:** PR #152 aperta in bozza, basata sulla PR #148.
 
 ### Sintesi verificata
 - Le specifiche artistiche, il processo e il workflow tecnico **esistono**. Le verifiche di base della PR #152 all'ultimo HEAD esaminato sono **PASS** (incluse prove WebGL), ma sono relative alla piattaforma tecnica.
 - L'**immagine ad alta risoluzione ART-DIR-02** esiste nei file della conversazione; il file JPEG reinviato mostra la stessa composizione, con differenza media per canale di circa **1,317/255** dopo il confronto a 384×216. La scelta canonica è il **PNG 1672×941** SHA-256 `7b3ffb9a355b89057acea02489020ad43d871e10b6cf5bbb29f8769ff3073336`. Verifica dettagliata nel [registro immagine](./ART-REFERENCE-MANIFEST.md). **Il file PNG non è ancora depositato nel percorso GitHub atteso.**
 - Il file `visual-factory/atlas-gateway/source/atlas-foyer-master.blend` non esiste nel ramo; l'**ultimo .blend prodotto dal generatore procedurale precedente** è solo una prova della filiera, **non** un master artistico approvato.
-- Il primo [run FLOW-02 #44759502412](https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/44759502412) è **FAIL/BLOCKED_INPUT** in preflight per ingressi mancanti; tutte le fasi Cycles/confronto/export dell'effettivo master sono **SKIPPED**, quindi **non sono state collaudate nella filiera finale**.
+- Il primo run FLOW-02 #44759502412 è **FAIL/BLOCKED_INPUT** in preflight per ingressi mancanti; tutte le fasi Cycles/confronto/export dell'effettivo master sono **SKIPPED**, quindi **non sono state collaudate nella filiera finale**.
 - Le quattro rotte Atlas `/curricolo/`, `/esplora/`, `/percorsi/` ed `/esperienze/` hanno pagine nel sorgente attuale. La loro presenza non è un collaudo del percorso artistico WebGL.
 
 ## 1. Bloccanti assoluti (P0)
