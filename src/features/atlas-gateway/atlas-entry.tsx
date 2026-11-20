@@ -6,7 +6,7 @@ import styles from "./atlas-entry.module.css";
 
 /**
  * ATLAS-GATEWAY-HYBRID-ENTRY-01
- * Four true destination links over the fullscreen image stage.
+ * Responsive full-screen Atlas gateway: desktop uses the panorama and four\n * CSS-tilting panels; portrait uses an integrated 9:16 architectural artwork\n * and four accessible, calibrated HTML link hotspots.
  * The photographic cuts are a preliminary 2.5D visual implementation,
  * not the final ART-DIR-02 approved image and not WebGL 3D meshes.
  */
@@ -85,6 +85,34 @@ export function AtlasEntry() {
             </Link>
           ))}
         </nav>
+
+        {/* Portrait uses a single architectural composition, not four detached cards.
+            Transparent links are calibrated to the four portals already in the mobile artwork. */}
+        <div className={styles.mobileUnderlay} aria-hidden="true" />
+        <div className={styles.mobileComposition}>
+          <img
+            className={styles.mobileImage}
+            src="./atlas-gateway-entry/mobile-atrium-01.png"
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+            width="948"
+            height="1659"
+          />
+          <nav className={styles.mobileHotspots} aria-label="Accessi Atlas nell'atrio verticale">
+            {portals.map((portal) => (
+              <Link
+                key={portal.id}
+                href={portal.href}
+                data-mobile-portal={portal.id}
+                className={styles.mobileHotspot}
+                aria-label={portal.label + " — " + portal.detail}
+              >
+                <span>{portal.label}</span>
+              </Link>
+            ))}
+          </nav>
+        </div>
         <Link href="/esplora/" className={styles.enter} aria-label="Entra in Atlas: esplora la conoscenza">
           <span>Entra in Atlas</span><span aria-hidden="true" className={styles.arrow}>→</span>
         </Link>
