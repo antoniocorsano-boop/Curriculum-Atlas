@@ -18,7 +18,7 @@
  // AREA watts do not convert directly to Three SpotLight intensity.
  if(NATIVE_LIGHTING.crownWashCount!==8||NATIVE_LIGHTING.crownWashWatts?.length!==8||NATIVE_LIGHTING.shelfWashWatts?.length!==3)throw Error("Atlas source lighting contract changed");
  const sectorLighting=[];
- const crownAngles=innerWidth<=650?[0,2,4,6]:[0,1,2,3,4,5,6,7];
+ const crownAngles=innerWidth<=650?[2,6]:[0,1,2,3,4,5,6,7];
  for(const i of crownAngles){
    const t=2*Math.PI*i/8,w=NATIVE_LIGHTING.crownWashWatts[i];
    const spot=new THREE.SpotLight(0xffd8ab,.72*w/56,3.7,Math.PI/3,.72,1.45);
@@ -30,7 +30,8 @@
  // shaders run 9 rather than 36 dynamic shelf emitters.
  const crownCount=sectorLighting.length;
  const shelfAngles=[-Math.PI/2,0,Math.PI/2];
- for(let level=0;level<3;level++)for(const t of shelfAngles){
+ const shelfLevels=innerWidth<=650?[1]:[0,1,2];
+ for(const level of shelfLevels)for(const t of shelfAngles){
    const w=NATIVE_LIGHTING.shelfWashWatts[level];
    const spot=new THREE.SpotLight(0xffddbd,.42*w/61,3.6,Math.PI/2.5,.77,1.55);
    spot.position.set(9.65*Math.sin(t),2.55+level*3.63,-9.65*Math.cos(t));
@@ -45,7 +46,7 @@
  }
  groupMap.bays.traverse(o=>{if(o.isMesh)o.receiveShadow=true});
  renderer.shadowMap.needsUpdate=true;
- scene.userData.atlasLighting={mode:"web-architectural-v1",crownCount:crownCount,shelfCount:sectorLighting.length-crownCount,shadowMapSize:sun.shadow.mapSize.x,oneTimeShadows:true};
+ scene.userData.atlasLighting={mode:"web-architectural-lite-v2",crownCount:crownCount,shelfCount:sectorLighting.length-crownCount,shadowMapSize:sun.shadow.mapSize.x,oneTimeShadows:true,materialModel:innerWidth<=650?"original-maps-scalar":"microstructure",mobileTier:innerWidth<=650?"balanced":"desktop"};
  `+hasFinal);
     // The ALS button animates decorative point sprites, not architectural lights.
     source=once(source,'<button id="atlas-astral-toggle" type="button" aria-pressed="false">Anima luci</button>',
