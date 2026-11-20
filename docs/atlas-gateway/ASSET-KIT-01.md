@@ -6,6 +6,7 @@
 **Stato dell'esecuzione:** INVENTARIO DA COMPLETARE — nessun asset esterno approvato o importato da questo documento.  
 **Riferimento artistico superiore:** [ART-DIR-02](./ATLAS-GATEWAY-ART-DIRECTION-02.md).  
 **Master:** [MASTER-BLENDER-01](./MASTER-BLENDER-01.md).  
+**Progetto geometrico precedente e vincolante rispetto alla scelta delle librerie:** [IMAGE-GEOMETRY-01](./IMAGE-GEOMETRY-01.md). Prima ricavare prospettiva, pianta, sezioni e proporzioni dall'immagine; solo dopo selezionare gli asset da adattare. L'asset non determina l'architettura.  
 **Piano:** [ART-PROD-01](./ATLAS-GATEWAY-PRODUCTION-WORKFLOW-01.md).  
 **Prontezza:** [PREPRODUCTION-READINESS-01](./PREPRODUCTION-READINESS-01.md), requisiti P0-CAP, P1-ASSETS, P1-BLENDER e P1-RUNTIME.  
 **Governance:** [ATLAS-GATEWAY-01 #151](https://github.com/antoniocorsano-boop/Curriculum-Atlas/issues/151), [AWC-DELIVERY-01 #354](https://github.com/antoniocorsano-boop/trama-ecosistema/issues/354).
