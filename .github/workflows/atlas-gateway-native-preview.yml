@@ -272,7 +272,7 @@ jobs:
           test -n "$CLOUDFLARE_API_TOKEN" && test -n "$CLOUDFLARE_ACCOUNT_ID"
           npx --yes wrangler@latest pages deploy preview \
             --project-name=atlas-pr-preview \
-            --branch="library-${ATLAS_EXACT_HEAD:0:12}" \
+            --branch="library-review" \
             --commit-hash="$ATLAS_EXACT_HEAD" \
             --commit-message="Atlas Library browser preview: studentAuthorized=false" | tee "$RUNNER_TEMP/atlas-library-deploy.log"
           URL="$(grep -Eo 'https://[^[:space:]]+\.pages\.dev' "$RUNNER_TEMP/atlas-library-deploy.log" | tail -1)"
