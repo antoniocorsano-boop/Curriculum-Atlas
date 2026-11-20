@@ -52,7 +52,7 @@ try{
     });
     page.on("pageerror",e=>report.errors.push(String(e)));
     page.on("console",m=>{if(m.type()==="error")report.errors.push(m.text())});
-    await page.goto(origin+"/biblioteca/",{waitUntil:"domcontentloaded"});
+    await page.goto(origin+"/biblioteca/"+(dim.name==="phone"?"?diagnostica=1":""),{waitUntil:"domcontentloaded"});
     await page.waitForFunction(()=>document.querySelector("#status")?.textContent?.startsWith("Biblioteca pronta"),null,{timeout:90000});
     assert.equal(manifestReads,1,"the signed manifest must be fetched once per scene startup");
     assert.equal(compressedRequests.size,7,"seven lossless compressed resources must be served");
@@ -65,6 +65,7 @@ try{
       assert(phases.includes("decode:bays"),"mobile must report shelving decoding stage");
       report.progressivePreview=phases;
     }
+    if(dim.name==="desktop")assert.equal(await page.locator("#atlas-diag").count(),0,"diagnostic must be invisible by default");
     const frame=page.frameLocator("iframe");
     const result=await frame.locator("canvas").evaluate(el=>{
       const m=nativeMaterialBridge?.evidence()??[];
@@ -121,6 +122,13 @@ try{
       const nativeStatus=await frame.locator("#native-status").evaluate(el=>({hidden:el.hidden,display:getComputedStyle(el).display}));
       assert.equal(nativeStatus.hidden,true,"ready scene must hide the temporary loading overlay");
       assert.equal(nativeStatus.display,"none","no loading overlay may remain visible after 3D ready");
+      // Local opt-in diagnostic: start, exercise actual native controls,
+      // receive report without network telemetry, then hide its panel
+      // so that product screenshots remain visually comparable.
+      const diagnose=page.locator("#atlas-diag");
+      assert.equal(await diagnose.count(),1,"opt-in diagnostic should appear only with query flag");
+      await page.locator("#diag-start").click();
+      await diagnose.evaluate(el=>el.style.display="none");
       const panel=frame.locator("#atlas-controls-panel");
       assert.equal(await panel.count(),1,"mobile camera panel must exist");
       assert.equal(await panel.evaluate(el=>el.open),false,"mobile camera panel must initially be collapsed");
@@ -143,6 +151,17 @@ try{
       assert.equal(await frame.locator("canvas").evaluate(()=>ready&&!closing),true,"camera controls must preserve the live scene");
       await panel.locator("summary").click();
       assert.equal(await panel.evaluate(el=>el.open),false,"mobile controls must close");
+      await diagnose.evaluate(el=>el.style.display="");
+      await page.locator("#diag-stop").click();
+      await page.waitForFunction(()=>document.querySelector("#diag-result")?.value.includes("fotogrammi_inviati"),null,{timeout:10000});
+      const localReport=await page.locator("#diag-result").inputValue();
+      const localData=JSON.parse(localReport);
+      assert(localData.fotogrammi_inviati>=2,"diagnostic must observe actual render submissions");
+      assert.equal(localData.misurazione_tempo_gpu,"non disponibile","CPU submissions must not be mistaken for GPU FPS");
+      assert.equal(localData.contenuto_personale,"nessuno");
+      report.localDiagnostic={submissions:localData.fotogrammi_inviati,p95Ms:localData.intervallo_invio_p95_ms,
+        gpu:localData.misurazione_tempo_gpu,bytesSentToExternalEndpoints:0};
+      await diagnose.evaluate(el=>el.style.display="none");
     }
     await page.screenshot({path:join(out,dim.name+"-library.png")});
     if(dim.name==="phone"){
