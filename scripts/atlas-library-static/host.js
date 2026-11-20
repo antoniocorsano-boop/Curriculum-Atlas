@@ -8,7 +8,7 @@ const setStatus=text=>status.textContent=text;
 const hex=bytes=>Array.from(new Uint8Array(bytes),v=>v.toString(16).padStart(2,"0")).join("");
 async function hash(bytes){return hex(await crypto.subtle.digest("SHA-256",bytes));}
 async function readFile(url){
-  const response=await fetch(url,{credentials:"omit",redirect:"error",cache:"no-store"});
+  const response=await fetch(url,{credentials:"omit",redirect:"error",cache:url.startsWith("/atlas-gateway-native/")?"force-cache":"no-store"});
   if(!response.ok||response.type==="opaque"||!response.body)throw Error("Risorsa locale non disponibile");
   return new Uint8Array(await response.arrayBuffer());
 }
@@ -89,7 +89,7 @@ async function start(){
       }
       if(data.type==="atlas-3d-ready"){
         ready=true;window.clearTimeout(timeout);
-        setStatus("Biblioteca pronta. Esplora la sala oppure scegli un ambiente.");
+        setStatus("Biblioteca pronta · scegli un accesso o esplora.");
       }else if(data.type==="atlas-3d-error"){
         fallback("Il motore grafico non è disponibile. Usa gli accessi della biblioteca.");
       }else if(data.type==="atlas-open"&&ready&&typeof data.id==="string"&&["curricolo","esperienze","studio"].includes(data.id)){
