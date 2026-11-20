@@ -1,0 +1,105 @@
+name: "ATLAS ART-DIR-02 — Filiera artistica completa"
+on:
+  push:
+    branches: [work/atlas-gateway-01-foyer]
+    paths:
+      - "visual-factory/atlas-gateway/**"
+      - "docs/atlas-gateway/ART-DIR-02-APPROVAL.json"
+      - "docs/atlas-gateway/ART-REFERENCE-MANIFEST.md"
+      - "docs/atlas-gateway/ATLAS-GATEWAY-PRODUCTION-WORKFLOW-01.md"
+      - "scripts/atlas-gateway-production/**"
+      - ".github/workflows/atlas-art-dir-02-production.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: atlas-art-dir02-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  closed-loop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      ATLAS_ART_REFERENCE: "visual-factory/atlas-gateway/reference/atlas-hero-approved.png"
+      ATLAS_ART_MASTER_SOURCE: "visual-factory/atlas-gateway/source/atlas-foyer-master.blend"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check pipeline scripts
+        run: |
+          node --check scripts/atlas-gateway-production/preflight.mjs
+          node --check scripts/atlas-gateway-production/art-approval.mjs
+          python3 -m py_compile scripts/atlas-gateway-production/render-master.py
+          python3 -m py_compile scripts/atlas-gateway-production/compare-render.py
+      - name: Source and version preflight — no generated placeholders
+        run: node scripts/atlas-gateway-production/preflight.mjs
+      - name: Restore immutable Cycles evidence for same master
+        id: render-cache
+        uses: actions/cache@v4
+        with:
+          path: evidence/atlas-art-02/render/
+          key: atlas-art-dir02-render-v1-${{ runner.os }}-${{ hashFiles('visual-factory/atlas-gateway/source/*.blend', 'scripts/atlas-gateway-production/render-master.py') }}
+      - name: Install open-source Blender and image tools
+        if: steps.render-cache.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy python3-pil
+          blender --version | head -2
+      - name: Create real 3D master views and glTF export
+        if: steps.render-cache.outputs.cache-hit != 'true'
+        run: |
+          blender --background --factory-startup --threads 2 --python-exit-code 1 --python scripts/atlas-gateway-production/render-master.py -- \
+            --master "$ATLAS_ART_MASTER_SOURCE" \
+            --out evidence/atlas-art-02/render
+      - name: Install image comparison library on reused evidence
+        if: steps.render-cache.outputs.cache-hit == 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends python3-pil
+      - name: Produce reference-versus-Cycles and side/mobile reports
+        run: |
+          /usr/bin/python3 scripts/atlas-gateway-production/compare-render.py \
+            "$ATLAS_ART_REFERENCE" evidence/atlas-art-02/render evidence/atlas-art-02/comparison
+      - name: Artistic release gate — explicit approval of exact master
+        run: node scripts/atlas-gateway-production/art-approval.mjs
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install existing Atlas dependencies and browser
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+      - name: Export actual Atlas application (not four fake routes)
+        env:
+          ATLAS_PREVIEW_ROOT_SCOPED: "true"
+        run: pnpm build
+      - name: Attach signed art master to existing Three.js runtime
+        env:
+          ATLAS_GATEWAY_FOYER_PREVIEW: "true"
+          ATLAS_FOYER_ART_MASTER: "evidence/atlas-art-02/render/foyer-authoring.glb"
+        run: |
+          node scripts/build-atlas-gateway-foyer.mjs out
+          node -e 'const f=require("./out/atrio/visual-manifest.json");if(!f.available||!f.sha256)process.exit(1)'
+      - name: Test real WebGL startup and destination behavior
+        env:
+          ATLAS_FOYER_EXPECT_ART: "true"
+        run: node scripts/test-atlas-gateway-foyer-browser.mjs out evidence/atlas-art-02/webgl
+      - name: Production chain handoff (not public release)
+        run: |
+          test -f evidence/atlas-art-02/render/hero-cycles.png
+          test -f evidence/atlas-art-02/comparison/reference-vs-blender.png
+          test -f evidence/atlas-art-02/webgl/desktop-foyer.png
+          test -f evidence/atlas-art-02/webgl/phone-foyer.png
+          echo "Atlas: verified 3D chain, ART-DIR-02 approved master and real app export"
+          echo "Android physical QA and release authorization are still separate requirements"
+      - name: Always preserve artwork, blockers and checks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-evidence-${{ github.run_number }}
+          path: evidence/atlas-art-02/
+          retention-days: 30
+          if-no-files-found: warn
