@@ -3,7 +3,8 @@
 
 **Decisione dell'ideatore:** 20 novembre 2026.  
 **Stato:** **MANDATO ADOTTATO; RILIEVO E MODELLO GEOMETRICO ANCORA DA ESEGUIRE.**  
-**Riferimento vincolante:** [ART-DIR-02](./ATLAS-GATEWAY-ART-DIRECTION-02.md) e [ART-REFERENCE-MANIFEST](./ART-REFERENCE-MANIFEST.md).  
+**Riferimento vincolante:** [ART-DIR-02](./ATLAS-GATEWAY-ART-DIRECTION-02.md) e [ART-REFERENCE-MANIFEST](./ART-REFERENCE-MANIFEST.md).
+**Strumento riusabile formalmente archiviato:** [ATLAS-ATRIUM-COMPOSER-KIT-01](./ATLAS-ATRIUM-COMPOSER-KIT-01.md), comprensivo di prompt integrale, specifica geometrica, parametri iniziali, verifiche e percorso di realizzazione.  
 **Master Blender:** [MASTER-BLENDER-01](./MASTER-BLENDER-01.md).  
 **Assemblaggio/riuso:** [ASSET-KIT-01](./ASSET-KIT-01.md).  
 **Piano esecutivo:** [ART-PROD-01](./ATLAS-GATEWAY-PRODUCTION-WORKFLOW-01.md).
