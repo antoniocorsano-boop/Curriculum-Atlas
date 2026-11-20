@@ -97,11 +97,72 @@ const lighting=[
 ].join("\n");
 const lightU={lightPos:{value:lp},lightColor:{value:lc},eye:{value:new T.Vector3()}};
 const targetMat=new T.ShaderMaterial({uniforms:{...u,...lightU},side:T.DoubleSide,vertexShader:vertex,fragmentShader:sampler+"\n"+lighting+"\nvoid main(){vec3 n=normalize(vN)*(gl_FrontFacing?1.0:-1.0),v=normalize(eye-vP);gl_FragColor=vec4(clamp(diffuse()+lightSpec(vP,n,v,roughness(),vec3(.04)),0.0,8.0),1.0);}"});
-const geom=new T.BufferGeometry(),p=[],n=[],c=[],props=[];
-for(const obj of bay.objects){if(obj.object===bay.target)continue;for(let i=obj.firstVertex;i<obj.firstVertex+obj.vertexCount;i++){const k=i*11;p.push(...rows.slice(k,k+3));n.push(...rows.slice(k+3,k+6));c.push(...rows.slice(k+6,k+9));props.push(rows[k+9],rows[k+10]);}}
-geom.setAttribute("position",new T.Float32BufferAttribute(p,3));geom.setAttribute("normal",new T.Float32BufferAttribute(n,3));geom.setAttribute("baseColor",new T.Float32BufferAttribute(c,3));geom.setAttribute("properties",new T.Float32BufferAttribute(props,2));
+const BAKE_OBJECT="Library bay 04-0-Bay Walnut";
+function geometryFor(predicate){
+  const g=new T.BufferGeometry(),p=[],n=[],c=[],props=[];
+  for(const obj of bay.objects){
+    if(!predicate(obj))continue;
+    for(let i=obj.firstVertex;i<obj.firstVertex+obj.vertexCount;i++){
+      const k=i*11;
+      p.push(...rows.slice(k,k+3));n.push(...rows.slice(k+3,k+6));
+      c.push(...rows.slice(k+6,k+9));props.push(rows[k+9],rows[k+10]);
+    }
+  }
+  g.setAttribute("position",new T.Float32BufferAttribute(p,3));
+  g.setAttribute("normal",new T.Float32BufferAttribute(n,3));
+  g.setAttribute("baseColor",new T.Float32BufferAttribute(c,3));
+  g.setAttribute("properties",new T.Float32BufferAttribute(props,2));
+  return g;
+}
+const geom=geometryFor(obj=>obj.object!==bay.target&&(!BRIDGE||obj.object!==BAKE_OBJECT));
+const walnutGeom=BRIDGE?geometryFor(obj=>obj.object===BAKE_OBJECT):null;
+if(BRIDGE)check(bay.objects.filter(obj=>obj.object===BAKE_OBJECT).length===1&&walnutGeom.attributes.position.count===864*3,"bound Walnut inventory");
 const surround=new T.ShaderMaterial({side:T.DoubleSide,uniforms:lightU,vertexShader:"attribute vec3 baseColor;attribute vec2 properties;varying vec3 vP,vN,vC;varying vec2 vProps;void main(){vP=position;vN=normal;vC=baseColor;vProps=properties;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",fragmentShader:"varying vec3 vP,vN,vC;varying vec2 vProps;\n"+lighting+"\nvoid main(){vec3 n=normalize(vN)*(gl_FrontFacing?1.0:-1.0),v=normalize(eye-vP);vec3 rgb=vC*(1.0-vProps.y)*lightDiffuse(vP,n)+lightSpec(vP,n,v,vProps.x,mix(vec3(.04),vC,vProps.y));gl_FragColor=vec4(clamp(rgb,0.0,8.0),1.0);}"});
 const scene=new T.Scene();target.material=targetMat;scene.add(target,new T.Mesh(geom,surround));
+const walnutSource=BRIDGE?new T.Mesh(walnutGeom,surround):null;
+if(walnutSource)scene.add(walnutSource);
+let bakedRoot=null,bridgeInfo=null;
+if(BRIDGE){
+  check(T.GLTFLoader,"pinned GLTFLoader");
+  const manager=new T.LoadingManager();
+  manager.setURLModifier(url=>{check(url.startsWith("blob:"),"nonembedded glTF URI");return url;});
+  const loader=new T.GLTFLoader(manager);
+  loader.register(parser=>{
+    parser.textureLoader=new T.TextureLoader(parser.options.manager);
+    parser.textureLoader.setCrossOrigin(parser.options.crossOrigin);
+    return {name:"ATLAS_BRIDGE_embedded_image_decoder"};
+  });
+  const payload=await bytes("/baked.glb");
+  const gltf=await new Promise((res,rej)=>loader.parse(payload.buffer,"",res,rej));
+  check(gltf.parser.json.materials?.length===1&&gltf.parser.json.meshes?.length===1&&gltf.parser.json.images?.length===1,"one surface GLB");
+  check(gltf.parser.json.materials[0].emissiveTexture?.texCoord===1,"baked texture must use UV2");
+  const meshes=[];gltf.scene.traverse(x=>{if(x.isMesh)meshes.push(x)});
+  check(meshes.length===1,"one baked mesh");
+  const original=meshes[0],uv0=original.geometry.attributes.uv,uv2=original.geometry.attributes.uv2;
+  check(uv0&&uv2&&uv0.count===uv2.count&&original.material.emissiveMap,"embedded image and UV2");
+  const bakedGeometry=original.geometry.clone();
+  bakedGeometry.setAttribute("uv",uv2.clone());
+  const texture=original.material.emissiveMap;
+  texture.encoding=T.sRGBEncoding;texture.needsUpdate=true;
+  const bakedMaterial=new T.MeshBasicMaterial({map:texture,color:0xffffff,side:T.DoubleSide,toneMapped:false});
+  const bakedMesh=new T.Mesh(bakedGeometry,bakedMaterial);bakedMesh.matrixAutoUpdate=false;
+  original.updateMatrixWorld(true);bakedMesh.matrix.copy(original.matrixWorld);
+  bakedRoot=new T.Group();bakedRoot.rotation.x=Math.PI/2;
+  bakedRoot.add(bakedMesh);scene.add(bakedRoot);bakedRoot.updateMatrixWorld(true);bakedRoot.visible=false;
+  walnutGeom.computeBoundingBox();
+  const expected=walnutGeom.boundingBox,actual=new T.Box3().setFromObject(bakedRoot);
+  const boundDelta=Math.max(...[0,1,2].flatMap(i=>[
+    Math.abs(expected.min.getComponent(i)-actual.min.getComponent(i)),
+    Math.abs(expected.max.getComponent(i)-actual.max.getComponent(i))
+  ]));
+  const bakedTriangles=bakedGeometry.index?bakedGeometry.index.count/3:bakedGeometry.attributes.position.count/3;
+  check(bakedTriangles===864&&boundDelta<.001,"GLB spatial identity "+boundDelta+" triangles "+bakedTriangles);
+  bridgeInfo={object:BAKE_OBJECT,sourceTriangles:864,bakedTriangles,boundDelta,
+    uv2Count:uv2.count,originalMaterial:original.material.type,
+    bakedMaterial:bakedMaterial.type,textureSize:[texture.image.width,texture.image.height],
+    sourceOtherObjectsUnmodified:true,bakedMaterialUnaffectedByDynamicLights:true};
+}
+
 const lut=tex(lutRaw,a.lut.width,a.lut.height,T.UnsignedByteType);
 const shader=new T.ShaderMaterial({toneMapped:false,depthTest:false,depthWrite:false,uniforms:{source:{value:floatRT.texture},lut:{value:lut},size:{value:a.lut.size},atlas:{value:new T.Vector2(a.lut.width,a.lut.height)},shaperK:{value:a.lut.shaperK},limit:{value:a.lut.domain[1]}},vertexShader:"varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.0,1.0);}",fragmentShader:[
 "precision highp float;varying vec2 vUv;uniform sampler2D source,lut;uniform float size,shaperK,limit;uniform vec2 atlas;",
@@ -120,6 +181,17 @@ canvas.addEventListener("pointerdown",e=>{drag=[e.clientX,e.clientY];canvas.setP
 canvas.addEventListener("wheel",e=>{e.preventDefault();zoom=Math.max(.65,Math.min(1.5,zoom+e.deltaY*.001));render(canvas.width,canvas.height);},{passive:false});
 document.querySelector("#reset").onclick=()=>{yaw=0;pitch=.025;zoom=1;render(canvas.width,canvas.height);};
 window.__capture=capture;window.__resize=(cw,ch)=>render(cw,ch);
+if(BRIDGE){
+  let baked=false;
+  function show(value){
+    check(typeof value==="boolean","bridge mode");
+    baked=value;walnutSource.visible=!value;bakedRoot.visible=value;
+    document.querySelector("#baked-switch").setAttribute("aria-pressed",String(value));
+    render(canvas.width,canvas.height);
+  }
+  window.__bridge={show,info:bridgeInfo,get baked(){return baked;}};
+  document.querySelector("#baked-switch").addEventListener("click",()=>show(!baked));
+}
 render();window.__result={status:"PASS_BAY_BINDING",metrics,triangles:bay.triangles,objects:bay.objects.length,actualBay:true,sourceRoughness:true,agxLive:true,geometryBudgetOnly:true,artisticApproval:false,physicalDeviceQualified:false,publishable:false};
 })().catch(e=>window.__result={status:"FAIL",error:String(e),metrics:window.__metrics||null});`;
 const actualJS=js.replace("__ASC_BAKED_BRIDGE__",bridge?"true":"false");
