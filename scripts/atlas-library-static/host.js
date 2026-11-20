@@ -14,8 +14,10 @@ function adaptMobileScene(original){
     pointerDown='down={x:e.clientX,y:e.clientY,angle,tilt};canvas.setPointerCapture(e.pointerId)',
     pointerUp=' down=null;\n if(tap){',
     pointerCancel='canvas.addEventListener("pointercancel",()=>{down=null;scheduleFrame()},events);',
-    microMode='nativeMaterialBridge.apply("micro");';
-  for(const [name,anchor] of Object.entries({raster,resizeGuard,pointerDown,pointerUp,pointerCancel,microMode})){
+    microMode='nativeMaterialBridge.apply("micro");',
+    dragOriginal="canvas.addEventListener(\"pointermove\",e=>{\n if(!down||!ready)return;\n if(Math.hypot(e.clientX-down.x,e.clientY-down.y)<8)return;\n angle=THREE.MathUtils.clamp(down.angle+(down.x-e.clientX)*.002,-.30,.30);\n tilt=THREE.MathUtils.clamp(down.tilt+(e.clientY-down.y)*.008,-1.3,1.3);setCamera();render();\n},events);",
+    dragOptimized="let pendingDragFrame=0,lastDragPaint=0;\nfunction drawDrag(t){\n  pendingDragFrame=0;\n  if(!down||!ready||closing||document.hidden)return;\n  // Coalesce touch events: <=30 frames/s and never queue behind a GPU fence.\n  if(t-lastDragPaint<32||!animationSlot()){\n    pendingDragFrame=requestAnimationFrame(drawDrag);return;\n  }\n  lastDragPaint=t;render(t);\n}\nfunction scheduleDragDraw(){if(!pendingDragFrame)pendingDragFrame=requestAnimationFrame(drawDrag)}\ncanvas.addEventListener(\"pointermove\",e=>{\n if(!down||!ready)return;\n if(Math.hypot(e.clientX-down.x,e.clientY-down.y)<8)return;\n angle=THREE.MathUtils.clamp(down.angle+(down.x-e.clientX)*.002,-.30,.30);\n tilt=THREE.MathUtils.clamp(down.tilt+(e.clientY-down.y)*.008,-1.3,1.3);setCamera();scheduleDragDraw();\n},events);";
+  for(const [name,anchor] of Object.entries({raster,resizeGuard,pointerDown,pointerUp,pointerCancel,microMode,dragOriginal})){
     if(original.split(anchor).length!==2)throw Error("SCENA_MOBILE_"+name+"_INCOMPATIBILE");
   }
   if(original.split(wait).length!==2||original.split(stage).length!==2||original.split(sequence).length!==2)
@@ -28,9 +30,10 @@ function adaptMobileScene(original){
       'if(rasterWidth===w&&rasterHeight===h&&Math.abs(renderBudget.scale-desiredScale)<0.008)return;')
     .replace(raster,'const scale=desiredScale;')
     .replace(pointerDown,'down={x:e.clientX,y:e.clientY,angle,tilt};resizeRaster(Math.max(1,innerWidth),Math.max(1,innerHeight));canvas.setPointerCapture(e.pointerId)')
-    .replace(pointerUp,' down=null;resizeRaster(Math.max(1,innerWidth),Math.max(1,innerHeight));\\n if(tap){'.replace('\\n','\n'))
-    .replace(pointerCancel,'canvas.addEventListener("pointercancel",()=>{down=null;resizeRaster(Math.max(1,innerWidth),Math.max(1,innerHeight));scheduleFrame()},events);')
+    .replace(pointerUp,' if(pendingDragFrame){cancelAnimationFrame(pendingDragFrame);pendingDragFrame=0;} down=null;resizeRaster(Math.max(1,innerWidth),Math.max(1,innerHeight));render();\\n if(tap){'.replace('\\n','\n'))
+    .replace(pointerCancel,'canvas.addEventListener("pointercancel",()=>{if(pendingDragFrame){cancelAnimationFrame(pendingDragFrame);pendingDragFrame=0;}down=null;resizeRaster(Math.max(1,innerWidth),Math.max(1,innerHeight));render();scheduleFrame()},events);')
     .replace(microMode,'nativeMaterialBridge.apply(innerWidth<=650?"scalar":"micro");')
+    .replace(dragOriginal,dragOptimized)
     .replace(wait,'},120000);')
     .replace(stage,stage+'send("atlas-3d-phase",{step:"decode",id});')
     // The early 3D preview sets display:grid inline. Hidden alone does not
