@@ -27,14 +27,21 @@ let browser;const report={status:"PENDING",route:"/biblioteca/",results:[],exter
 try{
   browser=await chromium.launch({headless:true,args:["--use-gl=angle","--use-angle=swiftshader","--enable-unsafe-swiftshader"]});
   for(const dim of [{name:"phone",width:390,height:844},{name:"desktop",width:1280,height:800}]){
-    const context=await browser.newContext({viewport:{width:dim.width,height:dim.height},reducedMotion:"no-preference"});
+    const context=await browser.newContext({
+      viewport:{width:dim.width,height:dim.height},reducedMotion:"no-preference",
+      ...(dim.name==="phone"?{isMobile:true,hasTouch:true,deviceScaleFactor:2.75,
+        userAgent:"Mozilla/5.0 (Linux; Android 12; M2007J20CG) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36"}:{})
+    });
     await context.route("**/*",r=>new URL(r.request().url()).origin===origin?r.continue():(
       report.externalRequests.push(r.request().url()),r.abort()));
     const page=await context.newPage();
+    let manifestReads=0;
+    page.on("request",request=>{if(new URL(request.url()).pathname==="/biblioteca/native-manifest.json")manifestReads++;});
     page.on("pageerror",e=>report.errors.push(String(e)));
     page.on("console",m=>{if(m.type()==="error")report.errors.push(m.text())});
     await page.goto(origin+"/biblioteca/",{waitUntil:"domcontentloaded"});
     await page.waitForFunction(()=>document.querySelector("#status")?.textContent?.startsWith("Biblioteca pronta"),null,{timeout:90000});
+    assert.equal(manifestReads,1,"the signed manifest must be fetched once per scene startup");
     const frame=page.frameLocator("iframe");
     const result=await frame.locator("canvas").evaluate(el=>{
       const m=nativeMaterialBridge?.evidence()??[];
