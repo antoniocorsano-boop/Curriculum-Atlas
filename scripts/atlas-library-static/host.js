@@ -13,6 +13,10 @@ function adaptMobileScene(original){
     throw Error("STRUTTURA_SCENA_INCOMPATIBILE");
   return original.replace(wait,'},120000);')
     .replace(stage,stage+'send("atlas-3d-phase",{step:"decode",id});')
+    // The early 3D preview sets display:grid inline. Hidden alone does not
+    // override it: reset only the display declaration on final readiness.
+    .replace('status.hidden=true;document.querySelector("#native-controls").hidden=false;',
+             'status.style.removeProperty("display");status.hidden=true;document.querySelector("#native-controls").hidden=false;')
     .replace(sequence,`for(const id of ["shell","scenography","cupola","portals","bays","stars"]){
       await loadModel(id);assertActive();
       if(id==="shell"&&innerWidth<=650){
@@ -81,7 +85,7 @@ function phoneControls(original){
   const nav='<nav id="native-controls" aria-label="Controlli della visuale" hidden>';
   if(original.split(nav).length!==2||original.split("</nav><script>").length!==2||
      original.split("</head>").length!==2)throw Error("Struttura dei controlli cambiata");
-  return original.replace("</head>","<style>\n#atlas-controls-panel{position:fixed;z-index:5;bottom:8px;left:8px;right:8px;pointer-events:none}\n#atlas-controls-panel summary{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 14px;background:#122b3de8;border:1px solid #dbbb7d;color:#fff;border-radius:10px;box-shadow:0 3px 16px #06101870;font:600 13px system-ui;list-style:none;cursor:pointer;pointer-events:auto}\n#atlas-controls-panel summary::-webkit-details-marker{display:none}\n#atlas-controls-panel[open] summary{background:#294456}\n#atlas-controls-panel #native-controls{position:static;left:auto;right:auto;bottom:auto;display:flex;flex-wrap:wrap;justify-content:center;gap:5px;max-width:100%;margin-top:6px;padding:7px;background:#102a3de8;border:1px solid #b9a27488;border-radius:10px;pointer-events:auto}\n#atlas-controls-panel:not([open]) #native-controls,#atlas-controls-panel #native-controls[hidden]{display:none}\n#atlas-controls-panel #native-controls button{min-width:44px;min-height:44px;flex:1 1 auto;white-space:nowrap}\n</style>"+"</head>")
+  return original.replace("</head>","<style>\n#atlas-controls-panel{position:fixed;z-index:5;bottom:8px;left:8px;right:8px;pointer-events:none}\n#atlas-controls-panel summary{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 14px;background:#122b3de8;border:1px solid #dbbb7d;color:#fff;border-radius:10px;box-shadow:0 3px 16px #06101870;font:600 13px system-ui;list-style:none;cursor:pointer;pointer-events:auto}\n#atlas-controls-panel summary::-webkit-details-marker{display:none}\n#atlas-controls-panel[open] summary{background:#294456}\n#atlas-controls-panel #native-controls{position:static;left:auto;right:auto;bottom:auto;display:flex;flex-wrap:wrap;justify-content:center;gap:5px;max-width:100%;margin-top:6px;padding:7px;background:#102a3de8;border:1px solid #b9a27488;border-radius:10px;pointer-events:auto}\n#atlas-controls-panel:not([open]) #native-controls,#atlas-controls-panel #native-controls[hidden]{display:none}\n#atlas-controls-panel[open] #native-controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;max-height:min(34vh,140px)}\n#atlas-controls-panel #native-controls button{min-width:0;min-height:44px;padding:4px 3px;white-space:normal;font:clamp(10px,2.8vw,12px) system-ui}\n</style>"+"</head>")
     .replace(nav,'<details id="atlas-controls-panel"><summary>Comandi 3D</summary>'+nav)
     .replace("</nav><script>","</nav></details><script>");
 }
