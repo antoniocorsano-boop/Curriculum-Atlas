@@ -21,8 +21,10 @@ function highlight(id){
   selected=id;
   for(const {pane,portal} of portalPanels){
     const active=portal.id===id;
-    pane.material.color.setHex(active?0xffffff:0xd7e7fa);
-    pane.material.opacity=active?1:.93;
+    if(!pane.userData.hitOnly){
+      pane.material.color.setHex(active?0xffffff:0xd7e7fa);
+      pane.material.opacity=active?1:.93;
+    }
   }
   for(const link of links)link.dataset.active=String(link.dataset.portal===id);
   schedule();
@@ -266,6 +268,51 @@ function drawFoyer(){
   starsGeo.setAttribute("position",new T.Float32BufferAttribute(vertices,3));
   scene.add(new T.Points(starsGeo,new T.PointsMaterial({color:0x89bdf4,size:.045,sizeAttenuation:true})));
 }
+function buildArtPortalTargets(){
+  // Raycast-only planes, matched to the same authoritative portal contract.
+  // Do not export routing or student permissions into the Blender GLB.
+  for(const portal of PORTALS){
+    const hit=new T.Mesh(new T.PlaneGeometry(3.08,4.90),
+      new T.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false,
+        colorWrite:false,side:T.DoubleSide}));
+    hit.position.set(portal.x,2.72,portal.z+.36);
+    hit.rotation.y=portal.yaw;
+    hit.userData.portalId=portal.id;
+    hit.userData.hitOnly=true;
+    scene.add(hit);portalPanels.push({pane:hit,portal});
+  }
+}
+async function loadArtMaster(){
+  // The local manifest is always included, even in geometric fallback mode.
+  const response=await fetch("./visual-manifest.json",{credentials:"omit",cache:"no-store"});
+  if(!response.ok)throw Error("Art manifest not available");
+  const manifest=await response.json();
+  if(manifest.schema!=="atlas.gateway.foyer-visual/v1"||
+     manifest.studentAuthorized!==false||typeof manifest.available!=="boolean")
+    throw Error("Invalid art manifest");
+  if(!manifest.available)return false;
+  if(manifest.file!=="foyer-master.glb"||
+     !Number.isInteger(manifest.bytes)||manifest.bytes<1000||manifest.bytes>8000000||
+     !/^[a-f0-9]{64}$/.test(manifest.sha256))
+    throw Error("Invalid verified Blender model identity");
+  if(typeof T.GLTFLoader!=="function"||!crypto?.subtle)throw Error("GLTF verifier unavailable");
+  const file=await fetch("./"+manifest.file,{credentials:"omit",cache:"no-store"});
+  if(!file.ok||file.url&&new URL(file.url).origin!==location.origin)throw Error("Untrusted asset URL");
+  const bytes=await file.arrayBuffer();
+  if(bytes.byteLength!==manifest.bytes)throw Error("Blender model size changed");
+  const sha=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",bytes)),
+    b=>b.toString(16).padStart(2,"0")).join("");
+  if(sha!==manifest.sha256)throw Error("Blender model checksum changed");
+  const gltf=await new Promise((resolve,reject)=>{
+    new T.GLTFLoader().parse(bytes,"",resolve,reject);
+  });
+  if(!gltf?.scene)throw Error("Missing Blender scene");
+  let meshes=0;gltf.scene.traverse(o=>{if(o.isMesh)meshes++;});
+  if(meshes<30||meshes>1000)throw Error("Unexpected Blender scene size");
+  scene.add(gltf.scene);
+  buildArtPortalTargets();
+  return true;
+}
 function setCamera(){
   const w=Math.max(1,stage.clientWidth),h=Math.max(1,stage.clientHeight);
   const portrait=w/h<.85, z=portrait?19.7:16.1;
@@ -300,7 +347,7 @@ function pick(event){
   const hit=ray.intersectObjects(portalPanels.map(o=>o.pane),false)[0];
   if(hit?.object?.userData?.portalId)activatePortal(hit.object.userData.portalId);
 }
-function init(){
+async function init(){
   if(!T||typeof T.WebGLRenderer!=="function"){fallback("WebGL non disponibile");return;}
   try{
     renderer=new T.WebGLRenderer({canvas,alpha:false,antialias:false,powerPreference:"low-power"});
@@ -312,7 +359,10 @@ function init(){
     const sun=new T.DirectionalLight(0xf7d4aa,.92);sun.position.set(2,11,8);scene.add(sun);
     const blue=new T.PointLight(0x338fe4,.75,25);blue.position.set(0,7,-1);scene.add(blue);
     const warm=new T.PointLight(0xffd3a6,.5,22);warm.position.set(0,5,6);scene.add(warm);
-    drawFoyer();
+    let artLoaded=false,artError=null;
+    try{artLoaded=await loadArtMaster();}
+    catch(error){artError=String(error?.message||error);console.warn("ATLAS_ART_FALLBACK",artError);}
+    if(!artLoaded)drawFoyer();
     canvas.style.touchAction="none";
     canvas.addEventListener("pointerdown",e=>{
       pressed={x:e.clientX,y:e.clientY,orbit,vertical,moved:false};
@@ -343,11 +393,12 @@ function init(){
     window.addEventListener("resize",resize,{passive:true});
     canvas.addEventListener("webglcontextlost",e=>{e.preventDefault();fallback("Contesto grafico interrotto");});
     window.addEventListener("pagehide",()=>{stopped=true;cancelAnimationFrame(request);renderer?.dispose();});
-    resize();setStatus("Atrio tridimensionale pronto · scegli una destinazione");
+    resize();setStatus(artLoaded?"Atrio tridimensionale pronto · modello Blender verificato":
+      artError?"Atrio tridimensionale pronto · versione geometrica di ripiego":"Atrio tridimensionale pronto · scegli una destinazione");
     console.info("ATLAS_FOYER_READY",FOYER_SCHEMA);
   }catch(error){
     console.error("ATLAS_FOYER_ERROR",error);
     fallback("L'atrio tridimensionale non si è avviato");
   }
 }
-init();
+void init();
