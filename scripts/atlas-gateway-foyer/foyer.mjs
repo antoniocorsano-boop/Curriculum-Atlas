@@ -21,8 +21,8 @@ function highlight(id){
   selected=id;
   for(const {pane,portal} of portalPanels){
     const active=portal.id===id;
-    pane.material.emissiveIntensity=active?.58:.23;
-    pane.material.opacity=active?.96:.86;
+    pane.material.color.setHex(active?0xffffff:0xd7e7fa);
+    pane.material.opacity=active?1:.93;
   }
   for(const link of links)link.dataset.active=String(link.dataset.portal===id);
   schedule();
@@ -43,10 +43,34 @@ function labelTexture(portal){
   light.addColorStop(0,"#80d8ff88");light.addColorStop(1,"#03336a00");
   ctx.fillStyle=light;ctx.fillRect(0,0,512,768);
   ctx.strokeStyle="#c1dbf5aa";ctx.lineWidth=5;ctx.strokeRect(22,22,468,724);
-  ctx.beginPath();ctx.arc(256,290,84,0,Math.PI*2);ctx.strokeStyle="#e3bb7d";ctx.lineWidth=8;ctx.stroke();
-  ctx.fillStyle="#f3ddb5";ctx.font="bold 106px Georgia,serif";ctx.textAlign="center";
-  ctx.fillText(portal.label.slice(0,1).toUpperCase(),256,324);
-  ctx.font="bold 45px system-ui,sans-serif";ctx.fillStyle="#fff5d8";
+  ctx.save();ctx.translate(256,290);
+  ctx.strokeStyle="#e8d2a4";ctx.fillStyle="#e8d2a4";ctx.lineWidth=11;
+  ctx.lineCap="round";ctx.lineJoin="round";
+  const sym=portal.label.toLowerCase();
+  if(sym==="curricolo"){
+    ctx.beginPath();ctx.moveTo(0,-53);ctx.bezierCurveTo(-24,-70,-57,-63,-76,-49);
+    ctx.lineTo(-76,49);ctx.bezierCurveTo(-50,35,-25,38,0,54);
+    ctx.bezierCurveTo(27,37,55,35,76,49);ctx.lineTo(76,-49);
+    ctx.bezierCurveTo(48,-63,22,-67,0,-53);ctx.lineTo(0,54);ctx.stroke();
+  }else if(sym==="esplora"){
+    ctx.beginPath();ctx.arc(0,0,76,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(27,-32);ctx.lineTo(-10,46);ctx.lineTo(-31,-32);ctx.closePath();ctx.stroke();
+    ctx.beginPath();ctx.arc(0,0,9,0,Math.PI*2);ctx.fill();
+  }else if(sym==="percorsi"){
+    ctx.beginPath();ctx.moveTo(-58,-45);ctx.lineTo(43,-45);ctx.lineTo(43,34);ctx.lineTo(-34,34);ctx.stroke();
+    for(const [px,py] of [[-58,-45],[43,-45],[43,34],[-34,34]]){
+      ctx.beginPath();ctx.arc(px,py,13,0,Math.PI*2);ctx.fill();
+    }
+  }else if(sym==="esperienze"){
+    ctx.beginPath();ctx.moveTo(-48,59);ctx.lineTo(-48,-55);ctx.lineTo(48,-55);ctx.lineTo(48,59);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(-22,57);ctx.lineTo(-22,-20);ctx.lineTo(25,-20);ctx.lineTo(25,57);ctx.stroke();
+    ctx.beginPath();ctx.arc(15,17,5,0,Math.PI*2);ctx.fill();
+  }else {
+    ctx.font="bold 104px Georgia,serif";ctx.textAlign="center";
+    ctx.fillText(portal.label.slice(0,1).toUpperCase(),0,34);
+  }
+  ctx.restore();ctx.textAlign="center";
+  ctx.font="bold 49px system-ui,sans-serif";ctx.fillStyle="#fff5d8";
   ctx.fillText(portal.label.toUpperCase(),256,500);
   ctx.fillStyle="#b8d8eb";ctx.font="28px system-ui,sans-serif";
   const words=portal.detail.split(" ");let lines=[""];
@@ -108,7 +132,7 @@ function drawFoyer(){
   add(floor,0,-.27,-1.3);
   const perimeter=new T.Mesh(new T.CylinderGeometry(11.77,11.83,.18,80),darkBronze);
   add(perimeter,0,-.42,-1.3);
-  for(const [r,th] of [[3.1,.035],[6.1,.024],[10.6,.058]]){
+  for(const [r,th] of [[3.35,.035],[8.65,.027],[10.6,.045]]){
     circumference(r,-.083,bronze,th);
   }
   // Two overlapping shadows establish the central object's contact with floor.
@@ -132,7 +156,7 @@ function drawFoyer(){
   for(const [y,th] of [[.19,.11],[3.48,.095],[5.8,.10]]){
     const band=new T.Mesh(new T.TorusGeometry(11.55,th,6,90,Math.PI),
       new T.MeshStandardMaterial({color:y===3.48?0x8c7656:0x5e5862,metalness:.76,roughness:.35}));
-    band.rotation.x=Math.PI/2;band.rotation.z=Math.PI/2;add(band,0,y,-1.3);
+    band.rotation.x=-Math.PI/2;add(band,0,y,-1.3);
   }
   // Architectural piers, two-level framed wall bays and indirect blue coves.
   for(let i=0;i<=16;i++){
@@ -152,8 +176,8 @@ function drawFoyer(){
   }
   // Dense crown, dark panels and curved architectural ribs.
   const ceiling=new T.Mesh(new T.SphereGeometry(11.42,44,10,0,Math.PI*2,0,Math.PI/2),
-    new T.MeshStandardMaterial({color:0x102e50,metalness:.4,roughness:.65,
-      side:T.BackSide,emissive:0x0a2444,emissiveIntensity:.12}));
+    new T.MeshStandardMaterial({color:0x091b2f,metalness:.32,roughness:.72,transparent:true,opacity:.28,
+      side:T.BackSide,emissive:0x061428,emissiveIntensity:.05}));
   ceiling.scale.y=.29;add(ceiling,0,5.65,-1.3);
   circumference(8.1,6.45,bronze,.08);
   circumference(4.45,7.9,glassFrame,.12);
@@ -206,7 +230,7 @@ function drawFoyer(){
   }
   const brand=new T.Mesh(new T.PlaneGeometry(2.7,1.35),
     new T.MeshBasicMaterial({map:brandTexture(),transparent:true,depthWrite:false,side:T.DoubleSide}));
-  add(brand,0,1.35,4.53);
+  add(brand,0,1.38,5.12);
   // Physical portal assemblies: recessed surround, glass face, bevel trim,
   // luminous perimeter and a faint reflection on the polished ground.
   for(const p of PORTALS){
