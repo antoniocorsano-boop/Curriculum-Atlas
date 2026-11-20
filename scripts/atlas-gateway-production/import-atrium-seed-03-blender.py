@@ -139,6 +139,34 @@ def main():
     bpy.ops.import_scene.gltf(filepath=str(glb))
     meshes=[o for o in bpy.context.scene.objects if o.type=='MESH']
     assert len(meshes)>=100, 'GLB not imported as distinct 3D meshes'
+
+    # Legacy SEED-03 GLB was authored with Z-up vertex coordinates, whereas
+    # glTF 2.0 convention is Y-up. The standard Blender importer rotates
+    # incoming Y-up into Blender Z-up. Detect the vertical floor and undo that
+    # conversion for the whole imported scene, rather than adjusting cameras
+    # until a wrongly oriented model looks plausible.
+    def world_spans(obj):
+        corners=[obj.matrix_world @ Vector(p) for p in obj.bound_box]
+        return [round(max(v[i] for v in corners)-min(v[i] for v in corners),6)
+                for i in range(3)]
+
+    floor=next((o for o in meshes if o.name.startswith('ARCH_FLOOR_POLISHED_STONE')),None)
+    if floor is None:
+        raise AssertionError('Missing floor mesh: cannot certify GLB coordinates')
+    bpy.context.view_layer.update()
+    floor_before=world_spans(floor)
+    axis_correction_degrees=0
+    if floor_before[2]>1.5 and floor_before[1]<.10:
+        correction=Matrix.Rotation(-math.pi/2,4,'X')
+        for obj in meshes:
+            obj.matrix_world=correction @ obj.matrix_world
+        bpy.context.view_layer.update()
+        axis_correction_degrees=-90
+    floor_after=world_spans(floor)
+    if not (floor_after[0]>1.5 and floor_after[1]>1.5 and floor_after[2]<.10):
+        raise AssertionError(
+            f'Floor must be horizontal after glTF import: before={floor_before}, after={floor_after}')
+    print('ATLAS_AXIS_IMPORT_CHECK',floor_before,floor_after,axis_correction_degrees,flush=True)
     mats=make_materials()
     for o in meshes:
         mat=byname(o.name,mats)
@@ -204,6 +232,9 @@ def main():
         'blend_sha256':checksum(output_blend),
         'blend_size_bytes':output_blend.stat().st_size,
         'mesh_nodes_imported':len(meshes),
+        'floor_bounds_before_correction_R':floor_before,
+        'floor_bounds_after_correction_R':floor_after,
+        'gltf_to_blender_axis_correction_degrees_x':axis_correction_degrees,
         'camera_names':sorted(cams.keys()),'render_paths':render_paths,
         'production_quality':'NOT_APPROVED_ART_DIR_02_REFERENCE_NOT_FITTED',
         'samples':a.samples}
