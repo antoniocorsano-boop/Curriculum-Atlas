@@ -2,7 +2,8 @@
 ## Piano esecutivo di produzione artistica e tridimensionale del Gateway
 
 **Versione:** 1.0 · **Data:** 20 novembre 2026  
-**Norma artistica superiore:** [ART-DIR-02](./ATLAS-GATEWAY-ART-DIRECTION-02.md). In caso di divergenza estetica prevale ART-DIR-02.
+**Norma artistica superiore:** [ART-DIR-02](./ATLAS-GATEWAY-ART-DIRECTION-02.md). In caso di divergenza estetica prevale ART-DIR-02.  
+**Norma geometrica di produzione:** [IMAGE-GEOMETRY-01](./IMAGE-GEOMETRY-01.md) — il progetto deriva dall'immagine approvata tramite rilievo, camera, pianta/sezioni e modello clay; la PR #152 resta tecnica e gli asset ASSET-KIT-01 vengono adattati al progetto, mai viceversa.
 **Piano prodotto:** [ATLAS-GATEWAY-01 #151](https://github.com/antoniocorsano-boop/Curriculum-Atlas/issues/151). **Governo ecosistema:** [TRAMA #354](https://github.com/antoniocorsano-boop/trama-ecosistema/issues/354).
 **Base tecnica riusabile:** [PR Atlas #152](https://github.com/antoniocorsano-boop/Curriculum-Atlas/pull/152) — **bozza, non integrata e non artisticamente approvata**.  
 **Metodo di selezione e assemblaggio adottato:** [ASSET-KIT-01](./ASSET-KIT-01.md) — riutilizzare/adattare asset professionali qualificati, costruire ex novo i tratti identitari Atlas, produrre prima una campata e un portale verificabili. La selezione è ancora da completare.
