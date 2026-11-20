@@ -56,6 +56,18 @@ try{
       assert(layout.actions.every(a=>a.width>=44&&a.height>=44),"mobile portal touch targets too small");
       report.results.push({device:"phone-first-screen",layout});
     }
+    if(dim.name==="phone"){
+      const panel=frame.locator("#atlas-controls-panel");
+      assert.equal(await panel.count(),1,"mobile camera panel must exist");
+      assert.equal(await panel.evaluate(el=>el.open),false,"mobile camera panel must initially be collapsed");
+      await panel.locator("summary").click();
+      assert.equal(await panel.evaluate(el=>el.open),true,"mobile camera controls must open");
+      await frame.locator('#native-controls button[data-action="left"]').click();
+      await frame.locator('#native-controls button[data-action="reset"]').click();
+      assert.equal(await frame.locator("canvas").evaluate(()=>ready&&!closing),true,"camera controls must preserve the live scene");
+      await panel.locator("summary").click();
+      assert.equal(await panel.evaluate(el=>el.open),false,"mobile controls must close");
+    }
     await page.screenshot({path:join(out,dim.name+"-library.png")});
     report.results.push({device:dim.name,...result});
     const dest=dim.name==="phone"?"curricolo":"esperienze";
