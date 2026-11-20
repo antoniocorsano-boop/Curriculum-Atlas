@@ -6,7 +6,7 @@ import styles from "./atlas-entry.module.css";
 
 /**
  * ATLAS-GATEWAY-HYBRID-ENTRY-01
- * Responsive full-screen Atlas gateway: desktop uses the panorama and four\n * CSS-tilting panels; portrait uses an integrated 9:16 architectural artwork\n * and four accessible, calibrated HTML link hotspots.
+ * Responsive full-screen Atlas gateway: desktop uses the panorama and four\n * CSS-tilting panels; portrait uses an integrated 9:16 architectural artwork\n * and four invisible, accessible, calibrated HTML link hotspots.
  * The photographic cuts are a preliminary 2.5D visual implementation,
  * not the final ART-DIR-02 approved image and not WebGL 3D meshes.
  */
@@ -54,8 +54,6 @@ export function AtlasEntry() {
           draggable={false}
         />
         <div className={styles.brandScreen} aria-hidden="true" />
-        <div className={styles.podiumScreen} aria-hidden="true" />
-        <div className={styles.podiumEmblem} aria-hidden="true"><AEmblem central /></div>
         <div className={styles.brand} aria-label="ATLAS, mondi della conoscenza">
           <AEmblem />
           <span className={styles.wordmark}>ATLAS</span>
@@ -108,7 +106,6 @@ export function AtlasEntry() {
                 className={styles.mobileHotspot}
                 aria-label={portal.label + " — " + portal.detail}
               >
-                <span>{portal.label}</span>
               </Link>
             ))}
           </nav>
