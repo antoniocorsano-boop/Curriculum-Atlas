@@ -65,8 +65,18 @@ function torus(radius,tube,color,y,rotation=0){
 }
 function drawFoyer(){
   const floor=new T.Mesh(new T.CylinderGeometry(12.4,12.4,.28,72),
-    new T.MeshStandardMaterial({color:0x163149,metalness:.76,roughness:.28}));
+    new T.MeshStandardMaterial({color:0x122a42,metalness:.62,roughness:.42}));
   floor.position.set(0,-.27,-1.3);scene.add(floor);
+  // Curved architectural wall: visual mass instead of a skeletal wireframe.
+  const wall=new T.Mesh(
+    new T.CylinderGeometry(11.62,11.62,6.2,64,1,true,Math.PI/2,Math.PI),
+    new T.MeshStandardMaterial({color:0x193b60,metalness:.34,roughness:.63,
+      side:T.BackSide,emissive:0x06182d,emissiveIntensity:.13}));
+  wall.position.set(0,2.92,-1.3);scene.add(wall);
+  const wallBase=new T.Mesh(new T.TorusGeometry(11.6,.13,8,80,Math.PI),
+    new T.MeshStandardMaterial({color:0xb89a61,metalness:.82,roughness:.29}));
+  wallBase.rotation.x=Math.PI/2;wallBase.rotation.z=Math.PI/2;
+  wallBase.position.set(0,.09,-1.3);scene.add(wallBase);
   for(const radius of [3.15,5.7,8.5,11.7]){
     const ring=new T.Mesh(new T.TorusGeometry(radius,.045,6,92),
       new T.MeshStandardMaterial({color:0xb59a64,emissive:0x483414,emissiveIntensity:.22,metalness:.8,roughness:.31}));
@@ -104,16 +114,16 @@ function drawFoyer(){
   logoMesh.position.set(0,2.2,1.3);scene.add(logoMesh);
   // 4 portali in posizione fisica; il testo HTML offre sempre l'equivalente accessibile.
   for(const p of PORTALS){
-    const g=new T.Group();g.position.set(p.x,2.55,p.z);g.rotation.y=p.yaw;
-    const pane=new T.Mesh(new T.PlaneGeometry(2.6,4.35),
+    const g=new T.Group();g.position.set(p.x,2.85,p.z);g.rotation.y=p.yaw;
+    const pane=new T.Mesh(new T.PlaneGeometry(3.04,4.95),
       new T.MeshStandardMaterial({map:labelTexture(p),transparent:true,opacity:.86,metalness:.28,roughness:.32,
         emissive:0x2369ad,emissiveIntensity:.23,side:T.DoubleSide}));
     pane.userData.portalId=p.id;g.add(pane);
     for(const side of [-1,1]){
-      const rail=box(.085,4.65,.16,0xe7ba73,.76,.25);rail.position.set(side*1.34,0,0);g.add(rail);
+      const rail=box(.095,5.14,.17,0xe7ba73,.76,.25);rail.position.set(side*1.58,0,0);g.add(rail);
     }
     for(const side of [-1,1]){
-      const rail=box(2.72,.09,.16,0xd6ae75,.76,.25);rail.position.set(0,side*2.32,0);g.add(rail);
+      const rail=box(3.24,.105,.17,0xd6ae75,.76,.25);rail.position.set(0,side*2.55,0);g.add(rail);
     }
     scene.add(g);portalPanels.push({pane,portal:p});
   }
@@ -127,7 +137,7 @@ function drawFoyer(){
 }
 function setCamera(){
   const w=Math.max(1,stage.clientWidth),h=Math.max(1,stage.clientHeight);
-  const portrait=w/h<.85, z=portrait?19.3:15.1;
+  const portrait=w/h<.85, z=portrait?17.8:12.8;
   const target=new T.Vector3(0,3.0,-.25);
   const offset=new T.Vector3(0,portrait?3.5:2.6,z);
   offset.applyAxisAngle(new T.Vector3(0,1,0),orbit);
@@ -170,7 +180,7 @@ function init(){
     scene.add(new T.HemisphereLight(0xbfdfff,0x18243a,.9));
     const sun=new T.DirectionalLight(0xf7deb8,1.3);sun.position.set(2,11,8);scene.add(sun);
     const blue=new T.PointLight(0x48aaff,1.4,25);blue.position.set(0,7,-1);scene.add(blue);
-    const warm=new T.PointLight(0xfbc386,.7,18);warm.position.set(0,4,6);scene.add(warm);
+    const warm=new T.PointLight(0xfbc386,1.15,22);warm.position.set(0,5,6);scene.add(warm);
     drawFoyer();
     canvas.style.touchAction="none";
     canvas.addEventListener("pointerdown",e=>{
