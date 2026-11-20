@@ -135,3 +135,15 @@ Questa tabella indica **che cosa misurare e riprogettare** quando i pixel della 
 - Nessun merge, deploy o pubblicazione studente conseguono a questa decisione.
 
 **Prossima operazione esecutiva:** ottenere il PNG effettivo nella filiera, effettuare il rilievo visivo IG0 e la ricostruzione di camera IG1, quindi produrre pianta/sezioni IG2. La stesura di questo documento non è l'esecuzione di tali operazioni.
+
+## IG0 — Esito operativo del 20 novembre 2026 (materiali effettivamente disponibili)
+
+**Verifica degli ingressi (evidenza, non approvazione):**
+- Il file fornito dall'ideatore con la prima immagine **ARENA** è disponibile come allegato della conversazione corrente: snapshot `1000032603.png`, **1536×864 px**, SHA-256 `1a5a75b661bc47c21655465e78cdb052027ef858a8c7b73390431f1ccda78bc8`. La schermata del telefono colloca il salvataggio del **precedente file originale locale** al **16/11/2026 ore 06:25 CET**. Il file corrente NON corrisponde binariamente all'originale locale indicato nella schermata.
+- **Primo rilievo VISIVO storico ESEGUITO**, su quello screenshot ARENA a cinque pannelli: asse stimato, contorni approssimativi dei cinque pannelli, curva apparente dell'oculo, ingombro ellittico del podio. Dati leggibili in [ARENA-IG0-HISTORIC-01.json](./ARENA-IG0-HISTORIC-01.json). Sono punti manuali di immagine, **non** quote, progetto di pianta, geometria approvata o solve prospettico.
+- Recuperata dalla Library un'altra variante `Atlas-AG04-riferimento-grafico-approvato.png`, **1672×941 px**, SHA-256 `e6d374806529223558d226e8e52faf1889cf73214030bd6f1100c569fd96b252`. Mostra la Biblioteca Atlas con **tre portali**, **NON** il PNG canonico ART-DIR-02 a quattro portali, e l'impronta è diversa. **Non sostituire** l'input canonico con questa variante.
+- Ricerche mirate nelle risorse della sessione/Library e nel Drive collegato (per nome del PNG originale e del pacchetto sorgenti visivi) **non hanno restituito il PNG canonico** `atrio_futuristico_atlas_della_conoscenza.png` con SHA `7b3ffb9a355b89057acea02489020ad43d871e10b6cf5bbb29f8769ff3073336`. Questo non prova l'inesistenza del file in altri archivi; **P0-REF rimane aperto**.
+- In questa sessione locale l'eseguibile Blender non è installato e la libreria Python `bpy` non è disponibile; **nessun render Cycles, test Blender o ricostruzione neurale può essere dichiarato eseguito**. Il runtime di produzione via CI/altro esecutore resta da verificare separatamente.
+- Il prompt letterale delle istruzioni ricevute dal generatore della prima immagine ARENA o dell'ultima immagine Atlas **non è stato recuperato**, nonostante la ricostruzione della finestra temporale storica in [GENERATION-PROVENANCE-01](./GENERATION-PROVENANCE-01.md).
+
+**Conclusione effettiva:** esiste un primo rilievo manuale di **provenienza storica**. **IG0–IG4 per l'Atlas definitivo non sono superati.** Il prossimo ingresso necessario è il file binario canonico approvato (SHA sopra), da cui effettuare il rilievo che governerà le geometrie, indipendentemente dalla vecchia PR #152. Non procedere a un modello definitivo utilizzando ARENA o AG04 come surrogati.
