@@ -9,6 +9,14 @@ on:
       - "scripts/atlas-gateway-production/generate-atrium-seed.py"
       - "scripts/atlas-gateway-production/import-atrium-seed-03-blender.py"
       - "docs/atlas-gateway/ATLAS-ATRIUM-BLUEPRINT-03.json"
+  pull_request:
+    branches: [work/atlas-library-web-delivery]
+    paths:
+      - ".github/workflows/atlas-atrium-seed-03-blender.yml"
+      - "scripts/atlas-gateway-production/generate-atrium-seed-03.py"
+      - "scripts/atlas-gateway-production/generate-atrium-seed.py"
+      - "scripts/atlas-gateway-production/import-atrium-seed-03-blender.py"
+      - "docs/atlas-gateway/ATLAS-ATRIUM-BLUEPRINT-03.json"
   workflow_dispatch:
 permissions:
   contents: read
