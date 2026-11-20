@@ -75,7 +75,18 @@ try{
       assert(layout.navBottom<layout.viewportHeight,"mobile portal actions must be visible without scrolling");
       assert(layout.scrollWidth<=layout.viewport,"mobile page must not scroll horizontally");
       assert(layout.actions.every(a=>a.width>=44&&a.height>=44),"mobile portal touch targets too small");
-      report.results.push({device:"phone-first-screen",layout});
+      const introHeight=await page.locator(".intro").evaluate(el=>el.getBoundingClientRect().height);
+      assert(introHeight<=70,"introductory mobile banner should not overwhelm the 3D scene");
+      const raster=await frame.locator("canvas").evaluate(()=>({
+        width:renderer.getContext().drawingBufferWidth,
+        height:renderer.getContext().drawingBufferHeight,
+        cssWidth:innerWidth,cssHeight:innerHeight,
+        pixelScale:renderBudget.scale,
+        frameSubmissionMs:renderBudget.lastSubmitMs
+      }));
+      assert(raster.pixelScale>=1.2&&raster.pixelScale<=1.36,"mobile scene should gain sharpness without excessive pixel cost");
+      assert(raster.width*raster.height<=1048576,"existing 1 Mi-pixel ceiling must be preserved");
+      report.results.push({device:"phone-first-screen",layout,introHeight,raster});
     }
     if(dim.name==="phone"){
       const nativeStatus=await frame.locator("#native-status").evaluate(el=>({hidden:el.hidden,display:getComputedStyle(el).display}));
@@ -96,6 +107,27 @@ try{
       assert.equal(await panel.evaluate(el=>el.open),false,"mobile controls must close");
     }
     await page.screenshot({path:join(out,dim.name+"-library.png")});
+    if(dim.name==="phone"){
+      const expand=page.locator("#expand");
+      await expand.click();
+      assert.equal(await page.locator("#viewer").evaluate(el=>el.classList.contains("expanded")),true,"immersive view must open");
+      assert.equal(await page.locator("body").evaluate(el=>el.classList.contains("viewer-expanded")),true,"immersive view must prevent background scrolling");
+      await page.waitForFunction(()=>{
+        const f=document.querySelector("#scene iframe");
+        return f&&Math.abs(f.getBoundingClientRect().height-innerHeight)<3;
+      },null,{timeout:10000});
+      const immersive=await frame.locator("canvas").evaluate(()=>({
+        ready,closed:closing,drawWidth:renderer.getContext().drawingBufferWidth,
+        drawHeight:renderer.getContext().drawingBufferHeight,
+        calls:renderer.info.render.calls
+      }));
+      assert(immersive.ready&&!immersive.closed&&immersive.calls>0,"immersive viewing must keep the 3D renderer active");
+      assert(immersive.drawWidth*immersive.drawHeight<=1048576,"immersive view may not exceed the raster budget");
+      await page.screenshot({path:join(out,"phone-immersive.png")});
+      await expand.click();
+      assert.equal(await page.locator("#viewer").evaluate(el=>el.classList.contains("expanded")),false,"immersive view must be dismissible");
+      report.immersive=immersive;
+    }
     report.results.push({device:dim.name,...result});
     const dest=dim.name==="phone"?"curricolo":"esperienze";
     await page.locator('[data-portal="'+dest+'"]').first().click();
