@@ -303,6 +303,12 @@
       "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
       "category": "infrastructure-legacy",
       "reason": "Exact existing GitHub repository address is a stable technical link; ART-DIR-02 prose uses the canonical curricolo vocabulary."
+    },
+    {
+      "path": "docs/atlas-gateway/MASTER-BLENDER-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository slug in technical source links; not product terminology."
     }
   ]
 }
