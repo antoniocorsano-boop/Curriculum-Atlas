@@ -54,7 +54,7 @@ try{
   const origin="http://127.0.0.1:"+server.address().port;
   browser=await chromium.launch({headless:true,args:["--use-gl=angle","--use-angle=swiftshader","--enable-unsafe-swiftshader"]});
   const page=await browser.newPage({viewport:{width:800,height:560},deviceScaleFactor:1});
-  page.on("request",req=>{if(!req.url().startsWith(origin+"/"))report.externalRequests.push(req.url())});
+  page.on("request",req=>{if(!req.url().startsWith(origin+"/")&&!req.url().startsWith("blob:"+origin+"/"))report.externalRequests.push(req.url())});
   page.on("pageerror",e=>report.pageErrors.push(String(e)));
   page.on("console",msg=>{if(msg.type()==="error")report.consoleErrors.push(msg.text())});
   page.on("console",msg=>{if(/Content Security Policy|ASC_CSP/.test(msg.text()))report.cspViolations.push(msg.text())});
