@@ -269,17 +269,16 @@ function drawFoyer(){
   scene.add(new T.Points(starsGeo,new T.PointsMaterial({color:0x89bdf4,size:.045,sizeAttenuation:true})));
 }
 function buildArtPortalTargets(){
-  // Raycast-only planes, matched to the same authoritative portal contract.
-  // Do not export routing or student permissions into the Blender GLB.
+  // The Blender architecture is immutable. Dynamic labels/icons and click
+  // targets are applied in Atlas from one authoritative portal contract.
   for(const portal of PORTALS){
-    const hit=new T.Mesh(new T.PlaneGeometry(3.08,4.90),
-      new T.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false,
-        colorWrite:false,side:T.DoubleSide}));
-    hit.position.set(portal.x,2.72,portal.z+.36);
-    hit.rotation.y=portal.yaw;
-    hit.userData.portalId=portal.id;
-    hit.userData.hitOnly=true;
-    scene.add(hit);portalPanels.push({pane:hit,portal});
+    const overlay=new T.Mesh(new T.PlaneGeometry(2.68,4.43),
+      new T.MeshBasicMaterial({map:labelTexture(portal),transparent:true,opacity:.90,
+        depthWrite:false,side:T.DoubleSide}));
+    overlay.position.set(portal.x,2.72,portal.z+.36);
+    overlay.rotation.y=portal.yaw;
+    overlay.userData.portalId=portal.id;
+    scene.add(overlay);portalPanels.push({pane:overlay,portal});
   }
 }
 async function loadArtMaster(){
