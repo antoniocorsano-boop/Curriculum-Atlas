@@ -7,12 +7,29 @@ let frame=null,channel=null,active=false,ready=false,closing=false,controller=nu
 const setStatus=text=>status.textContent=text;
 const hex=bytes=>Array.from(new Uint8Array(bytes),v=>v.toString(16).padStart(2,"0")).join("");
 async function hash(bytes){return hex(await crypto.subtle.digest("SHA-256",bytes));}
-async function readFile(url){
-  const response=await fetch(url,{credentials:"omit",redirect:"error",cache:url.startsWith("/atlas-gateway-native/")?"force-cache":"no-store"});
-  if(!response.ok||response.type==="opaque"||!response.body)throw Error("Risorsa locale non disponibile");
-  return new Uint8Array(await response.arrayBuffer());
+// A cellular browser can fail a transfer even when the page and files
+// are healthy. Retry transient reads without relaxing SHA-256 verification.
+async function readFile(url,signal){
+  const immutable=url.startsWith("/atlas-gateway-native/");
+  for(let attempt=0;attempt<3;attempt++){
+    try{
+      const response=await fetch(url,{signal,credentials:"omit",redirect:"follow",cache:immutable?"force-cache":"default"});
+      const finalUrl=new URL(response.url,location.href);
+      if(finalUrl.origin!==location.origin)throw Error("ORIGINE_NON_AUTORIZZATA");
+      if(!response.ok||response.type==="opaque"||!response.body)throw Error("HTTP_"+response.status);
+      return new Uint8Array(await response.arrayBuffer());
+    }catch(error){
+      if(signal?.aborted||String(error?.message).includes("ORIGINE_NON_AUTORIZZATA"))throw error;
+      if(attempt===2)throw error;
+      await new Promise(resolve=>setTimeout(resolve,450*(attempt+1)));
+    }
+  }
+  throw Error("RETE");
 }
-async function readJson(url){return JSON.parse(new TextDecoder().decode(await readFile(url)));}
+function parseJson(bytes,label){
+  try{return JSON.parse(new TextDecoder().decode(bytes));}
+  catch{throw Error("DATI_NON_VALIDI_"+label);}
+}
 
 // Keep the original scene and all its signed resources unmodified.
 // Only on narrow screens, wrap the existing controls in an accessible
@@ -30,8 +47,8 @@ function stop(){
   window.clearTimeout(timeout);controller?.abort();controller=null;
   if(frame)frame.remove();frame=null;channel=null;
 }
-function fallback(message){
-  stop();document.body.classList.add("simplified");toggle.textContent="Attiva la sala 3D";toggle.setAttribute("aria-pressed","true");
+function fallback(message,retry=false){
+  stop();document.body.classList.add("simplified");toggle.textContent=retry?"Riprova 3D":"Attiva la sala 3D";toggle.setAttribute("aria-pressed","true");
   setStatus(message);
 }
 function navigate(id){
@@ -60,15 +77,20 @@ async function start(){
   const current=controller;
   try{
     setStatus("Caricamento della biblioteca tridimensionale…");
-    const [manifest,receipt,sceneBytes]=await Promise.all([
-      readJson("./native-manifest.json"),readJson("./native-build-receipt.json"),readFile("./scene.html")
+    // Read each versioned document exactly once. A second request could
+    // cross a Cloudflare preview rollout and yield a mismatched checksum.
+    const [manifestBytes,receiptBytes]=await Promise.all([
+      readFile("./native-manifest.json",current.signal),readFile("./native-build-receipt.json",current.signal)
     ]);
     if(closing||current!==controller)return;
+    const manifest=parseJson(manifestBytes,"manifest"),receipt=parseJson(receiptBytes,"receipt");
     if(manifest.schema!=="atlas.gateway.native-assets/v1"||manifest.studentAuthorized!==false||
        receipt.profile!=="M2-micro-integrated"||receipt.materialDetailApplied!==true||
        manifest.assets?.length!==ids.length||manifest.assets.reduce((sum,a)=>sum+a.bytes,0)>40000000)throw Error("Identità del pacchetto non valida");
-    const manifestBytes=await readFile("./native-manifest.json");
-    if(await hash(manifestBytes)!==receipt.manifestSha256||await hash(sceneBytes)!==receipt.sceneSha256)throw Error("Impronte della scena non valide");
+    if(await hash(manifestBytes)!==receipt.manifestSha256)throw Error("INTEGRITA_MANIFEST");
+    const sceneBytes=await readFile("./scene.html",current.signal);
+    if(closing||current!==controller)return;
+    if(await hash(sceneBytes)!==receipt.sceneSha256)throw Error("INTEGRITA_SCENA");
     const map=new Map();
     manifest.assets.forEach((a,i)=>{
       if(a.id!==ids[i]||!Number.isSafeInteger(a.bytes)||a.bytes<1||a.bytes>40000000||!/^[a-f0-9]{64}$/.test(a.sha256)||
@@ -92,19 +114,19 @@ async function start(){
         seen.add(data.id);
         const target=frame.contentWindow;
         void (async()=>{
-          const bytes=await readFile("/atlas-gateway-native/"+asset.file);
+          const bytes=await readFile("/atlas-gateway-native/"+asset.file,current.signal);
           if(bytes.byteLength!==asset.bytes||await hash(bytes)!==asset.sha256)throw Error("Risorsa non integra: "+data.id);
           if(closing||controller!==current||frame?.contentWindow!==target)return;
           const transferred=bytes.buffer;
           target.postMessage({type:"atlas-native-asset",channel,id:asset.id,bytes:transferred},"*",[transferred]);
-        })().catch(()=>fallback("Una risorsa grafica non è disponibile. Gli accessi restano utilizzabili."));
+        })().catch(()=>fallback("Una risorsa grafica non è stata caricata. Tocca «Riprova 3D».",true));
         return;
       }
       if(data.type==="atlas-3d-ready"){
         ready=true;window.clearTimeout(timeout);
         setStatus("Biblioteca pronta · scegli un accesso o esplora.");
       }else if(data.type==="atlas-3d-error"){
-        fallback("Il motore grafico non è disponibile. Usa gli accessi della biblioteca.");
+        fallback("Il motore 3D non si è avviato. Tocca «Riprova 3D».",true);
       }else if(data.type==="atlas-open"&&ready&&typeof data.id==="string"&&["curricolo","esperienze","studio"].includes(data.id)){
         navigate(data.id);
       }
@@ -116,9 +138,16 @@ async function start(){
     frame.referrerPolicy="no-referrer";
     frame.srcdoc=source;
     scene.replaceChildren(frame);active=true;
-    timeout=window.setTimeout(()=>fallback("L'avvio 3D non è riuscito. Gli accessi restano utilizzabili."),90000);
+    timeout=window.setTimeout(()=>fallback("L'avvio 3D non è riuscito. Tocca «Riprova 3D».",true),90000);
   }catch(e){
-    if(!closing)fallback("Anteprima 3D non disponibile. Gli accessi restano utilizzabili.");
+    if(!closing){
+      const code=String(e?.message||"ERRORE");
+      const reason=code.startsWith("INTEGRITA")?"integrità dei file":
+        code.startsWith("DATI_NON_VALIDI")?"dati della scena":
+        code.startsWith("HTTP_")||e?.name==="TypeError"?"connessione":
+        "caricamento";
+      fallback("Sala 3D non avviata ("+reason+"). Tocca «Riprova 3D».",true);
+    }
     console.error("ATLAS_LIBRARY_WEB_START",e?.message??String(e));
   }
 }
