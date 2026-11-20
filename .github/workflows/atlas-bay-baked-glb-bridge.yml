@@ -77,7 +77,7 @@ jobs:
         run: |
           p="$RUNNER_TEMP/asc-bay-bridge-input"
           "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$p/Atlas-Scene-Master.blend" --python-exit-code 1 --python scripts/atlas-export-bay-preview.py -- "$p/Atlas-Scene-Master.blend" "$p/finish" "$p/bay"
-          cp "$p/bay/bay.json" "$RUNNER_TEMP/asc-bay-bridge-evidence/"
+          cp "$p/bay/bay.json" "$p/bay/bay.f32" "$RUNNER_TEMP/asc-bay-bridge-evidence/"
       - name: Compare original and baked material in same navigable scene
         run: |
           set -euo pipefail
