@@ -108,6 +108,15 @@ try{
       report.mobileMenuHeightPx=menuHeight;
       await frame.locator('#native-controls button[data-action="left"]').click();
       await frame.locator('#native-controls button[data-action="reset"]').click();
+      const steady=await frame.locator("canvas").evaluate(()=>({
+        millisecondRender:renderBudget.lastSubmitMs,
+        cachedStaticShadow:renderer.shadowMap.needsUpdate===false,
+        frames:renderBudget.frames,
+        passes:renderer.info.render.calls
+      }));
+      assert(steady.cachedStaticShadow,"shadow map may not re-render for every navigation frame");
+      assert(Number.isFinite(steady.millisecondRender)&&steady.millisecondRender>=0,"missing mobile steady frame metric");
+      report.steadyNavigation=steady;
       assert.equal(await frame.locator("canvas").evaluate(()=>ready&&!closing),true,"camera controls must preserve the live scene");
       await panel.locator("summary").click();
       assert.equal(await panel.evaluate(el=>el.open),false,"mobile controls must close");
