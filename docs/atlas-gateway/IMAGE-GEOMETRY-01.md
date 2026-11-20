@@ -64,6 +64,39 @@ L'esperimento AI-G0 e la calibrazione della telecamera possono svolgersi in para
 
 **Principio:** usare la memoria della progettazione generativa come **brief architettonico**, l'immagine approvata come **vincolo visivo** e il confronto Blender HERO/SIDE/MOBILE come **prova di geometria**. Nessuna generazione aggiuntiva sostituisce il riferimento approvato.
 
+## 2-quater. INVERSE-COMPOSER-01 — ricostruzione per sintesi e confronto (decisione del 20/11/2026)
+
+**Decisione:** fare del compositore Atlas/Blender il **generatore parametrico della scena** a partire da ART-DIR-02, non limitarsi a usare un modello image-to-3D opaco e non adattare il riferimento alla geometria precedente. **Prima scena 3D, poi render da quella scena; non usare un nuovo modello text-to-image come surrogato della geometria.** Il generatore deve produrre sia un fotogramma confrontabile sia quote/mesh/camera esportabili e versionate.
+
+**Metodo professionale:** **analisi mediante sintesi / inverse graphics**: stimare parametri `theta`, costruire con Blender una scena `S(theta)`, renderizzare `I(theta)` dalla camera HERO, misurare le differenze con il PNG canonico, aggiornare `theta` e ripetere, mantenendo SIDE/MOBILE per evitare geometria 2.5D. Sono separati gli scostamenti di camera, struttura, proporzioni, materiali e luce.
+
+**Ordine delle regolazioni:**
+1. Immagine canonica realmente verificata per byte SHA-256, quattro portali, non variante ARENA a cinque o biblioteca a tre.
+2. Rilevare su quel PNG i punti 2D di controllo e le silhouette: oculo/corona, asse, due livelli, posizioni/spigoli dei quattro portali, ellisse e appoggio del podio, fughe pavimento.
+3. Configurare **parametri editabili**: curvatura e raggio della rotonda, livelli, nervature oculo, portali (4), podio ellittico, posizione/focale/orientamento camera, orientamento delle superfici e ingombri architettonici.
+4. Eseguire un **render rapido neutro** e il confronto numerico/geometrico. Registrare misure **relative** e confidenza: un'immagine non identifica una pianta/metrica univoca.
+5. Regolare prima camera e grandi volumi; solo dopo sostituire le superfici principali con asset adeguati (ASSET-KIT-01) e passare ai materiali/luce Cycles.
+6. Ottenere da un unico modello `CAM_HERO`, `CAM_SIDE`, `CAM_MOBILE`; costruire e conservare `.blend`, parametri JSON, coordinate 3D, proiezioni 2D, tavole/sezioni, immagini e report delle differenze.
+7. SOLO dopo approvazione dell'ideatore e completamento della catena FLOW-02 passare al derivato GLB e al motore Atlas. Vietato trasformare un miglioramento dell'immagine in una falsa prova di geometria corretta.
+
+**Prototipo effettivamente preparato nella sessione del 20/11/2026:** archivio `atlas_inverse_composer_prototipo.zip`, SHA-256 `99850809929f62839373d0d782d41544a8df0a7d000042f7aec6e636c1863d2d`, contenente:
+- `scene-parameters.json`: ipotesi dimensionali **relative e non calibrate**, quattro portali, tre telecamere, impronta del riferimento;
+- `scene_composer.py`: Blender Python che genera una scena 3D **SEED UNAPPROVED**, salva un `.blend`, può renderizzare tre viste e produce `geometry-evidence.json` con geometrie e punti proiettati;
+- `README.md`: esecuzione, limiti, percorso al risultato.
+
+**Prove realmente eseguite:** sintassi Python valida con `py_compile`, JSON valido, invarianti quattro portali e tre camere. Archivio ZIP verificato. **Non eseguito:** Blender (non installato nell'ambiente locale), generazione `.blend`, render, calcolo di somiglianza sul PNG canonico e ottimizzazione iterativa. Il prototipo è al momento allegato come file scaricabile nella conversazione, **non depositato in GitHub né collegato a una CI esecutiva**. Il suo codice andrà versionato quando il collegamento ad artefatti sarà disponibile; non è il master finale.
+
+**Prossimo ostacolo risolutivo:** disponibilità del PNG definitivo ART-DIR-02 in byte autentici al percorso `visual-factory/atlas-gateway/reference/atlas-hero-approved.png`. Il confronto semantico dei pixel e l'ottimizzazione automatica dei parametri non sono eseguibili in sua assenza. Rimane aperta la selezione di un ambiente reale con Blender 5.x e risorse CPU/GPU compatibili e gratuite.
+
+**Fonti tecniche:**
+- Blender Python 5.0, esecuzione non interattiva: https://docs.blender.org/api/5.0/info_tips_and_tricks.html
+- Blender projection API `world_to_camera_view`: https://docs.blender.org/api/main/bpy_extras.object_utils.html
+- fSpy per camera matching: https://fspy.io/
+- Ricerca 2026 `Thinking in Blender — Staged Executable Inverse Graphics`: https://arxiv.org/abs/2606.02580
+
+**Regola di controllo:** distinguere (a) somiglianza bidimensionale, (b) plausibilità tridimensionale da altre viste, (c) editabilità geometrica, (d) effettiva fedeltà artistica. Nessun punteggio automatico può garantire (d).
+
+
 ## 3. Catena di inferenza, senza false certezze
 
 ### IG0 — Ricognizione visiva e tavola di riferimento
