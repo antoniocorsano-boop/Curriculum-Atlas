@@ -242,3 +242,13 @@
   .portal, .enter { transition: none !important; }
   .portal { transform: none !important; }
 }
+
+/* Root-scoped reset: Atlas content pages keep their existing global layout. */
+:global(html:has(#atlas-entry-root)),
+:global(body:has(#atlas-entry-root)) {
+  margin: 0;
+  padding: 0 !important;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
