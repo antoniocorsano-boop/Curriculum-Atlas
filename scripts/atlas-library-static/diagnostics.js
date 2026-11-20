@@ -5,13 +5,13 @@
 "use strict";
 if(new URLSearchParams(location.search).get("diagnostica")!=="1")return;
 
-const sampleBridge="const atlasPerf={active:false,start:0,samples:[],backpressure:0};\nconst atlasRound=value=>Math.round(value*10)/10;\nconst atlasP95=values=>{\n  if(!values.length)return null;\n  const sorted=values.slice().sort((a,b)=>a-b);\n  return atlasRound(sorted[Math.min(sorted.length-1,Math.ceil(sorted.length*.95)-1)]);\n};\naddEventListener(\"message\",event=>{\n  if(event.source!==parent||event.origin!==ATLAS_PARENT_ORIGIN||event.data?.channel!==ATLAS_CHANNEL)return;\n  if(event.data.type===\"atlas-diagnostic-start\"&&ready&&!closing){\n    atlasPerf.active=true;atlasPerf.start=performance.now();atlasPerf.samples=[];\n    atlasPerf.backpressure=renderBudget.backpressureSkips;\n    send(\"atlas-diagnostic-started\");\n  }\n  if(event.data.type===\"atlas-diagnostic-stop\"&&atlasPerf.active){\n    atlasPerf.active=false;\n    const samples=atlasPerf.samples;\n    const gaps=samples.slice(1).map((s,i)=>s.time-samples[i].time);\n    const length=samples.length,elapsed=performance.now()-atlasPerf.start;\n    const report={\n      durationMs:Math.round(elapsed),submittedFrames:length,\n      submissionRate:length>1?atlasRound((length-1)*1000/(samples[length-1].time-samples[0].time)):0,\n      frameIntervalP95Ms:atlasP95(gaps),longestFrameMs:gaps.length?atlasRound(Math.max(...gaps)):null,\n      cpuSubmitP95Ms:atlasP95(samples.map(s=>s.cpu)),\n      gpuBackpressure:renderBudget.backpressureSkips-atlasPerf.backpressure,\n      rasterScale:atlasRound(renderBudget.scale),drawCalls:renderer.info.render.calls\n    };\n    send(\"atlas-diagnostic-report\",{report});\n  }\n},events);";
+const sampleBridge="const atlasPerf={active:false,start:0,samples:[],backpressure:0,moves:[],gesture:0,dragging:false,lastMoveAt:0};\nconst atlasRound=value=>Math.round(value*10)/10;\nconst atlasP95=values=>{\n  if(!values.length)return null;\n  const sorted=values.slice().sort((a,b)=>a-b);\n  return atlasRound(sorted[Math.min(sorted.length-1,Math.ceil(sorted.length*.95)-1)]);\n};\n// Gesture samples are recorded independently of the render loop: stationary\n// pauses do not become false 3-second \"GPU stalls\".\ncanvas.addEventListener(\"pointerdown\",event=>{\n  if(!atlasPerf.active||!ready||closing||event.isPrimary===false)return;\n  atlasPerf.dragging=true;atlasPerf.gesture++;atlasPerf.lastMoveAt=0;\n},events);\ncanvas.addEventListener(\"pointermove\",event=>{\n  if(!atlasPerf.active||!atlasPerf.dragging)return;\n  const now=performance.now();\n  atlasPerf.lastMoveAt=now;\n  if(atlasPerf.moves.length<2400)atlasPerf.moves.push({time:now,gesture:atlasPerf.gesture});\n},events);\nfunction atlasGestureEnd(){atlasPerf.dragging=false}\ncanvas.addEventListener(\"pointerup\",atlasGestureEnd,events);\ncanvas.addEventListener(\"pointercancel\",atlasGestureEnd,events);\naddEventListener(\"message\",event=>{\n  if(event.source!==parent||event.origin!==ATLAS_PARENT_ORIGIN||event.data?.channel!==ATLAS_CHANNEL)return;\n  if(event.data.type===\"atlas-diagnostic-start\"&&ready&&!closing){\n    atlasPerf.active=true;atlasPerf.start=performance.now();atlasPerf.samples=[];\n    atlasPerf.moves=[];atlasPerf.gesture=0;atlasPerf.dragging=false;atlasPerf.lastMoveAt=0;\n    atlasPerf.backpressure=renderBudget.backpressureSkips;\n    send(\"atlas-diagnostic-started\");\n  }\n  if(event.data.type===\"atlas-diagnostic-stop\"&&atlasPerf.active){\n    atlasPerf.active=false;atlasPerf.dragging=false;\n    const samples=atlasPerf.samples;\n    const gaps=samples.slice(1).map((s,i)=>s.time-samples[i].time);\n    const motionGaps=[];\n    for(let i=1;i<samples.length;i++){\n      const a=samples[i-1],b=samples[i];\n      if(!a.gesture||a.gesture!==b.gesture)continue;\n      if(atlasPerf.moves.some(m=>m.gesture===b.gesture&&m.time>a.time&&m.time<=b.time))\n        motionGaps.push(b.time-a.time);\n    }\n    const motionCpu=samples.filter(s=>s.gesture>0).map(s=>s.cpu);\n    let movementDuration=0;\n    for(let i=1;i<atlasPerf.moves.length;i++){\n      const prev=atlasPerf.moves[i-1],next=atlasPerf.moves[i];\n      if(prev.gesture===next.gesture)movementDuration+=Math.min(150,next.time-prev.time);\n    }\n    const length=samples.length,elapsed=performance.now()-atlasPerf.start;\n    const report={\n      durationMs:Math.round(elapsed),submittedFrames:length,\n      submissionRate:length>1?atlasRound((length-1)*1000/(samples[length-1].time-samples[0].time)):0,\n      frameIntervalP95Ms:atlasP95(gaps),longestFrameMs:gaps.length?atlasRound(Math.max(...gaps)):null,\n      cpuSubmitP95Ms:atlasP95(samples.map(s=>s.cpu)),\n      gpuBackpressure:renderBudget.backpressureSkips-atlasPerf.backpressure,\n      gpuQueueFenceSupported:Boolean(renderBudget.fenceSupported),\n      rasterScale:atlasRound(renderBudget.scale),drawCalls:renderer.info.render.calls,\n      gestureCount:atlasPerf.gesture,gestureMoveEvents:atlasPerf.moves.length,\n      estimatedActiveMovementMs:Math.round(movementDuration),\n      renderIntervalsDuringMotion:motionGaps.length,\n      motionSubmissionRate:motionGaps.length?atlasRound(1000/(motionGaps.reduce((x,y)=>x+y,0)/motionGaps.length)):null,\n      motionIntervalP95Ms:atlasP95(motionGaps),\n      motionLongestIntervalMs:motionGaps.length?atlasRound(Math.max(...motionGaps)):null,\n      motionDelaysAbove200Ms:motionGaps.filter(x=>x>200).length,\n      motionCpuSubmitP95Ms:atlasP95(motionCpu)\n    };\n    send(\"atlas-diagnostic-report\",{report});\n  }\n},events);";
 const inject=function(source){
   const anchors=["function render(t=0){","renderBudget.lastSubmitMs=Math.round(performance.now()-start);"];
   for(const anchor of anchors)if(source.split(anchor).length!==2)throw Error("DIAGNOSTICA_SCENA_MODIFICATA");
   source=source.replace(anchors[0],sampleBridge+"\n"+anchors[0]);
   source=source.replace(anchors[1],anchors[1]+
-    '\n if(atlasPerf.active&&atlasPerf.samples.length<900)atlasPerf.samples.push({time:performance.now(),cpu:renderBudget.lastSubmitMs,scale:renderBudget.scale});');
+    '\n if(atlasPerf.active&&atlasPerf.samples.length<900){const now=performance.now();atlasPerf.samples.push({time:now,cpu:renderBudget.lastSubmitMs,scale:renderBudget.scale,gesture:atlasPerf.dragging||now-atlasPerf.lastMoveAt<180?atlasPerf.gesture:0});}');
   return source;
 };
 
@@ -67,6 +67,16 @@ function report(data){
     intervallo_massimo_ms:data.longestFrameMs,
     cpu_sottomissione_p95_ms:data.cpuSubmitP95Ms,
     attese_gpu:data.gpuBackpressure,
+    controllo_coda_gpu_supportato:data.gpuQueueFenceSupported,
+    gesti_rilevati:data.gestureCount,
+    eventi_movimento:data.gestureMoveEvents,
+    durata_movimento_rilevata_ms:data.estimatedActiveMovementMs,
+    intervalli_in_movimento:data.renderIntervalsDuringMotion,
+    frequenza_invio_durante_movimento_fps:data.motionSubmissionRate,
+    intervallo_movimento_p95_ms:data.motionIntervalP95Ms,
+    intervallo_massimo_movimento_ms:data.motionLongestIntervalMs,
+    ritardi_movimento_oltre_200ms:data.motionDelaysAbove200Ms,
+    cpu_sottomissione_movimento_p95_ms:data.motionCpuSubmitP95Ms,
     scala_render:data.rasterScale,
     chiamate_grafiche:data.drawCalls,
     misurazione_tempo_gpu:"non disponibile",
@@ -75,9 +85,9 @@ function report(data){
   lastReport=JSON.stringify(out,null,2);
   button("diag-result").value=lastReport;button("diag-result").hidden=false;
   button("diag-copy").disabled=false;button("diag-start").disabled=!ready;
-  setState(data.submittedFrames<5
-    ?"Pochi fotogrammi: ripeti la prova trascinando la scena."
-    :"Misura completata. Il rapporto distingue invio dei disegni e prestazioni GPU.");
+  setState(data.renderIntervalsDuringMotion<3
+    ?"Movimento insufficiente per una diagnosi affidabile: ripeti trascinando la scena più a lungo."
+    :"Movimento rilevato: il rapporto separa le pause dai rallentamenti durante il gesto.");
 }
 function handleMessage(data){
   if(data.type==="atlas-3d-ready"){
