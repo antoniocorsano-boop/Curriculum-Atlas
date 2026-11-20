@@ -41,6 +41,21 @@ try{
       return {phase:nativePhase,ready,revision:THREE.REVISION,materials:new Set(m.map(r=>r.name)).size,corrected:m.filter(r=>r.corrected).length,compiled:m.filter(r=>r.compiled>0).length,sceneObjects:visibility.update(camera).total,buffer:[el.width,el.height],calls:renderer.info.render.calls};
     });
     assert.equal(result.phase,"ready");assert.equal(result.ready,true);assert.equal(result.revision,"128");assert.equal(result.materials,7);assert.equal(result.corrected,1);assert(result.compiled>=1);assert.equal(result.sceneObjects,495);assert(result.calls>0);
+    if(dim.name==="phone"){
+      const layout=await page.evaluate(()=>{
+        const scene=document.querySelector(".scene").getBoundingClientRect();
+        const nav=document.querySelector(".portals").getBoundingClientRect();
+        const actions=[...document.querySelectorAll(".portals [data-portal]")].map(n=>{
+          const r=n.getBoundingClientRect();return {id:n.dataset.portal,top:r.top,bottom:r.bottom,width:r.width,height:r.height};
+        });
+        return {sceneTop:scene.top,navTop:nav.top,navBottom:nav.bottom,actions,scrollWidth:document.documentElement.scrollWidth,viewport:innerWidth,viewportHeight:innerHeight};
+      });
+      assert(layout.navBottom<layout.sceneTop,"mobile portals must precede the 3D scene");
+      assert(layout.navBottom<layout.viewportHeight,"mobile portal actions must be visible without scrolling");
+      assert(layout.scrollWidth<=layout.viewport,"mobile page must not scroll horizontally");
+      assert(layout.actions.every(a=>a.width>=44&&a.height>=44),"mobile portal touch targets too small");
+      report.results.push({device:"phone-first-screen",layout});
+    }
     await page.screenshot({path:join(out,dim.name+"-library.png")});
     report.results.push({device:dim.name,...result});
     const dest=dim.name==="phone"?"curricolo":"esperienze";
