@@ -1,6 +1,7 @@
 import {readFileSync,writeFileSync,mkdirSync,copyFileSync,existsSync,statSync} from "node:fs";
 import {resolve,join} from "node:path";
 import {createHash} from "node:crypto";
+import {gzipSync,gunzipSync} from "node:zlib";
 const [nativeDir,exportDir]=process.argv.slice(2).map(x=>resolve(x));
 if(!nativeDir||!exportDir)throw Error("Usage: nativeDir exportDir");
 const head=process.env.ATLAS_EXACT_HEAD;
@@ -34,13 +35,33 @@ for(const file of sources)copyFileSync(join("scripts","atlas-library-static",fil
 for(const [src,dest] of [["scene.html","scene.html"],["native-manifest.json","native-manifest.json"],["native-build-receipt.json","native-build-receipt.json"],["THREE-LICENSE.txt","THREE-LICENSE.txt"]]){
   copyFileSync(join(nativeDir,src),join(destination,dest));
 }
-writeFileSync(join(exportDir,"_headers"),"/*\n  X-Robots-Tag: noindex, nofollow, noarchive\n  Referrer-Policy: no-referrer\n  X-Content-Type-Options: nosniff\n\n/biblioteca/*\n  Cache-Control: no-cache, must-revalidate\n\n/atlas-gateway-native/*\n  Cache-Control: public, max-age=31536000, immutable\n");
+// Lossless content-addressed transport: the original locked GLBs remain
+// untouched. Chrome decodes local gzip streams, then verifies the same
+// original SHA-256 before the renderer receives any bytes.
+const gzipDir=join(exportDir,"atlas-gateway-gzip");
+mkdirSync(gzipDir,{recursive:true});
+const transport={schema:"atlas.library.gzip/v1",sourceManifestSha256:receipt.manifestSha256,assets:[]};
+for(const a of manifest.assets.filter(x=>x.id!=="sky")){
+  const raw=readFileSync(join(exportDir,"atlas-gateway-native",a.file));
+  const gz=gzipSync(raw,{level:6,mtime:0});
+  if(gz.length>=raw.length)throw Error("Compression ineffective for "+a.id);
+  const restored=gunzipSync(gz);
+  if(restored.length!==a.bytes||createHash("sha256").update(restored).digest("hex")!==a.sha256)
+    throw Error("Lossless compressed transport verification failed: "+a.id);
+  const compressedName=a.file+".gz";
+  writeFileSync(join(gzipDir,compressedName),gz);
+  transport.assets.push({id:a.id,file:compressedName,bytes:gz.length,
+    sha256:createHash("sha256").update(gz).digest("hex"),originalBytes:a.bytes});
+}
+writeFileSync(join(destination,"asset-transport.json"),JSON.stringify(transport,null,2)+"\n");
+const compressedBytes=transport.assets.reduce((total,a)=>total+a.bytes,0)+manifest.assets.find(a=>a.id==="sky").bytes;
+writeFileSync(join(exportDir,"_headers"),"/*\n  X-Robots-Tag: noindex, nofollow, noarchive\n  Referrer-Policy: no-referrer\n  X-Content-Type-Options: nosniff\n\n/biblioteca/*\n  Cache-Control: no-cache, must-revalidate\n\n/atlas-gateway-native/*\n  Cache-Control: public, max-age=31536000, immutable\n\n/atlas-gateway-gzip/*\n  Cache-Control: public, max-age=31536000, immutable\n");
 writeFileSync(join(exportDir,"robots.txt"),"User-agent: *\nDisallow: /\n");
 writeFileSync(join(exportDir,"EXACT_HEAD.txt"),head+"\n");
 writeFileSync(join(exportDir,"PREVIEW-MANIFEST.json"),JSON.stringify({exactHead:head,channel:"artifact-only",studentAuthorized:false,
   product:"atlas-library-full-web",materialProfile:receipt.profile,sceneSha256:receipt.sceneSha256,assetsSha256:receipt.manifestSha256},null,2)+"\n");
 const proof={status:"READY_FOR_CLOUDFLARE_PREVIEW",exactHead:head,studentAuthorized:false,route:"/biblioteca/",
-  assetCount:manifest.assets.length,assetBytes:actual,sceneSha256:receipt.sceneSha256,standaloneBrowser:true,
+  assetCount:manifest.assets.length,assetBytes:actual,transportBytes:compressedBytes,transportRatio:+(compressedBytes/actual).toFixed(4),sceneSha256:receipt.sceneSha256,standaloneBrowser:true,
   staticPages:["/","/curricolo/","/esperienze/","/biblioteca/"],publicationPerformed:false};
 writeFileSync(join(destination,"delivery-receipt.json"),JSON.stringify(proof,null,2)+"\n");
 console.log("ATLAS_LIBRARY_STATIC",JSON.stringify(proof));
