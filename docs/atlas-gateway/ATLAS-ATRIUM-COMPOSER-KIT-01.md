@@ -82,3 +82,13 @@ La prima consegna, **[ATLAS-ATRIUM-BLUEPRINT-01](./ATLAS-ATRIUM-BLUEPRINT-01.md)
 - **Blocco persistente:** il PNG canonico a quattro portali (SHA `7b3ffb9a355b89057acea02489020ad43d871e10b6cf5bbb29f8769ff3073336`) è stato inviato in altra chat, ma i byte non sono ancora accessibili al ciclo di confronto; non inventare calibrazione, fedeltà fotografica o approvazione.
 
 **Prossima soglia di avanzamento:** `.blend` e tre render reali da Blender verificati; acquisizione dei byte canonici e correzione delle geometrie su ART-DIR-02. Nessun merge/deploy.
+
+
+## Studio alternativo — Gateway ibrido 2D/3D (20 novembre 2026)
+
+L'ideatore ha proposto una soluzione a **fondale fotografico/architettonico 2D con soli quattro portali 3D interattivi**. La proposta è stata tradotta in uno **schema reale salvato in SVG**, con studio di fattibilità e criteri di verifica:
+
+- [ATLAS-GATEWAY-HYBRID-01.md](./ATLAS-GATEWAY-HYBRID-01.md): stratificazione, clean plate, maschere, interazioni e confronto con il 3D completo;
+- [ATLAS-GATEWAY-HYBRID-SCHEMA-01.svg](./ATLAS-GATEWAY-HYBRID-SCHEMA-01.svg): schema vettoriale apribile e riutilizzabile.
+
+**Stato:** sola ipotesi; nessun codice di prodotto ibrido, nessun fondale modificato, nessuna revisione ART-DIR-02 approvata. Non cancellare il master 3D/SEED-03, conservare distinte le due alternative finché la qualità visiva, navigazione e compatibilità non saranno confrontate. L'immagine originale ART-DIR-02 resta necessaria e attualmente non acquisita in byte nel deposito produttivo.
