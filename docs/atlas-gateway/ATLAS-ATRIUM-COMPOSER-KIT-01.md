@@ -45,3 +45,19 @@ La prima consegna, **[ATLAS-ATRIUM-BLUEPRINT-01](./ATLAS-ATRIUM-BLUEPRINT-01.md)
 ## Regola di conservazione permanente adottata
 
 **Ogni nuova consegna del compositore deve diventare un insieme di file riproducibili:** documentazione e dati/script nel ramo di lavoro GitHub; immagini e pacchetti binari nel deposito persistente con collegamento al repository; salvataggio verificato tramite rilettura e impronta; link e stato registrati su [Atlas #151](https://github.com/antoniocorsano-boop/Curriculum-Atlas/issues/151) e [TRAMA #354](https://github.com/antoniocorsano-boop/trama-ecosistema/issues/354). **Non** qualificare come prodotto un file che è solo progettato o rimasto nei temporanei della chat.
+
+
+## Produzione effettiva — ATLAS-ATRIUM-3D-SEED-01 (20/11/2026)
+
+**Artefatto realizzato, diverso da un Master Blender:** un GLB con **308 mesh e 68.796 triangoli**, 979.996 byte, **riaperto e verificato** dopo esportazione, tutte le mesh non vuote e chiuse. Il primo modello 3D contiene rotonda, due gallerie, lucernario con apertura reale, podio convesso, quattro pannelli fisici distinti, scaffalature e vegetazione. Le geometrie sono derivate dalle **ipotesi** del Blueprint-01, non dai pixel dell'immagine ART-DIR-02.
+
+- [Documento e limitazioni](./ATLAS-ATRIUM-3D-SEED-01.md)
+- [Rapporto JSON della geometria](./ATLAS-ATRIUM-3D-SEED-01-evidence.json)
+- [Generatore riproducibile Python](../../scripts/atlas-gateway-production/generate-atrium-seed.py)
+- [Passaggio a Blender / 3 telecamere / render Cycles](../../scripts/atlas-gateway-production/import-atrium-seed-blender.py)
+- [Pacchetto **persistente Drive**, contenente GLB, sorgenti, JSON e anteprima](https://drive.google.com/file/d/1kHp7LNSyU4nHAt1yLqDWDy5vkOqpLpJp/view); ID Drive `1kHp7LNSyU4nHAt1yLqDWDy5vkOqpLpJp`, **685.215 byte**, rilettura dei metadati riuscita.
+- SHA-256 GLB: `2800580409408efae6cc9181354a622959aee67ffb6620531f1db1e0b40b6ddf` e SHA-256 ZIP `1dd10ab8c18fcfd3d40159daeec3e6261df7d1f33bef2c1695d7ca4b7dce07b1`.
+
+**Prove superate:** export/rilettura GLB, 4 portali distinti, chiusura di ogni mesh, 3 camere nel JSON, script Python sintatticamente validi. **NON eseguito:** importazione con Blender, salvataggio di `.blend`, rendering Cycles, confronto con PNG canonico, approvazione artistica, test WebGL/Android. L'ambiente locale non disponeva di Blender e l'installazione non è riuscita.
+
+**Prossimo ingresso:** eseguire lo script Blender su un runner dotato di Blender e acquisire il PNG canonico, senza sostituirlo con ARENA 5 portali o Biblioteca Atlas 3 portali; poi effettuare la calibrazione mediante sintesi/confronto. Il lavoro appena salvato è un prototipo geometrico, non un risultato fotorealistico.
