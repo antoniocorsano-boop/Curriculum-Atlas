@@ -2,7 +2,7 @@
 **Proposta di prodotto e specifica di integrazione v1 — 20 novembre 2026**
 
 Stato: **DESIGN_CANDIDATE / HUMAN_PRODUCT_REVIEW_REQUIRED / NOT_STUDENT_AUTHORIZED / NO_DEPLOY**.  
-Perimetro: `Curriculum-Atlas` PR #136 (infrastruttura AWC-A–F); prodotto professionale **Studio Atlas**, di competenza TRAMA; non biblioteca 3-D e non editor di Arena.  
+Perimetro: repository Atlas, PR #136 (infrastruttura AWC-A–F); prodotto professionale **Studio Atlas**, di competenza TRAMA; non biblioteca 3-D e non editor di Arena.  
 Decisione fondamentale: **l'ideatore progetta un'esperienza educativa; il compositore aiuta a costruire e verificare un ambiente coerente. Non si parte dal modellatore tridimensionale.**
 
 ## 1. Evidenze, fonti e distinzione di autorità
