@@ -23,7 +23,10 @@
   </section>
   <p class="status" id="status" role="status" aria-live="polite">Preparazione della biblioteca tridimensionale…</p>
   <main>
-    <div class="scene" id="scene" aria-label="Vista della biblioteca tridimensionale"></div>
+    <div class="viewer" id="viewer">
+      <div class="scene" id="scene" aria-label="Vista della biblioteca tridimensionale"></div>
+      <button id="expand" class="expand-scene" type="button" aria-pressed="false" aria-label="Espandi la biblioteca tridimensionale">Espandi</button>
+    </div>
     <nav class="portals" aria-label="Destinazioni della biblioteca">
       <a data-portal="curricolo" href="/curricolo/"><span>Curricolo</span><small>Scopri i percorsi di apprendimento</small></a>
       <a data-portal="esperienze" href="/esperienze/"><span>Esperienze</span><small>Entra nelle attività formative</small></a>
