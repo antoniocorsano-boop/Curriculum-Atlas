@@ -85,3 +85,9 @@ Progetti e richieste di modifica rimangono separati finché non c'è un'interfac
 - Cloudflare Pages, gestione risorse e cache: https://developers.cloudflare.com/pages/configuration/serving-pages/
 
 **Decisione irrinunciabile:** la prossima modifica produttiva si valuta da ciò che migliora nell'esperienza reale, non dal numero di nuovi test o prototipi prodotti. Un solo ramo di prodotto, una sola cronologia decisionale, risorse artistiche e curricolari governate dalle rispettive fonti di autorità.
+
+
+## Esecuzione Fase A — Diagnostica locale opzionale
+È stata introdotta nella sola candidata Web PR #148 la pagina \`/biblioteca/?diagnostica=1\`, disponibile come anteprima tecnica. Il parametro aggiunge **Avvia misura**, **Termina misura** e **Copia risultato**, senza cambiare la scena, la geometria, i materiali, la luce o il caricamento quando la diagnostica non è attivata. I dati restano nella pagina e vengono copiati soltanto su azione esplicita; non vengono archiviati né trasmessi ad analisi esterne. Per misurare: aprire il collegamento con \`?diagnostica=1\`, verificare che la biblioteca sia pronta, premere Avvia misura, trascinare ripetutamente la visuale, premere Termina misura e condividere il testo soltanto se desiderato.
+
+**Interpretazione obbligatoria:** il rapporto contiene cadenza dei fotogrammi **inviati dal motore grafico**, p95 degli intervalli tra invii, p95 della durata CPU di sottomissione, contropressione della coda GPU, scala di risoluzione e numero delle chiamate grafiche. La cadenza d'invio NON è una misura degli FPS effettivamente mostrati dallo schermo; i tempi GPU risultano esplicitamente «non disponibile», evitando false equivalenze. Una misura supportata del tempo GPU può essere valutata in un secondo momento senza presumere estensioni WebGL presenti sul telefono. La prova è stata inserita nel test della stessa pagina Android simulata; la misura concreta richiede l'interazione sullo smartphone fisico.
