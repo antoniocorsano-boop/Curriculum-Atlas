@@ -226,7 +226,7 @@ await capture("reference");const box=await page.locator("canvas").boundingBox();
 await page.locator("#reset").click();await capture("restored");assert.equal(report.views.reference.sha256,report.views.restored.sha256,"camera restore");
 await page.evaluate(()=>window.__resize(320,240));await capture("mobile");assert.equal(report.views.mobile.width,320);
 if(bridge){
-  await page.evaluate((w,h)=>window.__resize(w,h),b.camera.width,b.camera.height);
+  await page.evaluate(({w,h})=>window.__resize(w,h),{w:b.camera.width,h:b.camera.height});
   report.bridge=await page.evaluate(()=>window.__bridge.info);
   await capture("bridge-original");
   await page.getByRole("button",{name:"Luce precalcolata"}).click();
