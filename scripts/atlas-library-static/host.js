@@ -13,6 +13,18 @@ async function readFile(url){
   return new Uint8Array(await response.arrayBuffer());
 }
 async function readJson(url){return JSON.parse(new TextDecoder().decode(await readFile(url)));}
+
+// Keep the original scene and all its signed resources unmodified.
+// Only on narrow screens, wrap the existing controls in an accessible
+// collapsible panel. SHA-256 is checked on the source before this adaptation.
+function phoneControls(original){
+  const nav='<nav id="native-controls" aria-label="Controlli della visuale" hidden>';
+  if(original.split(nav).length!==2||original.split("</nav><script>").length!==2||
+     original.split("</head>").length!==2)throw Error("Struttura dei controlli cambiata");
+  return original.replace("</head>","<style>\n#atlas-controls-panel{position:fixed;z-index:5;bottom:8px;left:8px;right:8px;pointer-events:none}\n#atlas-controls-panel summary{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 14px;background:#122b3de8;border:1px solid #dbbb7d;color:#fff;border-radius:10px;box-shadow:0 3px 16px #06101870;font:600 13px system-ui;list-style:none;cursor:pointer;pointer-events:auto}\n#atlas-controls-panel summary::-webkit-details-marker{display:none}\n#atlas-controls-panel[open] summary{background:#294456}\n#atlas-controls-panel #native-controls{position:static;left:auto;right:auto;bottom:auto;display:flex;flex-wrap:wrap;justify-content:center;gap:5px;max-width:100%;margin-top:6px;padding:7px;background:#102a3de8;border:1px solid #b9a27488;border-radius:10px;pointer-events:auto}\n#atlas-controls-panel:not([open]) #native-controls,#atlas-controls-panel #native-controls[hidden]{display:none}\n#atlas-controls-panel #native-controls button{min-width:44px;min-height:44px;flex:1 1 auto;white-space:nowrap}\n</style>"+"</head>")
+    .replace(nav,'<details id="atlas-controls-panel"><summary>Comandi 3D</summary>'+nav)
+    .replace("</nav><script>","</nav></details><script>");
+}
 function stop(){
   if(closing)return;closing=true;ready=false;active=false;
   window.clearTimeout(timeout);controller?.abort();controller=null;
@@ -68,8 +80,9 @@ async function start(){
     if(html.split("__ATLAS_PARENT_ORIGIN_JSON__").length!==2||html.split("__ATLAS_CHANNEL_JSON__").length!==2)throw Error("Scena non compatibile");
     channel=hex(crypto.getRandomValues(new Uint8Array(24)));
     const seen=new Set();
-    const source=html.replace("__ATLAS_PARENT_ORIGIN_JSON__",JSON.stringify(location.origin))
-                     .replace("__ATLAS_CHANNEL_JSON__",JSON.stringify(channel));
+    let source=html.replace("__ATLAS_PARENT_ORIGIN_JSON__",JSON.stringify(location.origin))
+                   .replace("__ATLAS_CHANNEL_JSON__",JSON.stringify(channel));
+    if(window.innerWidth<=650)source=phoneControls(source);
     function handle(event){
       if(closing||event.source!==frame?.contentWindow||event.origin!=="null"||!event.data||event.data.channel!==channel)return;
       const data=event.data;
