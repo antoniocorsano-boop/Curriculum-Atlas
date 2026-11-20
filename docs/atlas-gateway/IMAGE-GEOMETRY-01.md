@@ -25,6 +25,24 @@ Il progetto geometrico non si ricava scegliendo una libreria di asset né copian
 - **Condizione preliminare:** recuperare e depositare in un archivio durevole il file con i byte e l'impronta verificata, accessibile alla filiera Blender/CI.
 - Un'annotazione del SHA non è prova che il file sia depositato o che la sua geometria sia già stata ricostruita.
 
+## 2-bis. Valutazione image-to-3D prima di modellare tutto manualmente
+
+**Decisione di verifica del 20/11/2026:** recuperare anche il percorso sperimentale già discusso in precedenza (GEN-WORLD-01): usare l'immagine canonica come input di sistemi **image-to-3D** per ottenere una geometria iniziale **candidata**, importabile e modificabile in Blender. Questa verifica **precede le scelte di modellazione laboriosa**, ma non può diventare una dipendenza da servizi a pagamento o un pretesto per dichiarare pronto il master.
+
+**Distinzione tecnica obbligatoria:**
+- **Ricostruzione IA di mesh** (es. [TripoSR](https://github.com/VAST-AI-Research/TripoSR), [TRELLIS.2](https://github.com/microsoft/TRELLIS.2)): accetta una singola immagine e genera un possibile oggetto/mesh 3D; **non garantisce** pianta, quote, geometrie occluse, moduli editabili o corretta topologia di un atrio interno completo. TRELLIS.2 richiede risorse GPU elevate (repository ufficiale: NVIDIA con almeno 24 GB) e non è automaticamente eseguibile a costo zero sull'infrastruttura corrente.
+- **Profondità monoculare** (es. [Depth Anything V2](https://github.com/DepthAnything/Depth-Anything-V2), modello Small Apache-2.0): produce una stima della profondità visibile e può guidare la ricostruzione; **non produce da sola** l'architettura completa con parti nascoste e materiali editabili.
+- **Allineamento telecamera** (fSpy, eventuale [Fit The Camera](https://extensions.blender.org/add-ons/fit-the-camera/) se compatibile con Blender effettivamente fissato): ricava prospettiva/camera da linee guida, **non genera mesh da sola**. Fit The Camera dichiara supporto per Blender 5.2+, distinto dalla 5.0.1 già utilizzata dalla CI.
+
+**Prova AI-G0, comparativa e circoscritta:**
+1. Ottenere l'originale PNG canonico effettivamente accessibile, con SHA verificato.
+2. Valutare una modalità **gratuita e autorizzata** di esecuzione per almeno un generatore di mesh e una stima della profondità; non impegnare infrastruttura nuova o esporre contenuti non autorizzati. Registrare versione, licenze e limiti.
+3. Salvare risultati reali, screenshot da HERO e SIDE, prova di importazione/riapertura in Blender, presenza di geometria navigabile, separabilità dei componenti e dimensioni del GLB.
+4. Confrontare con immagine canonica e progettazione prospettica: oculo, pareti curve, due livelli, quattro portali, basamento, profondità. **Non dichiarare l'IA idonea solo perché genera un GLB.**
+5. **Decisione esplicita:** (a) geometria generata riutilizzabile e da ripulire; (b) adatta soltanto a parti secondarie; (c) non valida per il foyer: procedere con ricostruzione architettonica controllata IG0–IG4 senza ulteriore ricerca indefinita.
+
+L'esperimento AI-G0 e la calibrazione della telecamera possono svolgersi in parallelo. Il modello definitivo di Atlas deve comunque essere una geometria coerente, modificabile e fedele, verificata con HERO/SIDE/MOBILE; non una superficie 2,5D o un panorama.
+
 ## 3. Catena di inferenza, senza false certezze
 
 ### IG0 — Ricognizione visiva e tavola di riferimento
