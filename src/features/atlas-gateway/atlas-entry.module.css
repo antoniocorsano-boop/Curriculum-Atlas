@@ -55,7 +55,7 @@
   position: absolute;
   z-index: 8;
   top: 3.2%;
-  left: 4.25%;
+  left: max(4.25%, calc((100% - 100vw) / 2 + 14px));
   display: flex;
   align-items: center;
   gap: clamp(8px, .85vw, 16px);
@@ -319,9 +319,20 @@
 /* A rotated phone keeps the same panoramic composition as desktop;
    only the controls are moved away from the clipped edges. */
 @media (orientation: landscape) and (pointer: coarse) and (max-height: 520px) {
-  .brand { top: 12.5%; }
-  .brandScreen { height: 23%; }
-  .enter { bottom: 13%; min-height: 41px; font-size: clamp(14px, 2vw, 19px); }
+  /* Preserve the complete 16:9 stage, fitted to available height.
+     The extra horizontal space is dark scenery, not a cropped image. */
+  .artboard {
+    width: min(100vw, calc(100dvh * 1672 / 941));
+    height: min(100dvh, calc(100vw * 941 / 1672));
+  }
+  .brand { top: 4%; left: 4.25%; }
+  .brandScreen { height: 16%; }
+  .enter {
+    bottom: 7.15%;
+    min-height: 38px;
+    font-size: clamp(13px, 2vw, 18px);
+    padding: .35em .4em;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .portal, .mobileHotspot, .enter { transition: none !important; }
