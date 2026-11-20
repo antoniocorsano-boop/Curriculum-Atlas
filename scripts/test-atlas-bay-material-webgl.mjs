@@ -9,6 +9,21 @@ const sha=b=>createHash("sha256").update(b).digest("hex");
 const read=(d,n)=>readFileSync(join(d,n));
 const json=(d,n)=>JSON.parse(read(d,n));
 const engine=readFileSync(enginePath);
+const bridgePath=process.argv[8],loaderPath=process.argv[9],bridgeReceiptPath=process.argv[10];
+assert.equal(Boolean(bridgePath),Boolean(loaderPath),"loader must accompany isolated GLB");
+assert.equal(Boolean(bridgePath),Boolean(bridgeReceiptPath),"receipt must accompany isolated GLB");
+const bridge=bridgePath?(()=>{
+  const bytes=readFileSync(resolve(bridgePath)),loader=readFileSync(resolve(loaderPath));
+  const receipt=JSON.parse(readFileSync(resolve(bridgeReceiptPath),"utf8"));
+  assert.equal(receipt.status,"PASS_ISOLATED_BAKE_AND_GLTF");
+  assert.equal(receipt.revision,"4ad58f761246a317461c08dc7c78563a25fa2eda");
+  assert.equal(receipt.surface.name,"Library bay 04-0-Bay Walnut");
+  assert.equal(receipt.masterUnchanged,true);
+  assert.equal(sha(bytes),receipt.export.sha256);
+  const gitblob=b=>createHash("sha1").update(Buffer.concat([Buffer.from("blob "+b.length+"\0"),b])).digest("hex");
+  assert.equal(gitblob(loader),"cfa518ede1b0893f1da14347d78fcd19355f3686");
+  return {bytes,loader,receipt};
+})():null;
 assert.equal(createHash("sha1").update(Buffer.concat([Buffer.from("blob "+engine.length+"\0"),engine])).digest("hex"),"b14f47c0908bab15e890b468d53bb07db0be3a18");
 const b=json(src,"surface-binding.json"),m=json(src,"material-package.json"),f=json(src,"material-finish.json");
 const bay=json(bayDir,"bay.json"),oracle=json(ctx,"context-oracle.json"),lut=json(agx,"agx-lut.json"),prior=json(agx,"agx-browser.json");
@@ -26,6 +41,7 @@ const html='<!doctype html><html lang="it"><meta charset="utf-8"><meta name="vie
 const css='body{margin:0;background:#191512;color:#f1e7d5;font:14px system-ui}header{display:flex;gap:16px;align-items:center;padding:12px;flex-wrap:wrap}header span{color:#cbbba4}button{background:#493c31;color:#fff;border:1px solid #a18a6d;border-radius:6px;padding:6px 12px}canvas{display:block;max-width:100%;height:auto;touch-action:none;cursor:grab}main{display:flex;justify-content:center}';
 const js=String.raw`
 (async()=>{
+const BRIDGE=__ASC_BAKED_BRIDGE__;
 const T=window.THREE,check=(x,m)=>{if(!x)throw Error(m);};
 const json=async u=>{const r=await fetch(u);check(r.ok,u);return r.json();};
 const bytes=async u=>{const r=await fetch(u);check(r.ok,u);return new Uint8Array(await r.arrayBuffer());};
@@ -106,8 +122,14 @@ document.querySelector("#reset").onclick=()=>{yaw=0;pitch=.025;zoom=1;render(can
 window.__capture=capture;window.__resize=(cw,ch)=>render(cw,ch);
 render();window.__result={status:"PASS_BAY_BINDING",metrics,triangles:bay.triangles,objects:bay.objects.length,actualBay:true,sourceRoughness:true,agxLive:true,geometryBudgetOnly:true,artisticApproval:false,physicalDeviceQualified:false,publishable:false};
 })().catch(e=>window.__result={status:"FAIL",error:String(e),metrics:window.__metrics||null});`;
-const files=new Map([["/",["text/html",Buffer.from(html)]],["/style.css",["text/css",Buffer.from(css)]],["/bay.js",["application/javascript",Buffer.from(js)]],["/three.js",["application/javascript",engine]],...[[ "/binding",src,"surface-binding.json"],["/package",src,"material-package.json"],["/bay",bayDir,"bay.json"],["/oracle",ctx,"context-oracle.json"],["/agx",agx,"agx-lut.json"]].map(([url,d,n])=>[url,["application/json",read(d,n)]]),...[[ "/texture",texture],["/rough",rough],["/rows",rows],["/occ",occ],["/lut",lutBytes]].map(([url,data])=>[url,["application/octet-stream",data]])]);
-const server=createServer((req,res)=>{res.setHeader("Content-Security-Policy","default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; object-src 'none'; base-uri 'none'");res.setHeader("X-Content-Type-Options","nosniff");const f=files.get(req.url);if(!f){res.writeHead(404);res.end();return;}res.writeHead(200,{"Content-Type":f[0],"Cache-Control":"no-store"});res.end(f[1]);});
+const actualJS=js.replace("__ASC_BAKED_BRIDGE__",bridge?"true":"false");
+const candidateHtml=bridge?html.replace('<button id="reset">Ripristina</button>','<button id="reset">Ripristina</button><button id="baked-switch" type="button" aria-pressed="false">Luce precalcolata</button>').replace('<script src="/bay.js"></script>','<script src="/loader.js"></script><script src="/bay.js"></script>'):html;
+const files=new Map([["/",["text/html",Buffer.from(candidateHtml)]],["/style.css",["text/css",Buffer.from(css)]],["/bay.js",["application/javascript",Buffer.from(actualJS)]],["/three.js",["application/javascript",engine]],...[[ "/binding",src,"surface-binding.json"],["/package",src,"material-package.json"],["/bay",bayDir,"bay.json"],["/oracle",ctx,"context-oracle.json"],["/agx",agx,"agx-lut.json"]].map(([url,d,n])=>[url,["application/json",read(d,n)]]),...[[ "/texture",texture],["/rough",rough],["/rows",rows],["/occ",occ],["/lut",lutBytes]].map(([url,data])=>[url,["application/octet-stream",data]])]);
+if(bridge){
+  files.set("/loader.js",["application/javascript",bridge.loader]);
+  files.set("/baked.glb",["model/gltf-binary",bridge.bytes]);
+}
+const server=createServer((req,res)=>{res.setHeader("Content-Security-Policy","default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self' data: blob:; style-src 'self'; object-src 'none'; base-uri 'none'");res.setHeader("X-Content-Type-Options","nosniff");const f=files.get(req.url);if(!f){res.writeHead(404);res.end();return;}res.writeHead(200,{"Content-Type":f[0],"Cache-Control":"no-store"});res.end(f[1]);});
 let browser;const report={schema:"atlas.asc01.bay-browser/v1",revision:process.env.ATLAS_EXACT_HEAD,sourceRevision:b.revision,masterSha256:b.masterSha256,packageSha256:f.packageSha256,baySha256:bay.sha256,externalRequests:[],pageErrors:[],status:"PENDING",views:{}};
 try{await new Promise((ok,fail)=>{server.once("error",fail);server.listen(0,"127.0.0.1",ok);});const origin="http://127.0.0.1:"+server.address().port;
 browser=await chromium.launch({headless:true,args:["--use-gl=angle","--use-angle=swiftshader","--enable-unsafe-swiftshader"]});const c=await browser.newContext({viewport:{width:800,height:650}});await c.route("**/*",r=>{if(new URL(r.request().url()).origin!==origin){report.externalRequests.push(r.request().url());return r.abort();}return r.continue();});const page=await c.newPage();page.on("pageerror",e=>report.pageErrors.push(String(e)));await page.goto(origin+"/");await page.waitForFunction(()=>window.__result,{},{timeout:180000});report.result=await page.evaluate(()=>window.__result);assert.equal(report.result.status,"PASS_BAY_BINDING",JSON.stringify(report.result));
