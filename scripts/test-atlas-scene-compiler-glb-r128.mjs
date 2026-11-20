@@ -6,7 +6,7 @@ import {resolve,join} from "node:path";
 import {tmpdir} from "node:os";
 import {execFileSync} from "node:child_process";
 import {chromium} from "playwright";
-const [artifact,receiptPath,engineDir,outDir]=process.argv.slice(2).map(resolve);
+const [artifact,receiptPath,engineDir,outDir]=process.argv.slice(2).map(p=>resolve(p));
 assert(artifact&&receiptPath&&engineDir&&outDir,"input arguments");
 mkdirSync(outDir,{recursive:true});
 const hex=b=>createHash("sha256").update(b).digest("hex");
