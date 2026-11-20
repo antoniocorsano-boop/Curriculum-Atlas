@@ -23,7 +23,13 @@ h1{font:clamp(25px,3.2vw,43px)/1.13 Georgia,"Times New Roman",serif;font-weight:
 .portals span{display:block;color:#f6ead2;font-weight:650;margin-bottom:6px}
 .portals small{display:block;color:#bbc8ce;font-size:12px}
 footer{text-align:center;font-size:11px;color:#b1bbc2;padding-top:24px}
-body.simplified .scene{display:none}
+.viewer{position:relative;min-width:0}
+.expand-scene{position:absolute;top:12px;right:12px;z-index:7;min-height:44px;min-width:76px;padding:8px 13px;background:#122b3dec;color:#fff5db;border:1px solid #e4c58d;border-radius:10px;font:600 13px system-ui;box-shadow:0 3px 15px #0008;cursor:pointer}
+.viewer.expanded{position:fixed;inset:0;z-index:100;background:#101a23;padding:0}
+.viewer.expanded .scene{width:100%;height:100dvh;min-height:100%;border:0;border-radius:0;box-shadow:none}
+.viewer.expanded .expand-scene{top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right))}
+body.viewer-expanded{overflow:hidden}
+body.simplified .viewer{display:none}
 @media(max-width:650px){.shell{padding:0 10px 20px}.header{min-height:60px}.brand{font-size:13px;letter-spacing:.08em}.brand small{font-size:10px}.home{display:none}.intro{padding:18px 0 8px}.intro>p:last-child{font-size:12px}.scene{height:min(67dvh,600px);min-height:300px;border-radius:12px}.portals{grid-template-columns:1fr;gap:8px}.portals a,.portals button{min-height:59px;padding:9px 12px}.portals span{margin-bottom:2px}.actions a,.actions button{padding:8px 10px;font-size:11px}}
 
 /* Revisione dell'esperienza effettiva: i portali devono essere visibili
@@ -46,4 +52,20 @@ body.simplified .scene{display:none}
   .brand{gap:9px}
   .brand small{letter-spacing:0}
   .intro>p:last-child{font-size:11px}
+}
+
+/* The architectural scene is the primary product, not the page introduction.
+   Keep the three safe direct routes visible; give the artwork screen space. */
+@media(max-width:650px){
+  .header{min-height:55px}
+  .intro{padding:7px 0 2px}
+  .intro .eyebrow{display:none}
+  .intro h1{font-size:clamp(18px,5vw,23px);line-height:1.12;margin:0 auto 4px}
+  .intro>p:last-child{display:none}
+  .status{min-height:18px;font-size:12px;margin:3px auto 4px}
+  .portals{margin:5px 0 7px;gap:6px}
+  .portals a,.portals button{min-height:48px}
+  .scene{height:clamp(390px,70dvh,710px)}
+  .viewer.expanded .scene{height:100dvh}
+  .expand-scene{top:9px;right:9px;padding:7px 12px}
 }
