@@ -216,9 +216,11 @@ async function start(){
     if(window.innerWidth<=650)source=adaptMobileScene(phoneControls(source));
     if(typeof window.atlasLightingBridge!=="function")throw Error("MODULO_LUCI_MANCANTE");
     source=window.atlasLightingBridge(source);
+    if(window.atlasDiagnostics)source=window.atlasDiagnostics.inject(source);
     function handle(event){
       if(closing||event.source!==frame?.contentWindow||event.origin!=="null"||!event.data||event.data.channel!==channel)return;
       const data=event.data;
+      window.atlasDiagnostics?.handleMessage(data);
       if(data.type==="atlas-native-asset-request"){
         const asset=map.get(data.id);
         if(!asset||seen.has(data.id))return;
@@ -272,6 +274,7 @@ async function start(){
     frame.title="Biblioteca Atlas tridimensionale";
     frame.setAttribute("sandbox","allow-scripts");
     frame.referrerPolicy="no-referrer";
+    window.atlasDiagnostics?.attach(channel,frame);
     frame.srcdoc=source;
     scene.replaceChildren(frame);active=true;
     timeout=window.setTimeout(()=>fallback("L'avvio 3D non è riuscito. Tocca «Riprova 3D».",true),210000);
