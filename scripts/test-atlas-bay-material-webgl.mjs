@@ -208,5 +208,23 @@ browser=await chromium.launch({headless:true,args:["--use-gl=angle","--use-angle
 async function capture(name){const v=await page.evaluate(()=>window.__capture());const raw=Buffer.from(v.png.split(",")[1],"base64");writeFileSync(join(out,name+".png"),raw);report.views[name]={sha256:sha(raw),width:v.width,height:v.height,lit:v.lit};assert(v.lit>v.width*v.height*.04,"empty preview");}
 await capture("reference");const box=await page.locator("canvas").boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await page.mouse.move(box.x+box.width/2+70,box.y+box.height/2+10,{steps:4});await page.mouse.up();await capture("rotated");assert.notEqual(report.views.reference.sha256,report.views.rotated.sha256,"pointer navigation");
 await page.locator("#reset").click();await capture("restored");assert.equal(report.views.reference.sha256,report.views.restored.sha256,"camera restore");
-await page.evaluate(()=>window.__resize(320,240));await capture("mobile");assert.equal(report.views.mobile.width,320);assert.deepEqual(report.externalRequests,[]);assert.deepEqual(report.pageErrors,[]);report.status="PASS_NAVIGABLE_BAY_PREVIEW";
+await page.evaluate(()=>window.__resize(320,240));await capture("mobile");assert.equal(report.views.mobile.width,320);
+if(bridge){
+  await page.evaluate((w,h)=>window.__resize(w,h),b.camera.width,b.camera.height);
+  report.bridge=await page.evaluate(()=>window.__bridge.info);
+  await capture("bridge-original");
+  await page.getByRole("button",{name:"Luce precalcolata"}).click();
+  assert.equal(await page.evaluate(()=>window.__bridge.baked),true);
+  await capture("bridge-baked");
+  await page.getByRole("button",{name:"Luce precalcolata"}).click();
+  await capture("bridge-restored");
+  assert.equal(report.views["bridge-original"].sha256,report.views["bridge-restored"].sha256,"GLB rollback exact");
+  report.bridge.changed=report.views["bridge-original"].sha256!==report.views["bridge-baked"].sha256;
+  assert(report.bridge.changed,"baked material must change the full-bay pixels in a matched view");
+  report.bridge.glbSha256=sha(bridge.bytes);
+  report.bridge.unchangedScene=true;
+  report.bridge.artisticApproval=false;
+  report.bridge.publishable=false;
+}
+assert.deepEqual(report.externalRequests,[]);assert.deepEqual(report.pageErrors,[]);report.status="PASS_NAVIGABLE_BAY_PREVIEW";
 }catch(e){report.status="FAIL";report.error=String(e);throw e;}finally{writeFileSync(join(out,"bay-browser.json"),JSON.stringify(report,null,2)+"\n");console.log("ASC BAY BROWSER",JSON.stringify(report));if(browser)await browser.close();server.close();}
