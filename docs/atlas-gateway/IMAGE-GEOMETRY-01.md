@@ -45,6 +45,10 @@ L'esperimento AI-G0 e la calibrazione della telecamera possono svolgersi in para
 
 ## 2-ter. Provenienza generativa e intenzione progettuale (verifica storica del 20/11/2026)
 
+**Cronologia ricostruita delle conversazioni:** [GENERATION-PROVENANCE-01](./GENERATION-PROVENANCE-01.md) — ARENA 16/11 ore 06:16–06:25, passaggio Biblioteca Atlas tre portali, direzione Atlas finale quattro portali. Titolo e testo esatto della generazione originaria ancora non recuperati.
+
+
+
 **Premessa confermata dall'ideatore:** il fotogramma ART-DIR-02 fu generato da ChatGPT. La generazione di un'immagine non presuppone che sia stato creato e conservato un modello 3D, una pianta, una telecamera reale o un file Blender recuperabile.
 
 **Recupero effettivo eseguito:** dalla cronologia personale e dalla documentazione del progetto risultano conservati l'orientamento artistico di Atlas, i vincoli della rotonda, del lucernario, dei quattro portali, del basamento e della luce. In `ART-DIR-02` le caratteristiche visibili e gli obiettivi artistici sono descritti in dettaglio. **Non è stato recuperato il testo esatto dell'istruzione di generazione dell'immagine canonica, né parametri strutturali originali del generatore.** Non attribuire misure, focale, quote o topologia a quel prompt come se fossero dati storici certi.
