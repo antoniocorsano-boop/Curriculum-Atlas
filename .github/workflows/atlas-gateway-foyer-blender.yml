@@ -51,6 +51,31 @@ jobs:
           assert not any("uri" in x for x in schema.get("images",[]))
           print("ATLAS_FOYER_BLENDER_GLTF_PASS",r["meshes"],r["triangles_estimate"],len(data))
           PY
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser verification dependencies
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+      - name: Assemble actual Blender master into isolated Atlas preview
+        env:
+          ATLAS_GATEWAY_FOYER_PREVIEW: 'true'
+          ATLAS_FOYER_ART_MASTER: ${{ runner.temp }}/atlas-foyer-master/atlas-foyer-master.glb
+        run: |
+          mkdir -p out/curricolo out/esplora out/percorsi out/esperienze
+          for route in curricolo esplora percorsi esperienze; do
+            printf '%s\n' '<!doctype html><html lang="it"><title>Route sample</title></html>' > "out/$route/index.html"
+          done
+          node scripts/build-atlas-gateway-foyer.mjs out
+          node -e 'const d=require("./out/atrio/visual-manifest.json");if(!d.available||!d.sha256)process.exit(1)'
+      - name: Capture browser WebGL scene from original Blender GLB
+        env:
+          ATLAS_FOYER_EXPECT_ART: 'true'
+        run: node scripts/test-atlas-gateway-foyer-browser.mjs out "$RUNNER_TEMP/atlas-foyer-master/browser-evidence"
       - name: Archive editable master and exported resources
         if: always()
         uses: actions/upload-artifact@v4
