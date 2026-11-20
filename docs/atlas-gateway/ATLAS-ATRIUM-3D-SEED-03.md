@@ -70,3 +70,10 @@ La catena non promuove automaticamente questa scena nella [filiera ART-DIR-02](.
 ## 6. Deposito permanente e prossimo controllo
 
 Archiviare il GLB, i parametri, il generatore, le viste, il confronto a camera costante e i rapporti con SHA in Drive/ GitHub. **Non modificare il PNG di riferimento canonico.** Prossimo controllo prioritario: eseguire il compositore nel vero ambiente Blender e acquisire il PNG originale definitivo per misurare i landmark dell'immagine; solo allora può cominciare la verifica ART-DIR-02 reale.
+## 7. Archivio persistente verificato
+
+- **[Drive Curriculum Atlas — SEED-03, sorgenti e tre viste](https://drive.google.com/file/d/1qmY_CtiOjOdrAxDlJXvbgibdCfxU5nSP/view)**, file ZIP **2.508.885 byte**. Google Drive ha confermato il caricamento e la successiva rilettura dei metadati.
+- SHA-256 del pacchetto: `4fefb233c93cf021a14ebd35808472c67ae22a57748920292f3295560bee7c17`.
+- L'archivio contiene GLB, versione autonoma del generatore, programma d'importazione Blender, sorgenti parametriche, rapporti, manifest con SHA e tre immagini VTK; i sorgenti di GitHub sono organizzati come variante incrementale che riusa il generatore base.
+- **Workflow predisposto** [SEED-03 Blender](../../.github/workflows/atlas-atrium-seed-03-blender.yml): rigenera GLB, controlla l'identità SHA e richiede Blender reale, `.blend` e tre render. **All'ultima verifica non risultava alcuna esecuzione di questo workflow associata al commit di creazione.** Non attestare né `.blend` né render Cycles fino a riscontro di artefatti reali.
+
