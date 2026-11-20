@@ -68,7 +68,7 @@ recess = material("Atrium • nicchia blu notte", 0x071b32, .14, .54)
 steel = material("Atrium • metallo ossidato", 0x274865, .68, .29)
 bronze = material("Atrium • ottone satinato", 0xa78b59, .74, .31)
 polished = material("Atrium • grafite lucida", 0x0a1b2e, .58, .20)
-blue = material("Atrium • vetro portale luminoso", 0x13558d, .34, .20, 0x267ece, .74)
+blue = material("Atrium • vetro portale luminoso", 0x124078, .32, .25, 0x124f93, .34)
 halo = material("Atrium • taglio luce cielo", 0x5899da, .12, .32, 0x5b9ef1, 2.2)
 warm = material("Atrium • taglio luce bronzo", 0xd2aa6b, .28, .34, 0xe5b874, 1.5)
 
@@ -149,39 +149,40 @@ def semicircle_wall():
     return wall_obj
 
 def dome():
-    # Faceted shell with distinct radial ribs; real volume, not background image.
-    sectors=48;rings=9
+    # Rear half-vault: the front is open towards the visitor and never masks
+    # the navigational portals. This is an architectural roof, not a blue lid.
+    sectors=32
+    levels=8
     vertices=[]
-    for j in range(rings+1):
-        t=j/rings
-        r=11.46*(1-t)+3.55*t
-        height=5.9+2.28*math.sin(t*math.pi/2)
-        for i in range(sectors):
-            a=math.tau*i/sectors
-            vertices.append((math.sin(a)*r,1.3+math.cos(a)*r,height))
+    for j in range(levels+1):
+        t=j/levels
+        r=11.44*(1-t)+3.6*t
+        z=5.88+2.24*math.sin(t*math.pi/2)
+        for i in range(sectors+1):
+            a=-math.pi/2+math.pi*i/sectors
+            vertices.append((math.sin(a)*r,1.3+math.cos(a)*r,z))
     faces=[]
-    for j in range(rings):
+    for j in range(levels):
         for i in range(sectors):
-            a=j*sectors+i;b=j*sectors+(i+1)%sectors
-            faces.append((a,b,b+sectors,a+sectors))
-    mesh=bpy.data.meshes.new("Soffitto radiale")
+            a=j*(sectors+1)+i
+            faces.append((a,a+1,a+sectors+2,a+sectors+1))
+    mesh=bpy.data.meshes.new("Semicupola posteriore")
     mesh.from_pydata(vertices,[],faces);mesh.update()
-    obj=bpy.data.objects.new("Atrio • cupola materica",mesh)
+    obj=bpy.data.objects.new("Atrio • copertura posteriore",mesh)
     bpy.context.collection.objects.link(obj)
     assign(obj,wall)
-    for i in range(0,sectors,3):
-        a=math.tau*i/sectors
+    for i in range(0,sectors+1,2):
+        a=-math.pi/2+math.pi*i/sectors
         points=[]
-        for j in range(rings+1):
-            t=j/rings;r=11.48*(1-t)+3.57*t
-            z=5.92+2.28*math.sin(t*math.pi/2)
+        for j in range(levels+1):
+            t=j/levels;r=11.45*(1-t)+3.61*t
+            z=5.90+2.24*math.sin(t*math.pi/2)
             points.append((math.sin(a)*r,1.3+math.cos(a)*r,z))
         for j in range(len(points)-1):
-            beam("Atrio • costolone",points[j],points[j+1],.075,
-                 bronze if i%6==0 else steel)
-    ring("Atrio • corona esterna",11.45,5.89,bronze,.08)
-    ring("Atrio • anello lucernario",3.56,8.18,warm,.09)
-    cylinder("Atrio • vetro lucernario",(0,1.3,8.23),3.48,.04,blue,64)
+            beam("Atrio • costolone retrostante",points[j],points[j+1],.075,
+                 bronze if i%4==0 else steel)
+    ring("Atrio • arco frontale",11.43,5.89,bronze,.065,arc=math.pi)
+    ring("Atrio • corona lucernario",3.65,8.13,warm,.075,arc=math.pi)
 
 def portal(label,x,y,rotation_deg):
     # Blender portal coordinates mirror the four live links, no routing is embedded in GLB.
@@ -205,6 +206,14 @@ def portal(label,x,y,rotation_deg):
         part("bordo orizzontale",(x,base_y-.31,2.72+side*2.43),(3.15,.18,.085),bronze)
         part("luce verticale",(x+side*1.38,base_y-.35,2.72),(.027,.10,4.56),halo)
     part("corona luminosa",(x,base_y-.34,5.0),(2.77,.09,.08),warm)
+    # Labels belong to the authored illustration, while actual destinations
+    # and permissions remain defined only by the HTML portal contract.
+    bpy.ops.object.text_add(location=(x,base_y-.43,2.20),rotation=(math.pi/2,0,0))
+    title=bpy.context.object;title.name="Portale • titolo "+label
+    title.data.body=label.upper()
+    title.data.align_x="CENTER";title.data.size=.34
+    title.data.extrude=.004;title.data.materials.append(warm)
+    bpy.ops.object.convert(target="MESH")
 
 # Floors, recessed gallery and structural depth.
 cylinder("Atrio • pavimento lapideo",(0,1.3,-.24),11.76,.40,basalt)
@@ -254,16 +263,16 @@ def area(name,loc,target,energy,color,size):
     obj.data.shape="DISK";obj.data.size=size
     obj.rotation_euler=(Vector(target)-obj.location).to_track_quat("-Z","Y").to_euler()
 
-area("Luce • volta blu",(-2,1.3,10),(0,1.3,0),1250,0x5d9fef,8)
-area("Luce • riflesso caldo",(4,-4,6),(0,2,2),850,0xffd6a1,6)
+area("Luce • volta blu",(-2,1.3,10),(0,1.3,0),720,0x5d9fef,8)
+area("Luce • riflesso caldo",(4,-4,6),(0,2,2),450,0xffd6a1,6)
 area("Luce • riempimento sinistro",(-9,0,5),(0,3,2),550,0x8cbde8,5)
 area("Luce • fronte",(0,-8,5),(0,1,2),300,0xffe2bf,9)
 
-bpy.ops.object.camera_add(location=(0,-18,8.1))
+bpy.ops.object.camera_add(location=(0,-15.5,4.6))
 camera=bpy.context.object
 camera.name="Fotocamera • ingresso Atlas"
-camera.rotation_euler=(Vector((0,1.2,3.1))-camera.location).to_track_quat("-Z","Y").to_euler()
-camera.data.lens=24
+camera.rotation_euler=(Vector((0,2.9,3.0))-camera.location).to_track_quat("-Z","Y").to_euler()
+camera.data.lens=29
 scene.camera=camera
 scene.world.use_nodes=True
 bg=scene.world.node_tree.nodes.get("Background")
