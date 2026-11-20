@@ -4,6 +4,9 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - "scripts/build-atlas-gateway-native.mjs"
+      - "scripts/atlas-library-static/**"
+      - "scripts/atlas-library-static-assemble.mjs"
+      - "scripts/test-atlas-library-static-web.mjs"
       - "scripts/test-atlas-gateway-native.mjs"
       - "scripts/test-atlas-gateway-native-preflight.mjs"
       - "scripts/test-atlas-gateway-navigation-differential.mjs"
@@ -20,12 +23,13 @@ concurrency:
   cancel-in-progress: true
 jobs:
   qualify-native-gateway:
-    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && (github.event.pull_request.head.ref == 'work/atlas-gateway-native-preview' || github.event.pull_request.head.ref == 'work/atlas-scene-consolidated') && github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && (github.event.pull_request.head.ref == 'work/atlas-gateway-native-preview' || github.event.pull_request.head.ref == 'work/atlas-scene-consolidated' || github.event.pull_request.head.ref == 'work/atlas-library-web-delivery') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
       ATLAS_GATEWAY_PREVIEW: "true"
       ATLAS_GATEWAY_NATIVE_PREVIEW: "true"
+      ATLAS_LIBRARY_WEB_DELIVERY: ${{ github.event.pull_request.head.ref == 'work/atlas-library-web-delivery' && 'true' || 'false' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -84,10 +88,27 @@ jobs:
           node --experimental-strip-types scripts/test-atlas-gateway-native-preflight.mjs "$RUNNER_TEMP/native-gateway" "$RUNNER_TEMP/native-gateway/evidence/preflight"
       - name: Build local native Gateway candidate
         run: pnpm build
+      - name: Package runnable Web library
+        if: env.ATLAS_LIBRARY_WEB_DELIVERY == 'true'
+        run: |
+          set -euo pipefail
+          test -f .next/standalone/server.js
+          cp -a .next/standalone "$RUNNER_TEMP/atlas-web"
+          mkdir -p "$RUNNER_TEMP/atlas-web/.next" "$RUNNER_TEMP/atlas-web/gateway-package"
+          cp -a .next/static "$RUNNER_TEMP/atlas-web/.next/static"
+          cp -a public "$RUNNER_TEMP/atlas-web/public"
+          cp "$RUNNER_TEMP/native-gateway/"{scene.html,native-manifest.json,native-build-receipt.json,THREE-LICENSE.txt} "$RUNNER_TEMP/atlas-web/gateway-package/"
+          cp scripts/atlas-library-start.mjs "$RUNNER_TEMP/atlas-web/start-atlas.mjs"
+          cp docs/atlas-gateway/ATLAS-LIBRARY-WEB-DELIVERY.md "$RUNNER_TEMP/atlas-web/LEGGIMI.md"
+          tar -C "$RUNNER_TEMP" -czf "$RUNNER_TEMP/atlas-web-linux-x64.tar.gz" atlas-web
       - name: Exercise actual route, portals, isolated assets and fallbacks
         run: |
           set -euo pipefail
-          pnpm start --hostname 127.0.0.1 > "$RUNNER_TEMP/native-gateway/server.log" 2>&1 &
+          if [[ "$ATLAS_LIBRARY_WEB_DELIVERY" == true ]]; then
+            node "$RUNNER_TEMP/atlas-web/start-atlas.mjs" > "$RUNNER_TEMP/native-gateway/server.log" 2>&1 &
+          else
+            pnpm start --hostname 127.0.0.1 > "$RUNNER_TEMP/native-gateway/server.log" 2>&1 &
+          fi
           trap 'kill $! 2>/dev/null || true' EXIT
           for i in {1..60}; do
             if curl -fsS http://127.0.0.1:3000/gateway/ >/dev/null; then
@@ -112,8 +133,192 @@ jobs:
             ${{ runner.temp }}/native-gateway/evidence/
           if-no-files-found: ignore
           retention-days: 7
+      - name: Deliver complete runnable local Web package
+        if: success() && env.ATLAS_LIBRARY_WEB_DELIVERY == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-library-web-linux-x64
+          path: ${{ runner.temp }}/atlas-web-linux-x64.tar.gz
+          if-no-files-found: error
+          retention-days: 30
       - name: Remove staging
         if: always()
         run: rm -rf public/atlas-gateway-native
 
 # Local read-only qualification only. No publication or deployment.
+
+
+  build-library-web:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-library-web-delivery' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    env:
+      ATLAS_GATEWAY_PREVIEW: "true"
+      ATLAS_GATEWAY_NATIVE_PREVIEW: "true"
+      ATLAS_LIBRARY_WEB_DELIVERY: "true"
+      ATLAS_PREVIEW_ROOT_SCOPED: "true"
+      ATLAS_LIBRARY_STATIC_PREVIEW: "true"
+      ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Recover previously qualified full Web library by content hash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --retry 3 --max-time 180 \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/14570931497/zip" \
+            -o "$RUNNER_TEMP/library-archive.zip"
+          printf '%s  %s\n' '6d78ff38d32cd18feb2e5058a52cfa9e24bffef2c60bfffcb65f775f01a35799' "$RUNNER_TEMP/library-archive.zip" | sha256sum --strict --check
+          unzip -p "$RUNNER_TEMP/library-archive.zip" atlas-web-linux-x64.tar.gz > "$RUNNER_TEMP/library-archive.tar.gz"
+          tar -xzf "$RUNNER_TEMP/library-archive.tar.gz" -C "$RUNNER_TEMP"
+          test -f "$RUNNER_TEMP/atlas-web/gateway-package/scene.html"
+          test -d "$RUNNER_TEMP/atlas-web/public/atlas-gateway-native"
+          cp -a "$RUNNER_TEMP/atlas-web/public/atlas-gateway-native" public/
+          echo "ATLAS_GATEWAY_SCENE_FILE=$RUNNER_TEMP/atlas-web/gateway-package/scene.html" >> "$GITHUB_ENV"
+          echo "ATLAS_GATEWAY_NATIVE_MANIFEST=$RUNNER_TEMP/atlas-web/gateway-package/native-manifest.json" >> "$GITHUB_ENV"
+          echo "ATLAS_GATEWAY_SCENE_SHA256=$(sha256sum "$RUNNER_TEMP/atlas-web/gateway-package/scene.html" | cut -d' ' -f1)" >> "$GITHUB_ENV"
+          echo "ATLAS_GATEWAY_NATIVE_MANIFEST_SHA256=$(sha256sum "$RUNNER_TEMP/atlas-web/gateway-package/native-manifest.json" | cut -d' ' -f1)" >> "$GITHUB_ENV"
+      - name: Build the actual public browser site and library entrance
+        run: |
+          set -euo pipefail
+          node --check scripts/atlas-library-static/lighting-bridge.js
+          node --check scripts/atlas-library-static/diagnostics.js
+          pnpm install --frozen-lockfile
+          pnpm build
+          node scripts/test-percorsi-publication-filter.mjs
+          node scripts/filter-unauthorized-pathway-routes.mjs out
+          node scripts/atlas-library-static-assemble.mjs "$RUNNER_TEMP/atlas-web/gateway-package" out
+          node scripts/validate-atlas-preview-contract.mjs out "$ATLAS_EXACT_HEAD"
+      - name: Open the entire static library on phone and desktop
+        run: |
+          set -euo pipefail
+          pnpm exec playwright install --with-deps chromium
+          node scripts/test-atlas-library-static-web.mjs out "$RUNNER_TEMP/library-browser"
+      - name: Preserve the complete reachable static Web site
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-library-static-${{ github.event.pull_request.head.sha }}
+          path: out/
+          retention-days: 7
+          if-no-files-found: error
+      - name: Preserve real browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-library-browser-${{ github.event.pull_request.head.sha }}
+          path: ${{ runner.temp }}/library-browser/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  publish-library-preview:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-library-web-delivery' && github.event.pull_request.head.repo.full_name == github.repository
+    needs: build-library-web
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: atlas-pr-preview
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Recover exact completed static site
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-library-static-${{ github.event.pull_request.head.sha }}
+          path: preview
+      - name: Verify full site and deny student authorization
+        env:
+          ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          node scripts/validate-atlas-preview-contract.mjs preview "$ATLAS_EXACT_HEAD"
+          test -s preview/biblioteca/index.html
+          test -s preview/biblioteca/scene.html
+          test -s preview/curricolo/index.html
+          test -s preview/esperienze/index.html
+          node - <<'NODE'
+          const fs=require('fs'),crypto=require('crypto'),path=require('path');
+          const dir='preview',m=JSON.parse(fs.readFileSync(path.join(dir,'biblioteca/native-manifest.json'))),r=JSON.parse(fs.readFileSync(path.join(dir,'biblioteca/native-build-receipt.json'))),p=JSON.parse(fs.readFileSync(path.join(dir,'PREVIEW-MANIFEST.json')));
+          const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+          if(m.studentAuthorized!==false||p.studentAuthorized!==false||r.materialDetailApplied!==true||r.profile!=='M2-micro-integrated'||m.assets.length!==8)throw Error('scope');
+          if(sha(fs.readFileSync(path.join(dir,'biblioteca/scene.html')))!==r.sceneSha256)throw Error('scene');
+          if(sha(fs.readFileSync(path.join(dir,'biblioteca/native-manifest.json')))!==r.manifestSha256)throw Error('manifest');
+          for(const a of m.assets){const b=fs.readFileSync(path.join(dir,'atlas-gateway-native',a.file));if(b.length!==a.bytes||sha(b)!==a.sha256)throw Error('asset '+a.id)}
+          NODE
+      - name: Upload authorized preview to existing Cloudflare Pages project
+        id: deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN" && test -n "$CLOUDFLARE_ACCOUNT_ID"
+          npx --yes wrangler@latest pages deploy preview \
+            --project-name=atlas-pr-preview \
+            --branch="library-review" \
+            --commit-hash="$ATLAS_EXACT_HEAD" \
+            --commit-message="Atlas Library browser preview: studentAuthorized=false" | tee "$RUNNER_TEMP/atlas-library-deploy.log"
+          URL="$(grep -Eo 'https://[^[:space:]]+\.pages\.dev' "$RUNNER_TEMP/atlas-library-deploy.log" | tail -1)"
+          test -n "$URL"
+          echo "deployment_url=$URL" >> "$GITHUB_OUTPUT"
+      - name: Confirm real HTTPS access to the library
+        env:
+          URL: ${{ steps.deploy.outputs.deployment_url }}
+          ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          # A stable Cloudflare alias can briefly serve its previous
+          # successful release after a new upload. A 200 alone is not readiness.
+          # Retry until the exact new revision and signed resources are served.
+          verified=false
+          for n in {1..18}; do
+            if curl -fsSL "$URL/EXACT_HEAD.txt" -o "$RUNNER_TEMP/atlas-head" &&
+               curl -fsSL "$URL/biblioteca/" -o "$RUNNER_TEMP/atlas-library.html" &&
+               curl -fsSL "$URL/biblioteca/scene.html" -o "$RUNNER_TEMP/atlas-library-scene" &&
+               curl -fsSL "$URL/biblioteca/native-manifest.json" -o "$RUNNER_TEMP/atlas-library-manifest" &&
+               test "$(tr -d '\r\n' < "$RUNNER_TEMP/atlas-head")" = "$ATLAS_EXACT_HEAD" &&
+               grep -q 'Biblioteca della conoscenza' "$RUNNER_TEMP/atlas-library.html" &&
+               cmp -s "$RUNNER_TEMP/atlas-library-scene" preview/biblioteca/scene.html &&
+               cmp -s "$RUNNER_TEMP/atlas-library-manifest" preview/biblioteca/native-manifest.json; then
+              echo "Cloudflare verified exact preview revision at attempt $n"
+              verified=true
+              break
+            fi
+            echo "Cloudflare preview alias not yet serving exact revision (attempt $n/18)"
+            if test -f "$RUNNER_TEMP/atlas-head"; then
+              printf 'Observed revision: '; tr -d '\r\n' < "$RUNNER_TEMP/atlas-head"; printf '\n'
+            fi
+            test "$n" -lt 18 || break
+            sleep 5
+          done
+          test "$verified" = true || { echo "Cloudflare preview never served the complete exact revision" >&2; exit 1; }
+          curl -fsSL "$URL/esperienze/" -o "$RUNNER_TEMP/atlas-experiences"
+          curl -fsSL "$URL/curricolo/" -o "$RUNNER_TEMP/atlas-curricolo"
+          grep -qi '<html' "$RUNNER_TEMP/atlas-experiences"
+          grep -qi '<html' "$RUNNER_TEMP/atlas-curricolo"
+          {
+            echo "### Biblioteca Atlas: anteprima Web pubblicata"
+            echo "Indirizzo verificato: $URL/biblioteca/"
+            echo "Revision: $ATLAS_EXACT_HEAD"
+            echo "Canale: anteprima — studentAuthorized=false"
+            echo "Risorse e destinazioni: integrità e disponibilità HTTPS verificate"
+          } >> "$GITHUB_STEP_SUMMARY"
