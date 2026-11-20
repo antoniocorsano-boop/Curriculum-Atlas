@@ -235,7 +235,9 @@ async function start(){
           const compressed=gzipById.get(asset.id);
           if(compressed){
             try{
-              bytes=await readFile("/atlas-gateway-gzip/"+compressed.file,current.signal,progress,asset.bytes,true);
+              const candidate=await readFile("/atlas-gateway-gzip/"+compressed.file,current.signal,progress,asset.bytes,true);
+              if(candidate.byteLength!==asset.bytes||await hash(candidate)!==asset.sha256)throw Error("GZIP_INTEGRITA");
+              bytes=candidate;
             }catch(error){
               if(current.signal.aborted)throw error;
               console.warn("ATLAS_GZIP_RESOURCE_FALLBACK",asset.id);
