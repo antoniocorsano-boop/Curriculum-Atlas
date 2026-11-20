@@ -3,6 +3,7 @@
 
 **Data:** 20 novembre 2026. **Esito:** **NO-GO al ciclo di produzione artistica completo**; **GO alla chiusura mirata dei prerequisiti**.
 **Documenti verificati:** [ART-DIR-02](./ATLAS-GATEWAY-ART-DIRECTION-02.md), [ART-PROD-01](./ATLAS-GATEWAY-PRODUCTION-WORKFLOW-01.md), [FLOW-02](./ATLAS-GATEWAY-CLOSED-LOOP-02.md), [MASTER-BLENDER-01](./MASTER-BLENDER-01.md).  
+**Decisione successiva di produzione (20/11/2026):** [ASSET-KIT-01](./ASSET-KIT-01.md) adottato per il riuso qualificato delle librerie. Questo non chiude P1-ASSETS né P0-CAP: risorse singole e capacità produttiva devono essere ancora provate.  
 **Lavorazioni in corso:** PR #152 aperta in bozza, basata sulla PR #148.
 
 ### Sintesi verificata
