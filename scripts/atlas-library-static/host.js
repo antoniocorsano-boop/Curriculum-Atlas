@@ -9,14 +9,28 @@ function adaptMobileScene(original){
   // The original scene is SHA-256 verified before these display-only edits.
   const wait='},45000);',stage='nativePhase="decode:"+id;',
     sequence='for(const id of ["shell","scenography","cupola","portals","bays","stars"]){await loadModel(id);assertActive();}',
-    raster='const scale=Math.min(1,Math.sqrt(NATIVE_MAX_RASTER_PIXELS/(w*h)));';
-  if(original.split(raster).length!==2)throw Error("SCENA_RISOLUZIONE_NON_COMPATIBILE");
+    raster='const scale=Math.min(1,Math.sqrt(NATIVE_MAX_RASTER_PIXELS/(w*h)));',
+    resizeGuard='if(rasterWidth===w&&rasterHeight===h)return;',
+    pointerDown='down={x:e.clientX,y:e.clientY,angle,tilt};canvas.setPointerCapture(e.pointerId)',
+    pointerUp=' down=null;\n if(tap){',
+    pointerCancel='canvas.addEventListener("pointercancel",()=>{down=null;scheduleFrame()},events);',
+    microMode='nativeMaterialBridge.apply("micro");';
+  for(const [name,anchor] of Object.entries({raster,resizeGuard,pointerDown,pointerUp,pointerCancel,microMode})){
+    if(original.split(anchor).length!==2)throw Error("SCENA_MOBILE_"+name+"_INCOMPATIBILE");
+  }
   if(original.split(wait).length!==2||original.split(stage).length!==2||original.split(sequence).length!==2)
     throw Error("STRUTTURA_SCENA_INCOMPATIBILE");
-  // 1.35 physical pixels per CSS pixel sharpens portal signs on
-  // high-DPI phones; the original hard cap of 1,048,576 remains intact.
-  return original.replace(raster,
-      'const scale=Math.min(Math.min(1.35,devicePixelRatio||1),Math.sqrt(NATIVE_MAX_RASTER_PIXELS/(w*h)));')
+  // Keep visible high-DPI detail at rest; reduce fragment shader workload
+  // during a real drag, then restore clarity on release. Zero added assets.
+  // Original photographic maps always remain active.
+  return original.replace(resizeGuard,
+      'const desiredScale=Math.min(down?0.72:1.20,devicePixelRatio||1,Math.sqrt(NATIVE_MAX_RASTER_PIXELS/(w*h)));'+
+      'if(rasterWidth===w&&rasterHeight===h&&Math.abs(renderBudget.scale-desiredScale)<0.008)return;')
+    .replace(raster,'const scale=desiredScale;')
+    .replace(pointerDown,'down={x:e.clientX,y:e.clientY,angle,tilt};resizeRaster(Math.max(1,innerWidth),Math.max(1,innerHeight));canvas.setPointerCapture(e.pointerId)')
+    .replace(pointerUp,' down=null;resizeRaster(Math.max(1,innerWidth),Math.max(1,innerHeight));\\n if(tap){'.replace('\\n','\n'))
+    .replace(pointerCancel,'canvas.addEventListener("pointercancel",()=>{down=null;resizeRaster(Math.max(1,innerWidth),Math.max(1,innerHeight));scheduleFrame()},events);')
+    .replace(microMode,'nativeMaterialBridge.apply(innerWidth<=650?"scalar":"micro");')
     .replace(wait,'},120000);')
     .replace(stage,stage+'send("atlas-3d-phase",{step:"decode",id});')
     // The early 3D preview sets display:grid inline. Hidden alone does not
