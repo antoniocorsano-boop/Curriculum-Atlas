@@ -284,17 +284,31 @@ jobs:
           ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
-          for n in {1..12}; do
+          # A stable Cloudflare alias can briefly serve its previous
+          # successful release after a new upload. A 200 alone is not readiness.
+          # Retry until the exact new revision and signed resources are served.
+          verified=false
+          for n in {1..18}; do
             if curl -fsSL "$URL/EXACT_HEAD.txt" -o "$RUNNER_TEMP/atlas-head" &&
                curl -fsSL "$URL/biblioteca/" -o "$RUNNER_TEMP/atlas-library.html" &&
                curl -fsSL "$URL/biblioteca/scene.html" -o "$RUNNER_TEMP/atlas-library-scene" &&
-               curl -fsSL "$URL/biblioteca/native-manifest.json" -o "$RUNNER_TEMP/atlas-library-manifest"; then break; fi
-            test "$n" -lt 12; sleep 5
+               curl -fsSL "$URL/biblioteca/native-manifest.json" -o "$RUNNER_TEMP/atlas-library-manifest" &&
+               test "$(tr -d '\r\n' < "$RUNNER_TEMP/atlas-head")" = "$ATLAS_EXACT_HEAD" &&
+               grep -q 'Biblioteca della conoscenza' "$RUNNER_TEMP/atlas-library.html" &&
+               cmp -s "$RUNNER_TEMP/atlas-library-scene" preview/biblioteca/scene.html &&
+               cmp -s "$RUNNER_TEMP/atlas-library-manifest" preview/biblioteca/native-manifest.json; then
+              echo "Cloudflare verified exact preview revision at attempt $n"
+              verified=true
+              break
+            fi
+            echo "Cloudflare preview alias not yet serving exact revision (attempt $n/18)"
+            if test -f "$RUNNER_TEMP/atlas-head"; then
+              printf 'Observed revision: '; tr -d '\r\n' < "$RUNNER_TEMP/atlas-head"; printf '\n'
+            fi
+            test "$n" -lt 18 || break
+            sleep 5
           done
-          test "$(tr -d '\r\n' < "$RUNNER_TEMP/atlas-head")" = "$ATLAS_EXACT_HEAD"
-          grep -q 'Biblioteca della conoscenza' "$RUNNER_TEMP/atlas-library.html"
-          cmp "$RUNNER_TEMP/atlas-library-scene" preview/biblioteca/scene.html
-          cmp "$RUNNER_TEMP/atlas-library-manifest" preview/biblioteca/native-manifest.json
+          test "$verified" = true || { echo "Cloudflare preview never served the complete exact revision" >&2; exit 1; }
           curl -fsSL "$URL/esperienze/" -o "$RUNNER_TEMP/atlas-experiences"
           curl -fsSL "$URL/curricolo/" -o "$RUNNER_TEMP/atlas-curricolo"
           grep -qi '<html' "$RUNNER_TEMP/atlas-experiences"
