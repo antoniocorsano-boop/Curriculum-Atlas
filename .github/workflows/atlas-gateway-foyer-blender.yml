@@ -4,6 +4,8 @@ on:
     branches: [work/atlas-gateway-01-foyer]
     paths:
       - "scripts/atlas-gateway-foyer/blender_master.py"
+      - "scripts/atlas-gateway-foyer/foyer.mjs"
+      - "scripts/build-atlas-gateway-foyer.mjs"
       - ".github/workflows/atlas-gateway-foyer-blender.yml"
   workflow_dispatch:
 permissions:
