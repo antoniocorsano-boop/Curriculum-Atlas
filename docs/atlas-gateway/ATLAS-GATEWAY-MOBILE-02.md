@@ -49,3 +49,14 @@ L'ideatore propone di abbandonare i quattro pannelli disposti in una griglia 2×
 ## Prossima azione di prodotto
 
 Verificare il **render finale nel navigatore** dei due orientamenti dopo la correzione dell'ultimo doppione CTA, raccogliere feedback artistico dell'ideatore e, se approvato, sostituire il PNG mobile con WebP verificato in repository per trasferimento ottimizzato e pianificare la pubblicazione della porta di accesso su un canale autorizzato.
+
+
+## Collaudo definitivo — orientamento verticale e orizzontale
+
+**GitHub Actions [#44814842438](https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/44814842438) — SUCCESS.** La procedura Playwright ha superato 4 prove reali su Chromium: desktop con navigazione e tilt, smartphone portrait 390×844 con immagine 9:16 e quattro hotspot in un'unica fila, smartphone landscape 844×390 con panorama contenuto, riduzione del movimento. Confermata la correzione finale per evitare il doppio pulsante in panorama.
+
+**Conservazione permanente delle prove:** [Archivio ZIP su Google Drive](https://drive.google.com/file/d/1-rzCoHnHUiFXgRp7EBI8bV_yOuoZFxIU/view), **4.660.979 byte**, con tre schermate effettive `desktop-entire-stage.png`, `phone-portrait-integrated-atrium.png`, `phone-landscape-panorama.png`. Rilettura metadati Drive riuscita. Il PNG verticale originale e il suo prompt restano separatamente archiviati, vedi [provenienza dell'immagine](./ATLAS-GATEWAY-MOBILE-ART-PROVENANCE-01.md).
+
+**Verifica umana delle immagini:** la vista verticale mostra lucernario, gallerie, quattro portali e basamento nell'unica architettura, con titoli DOM; la vista orizzontale non mostra più il pulsante duplicato e utilizza il panorama a proporzioni integre, con bande laterali quando richiesto dal rapporto dello schermo. Questo è un giudizio di controllo visivo tecnico, **non** approvazione ART-DIR-02.
+
+**Persistenza e rilascio:** i due orientamenti sono implementati nel ramo della PR #152. Nessun merge, deploy canonico o approvazione studenti.
