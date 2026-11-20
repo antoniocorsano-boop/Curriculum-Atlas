@@ -1,14 +1,6 @@
 name: "ATLAS Atrium SEED-03 — Blender reale e tre viste"
 # Revisione geometrica esperimentale: non abilita la pubblicazione e non approva ART-DIR-02.
 on:
-  push:
-    branches: [work/atlas-gateway-01-foyer]
-    paths:
-      - ".github/workflows/atlas-atrium-seed-03-blender.yml"
-      - "scripts/atlas-gateway-production/generate-atrium-seed-03.py"
-      - "scripts/atlas-gateway-production/generate-atrium-seed.py"
-      - "scripts/atlas-gateway-production/import-atrium-seed-03-blender.py"
-      - "docs/atlas-gateway/ATLAS-ATRIUM-BLUEPRINT-03.json"
   pull_request:
     branches: [work/atlas-library-web-delivery]
     paths:
@@ -91,9 +83,19 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends blender
           blender --version | head -3
+      - name: Give Blender its own compatible NumPy and test the actual interpreter
+        run: |
+          # Ubuntu's Blender has its own Python environment; dependencies
+          # installed by actions/setup-python do not automatically reach it.
+          python -m pip install --no-deps --disable-pip-version-check \
+            --target "$RUNNER_TEMP/atlas-blender-py" "numpy==1.26.4"
+          PYTHONPATH="$RUNNER_TEMP/atlas-blender-py" blender --background \
+            --python-use-system-env --python-exit-code 1 \
+            --python-expr "import sys,numpy; print('BLENDER PYTHON',sys.version); print('BLENDER NUMPY',numpy.__version__)"
       - name: Import actual GLB into Blender and produce .blend / three draft Cycles views
         run: |
-          blender --background --factory-startup --threads 2 --python-exit-code 1 \
+          PYTHONPATH="$RUNNER_TEMP/atlas-blender-py" blender --background --factory-startup --threads 2 \
+            --python-use-system-env --python-exit-code 1 \
             --python scripts/atlas-gateway-production/import-atrium-seed-03-blender.py -- \
             --glb "$EVIDENCE/geometry/ATLAS-ATRIUM-3D-SEED-03.glb" \
             --blueprint "$BLUEPRINT" --output "$EVIDENCE/blender" --samples 6 --render
