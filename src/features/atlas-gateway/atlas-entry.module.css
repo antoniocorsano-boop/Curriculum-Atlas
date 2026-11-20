@@ -327,12 +327,20 @@
   }
   .brand { top: 4%; left: 4.25%; }
   .brandScreen { height: 16%; }
+  /* The panoramic master already contains the visible CTA.
+     Keep one large semantic clickable link over it, without printing it twice. */
   .enter {
-    bottom: 7.15%;
-    min-height: 38px;
+    bottom: 6%;
+    min-height: 44px;
     font-size: clamp(13px, 2vw, 18px);
     padding: .35em .4em;
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
   }
+  .enter span { opacity: 0; }
+  .enter:focus-visible { outline: 3px solid #ffe4aa; }
+  .enter:hover { background: rgb(241 193 113 / .10); box-shadow: 0 0 15px #ffe0a066; }
 }
 @media (prefers-reduced-motion: reduce) {
   .portal, .mobileHotspot, .enter { transition: none !important; }
