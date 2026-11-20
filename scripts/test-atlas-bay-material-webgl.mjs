@@ -9,6 +9,21 @@ const sha=b=>createHash("sha256").update(b).digest("hex");
 const read=(d,n)=>readFileSync(join(d,n));
 const json=(d,n)=>JSON.parse(read(d,n));
 const engine=readFileSync(enginePath);
+const bridgePath=process.argv[8],loaderPath=process.argv[9],bridgeReceiptPath=process.argv[10];
+assert.equal(Boolean(bridgePath),Boolean(loaderPath),"loader must accompany isolated GLB");
+assert.equal(Boolean(bridgePath),Boolean(bridgeReceiptPath),"receipt must accompany isolated GLB");
+const bridge=bridgePath?(()=>{
+  const bytes=readFileSync(resolve(bridgePath)),loader=readFileSync(resolve(loaderPath));
+  const receipt=JSON.parse(readFileSync(resolve(bridgeReceiptPath),"utf8"));
+  assert.equal(receipt.status,"PASS_ISOLATED_BAKE_AND_GLTF");
+  assert.equal(receipt.revision,"4ad58f761246a317461c08dc7c78563a25fa2eda");
+  assert.equal(receipt.surface.name,"Library bay 04-0-Bay Walnut");
+  assert.equal(receipt.masterUnchanged,true);
+  assert.equal(sha(bytes),receipt.export.sha256);
+  const gitblob=b=>createHash("sha1").update(Buffer.concat([Buffer.from("blob "+b.length+"\0"),b])).digest("hex");
+  assert.equal(gitblob(loader),"cfa518ede1b0893f1da14347d78fcd19355f3686");
+  return {bytes,loader,receipt};
+})():null;
 assert.equal(createHash("sha1").update(Buffer.concat([Buffer.from("blob "+engine.length+"\0"),engine])).digest("hex"),"b14f47c0908bab15e890b468d53bb07db0be3a18");
 const b=json(src,"surface-binding.json"),m=json(src,"material-package.json"),f=json(src,"material-finish.json");
 const bay=json(bayDir,"bay.json"),oracle=json(ctx,"context-oracle.json"),lut=json(agx,"agx-lut.json"),prior=json(agx,"agx-browser.json");
@@ -26,6 +41,7 @@ const html='<!doctype html><html lang="it"><meta charset="utf-8"><meta name="vie
 const css='body{margin:0;background:#191512;color:#f1e7d5;font:14px system-ui}header{display:flex;gap:16px;align-items:center;padding:12px;flex-wrap:wrap}header span{color:#cbbba4}button{background:#493c31;color:#fff;border:1px solid #a18a6d;border-radius:6px;padding:6px 12px}canvas{display:block;max-width:100%;height:auto;touch-action:none;cursor:grab}main{display:flex;justify-content:center}';
 const js=String.raw`
 (async()=>{
+const BRIDGE=__ASC_BAKED_BRIDGE__;
 const T=window.THREE,check=(x,m)=>{if(!x)throw Error(m);};
 const json=async u=>{const r=await fetch(u);check(r.ok,u);return r.json();};
 const bytes=async u=>{const r=await fetch(u);check(r.ok,u);return new Uint8Array(await r.arrayBuffer());};
@@ -81,11 +97,88 @@ const lighting=[
 ].join("\n");
 const lightU={lightPos:{value:lp},lightColor:{value:lc},eye:{value:new T.Vector3()}};
 const targetMat=new T.ShaderMaterial({uniforms:{...u,...lightU},side:T.DoubleSide,vertexShader:vertex,fragmentShader:sampler+"\n"+lighting+"\nvoid main(){vec3 n=normalize(vN)*(gl_FrontFacing?1.0:-1.0),v=normalize(eye-vP);gl_FragColor=vec4(clamp(diffuse()+lightSpec(vP,n,v,roughness(),vec3(.04)),0.0,8.0),1.0);}"});
-const geom=new T.BufferGeometry(),p=[],n=[],c=[],props=[];
-for(const obj of bay.objects){if(obj.object===bay.target)continue;for(let i=obj.firstVertex;i<obj.firstVertex+obj.vertexCount;i++){const k=i*11;p.push(...rows.slice(k,k+3));n.push(...rows.slice(k+3,k+6));c.push(...rows.slice(k+6,k+9));props.push(rows[k+9],rows[k+10]);}}
-geom.setAttribute("position",new T.Float32BufferAttribute(p,3));geom.setAttribute("normal",new T.Float32BufferAttribute(n,3));geom.setAttribute("baseColor",new T.Float32BufferAttribute(c,3));geom.setAttribute("properties",new T.Float32BufferAttribute(props,2));
+const BAKE_OBJECT="Library bay 04-0-Bay Walnut";
+function geometryFor(predicate){
+  const g=new T.BufferGeometry(),p=[],n=[],c=[],props=[];
+  for(const obj of bay.objects){
+    if(!predicate(obj))continue;
+    for(let i=obj.firstVertex;i<obj.firstVertex+obj.vertexCount;i++){
+      const k=i*11;
+      p.push(...rows.slice(k,k+3));n.push(...rows.slice(k+3,k+6));
+      c.push(...rows.slice(k+6,k+9));props.push(rows[k+9],rows[k+10]);
+    }
+  }
+  g.setAttribute("position",new T.Float32BufferAttribute(p,3));
+  g.setAttribute("normal",new T.Float32BufferAttribute(n,3));
+  g.setAttribute("baseColor",new T.Float32BufferAttribute(c,3));
+  g.setAttribute("properties",new T.Float32BufferAttribute(props,2));
+  return g;
+}
+const geom=geometryFor(obj=>obj.object!==bay.target&&(!BRIDGE||obj.object!==BAKE_OBJECT));
+const walnutGeom=BRIDGE?geometryFor(obj=>obj.object===BAKE_OBJECT):null;
+if(BRIDGE)check(bay.objects.filter(obj=>obj.object===BAKE_OBJECT).length===1&&walnutGeom.attributes.position.count===864*3,"bound Walnut inventory");
 const surround=new T.ShaderMaterial({side:T.DoubleSide,uniforms:lightU,vertexShader:"attribute vec3 baseColor;attribute vec2 properties;varying vec3 vP,vN,vC;varying vec2 vProps;void main(){vP=position;vN=normal;vC=baseColor;vProps=properties;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",fragmentShader:"varying vec3 vP,vN,vC;varying vec2 vProps;\n"+lighting+"\nvoid main(){vec3 n=normalize(vN)*(gl_FrontFacing?1.0:-1.0),v=normalize(eye-vP);vec3 rgb=vC*(1.0-vProps.y)*lightDiffuse(vP,n)+lightSpec(vP,n,v,vProps.x,mix(vec3(.04),vC,vProps.y));gl_FragColor=vec4(clamp(rgb,0.0,8.0),1.0);}"});
 const scene=new T.Scene();target.material=targetMat;scene.add(target,new T.Mesh(geom,surround));
+const walnutSource=BRIDGE?new T.Mesh(walnutGeom,surround):null;
+if(walnutSource)scene.add(walnutSource);
+let bakedRoot=null,bridgeInfo=null;
+if(BRIDGE){
+  check(T.GLTFLoader,"pinned GLTFLoader");
+  const manager=new T.LoadingManager();
+  manager.setURLModifier(url=>{check(url.startsWith("blob:"),"nonembedded glTF URI");return url;});
+  const loader=new T.GLTFLoader(manager);
+  loader.register(parser=>{
+    parser.textureLoader=new T.TextureLoader(parser.options.manager);
+    parser.textureLoader.setCrossOrigin(parser.options.crossOrigin);
+    return {name:"ATLAS_BRIDGE_embedded_image_decoder"};
+  });
+  const payload=await bytes("/baked.glb");
+  const gltf=await new Promise((res,rej)=>loader.parse(payload.buffer,"",res,rej));
+  check(gltf.parser.json.materials?.length===1&&gltf.parser.json.meshes?.length===1&&gltf.parser.json.images?.length===1,"one surface GLB");
+  check(gltf.parser.json.materials[0].emissiveTexture?.texCoord===1,"baked texture must use UV2");
+  const meshes=[];gltf.scene.traverse(x=>{if(x.isMesh)meshes.push(x)});
+  check(meshes.length===1,"one baked mesh");
+  const original=meshes[0],uv0=original.geometry.attributes.uv,uv2=original.geometry.attributes.uv2;
+  check(uv0&&uv2&&uv0.count===uv2.count&&original.material.emissiveMap,"embedded image and UV2");
+  const bakedGeometry=original.geometry.clone();
+  bakedGeometry.setAttribute("uv",uv2.clone());
+  const texture=original.material.emissiveMap;
+  texture.encoding=T.sRGBEncoding;texture.needsUpdate=true;
+  const bakedMaterial=new T.MeshBasicMaterial({map:texture,color:0xffffff,side:T.DoubleSide,toneMapped:false});
+  const bakedMesh=new T.Mesh(bakedGeometry,bakedMaterial);bakedMesh.matrixAutoUpdate=false;
+  original.updateMatrixWorld(true);bakedMesh.matrix.copy(original.matrixWorld);
+  bakedRoot=new T.Group();bakedRoot.rotation.x=Math.PI/2;
+  bakedRoot.add(bakedMesh);scene.add(bakedRoot);bakedRoot.updateMatrixWorld(true);bakedRoot.visible=false;
+  walnutGeom.computeBoundingBox();
+  const expected=walnutGeom.boundingBox;
+  // Three r128 Box3.setFromObject transforms a *local AABB*, not the actual
+  // positions. On rotated bays it inflates bounds by centimetres. Measure
+  // every transformed vertex instead; no correction/scaling is authorized.
+  const pos=bakedGeometry.getAttribute("position"),idx=bakedGeometry.index;
+  const originalPos=walnutGeom.getAttribute("position"),transformed=new T.Vector3();
+  const actual=new T.Box3().makeEmpty(),n=idx?idx.count:pos.count;
+  check(n===originalPos.count&&n===864*3,"GLB real triangle coverage");
+  let maxVertexDelta=0;
+  for(let i=0;i<n;i++){
+    const vertexIndex=idx?idx.getX(i):i;
+    transformed.fromBufferAttribute(pos,vertexIndex).applyMatrix4(bakedMesh.matrixWorld);
+    actual.expandByPoint(transformed);
+    const src=new T.Vector3().fromBufferAttribute(originalPos,i);
+    maxVertexDelta=Math.max(maxVertexDelta,transformed.distanceTo(src));
+  }
+  const boundDelta=Math.max(...[0,1,2].flatMap(i=>[
+    Math.abs(expected.min.getComponent(i)-actual.min.getComponent(i)),
+    Math.abs(expected.max.getComponent(i)-actual.max.getComponent(i))
+  ]));
+  const bakedTriangles=n/3;
+  check(bakedTriangles===864&&maxVertexDelta<.00005&&boundDelta<.00005,
+    "GLB exact world vertices "+JSON.stringify({maxVertexDelta,boundDelta,bakedTriangles}));
+  bridgeInfo={object:BAKE_OBJECT,sourceTriangles:864,bakedTriangles,boundDelta,maxVertexDelta,exactTriangleIdentity:true,
+    uv2Count:uv2.count,originalMaterial:original.material.type,
+    bakedMaterial:bakedMaterial.type,textureSize:[texture.image.width,texture.image.height],
+    sourceOtherObjectsUnmodified:true,bakedMaterialUnaffectedByDynamicLights:true};
+}
+
 const lut=tex(lutRaw,a.lut.width,a.lut.height,T.UnsignedByteType);
 const shader=new T.ShaderMaterial({toneMapped:false,depthTest:false,depthWrite:false,uniforms:{source:{value:floatRT.texture},lut:{value:lut},size:{value:a.lut.size},atlas:{value:new T.Vector2(a.lut.width,a.lut.height)},shaperK:{value:a.lut.shaperK},limit:{value:a.lut.domain[1]}},vertexShader:"varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.0,1.0);}",fragmentShader:[
 "precision highp float;varying vec2 vUv;uniform sampler2D source,lut;uniform float size,shaperK,limit;uniform vec2 atlas;",
@@ -104,15 +197,50 @@ canvas.addEventListener("pointerdown",e=>{drag=[e.clientX,e.clientY];canvas.setP
 canvas.addEventListener("wheel",e=>{e.preventDefault();zoom=Math.max(.65,Math.min(1.5,zoom+e.deltaY*.001));render(canvas.width,canvas.height);},{passive:false});
 document.querySelector("#reset").onclick=()=>{yaw=0;pitch=.025;zoom=1;render(canvas.width,canvas.height);};
 window.__capture=capture;window.__resize=(cw,ch)=>render(cw,ch);
+if(BRIDGE){
+  let baked=false;
+  function show(value){
+    check(typeof value==="boolean","bridge mode");
+    baked=value;walnutSource.visible=!value;bakedRoot.visible=value;
+    document.querySelector("#baked-switch").setAttribute("aria-pressed",String(value));
+    render(canvas.width,canvas.height);
+  }
+  window.__bridge={show,info:bridgeInfo,get baked(){return baked;}};
+  document.querySelector("#baked-switch").addEventListener("click",()=>show(!baked));
+}
 render();window.__result={status:"PASS_BAY_BINDING",metrics,triangles:bay.triangles,objects:bay.objects.length,actualBay:true,sourceRoughness:true,agxLive:true,geometryBudgetOnly:true,artisticApproval:false,physicalDeviceQualified:false,publishable:false};
 })().catch(e=>window.__result={status:"FAIL",error:String(e),metrics:window.__metrics||null});`;
-const files=new Map([["/",["text/html",Buffer.from(html)]],["/style.css",["text/css",Buffer.from(css)]],["/bay.js",["application/javascript",Buffer.from(js)]],["/three.js",["application/javascript",engine]],...[[ "/binding",src,"surface-binding.json"],["/package",src,"material-package.json"],["/bay",bayDir,"bay.json"],["/oracle",ctx,"context-oracle.json"],["/agx",agx,"agx-lut.json"]].map(([url,d,n])=>[url,["application/json",read(d,n)]]),...[[ "/texture",texture],["/rough",rough],["/rows",rows],["/occ",occ],["/lut",lutBytes]].map(([url,data])=>[url,["application/octet-stream",data]])]);
-const server=createServer((req,res)=>{res.setHeader("Content-Security-Policy","default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; object-src 'none'; base-uri 'none'");res.setHeader("X-Content-Type-Options","nosniff");const f=files.get(req.url);if(!f){res.writeHead(404);res.end();return;}res.writeHead(200,{"Content-Type":f[0],"Cache-Control":"no-store"});res.end(f[1]);});
+const actualJS=js.replace("__ASC_BAKED_BRIDGE__",bridge?"true":"false");
+const candidateHtml=bridge?html.replace('<button id="reset">Ripristina</button>','<button id="reset">Ripristina</button><button id="baked-switch" type="button" aria-pressed="false">Luce precalcolata</button>').replace('<script src="/bay.js"></script>','<script src="/loader.js"></script><script src="/bay.js"></script>'):html;
+const files=new Map([["/",["text/html",Buffer.from(candidateHtml)]],["/style.css",["text/css",Buffer.from(css)]],["/bay.js",["application/javascript",Buffer.from(actualJS)]],["/three.js",["application/javascript",engine]],...[[ "/binding",src,"surface-binding.json"],["/package",src,"material-package.json"],["/bay",bayDir,"bay.json"],["/oracle",ctx,"context-oracle.json"],["/agx",agx,"agx-lut.json"]].map(([url,d,n])=>[url,["application/json",read(d,n)]]),...[[ "/texture",texture],["/rough",rough],["/rows",rows],["/occ",occ],["/lut",lutBytes]].map(([url,data])=>[url,["application/octet-stream",data]])]);
+if(bridge){
+  files.set("/loader.js",["application/javascript",bridge.loader]);
+  files.set("/baked.glb",["model/gltf-binary",bridge.bytes]);
+}
+const server=createServer((req,res)=>{res.setHeader("Content-Security-Policy","default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self' data: blob:; style-src 'self'; object-src 'none'; base-uri 'none'");res.setHeader("X-Content-Type-Options","nosniff");const f=files.get(req.url);if(!f){res.writeHead(404);res.end();return;}res.writeHead(200,{"Content-Type":f[0],"Cache-Control":"no-store"});res.end(f[1]);});
 let browser;const report={schema:"atlas.asc01.bay-browser/v1",revision:process.env.ATLAS_EXACT_HEAD,sourceRevision:b.revision,masterSha256:b.masterSha256,packageSha256:f.packageSha256,baySha256:bay.sha256,externalRequests:[],pageErrors:[],status:"PENDING",views:{}};
 try{await new Promise((ok,fail)=>{server.once("error",fail);server.listen(0,"127.0.0.1",ok);});const origin="http://127.0.0.1:"+server.address().port;
 browser=await chromium.launch({headless:true,args:["--use-gl=angle","--use-angle=swiftshader","--enable-unsafe-swiftshader"]});const c=await browser.newContext({viewport:{width:800,height:650}});await c.route("**/*",r=>{if(new URL(r.request().url()).origin!==origin){report.externalRequests.push(r.request().url());return r.abort();}return r.continue();});const page=await c.newPage();page.on("pageerror",e=>report.pageErrors.push(String(e)));await page.goto(origin+"/");await page.waitForFunction(()=>window.__result,{},{timeout:180000});report.result=await page.evaluate(()=>window.__result);assert.equal(report.result.status,"PASS_BAY_BINDING",JSON.stringify(report.result));
 async function capture(name){const v=await page.evaluate(()=>window.__capture());const raw=Buffer.from(v.png.split(",")[1],"base64");writeFileSync(join(out,name+".png"),raw);report.views[name]={sha256:sha(raw),width:v.width,height:v.height,lit:v.lit};assert(v.lit>v.width*v.height*.04,"empty preview");}
 await capture("reference");const box=await page.locator("canvas").boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await page.mouse.move(box.x+box.width/2+70,box.y+box.height/2+10,{steps:4});await page.mouse.up();await capture("rotated");assert.notEqual(report.views.reference.sha256,report.views.rotated.sha256,"pointer navigation");
 await page.locator("#reset").click();await capture("restored");assert.equal(report.views.reference.sha256,report.views.restored.sha256,"camera restore");
-await page.evaluate(()=>window.__resize(320,240));await capture("mobile");assert.equal(report.views.mobile.width,320);assert.deepEqual(report.externalRequests,[]);assert.deepEqual(report.pageErrors,[]);report.status="PASS_NAVIGABLE_BAY_PREVIEW";
+await page.evaluate(()=>window.__resize(320,240));await capture("mobile");assert.equal(report.views.mobile.width,320);
+if(bridge){
+  await page.evaluate(({w,h})=>window.__resize(w,h),{w:b.camera.width,h:b.camera.height});
+  report.bridge=await page.evaluate(()=>window.__bridge.info);
+  await capture("bridge-original");
+  await page.getByRole("button",{name:"Luce precalcolata"}).click();
+  assert.equal(await page.evaluate(()=>window.__bridge.baked),true);
+  await capture("bridge-baked");
+  await page.getByRole("button",{name:"Luce precalcolata"}).click();
+  await capture("bridge-restored");
+  assert.equal(report.views["bridge-original"].sha256,report.views["bridge-restored"].sha256,"GLB rollback exact");
+  report.bridge.changed=report.views["bridge-original"].sha256!==report.views["bridge-baked"].sha256;
+  assert(report.bridge.changed,"baked material must change the full-bay pixels in a matched view");
+  report.bridge.glbSha256=sha(bridge.bytes);
+  report.bridge.unchangedScene=true;
+  report.bridge.artisticApproval=false;
+  report.bridge.publishable=false;
+}
+assert.deepEqual(report.externalRequests,[]);assert.deepEqual(report.pageErrors,[]);report.status="PASS_NAVIGABLE_BAY_PREVIEW";
 }catch(e){report.status="FAIL";report.error=String(e);throw e;}finally{writeFileSync(join(out,"bay-browser.json"),JSON.stringify(report,null,2)+"\n");console.log("ASC BAY BROWSER",JSON.stringify(report));if(browser)await browser.close();server.close();}
