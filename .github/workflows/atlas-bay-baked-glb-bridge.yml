@@ -1,0 +1,119 @@
+name: Atlas — ASC bay real baked GLB bridge
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/test-atlas-bay-material-webgl.mjs'
+      - 'docs/atlas-gateway/ASC-01-BAY-GLB-BRIDGE.md'
+      - '.github/workflows/atlas-bay-baked-glb-bridge.yml'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-bay-baked-glb-${{ github.event.pull_request.head.ref }}
+  cancel-in-progress: true
+jobs:
+  qualify-bridge:
+    if: github.event.repository.visibility == 'public' && github.event.pull_request.draft && github.event.pull_request.head.ref == 'work/atlas-bay-webgl-baked-bridge' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      ATLAS_EXACT_HEAD: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/atlas-blender-cache
+          key: atlas-blender-linux-x64-v1-bea0eb3146be13eae6225409a117b215184f41b7f79e799f97cb3abb8f6dc404
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: Validate scripts and exact dependencies
+        run: |
+          bash scripts/atlas-gateway-c3/bootstrap-blender.sh
+          python3 -m py_compile scripts/atlas-export-bay-preview.py
+          node --check scripts/test-atlas-bay-material-webgl.mjs
+          pnpm install --frozen-lockfile
+      - name: Recover verified master, material package and baked GLB
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/asc-bay-bridge-input"
+          mkdir -p "$p"/{finish,context,agx,bay} "$RUNNER_TEMP/asc-bay-bridge-evidence"
+          for spec in "14444143410 c7154de191cb6d25890a2881f470f6d6eeba74b2dcab897842f4753403e685c6 master" "14550684753 b0bfa200423cdb3b58e0b7bcfcefec6be68a8adbf6f93ca47817d76d8a80f633 finish" "14541319689 d1abd91c141ff35286d2ec005bcdf2a6556126aedcc29040b38e4ba5957fb225 context" "14542267386 508a424f41059a3b1cfaa30eff2315746545f866479235e5b5f2e915cce350e4 agx" "14614203407 ca2603da6ce05cecb546550651aa09babb96ad8a5c799702f0e9af242d2492e7 baked"; do
+            read -r id sha name <<< "$spec"
+            curl --fail --silent --show-error --location --retry 3 --max-time 180 --proto '=https' --proto-redir '=https' -H "Authorization: Bearer $GH_TOKEN" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$id/zip" -o "$p/$name.zip"
+            printf '%s  %s\n' "$sha" "$p/$name.zip" | sha256sum --strict --check
+          done
+          unzip -p "$p/master.zip" Atlas-Scene-Master.blend > "$p/Atlas-Scene-Master.blend"
+          printf '%s  %s\n' f216e3158c055de0990cd5f36ce388fe4731847fce12f2c42619b03806b9c3ab "$p/Atlas-Scene-Master.blend" | sha256sum --strict --check
+          for f in surface-binding.json binding.rgba32f material-package.json material-finish.json roughness.rgb8; do unzip -p "$p/finish.zip" "$f" > "$p/finish/$f"; done
+          for f in context-oracle.json occluders.f32; do unzip -p "$p/context.zip" "$f" > "$p/context/$f"; done
+          for f in agx-lut.json agx-browser.json lut.rgba8; do unzip -p "$p/agx.zip" "$f" > "$p/agx/$f"; done
+          unzip -p "$p/baked.zip" single-surface-baked.glb > "$p/baked.glb"
+          unzip -p "$p/baked.zip" light-transfer.json > "$p/light-transfer.json"
+          printf '%s  %s\n' 442791262d07bb48bb51800d89a149046067047163d117a04d4fad3395e2a856 "$p/baked.glb" | sha256sum --strict --check
+          chmod a-w "$p/Atlas-Scene-Master.blend" "$p/baked.glb" "$p/light-transfer.json" "$p"/{finish,context,agx}/*
+      - name: Prepare existing pinned Three r128 and GLTFLoader
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/asc-bay-bridge-input"
+          node scripts/build-atlas-gateway-local.mjs "$RUNNER_TEMP/asc-bay-bridge-engine"
+          mkdir -p "$p/loader"
+          npm pack three@0.128.0 --ignore-scripts --pack-destination "$p/loader" >/dev/null
+          tar -xOf "$p/loader/three-0.128.0.tgz" package/examples/js/loaders/GLTFLoader.js > "$p/loader-r128.js"
+          node -e 'const fs=require("fs"),crypto=require("crypto");const b=fs.readFileSync(process.argv[1]);const x=crypto.createHash("sha1").update(Buffer.concat([Buffer.from("blob "+b.length+"\0"),b])).digest("hex");if(x!=="cfa518ede1b0893f1da14347d78fcd19355f3686")throw Error("GLTFLoader identity")' "$p/loader-r128.js"
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Export unchanged 11-object real bay
+        run: |
+          p="$RUNNER_TEMP/asc-bay-bridge-input"
+          "$BLENDER_BIN" --background --factory-startup --disable-autoexec "$p/Atlas-Scene-Master.blend" --python-exit-code 1 --python scripts/atlas-export-bay-preview.py -- "$p/Atlas-Scene-Master.blend" "$p/finish" "$p/bay"
+          cp "$p/bay/bay.json" "$RUNNER_TEMP/asc-bay-bridge-evidence/"
+      - name: Compare original and baked material in same navigable scene
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/asc-bay-bridge-input"
+          node scripts/test-atlas-bay-material-webgl.mjs "$p/finish" "$p/context" "$p/agx" "$p/bay" "$RUNNER_TEMP/asc-bay-bridge-evidence" "$RUNNER_TEMP/asc-bay-bridge-engine/three.min.js" "$p/baked.glb" "$p/loader-r128.js" "$p/light-transfer.json"
+      - name: Verify visual and geometry evidence
+        run: |
+          python3 - <<'PY'
+          import json,os,pathlib,hashlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"asc-bay-bridge-evidence"
+          report=json.loads((p/"bay-browser.json").read_text())
+          bay=json.loads((p/"bay.json").read_text())
+          assert report["status"]=="PASS_NAVIGABLE_BAY_PREVIEW" and report["revision"]==os.environ["ATLAS_EXACT_HEAD"]
+          assert report["result"]["status"]=="PASS_BAY_BINDING" and bay["triangles"]==report["result"]["triangles"]
+          assert bay["objects"] and len(bay["objects"])==11 and bay["masterUnchanged"]
+          assert report["result"]["metrics"]["badVisibility"]==report["result"]["metrics"]["badSamples"]==0
+          bridge=report["bridge"]
+          assert bridge["object"]=="Library bay 04-0-Bay Walnut" and bridge["sourceTriangles"]==bridge["bakedTriangles"]==864
+          assert bridge["boundDelta"]<.001 and bridge["uv2Count"]>0
+          assert bridge["bakedMaterial"]=="MeshBasicMaterial" and bridge["bakedMaterialUnaffectedByDynamicLights"]
+          assert bridge["sourceOtherObjectsUnmodified"] and bridge["changed"] and bridge["unchangedScene"]
+          assert bridge["glbSha256"]=="442791262d07bb48bb51800d89a149046067047163d117a04d4fad3395e2a856"
+          assert not bridge["publishable"] and not bridge["artisticApproval"]
+          assert set(report["views"])=={"reference","rotated","restored","mobile","bridge-original","bridge-baked","bridge-restored"}
+          for name,r in report["views"].items():
+              assert hashlib.sha256((p/(name+".png")).read_bytes()).hexdigest()==r["sha256"]
+          assert report["views"]["reference"]["sha256"]==report["views"]["restored"]["sha256"]
+          assert report["views"]["bridge-original"]["sha256"]==report["views"]["bridge-restored"]["sha256"]!=report["views"]["bridge-baked"]["sha256"]
+          assert not report["externalRequests"] and not report["pageErrors"]
+          print("ASC bridge qualified as isolated visual A/B/A in real navigable bay, not artistic approval or release.")
+          PY
+      - name: Preserve both visual alternatives and negative evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-asc-bay-baked-glb-bridge
+          path: ${{ runner.temp }}/asc-bay-bridge-evidence/
+          retention-days: 7
+          if-no-files-found: warn
