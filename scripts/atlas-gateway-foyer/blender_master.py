@@ -37,7 +37,8 @@ scene.render.image_settings.file_format = "PNG"
 scene.render.film_transparent = False
 scene.render.engine = "CYCLES"
 scene.cycles.samples = 24
-scene.cycles.use_denoising = True
+if hasattr(scene.cycles,"use_denoising"):
+    scene.cycles.use_denoising = True
 
 def rgba(rgb):
     return ((rgb >> 16 & 255)/255.0, (rgb >> 8 & 255)/255.0,
@@ -89,7 +90,8 @@ def cube(name, loc, scale, mat, bevel=0.0):
         mod = obj.modifiers.new("Raccordo architettonico", "BEVEL")
         mod.width = bevel
         mod.segments = 2
-        mod.affect = "EDGES" if hasattr(mod,"affect") else None
+        if hasattr(mod, "affect"):
+            mod.affect = "EDGES"
         obj.modifiers.new("Normali ponderate", "WEIGHTED_NORMAL")
     return obj
 
@@ -267,7 +269,10 @@ scene.world.use_nodes=True
 bg=scene.world.node_tree.nodes.get("Background")
 bg.inputs["Color"].default_value=rgba(0x091626)
 bg.inputs["Strength"].default_value=.4
-scene.view_settings.view_transform="AgX" if "AgX" in [x.identifier for x in bpy.types.ColorManagedViewSettings.bl_rna.properties["view_transform"].enum_items] else "Standard"
+try:
+    scene.view_settings.view_transform="AgX"
+except (TypeError,ValueError):
+    scene.view_settings.view_transform="Standard"
 
 reference=os.path.join(OUT,"foyer-reference.png")
 scene.render.filepath=reference
