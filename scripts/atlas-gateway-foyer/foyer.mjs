@@ -64,85 +64,192 @@ function torus(radius,tube,color,y,rotation=0){
   ring.position.set(0,y,rotation);ring.rotation.x=Math.PI/2;scene.add(ring);return ring;
 }
 function drawFoyer(){
-  const floor=new T.Mesh(new T.CylinderGeometry(12.4,12.4,.28,72),
-    new T.MeshStandardMaterial({color:0x122a42,metalness:.62,roughness:.42}));
-  floor.position.set(0,-.27,-1.3);scene.add(floor);
-  // Curved architectural wall: visual mass instead of a skeletal wireframe.
-  const wall=new T.Mesh(
-    new T.CylinderGeometry(11.62,11.62,6.2,64,1,true,Math.PI/2,Math.PI),
-    new T.MeshStandardMaterial({color:0x193b60,metalness:.34,roughness:.63,
-      side:T.BackSide,emissive:0x06182d,emissiveIntensity:.13}));
-  wall.position.set(0,2.92,-1.3);scene.add(wall);
-  const wallBase=new T.Mesh(new T.TorusGeometry(11.6,.13,8,80,Math.PI),
-    new T.MeshStandardMaterial({color:0xb89a61,metalness:.82,roughness:.29}));
-  wallBase.rotation.x=Math.PI/2;wallBase.rotation.z=Math.PI/2;
-  wallBase.position.set(0,.09,-1.3);scene.add(wallBase);
-  for(const radius of [3.15,5.7,8.5,11.7]){
-    const ring=new T.Mesh(new T.TorusGeometry(radius,.045,6,92),
-      new T.MeshStandardMaterial({color:0xb59a64,emissive:0x483414,emissiveIntensity:.22,metalness:.8,roughness:.31}));
-    ring.rotation.x=-Math.PI/2;ring.position.set(0,-.10,-1.3);scene.add(ring);
+  // AWC / G2 — scenografia v2: architettura e materiali, non un secondo motore.
+  // Geometrie e risorse locali senza animazione permanente o servizi esterni.
+  const material=(color,metalness=.28,roughness=.52,emissive=0,emissiveIntensity=0)=>
+    new T.MeshStandardMaterial({color,metalness,roughness,emissive,emissiveIntensity});
+  const bronze=material(0xb69b69,.8,.28),darkBronze=material(0x66583f,.65,.39),
+    darkWall=material(0x152737,.32,.76),obsidian=material(0x0c1826,.63,.3),
+    recessed=material(0x0b1d31,.32,.66),glassFrame=material(0x224d73,.48,.36),
+    blueLight=new T.MeshBasicMaterial({color:0x5eabf7,transparent:true,opacity:.55,depthWrite:false}),
+    amberLight=new T.MeshBasicMaterial({color:0xffd4a1,transparent:true,opacity:.5,depthWrite:false});
+  function add(mesh,x,y,z,parent=scene){
+    mesh.position.set(x,y,z);parent.add(mesh);return mesh;
   }
-  // Architettura circolare, cupola e costoloni: vera profondità geometrica.
+  function section(w,h,d,x,y,z,mat,angle=0,parent=scene){
+    const mesh=new T.Mesh(new T.BoxGeometry(w,h,d),mat);mesh.rotation.y=angle;
+    return add(mesh,x,y,z,parent);
+  }
+  function circumference(radius,y,color,thickness=.038,z=-1.3){
+    const mesh=new T.Mesh(new T.TorusGeometry(radius,thickness,6,92),color);
+    mesh.rotation.x=-Math.PI/2;return add(mesh,0,y,z);
+  }
+  function radialPanel(a,r,y,w,h,mat){
+    const x=Math.sin(a)*r,z=-1.3-Math.cos(a)*r;
+    return section(w,h,.16,x,y,z,mat,-a);
+  }
+  function floorTexture(){
+    const c=document.createElement("canvas");c.width=c.height=512;
+    const ctx=c.getContext("2d");if(!ctx)throw Error("Decorative canvas not available");
+    ctx.fillStyle="#192938";ctx.fillRect(0,0,512,512);
+    for(let i=0;i<155;i++){
+      const x=(i*173)%512,y=(i*311)%512,w=18+(i*37)%118;
+      ctx.strokeStyle=i%3===0?"#5a718343":"#ced9d010";
+      ctx.lineWidth=.4+(i%4)*.22;ctx.beginPath();ctx.moveTo(x,y);
+      ctx.bezierCurveTo(x+w*.28,y-9,x+w*.65,y+5,x+w,y-6);ctx.stroke();
+    }
+    const t=new T.CanvasTexture(c);
+    t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(2.5,2.5);
+    t.encoding=T.sRGBEncoding;t.anisotropy=2;return t;
+  }
+  // Dark stone floor, bounded stage edge and only restrained brass inlays.
+  const stoneMat=material(0xb5c2cb,.42,.42);stoneMat.map=floorTexture();
+  const floor=new T.Mesh(new T.CylinderGeometry(11.7,11.7,.34,80),stoneMat);
+  add(floor,0,-.27,-1.3);
+  const perimeter=new T.Mesh(new T.CylinderGeometry(11.77,11.83,.18,80),darkBronze);
+  add(perimeter,0,-.42,-1.3);
+  for(const [r,th] of [[3.1,.035],[6.1,.024],[10.6,.058]]){
+    circumference(r,-.083,bronze,th);
+  }
+  // Two overlapping shadows establish the central object's contact with floor.
+  const shadowTex=(()=>{
+    const c=document.createElement("canvas");c.width=c.height=128;const ctx=c.getContext("2d");
+    const grad=ctx.createRadialGradient(64,64,6,64,64,62);
+    grad.addColorStop(0,"rgba(0,0,0,.78)");grad.addColorStop(1,"rgba(0,0,0,0)");
+    ctx.fillStyle=grad;ctx.fillRect(0,0,128,128);
+    return new T.CanvasTexture(c);
+  })();
+  for(const [r,alpha] of [[4.7,.7],[7,.25]]){
+    const s=new T.Mesh(new T.PlaneGeometry(r*2,r*2),
+      new T.MeshBasicMaterial({map:shadowTex,transparent:true,opacity:alpha,depthWrite:false}));
+    s.rotation.x=-Math.PI/2;add(s,0,-.074,1.65);
+  }
+  // A solid rotunda with recessed wall bays and mezzanine, not an open wire cage.
+  const wall=new T.Mesh(new T.CylinderGeometry(11.58,11.58,6.8,72,1,true,
+    Math.PI*.5,Math.PI),new T.MeshStandardMaterial({
+      color:0x13253a,metalness:.26,roughness:.78,side:T.BackSide}));
+  add(wall,0,3.0,-1.3);
+  for(const [y,th] of [[.19,.11],[3.48,.095],[5.8,.10]]){
+    const band=new T.Mesh(new T.TorusGeometry(11.55,th,6,90,Math.PI),
+      new T.MeshStandardMaterial({color:y===3.48?0x8c7656:0x5e5862,metalness:.76,roughness:.35}));
+    band.rotation.x=Math.PI/2;band.rotation.z=Math.PI/2;add(band,0,y,-1.3);
+  }
+  // Architectural piers, two-level framed wall bays and indirect blue coves.
   for(let i=0;i<=16;i++){
-    const angle=-Math.PI*.62+i*(Math.PI*1.24/16);
-    const x=11.65*Math.sin(angle),z=-1.3-11.65*Math.cos(angle);
-    const col=box(.19,5.9,.23,i%4===0?0xc7a66e:0x315475,.65,.32);
-    col.position.set(x,2.85,z);col.rotation.y=-angle;scene.add(col);
+    const a=-Math.PI*.49+i*(Math.PI*.98/16);
+    const x=Math.sin(a)*11.46,z=-1.3-Math.cos(a)*11.46;
+    section(.32,6.42,.40,x,3.15,z,i%4===0?darkBronze:darkWall,-a);
+    section(.12,6.2,.43,x,3.14,z,bronze,-a);
+    if(i<16){
+      const mid=a+Math.PI*.98/32;
+      radialPanel(mid,11.37,2.3,1.06,3.45,recessed);
+      const glow=radialPanel(mid,11.24,3.2,.72,1.15,
+        new T.MeshBasicMaterial({color:0x2e69a9,transparent:true,opacity:.13,depthWrite:false}));
+      glow.material.side=T.DoubleSide;
+      radialPanel(mid,11.26,4.12,1.16,.035,bronze);
+      radialPanel(mid,11.26,1.06,1.16,.04,darkBronze);
+    }
+  }
+  // Dense crown, dark panels and curved architectural ribs.
+  const ceiling=new T.Mesh(new T.SphereGeometry(11.42,44,10,0,Math.PI*2,0,Math.PI/2),
+    new T.MeshStandardMaterial({color:0x102e50,metalness:.4,roughness:.65,
+      side:T.BackSide,emissive:0x0a2444,emissiveIntensity:.12}));
+  ceiling.scale.y=.29;add(ceiling,0,5.65,-1.3);
+  circumference(8.1,6.45,bronze,.08);
+  circumference(4.45,7.9,glassFrame,.12);
+  circumference(4.1,7.93,amberLight,.046);
+  for(let i=0;i<18;i++){
+    const a=i*2*Math.PI/18;
+    const x=10.8*Math.sin(a),z=-1.3-10.8*Math.cos(a);
     const path=new T.CatmullRomCurve3([
-      new T.Vector3(x,5.7,z),new T.Vector3(x*.80,7.35,z*.80-.15),
-      new T.Vector3(x*.47,8.25,z*.58-.3),new T.Vector3(0,8.7,-1.3)]);
-    const rib=new T.Mesh(new T.TubeGeometry(path,14,.055,5,false),
-      new T.MeshStandardMaterial({color:0x9baebd,metalness:.64,roughness:.31,emissive:0x113966,emissiveIntensity:.3}));
+      new T.Vector3(x,5.65,z),
+      new T.Vector3(x*.79,6.84,-1.3+(z+1.3)*.79),
+      new T.Vector3(x*.46,7.82,-1.3+(z+1.3)*.46),
+      new T.Vector3(0,8.26,-1.3)]);
+    const rib=new T.Mesh(new T.TubeGeometry(path,12,.075,5,false),i%3===0?bronze:glassFrame);
     scene.add(rib);
   }
-  torus(7.0,.09,0x558ac3,7.15,-1.3);
-  torus(3.7,.105,0xbe9955,8.17,-1.3);
-  const dome=new T.Mesh(new T.SphereGeometry(3.7,28,10,0,Math.PI*2,0,Math.PI/2),
-    new T.MeshStandardMaterial({color:0x19558b,metalness:.65,roughness:.24,side:T.BackSide,transparent:true,opacity:.5,emissive:0x1e5ea3,emissiveIntensity:.15}));
-  dome.position.set(0,8.17,-1.3);scene.add(dome);
-  const dais=new T.Mesh(new T.CylinderGeometry(2.8,3.45,.58,56),
-    new T.MeshStandardMaterial({color:0x194767,metalness:.74,roughness:.28}));
-  dais.position.set(0,.23,1.35);scene.add(dais);
-  const cap=new T.Mesh(new T.CylinderGeometry(2.82,2.82,.12,56),
-    new T.MeshStandardMaterial({color:0x102e4c,metalness:.62,roughness:.3}));
-  cap.position.set(0,.58,1.35);scene.add(cap);
-  const band=new T.Mesh(new T.TorusGeometry(2.84,.085,8,56),
-    new T.MeshStandardMaterial({color:0xe9be74,emissive:0xc58a2e,emissiveIntensity:.4,metalness:.68}));
-  band.rotation.x=-Math.PI/2;band.position.set(0,.56,1.35);scene.add(band);
-  const logo=labelTexture({label:"ATLAS",detail:"Mondi della conoscenza"});
-  const logoMesh=new T.Mesh(new T.PlaneGeometry(2.05,2.3),new T.MeshBasicMaterial({map:logo,transparent:true,opacity:.94,side:T.DoubleSide}));
-  logoMesh.position.set(0,2.2,1.3);scene.add(logoMesh);
-  // 4 portali in posizione fisica; il testo HTML offre sempre l'equivalente accessibile.
-  for(const p of PORTALS){
-    const g=new T.Group();g.position.set(p.x,2.85,p.z);g.rotation.y=p.yaw;
-    const pane=new T.Mesh(new T.PlaneGeometry(3.04,4.95),
-      new T.MeshStandardMaterial({map:labelTexture(p),transparent:true,opacity:.86,metalness:.28,roughness:.32,
-        emissive:0x2369ad,emissiveIntensity:.23,side:T.DoubleSide}));
-    pane.userData.portalId=p.id;g.add(pane);
-    for(const side of [-1,1]){
-      const rail=box(.095,5.14,.17,0xe7ba73,.76,.25);rail.position.set(side*1.58,0,0);g.add(rail);
-    }
-    for(const side of [-1,1]){
-      const rail=box(3.24,.105,.17,0xd6ae75,.76,.25);rail.position.set(0,side*2.55,0);g.add(rail);
-    }
-    scene.add(g);portalPanels.push({pane,portal:p});
+  // Opaque luminous central oculus simulates bounced indirect blue light.
+  const oculus=new T.Mesh(new T.CircleGeometry(3.25,48),
+    new T.MeshBasicMaterial({color:0x2762a6,side:T.DoubleSide,transparent:true,opacity:.42}));
+  oculus.rotation.x=Math.PI/2;add(oculus,0,8.17,-1.3);
+  circumference(3.38,8.17,bronze,.095);
+  // Architectural lighting: restrained light volume, no moving sources.
+  for(const x of [-5.4,0,5.4]){
+    const cone=new T.Mesh(new T.ConeGeometry(2.25,5.6,16,1,true),
+      new T.MeshBasicMaterial({color:0x4c95d8,transparent:true,opacity:.035,
+        side:T.DoubleSide,depthWrite:false}));
+    cone.rotation.z=Math.PI;add(cone,x,5.2,-4.6);
   }
-  const starsGeo=new T.BufferGeometry();const vertices=[];
-  for(let i=0;i<85;i++){
-    const a=i*2.39996,rad=4.5+((i*29)%70)/10;
-    vertices.push(Math.sin(a)*rad,5.1+(i%10)*.26,-5.1-Math.cos(a)*rad*.35);
+  // Central elliptical monument, inspired by the original Arena composition.
+  // A low domed volume avoids blocking the essential portal titles.
+  const pedestal=new T.Mesh(new T.CylinderGeometry(3.12,3.44,.44,64),obsidian);
+  add(pedestal,0,.17,2.0);
+  const pedestalBand=new T.Mesh(new T.TorusGeometry(3.25,.095,8,64),bronze);
+  pedestalBand.rotation.x=-Math.PI/2;add(pedestalBand,0,.36,2.0);
+  const dome=new T.Mesh(new T.SphereGeometry(2.98,48,18,0,Math.PI*2,0,Math.PI/2),
+    material(0x143b65,.7,.27,0x0b2245,.15));
+  dome.scale.y=.49;add(dome,0,.4,2.0);
+  const domeHighlight=new T.Mesh(new T.TorusGeometry(2.57,.038,6,64),
+    new T.MeshBasicMaterial({color:0xe7be79,transparent:true,opacity:.5}));
+  domeHighlight.rotation.x=-Math.PI/2;add(domeHighlight,0,.53,2.0);
+  function brandTexture(){
+    const c=document.createElement("canvas");c.width=512;c.height=256;
+    const ctx=c.getContext("2d");ctx.clearRect(0,0,512,256);
+    ctx.textAlign="center";ctx.shadowColor="#edb970";ctx.shadowBlur=15;
+    ctx.font="bold 105px Georgia,serif";ctx.fillStyle="#f6d7a0";ctx.fillText("A",256,105);
+    ctx.shadowBlur=3;ctx.font="bold 55px system-ui,sans-serif";
+    ctx.letterSpacing="12px";ctx.fillText("ATLAS",258,177);
+    ctx.font="18px system-ui,sans-serif";ctx.shadowBlur=0;ctx.fillStyle="#bbd7e7";
+    ctx.fillText("MONDI DELLA CONOSCENZA",256,216);
+    const tex=new T.CanvasTexture(c);tex.encoding=T.sRGBEncoding;return tex;
+  }
+  const brand=new T.Mesh(new T.PlaneGeometry(2.7,1.35),
+    new T.MeshBasicMaterial({map:brandTexture(),transparent:true,depthWrite:false,side:T.DoubleSide}));
+  add(brand,0,1.35,4.53);
+  // Physical portal assemblies: recessed surround, glass face, bevel trim,
+  // luminous perimeter and a faint reflection on the polished ground.
+  for(const p of PORTALS){
+    const group=new T.Group();group.position.set(p.x,2.66,p.z);
+    group.rotation.y=p.yaw;
+    const back=section(3.16,5.02,.23,0,0,-.18,darkBronze,0,group);
+    const frame=section(2.96,4.84,.11,0,0,-.055,glassFrame,0,group);
+    const pane=new T.Mesh(new T.PlaneGeometry(2.77,4.55),
+      new T.MeshBasicMaterial({map:labelTexture(p),transparent:true,opacity:.93,
+        side:T.DoubleSide}));
+    add(pane,0,0,.026,group);pane.userData.portalId=p.id;
+    for(const side of [-1,1]){
+      section(.082,4.95,.14,side*1.48,0,.05,bronze,0,group);
+      section(.038,4.64,.15,side*1.39,0,.09,blueLight,0,group);
+      section(3.0,.086,.14,0,side*2.44,.05,bronze,0,group);
+      section(2.78,.035,.15,0,side*2.31,.10,amberLight,0,group);
+    }
+    // Small plinths ground the portals in the architectural space.
+    section(3.30,.16,.6,0,-2.58,-.04,obsidian,0,group);
+    scene.add(group);portalPanels.push({pane,portal:p});
+    const reflect=new T.Mesh(new T.PlaneGeometry(2.1,3.3),
+      new T.MeshBasicMaterial({map:pane.material.map,transparent:true,opacity:.11,
+        depthWrite:false,side:T.DoubleSide}));
+    reflect.rotation.x=-Math.PI/2;reflect.rotation.z=Math.PI;
+    reflect.position.set(p.x,.004,p.z+2.0);scene.add(reflect);
+  }
+  // Sparse stars only inside the overhead oculus, never a full-screen effect.
+  const starsGeo=new T.BufferGeometry(),vertices=[];
+  for(let i=0;i<40;i++){
+    const a=i*2.39996,r=1+(i*29%55)/10;
+    vertices.push(Math.sin(a)*r,7.15+(i%10)*.09,-1.3-Math.cos(a)*r);
   }
   starsGeo.setAttribute("position",new T.Float32BufferAttribute(vertices,3));
-  scene.add(new T.Points(starsGeo,new T.PointsMaterial({color:0x8bcfff,size:.07,sizeAttenuation:true})));
+  scene.add(new T.Points(starsGeo,new T.PointsMaterial({color:0x89bdf4,size:.045,sizeAttenuation:true})));
 }
 function setCamera(){
   const w=Math.max(1,stage.clientWidth),h=Math.max(1,stage.clientHeight);
-  const portrait=w/h<.85, z=portrait?17.8:12.8;
-  const target=new T.Vector3(0,3.0,-.25);
-  const offset=new T.Vector3(0,portrait?3.5:2.6,z);
+  const portrait=w/h<.85, z=portrait?19.7:16.1;
+  const target=new T.Vector3(0,3.1,-.65);
+  const offset=new T.Vector3(0,portrait?3.0:2.3,z);
   offset.applyAxisAngle(new T.Vector3(0,1,0),orbit);
-  camera.position.copy(target).add(offset);camera.lookAt(new T.Vector3(0,3.0+vertical,-.25));
-  camera.aspect=w/h;camera.fov=portrait?64:58;camera.updateProjectionMatrix();
+  camera.position.copy(target).add(offset);camera.lookAt(new T.Vector3(0,3.1+vertical,-.65));
+  camera.aspect=w/h;camera.fov=portrait?60:53;camera.updateProjectionMatrix();
 }
 function render(){
   request=0;if(stopped)return;
@@ -173,14 +280,14 @@ function init(){
   if(!T||typeof T.WebGLRenderer!=="function"){fallback("WebGL non disponibile");return;}
   try{
     renderer=new T.WebGLRenderer({canvas,alpha:false,antialias:false,powerPreference:"low-power"});
-    renderer.outputEncoding=T.sRGBEncoding;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.18;
+    renderer.outputEncoding=T.sRGBEncoding;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.03;
     scene=new T.Scene();scene.background=new T.Color(0x0a192e);
     scene.fog=new T.FogExp2(0x122641,.012);
     camera=new T.PerspectiveCamera(58,1,.05,90);
-    scene.add(new T.HemisphereLight(0xbfdfff,0x18243a,.9));
-    const sun=new T.DirectionalLight(0xf7deb8,1.3);sun.position.set(2,11,8);scene.add(sun);
-    const blue=new T.PointLight(0x48aaff,1.4,25);blue.position.set(0,7,-1);scene.add(blue);
-    const warm=new T.PointLight(0xfbc386,1.15,22);warm.position.set(0,5,6);scene.add(warm);
+    scene.add(new T.HemisphereLight(0x90bcf0,0x121b2b,.67));
+    const sun=new T.DirectionalLight(0xf7d4aa,.92);sun.position.set(2,11,8);scene.add(sun);
+    const blue=new T.PointLight(0x338fe4,.75,25);blue.position.set(0,7,-1);scene.add(blue);
+    const warm=new T.PointLight(0xffd3a6,.5,22);warm.position.set(0,5,6);scene.add(warm);
     drawFoyer();
     canvas.style.touchAction="none";
     canvas.addEventListener("pointerdown",e=>{
