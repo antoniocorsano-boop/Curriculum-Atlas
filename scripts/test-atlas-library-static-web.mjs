@@ -135,12 +135,19 @@ try{
       assert(canvasRect&&canvasRect.width>250&&canvasRect.height>250,"canvas must receive direct pointer gestures");
       const cx=canvasRect.x+canvasRect.width*.48,cy=canvasRect.y+canvasRect.height*.42;
       await page.mouse.move(cx,cy);
+      const initialCamera=await frame.locator("canvas").evaluate(()=>camera.position.toArray());
       await page.mouse.down();
       for(let step=0;step<16;step++){
         await page.mouse.move(cx+48*Math.sin(step*.26),cy+24*Math.sin(step*.19),{steps:2});
         await page.waitForTimeout(60);
       }
+      const movingCamera=await frame.locator("canvas").evaluate(()=>camera.position.toArray());
+      assert(movingCamera.some((v,i)=>Math.abs(v-initialCamera[i])>.0001),
+        "camera must visibly follow the pointer while held, without waiting for release");
       await page.mouse.up();
+      const releasedCamera=await frame.locator("canvas").evaluate(()=>camera.position.toArray());
+      assert(releasedCamera.every(Number.isFinite),"released camera must remain valid");
+      report.dragCameraUpdatedWhileHeld=true;
       const panel=frame.locator("#atlas-controls-panel");
       assert.equal(await panel.count(),1,"mobile camera panel must exist");
       assert.equal(await panel.evaluate(el=>el.open),false,"mobile camera panel must initially be collapsed");
