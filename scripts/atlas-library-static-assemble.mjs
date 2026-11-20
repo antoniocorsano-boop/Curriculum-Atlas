@@ -29,7 +29,7 @@ for(const path of ["index.html","curricolo/index.html","esperienze/index.html"])
 const destination=join(exportDir,"biblioteca");
 if(existsSync(destination))throw Error("Library route must be new, not overwritten");
 mkdirSync(destination,{recursive:true});
-const sources=["index.html","host.js","host.css"];
+const sources=["index.html","host.js","host.css","lighting-bridge.js"];
 for(const file of sources)copyFileSync(join("scripts","atlas-library-static",file),join(destination,file));
 for(const [src,dest] of [["scene.html","scene.html"],["native-manifest.json","native-manifest.json"],["native-build-receipt.json","native-build-receipt.json"],["THREE-LICENSE.txt","THREE-LICENSE.txt"]]){
   copyFileSync(join(nativeDir,src),join(destination,dest));
