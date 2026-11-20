@@ -61,3 +61,11 @@ La prima consegna, **[ATLAS-ATRIUM-BLUEPRINT-01](./ATLAS-ATRIUM-BLUEPRINT-01.md)
 **Prove superate:** export/rilettura GLB, 4 portali distinti, chiusura di ogni mesh, 3 camere nel JSON, script Python sintatticamente validi. **NON eseguito:** importazione con Blender, salvataggio di `.blend`, rendering Cycles, confronto con PNG canonico, approvazione artistica, test WebGL/Android. L'ambiente locale non disponeva di Blender e l'installazione non è riuscita.
 
 **Prossimo ingresso:** eseguire lo script Blender su un runner dotato di Blender e acquisire il PNG canonico, senza sostituirlo con ARENA 5 portali o Biblioteca Atlas 3 portali; poi effettuare la calibrazione mediante sintesi/confronto. Il lavoro appena salvato è un prototipo geometrico, non un risultato fotorealistico.
+
+## Evidenze produttive successive (20 novembre 2026)
+
+- [ATLAS-3D-SEED-VIEWS-01](./ATLAS-3D-SEED-VIEWS-01.md): **prove prospettiche da GLB reale** e registrazione dei difetti architettonici e delle telecamere; [configurazioni sperimentali](./ATLAS-CAMERA-DIAGNOSTIC-02.json). Le immagini reali e il loro generatore sono nel [Drive](https://drive.google.com/file/d/1Fsv_KDX4S_pFmlR941Curp_0_iOH35bF/view).
+- [ATLAS-ATRIUM-BLUEPRINT-02](./ATLAS-ATRIUM-BLUEPRINT-02.json) e [ATLAS-ATRIUM-3D-SEED-02](./ATLAS-ATRIUM-3D-SEED-02.md): prima **revisione geometrica reale** dopo i difetti osservati; GLB, tre viste e report in [Drive](https://drive.google.com/file/d/1AqK_L45BYeWVZ6cn3RdM-swIxEvzB0HN/view). Non risolve ancora la qualità artistica né sostituisce ART-DIR-02.
+- [Procedura Blender autonoma](../../.github/workflows/atlas-atrium-seed-blender.yml): codice di esecuzione reale su GitHub Actions **salvato e letto**, ma senza evidenza acquisita del suo esito nella conversazione attuale. Nessuna affermazione di aver già generato `.blend` o render Cycles.
+
+**Decisione di proseguimento:** i prossimi interventi produttivi devono risolvere la geometria della copertura e calibrare l'inquadratura HERO sul PNG canonico. Evitare di scambiare la correzione del campo visivo per l'approvazione artistica.
