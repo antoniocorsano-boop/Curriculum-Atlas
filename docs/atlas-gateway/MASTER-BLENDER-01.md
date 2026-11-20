@@ -30,9 +30,7 @@ L'immagine **inviata nuovamente dall'ideatore nella conversazione del 20/11/2026
 - pavimento di pietra scura levigata, riflessi blu/oro, vegetazione laterale e stendardi;
 - bottone centrale «Entra in Atlas».
 
-**Impronta del file dell'ultimo allegato acquisito in questo turno:** immagine con contenuto **JPEG**, dimensioni **1536 × 864**, SHA-256
-`cce6bb9d670376e1b75558136b220a71095d15b64843bf1ba89cc9432d3d2cb8`.
-Il nome locale dell'allegato terminava in `.png`, ma **il formato binario è JPEG**. La precedente documentazione registra un altro riferimento PNG, 1672 × 941, SHA `7b3ffb9a355b89057acea02489020ad43d871e10b6cf5bbb29f8769ff3073336`. **Non sono lo stesso file.** L'immagine più recente è il riferimento descrittivo di questo studio; prima che il workflow FLOW-02 la accetti occorre scegliere e archiviare la versione canonica e **aggiornare esplicitamente** i controlli su formato/dimensioni/SHA, non falsificare i dati né far passare un JPEG per PNG.
+**Confronto verificato il 20 novembre 2026:** l'ultimo allegato ha contenuto **JPEG**, 1536×864 pixel e SHA-256 `cce6bb9d670376e1b75558136b220a71095d15b64843bf1ba89cc9432d3d2cb8`; la fonte PNG originale è 1672×941 e SHA-256 `7b3ffb9a355b89057acea02489020ad43d871e10b6cf5bbb29f8769ff3073336`. **Sono file diversi ma rappresentano sostanzialmente lo stesso fotogramma**, come dimostra il confronto ridimensionato (differenza media per canale 1,317 su 255). **Scelta operativa:** il PNG originale, di qualità e risoluzione superiori, rimane il riferimento canonico ART-DIR-02; il JPEG reinviato conferma il soggetto da ricostruire. Non alterare SHA o formato per simulare una corrispondenza binaria. Dettagli nel [registro delle immagini](./ART-REFERENCE-MANIFEST.md).
 
 **Stato di conservazione:** il presente documento conserva l'identità verificata; il **file immagine originale deve ancora essere depositato in un archivio durevole** del progetto. Il percorso locale della chat non è una risorsa GitHub. Il master artistico resta BLOCCATO per l'avvio automatico finché l'originale canonico non è disponibile.
 
