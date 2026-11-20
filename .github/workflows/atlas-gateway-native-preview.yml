@@ -196,6 +196,7 @@ jobs:
       - name: Build the actual public browser site and library entrance
         run: |
           set -euo pipefail
+          node --check scripts/atlas-library-static/lighting-bridge.js
           pnpm install --frozen-lockfile
           pnpm build
           node scripts/test-percorsi-publication-filter.mjs
