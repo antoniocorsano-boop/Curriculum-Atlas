@@ -37,28 +37,64 @@ test("Desktop: l'intera finestra è occupata dall'atrio e i portali sono navigab
   await page.screenshot({ path: testInfo.outputPath("desktop-entire-stage.png") });
 });
 
-test("Telefono: quattro accessi visibili e nessuna navigazione estranea", async ({ browser }, testInfo) => {
+test("Telefono verticale: atrio unitario 9:16 con quattro portali cliccabili sullo stesso piano", async ({ browser }, testInfo) => {
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
   });
   const page = await context.newPage();
   await page.goto("/");
   await expect(page.locator("#atlas-entry-root")).toBeVisible();
-  for (const [id] of routeMap) {
-    const el = page.locator('[data-portal="' + id + '"]');
+  await expect(page.locator('img[src*="mobile-atrium-01.png"]')).toBeVisible();
+  const art = page.locator('img[src*="mobile-atrium-01.png"]');
+  expect(await art.evaluate(e => (e as HTMLImageElement).naturalWidth)).toBe(948);
+  await expect(page.locator('[data-portal="curricolo"]')).toBeHidden();
+  const yCenters: number[] = [];
+  for (const [id, href] of routeMap) {
+    const el = page.locator('[data-mobile-portal="' + id + '"]');
+    await expect(el).toBeVisible();
+    await expect(el).toHaveAttribute("href", href);
     const box = await el.boundingBox();
     expect(box).not.toBeNull();
     expect(box!.width).toBeGreaterThanOrEqual(44);
     expect(box!.height).toBeGreaterThanOrEqual(44);
     expect(box!.x).toBeGreaterThanOrEqual(-1);
     expect(box!.x + box!.width).toBeLessThanOrEqual(391);
+    yCenters.push(box!.y + box!.height / 2);
   }
-  const cta = page.getByRole("link", { name: /Entra in Atlas/i });
-  await expect(cta).toBeVisible();
-  await page.screenshot({ path: testInfo.outputPath("phone-entire-stage.png") });
-  await cta.click();
-  await expect(page).toHaveURL(/\/esplora\/?$/);
+  // A single architectural row; the previous layout detached portals into a 2x2 grid.
+  expect(Math.max(...yCenters) - Math.min(...yCenters)).toBeLessThan(42);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await expect(page.getByRole("link", { name: /Entra in Atlas/i })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath("phone-portrait-integrated-atrium.png") });
+  await page.locator('[data-mobile-portal="curricolo"]').click();
+  await expect(page).toHaveURL(/\/curricolo\/?$/);
   await expect(page.locator(".atlas-shell")).toBeVisible();
+  await context.close();
+});
+
+test("Telefono ruotato: panorama completo e collegamenti interattivi", async ({ browser }, testInfo) => {
+  const context = await browser.newContext({
+    viewport: { width: 844, height: 390 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
+  });
+  const page = await context.newPage();
+  await page.goto("/");
+  await expect(page.locator('img[src*="mobile-atrium-01.png"]')).toBeHidden();
+  await expect(page.locator('img[src*="plate-prova.jpg"]')).toBeVisible();
+  for (const [id, href] of routeMap) {
+    const el = page.locator('[data-portal="' + id + '"]');
+    await expect(el).toBeVisible();
+    await expect(el).toHaveAttribute("href", href);
+    const rect = await el.boundingBox();
+    expect(rect).not.toBeNull();
+    expect(rect!.width).toBeGreaterThanOrEqual(44);
+  }
+  const enter = page.getByRole("link", { name: /Entra in Atlas/i });
+  await expect(enter).toBeVisible();
+  const ctaBox = await enter.boundingBox();
+  expect(ctaBox).not.toBeNull();
+  expect(ctaBox!.y).toBeGreaterThanOrEqual(0);
+  expect(ctaBox!.y + ctaBox!.height).toBeLessThanOrEqual(390);
+  await page.screenshot({ path: testInfo.outputPath("phone-landscape-panorama.png") });
   await context.close();
 });
 
