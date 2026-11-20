@@ -11,6 +11,9 @@ on:
       - "tests/atlas-gateway-entry.spec.ts"
       - ".github/workflows/atlas-gateway-entry.yml"
   workflow_dispatch:
+concurrency:
+  group: atlas-gateway-entry-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
