@@ -182,74 +182,150 @@
 .enter:hover, .enter:focus-visible { filter: brightness(1.12); box-shadow: 0 0 23px #f3cd89; }
 .enter:focus-visible { outline: 3px solid #fff9d9; outline-offset: 4px; }
 .arrow { font-size: 1.3em; line-height: 1; }
-@media (max-width: 720px), (pointer: coarse) and (max-width: 980px) {
-  .artboard { width: 100%; height: 100%; }
-  .plate { object-fit: cover; object-position: center; filter: blur(7px) brightness(.63); transform: scale(1.025); }
-  .artboard::after {
-    content: "";
+
+/* The mobile original is a coherent 9:16 scene with four smaller portals
+   integrated into the same rotunda (not four detached image cards). */
+.mobileUnderlay,
+.mobileComposition { display: none; }
+
+/* Portrait: use the separate mobile asset. A blurred extension occupies any
+   difference between the exact 948:1659 artwork and the phone viewport,
+   without black letterbox bands or horizontal image cropping. */
+@media (orientation: portrait) and (max-width: 900px) {
+  .artboard {
+    width: 100%;
+    height: 100%;
+    background: #081726;
+  }
+  .plate,
+  .portals,
+  .podiumScreen,
+  .podiumEmblem { display: none; }
+  .mobileUnderlay {
+    display: block;
     position: absolute;
-    z-index: 2;
-    inset: 66% 0 0;
-    background: linear-gradient(180deg, transparent, #071a2bdf 23%, #07192ae8 90%);
+    inset: -3%;
+    z-index: 0;
+    background-image: url("/atlas-gateway-entry/mobile-atrium-01.png");
+    background-size: cover;
+    background-position: center;
+    filter: blur(23px) brightness(.42);
+    transform: scale(1.05);
     pointer-events: none;
   }
-  .brandScreen {
-    width: 100%; height: 14%;
-    background: linear-gradient(180deg, #061426f7, #061426dd 65%, transparent);
-  }
-  .brand { left: 4%; top: max(2%, env(safe-area-inset-top)); gap: 8px; }
-  .smallA { width: clamp(30px, 8vw, 41px); height: clamp(30px, 8vw, 41px); }
-  .wordmark { font-size: clamp(17px, 5.2vw, 24px); letter-spacing: .18em; }
-  .brandDivider { margin: 0 2px; }
-  .brandSubtitle { font-size: clamp(9px, 2.8vw, 13px); }
-  .podiumScreen { display: block; left: 30%; top: 45%; width: 40%; height: 13%; }
-  .podiumEmblem { display: none; }
-  .portals {
-    inset: 21% auto 25%;
+  .mobileComposition {
+    display: block;
+    position: absolute;
+    z-index: 2;
     left: 50%;
-    transform: translateX(-50%);
-    width: min(96%, 460px);
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(2, minmax(0, 1fr));
-    column-gap: 0;
-    row-gap: 1%;
-    align-items: center;
-    justify-items: center;
+    top: 50%;
+    transform: translate(-50%,-50%);
+    width: min(100%, calc(100dvh * 948 / 1659));
+    aspect-ratio: 948 / 1659;
+    overflow: visible;
+    isolation: isolate;
   }
-  .portal[data-portal] {
-    position: relative;
-    left: auto;
-    top: auto;
-    width: min(100%, 195px);
-    height: 100%;
-    min-height: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .portal img {
+  .mobileImage {
+    position: absolute;
+    inset: 0;
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: contain;
-    filter: drop-shadow(0 8px 12px #0006);
+    pointer-events: none;
+    user-select: none;
   }
+  .mobileHotspots {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+    pointer-events: none;
+  }
+  .mobileHotspot {
+    position: absolute;
+    z-index: 2;
+    display: grid;
+    justify-items: center;
+    align-items: center;
+    text-align: center;
+    color: #f9f4e7;
+    border-radius: 12px;
+    pointer-events: auto;
+    cursor: pointer;
+    touch-action: manipulation;
+    text-decoration: none;
+    outline-offset: 2px;
+    -webkit-tap-highlight-color: transparent;
+    transition: filter 220ms ease-out, transform 220ms ease-out;
+  }
+  .mobileHotspot span {
+    margin-top: 4%;
+    padding: 4px 3px;
+    border-radius: 5px;
+    color: #fff3d6;
+    background: rgb(4 21 42 / .78);
+    text-shadow: 0 1px 4px #03101e;
+    font-size: clamp(10px, 2.7vw, 13px);
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .mobileHotspot[data-mobile-portal="curricolo"] {
+    left: 7.1%; top: 39.3%; width: 21.5%; height: 20.6%;
+  }
+  .mobileHotspot[data-mobile-portal="esplora"] {
+    left: 29.25%; top: 41.15%; width: 20.6%; height: 18.8%;
+  }
+  .mobileHotspot[data-mobile-portal="percorsi"] {
+    left: 49.75%; top: 41.1%; width: 20.1%; height: 18.9%;
+  }
+  .mobileHotspot[data-mobile-portal="esperienze"] {
+    left: 69.9%; top: 39.3%; width: 20.6%; height: 20.6%;
+  }
+  .mobileHotspot:focus-visible {
+    outline: 3px solid #ffe5a9;
+    background: rgb(255 214 146 / .09);
+  }
+  .mobileHotspot:hover {
+    filter: drop-shadow(0 0 9px #ffe3a6);
+    transform: translateY(-2px);
+  }
+  .brandScreen {
+    width: 100%;
+    height: 14%;
+    background: linear-gradient(180deg,#061426f4,#061426dd 62%,transparent);
+  }
+  .brand {
+    left: 4%;
+    top: max(2%, env(safe-area-inset-top));
+    gap: 8px;
+  }
+  .smallA { width: clamp(28px, 7.5vw, 41px); height: clamp(28px, 7.5vw, 41px); }
+  .wordmark { font-size: clamp(17px, 5.2vw, 24px); letter-spacing: .18em; }
+  .brandDivider { margin: 0 2px; }
+  .brandSubtitle { font-size: clamp(9px, 2.8vw, 13px); }
   .enter {
+    bottom: calc(2.2% + env(safe-area-inset-bottom));
     width: min(74vw, 320px);
-    bottom: calc(3% + env(safe-area-inset-bottom));
     min-height: 49px;
     border-radius: 14px;
-    font-size: clamp(17px, 4.5vw, 22px);
+    font-size: clamp(16px, 4.5vw, 22px);
   }
 }
-@media(max-width: 360px) {
-  .portals { inset: 21% auto 28%; }
+@media (orientation: portrait) and (max-width: 350px) {
   .brandSubtitle { font-size: 9px; }
   .brandDivider { height: 1.35em; }
+  .mobileHotspot span { font-size: 10px; }
+}
+/* A rotated phone keeps the same panoramic composition as desktop;
+   only the controls are moved away from the clipped edges. */
+@media (orientation: landscape) and (pointer: coarse) and (max-height: 520px) {
+  .brand { top: 12.5%; }
+  .brandScreen { height: 23%; }
+  .enter { bottom: 13%; min-height: 41px; font-size: clamp(14px, 2vw, 19px); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .portal, .enter { transition: none !important; }
-  .portal { transform: none !important; }
+  .portal, .mobileHotspot, .enter { transition: none !important; }
+  .portal, .mobileHotspot { transform: none !important; }
 }
 
 /* Root-scoped reset: Atlas content pages keep their existing global layout. */
