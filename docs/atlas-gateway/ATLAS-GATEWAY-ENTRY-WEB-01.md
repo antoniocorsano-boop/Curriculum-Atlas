@@ -59,3 +59,13 @@ La PR è una candidata di implementazione, non la pagina autorizzata agli studen
 2. Consolidare la prova di pagina iniziale funzionante e recuperabile come artefatto permanente, non solo screenshot temporaneo di GitHub.
 3. Sostituire il `plate-prova.jpg` con un clean plate professionale a partire dalla **sorgente canonica ART-DIR-02 verificata in byte**, mantenendo invariati rotte e comportamento.
 4. Richiedere approvazione visiva e quindi realizzare la pubblicazione nel canale corretto, separatamente da questo sviluppo.
+
+## Qualificazione e conservazione aggiornata
+
+**Esecuzione browser dopo la revisione dell'interfaccia:** [GitHub Actions #44811398372](https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/44811398372): **SUCCESS** (tipi, desktop, smartphone, movimento ridotto, navigazione reale).
+
+**Evidenza permanente**: [Archivio Google Drive degli screenshot browser](https://drive.google.com/file/d/14xziEYMMsBjGeHUcblYRbJObdZKpxysN/view), 2.564.296 byte, caricato dalla prova GitHub Actions e verificato mediante rilettura dei metadati. Contiene `desktop-entire-stage.png` e `phone-entire-stage.png`; non è un'immagine generata artificialmente.
+
+**Rifinitura finale in codice:** maschera del marchio estesa per eliminare il residuo di scritta inglobata nel fondale, commit `ffa287dfe65038a3ef51051b60e7370ed3b490c5`. È una modifica di stile limitata, senza cambio di rotte o geometrie. La qualifica dell'esatto commit più recente deve essere riletta separatamente prima di pubblicare.
+
+**Conservazione delle immagini sorgente**: i cinque binari già versionati in GitHub sono separati dalle prove browser ed esistono anche nel Drive Curriculum Atlas. Nessun file fotografico di origine è stato sovrascritto.
