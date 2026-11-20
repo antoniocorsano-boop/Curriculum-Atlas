@@ -197,6 +197,7 @@ jobs:
         run: |
           set -euo pipefail
           node --check scripts/atlas-library-static/lighting-bridge.js
+          node --check scripts/atlas-library-static/diagnostics.js
           pnpm install --frozen-lockfile
           pnpm build
           node scripts/test-percorsi-publication-filter.mjs
