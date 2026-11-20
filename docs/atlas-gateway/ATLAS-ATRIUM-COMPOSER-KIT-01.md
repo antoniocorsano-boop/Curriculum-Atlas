@@ -105,3 +105,14 @@ Il percorso ibrido non è più soltanto una tavola o un esperimento con quattro 
 - [Drive — archivio permanente delle schermate del navigatore](https://drive.google.com/file/d/14xziEYMMsBjGeHUcblYRbJObdZKpxysN/view)
 
 **Non dichiarare conclusa la qualifica artistica:** il fondale usa inpainting da una generazione dimostrativa, i portali sono ancora porzioni di immagine trasformate via CSS, non mesh. Il sistema è tecnicamente utilizzabile per la navigazione interna alla prova, ma richiede approvazione dell'ideatore e sorgente ART-DIR-02 definitiva prima di pubblicare agli studenti.
+
+
+## Adattamento smartphone — Scenografia verticale (20 novembre 2026)
+
+La prova **ATLAS-GATEWAY-MOBILE-02** supera la precedente griglia 2×2: in verticale mostra **un'unica immagine 9:16** dell'atrio con quattro portali più piccoli in una fila, quattro hotspot HTML reali, logo A e CTA; in orizzontale visualizza il **panorama 16:9 intero**.
+
+- [Scelte, coordinate, risultati browser](./ATLAS-GATEWAY-MOBILE-02.md)
+- [Asset mobile, prompt e provenance](./ATLAS-GATEWAY-MOBILE-ART-PROVENANCE-01.md)
+- [Componente della pagina](../../src/features/atlas-gateway/atlas-entry.tsx), [stili responsive](../../src/features/atlas-gateway/atlas-entry.module.css) e [prove Playwright](../../tests/atlas-gateway-entry.spec.ts)
+
+**Stato:** sviluppato nel ramo della PR #152; immagine mobile candidata, distinta dal PNG canonico ART-DIR-02; nessun merge o deploy e nessuna dismissione del lavoro Blender.
