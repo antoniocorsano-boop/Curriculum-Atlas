@@ -29,3 +29,19 @@
 5. Registrare blocchi ed esiti nei piani [Atlas #151](https://github.com/antoniocorsano-boop/Curriculum-Atlas/issues/151) e [TRAMA #354](https://github.com/antoniocorsano-boop/trama-ecosistema/issues/354).
 
 **Avvertenza di stato:** questo indice fissa metodi e documenti, non chiude il P0-REF e non dimostra esecuzione Blender, approvazione, integrazione o pubblicazione.
+
+## Consegna operativa #1 — Tavola parametrica reale (20 novembre 2026)
+
+La prima consegna, **[ATLAS-ATRIUM-BLUEPRINT-01](./ATLAS-ATRIUM-BLUEPRINT-01.md)**, è stata **generata, verificata e salvata**. Non è soltanto un progetto descritto in chat.
+
+- [Pianta, sezione A–A e schema 4 portali SVG](./ATLAS-ATRIUM-BLUEPRINT-01.svg) — file vettoriale sorgente.
+- [Parametri geometrici e camere](./ATLAS-ATRIUM-BLUEPRINT-01.json) — R normalizzato, scelte iniziali con provenienza; modifica della seed conservata come override, non sovrascrittura.
+- [Misure/coordinate e controlli geometrici](./ATLAS-ATRIUM-BLUEPRINT-01-measures.json) — dati generati e verificati; portali non sovrapposti in pianta.
+- [Generatore Python riproducibile](../../scripts/atlas-gateway-production/render-blueprint.py) — codice che produce la tavola direttamente dal JSON, non una dichiarazione di possibilità.
+- [Archivio Drive dell'intera consegna](https://drive.google.com/file/d/1VsGEd-SWirx1Xp64qbq24IoZYAVg8dMY/view) — ZIP con SVG, PNG, JSON, misure, istruzioni e generatore; SHA-256 del pacchetto `89295144502da996a341e20103999884cb8a90bb057bdcd71d49dae6540e5b2c`.
+
+**Prove effettuate:** JSON interpretabile, script compilato ed eseguito con Python, XML/SVG valido, quattro portali e tre telecamere, simmetria e intersezioni in pianta. **Non superati:** camera fitting sul PNG canonico, vera scena Blender e approvazione artistica. Nessuna pubblicazione studenti.
+
+## Regola di conservazione permanente adottata
+
+**Ogni nuova consegna del compositore deve diventare un insieme di file riproducibili:** documentazione e dati/script nel ramo di lavoro GitHub; immagini e pacchetti binari nel deposito persistente con collegamento al repository; salvataggio verificato tramite rilettura e impronta; link e stato registrati su [Atlas #151](https://github.com/antoniocorsano-boop/Curriculum-Atlas/issues/151) e [TRAMA #354](https://github.com/antoniocorsano-boop/trama-ecosistema/issues/354). **Non** qualificare come prodotto un file che è solo progettato o rimasto nei temporanei della chat.
