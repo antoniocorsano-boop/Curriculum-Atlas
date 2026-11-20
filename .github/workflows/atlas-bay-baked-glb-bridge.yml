@@ -96,7 +96,7 @@ jobs:
           assert report["result"]["metrics"]["badVisibility"]==report["result"]["metrics"]["badSamples"]==0
           bridge=report["bridge"]
           assert bridge["object"]=="Library bay 04-0-Bay Walnut" and bridge["sourceTriangles"]==bridge["bakedTriangles"]==864
-          assert bridge["boundDelta"]<.0005 and bridge["sizeDelta"]<.0005 and bridge["exactTriangleIdentity"] and bridge["uv2Count"]>0
+          assert bridge["boundDelta"]<.00005 and bridge["maxVertexDelta"]<.00005 and bridge["exactTriangleIdentity"] and bridge["uv2Count"]>0
           assert bridge["bakedMaterial"]=="MeshBasicMaterial" and bridge["bakedMaterialUnaffectedByDynamicLights"]
           assert bridge["sourceOtherObjectsUnmodified"] and bridge["changed"] and bridge["unchangedScene"]
           assert bridge["glbSha256"]=="442791262d07bb48bb51800d89a149046067047163d117a04d4fad3395e2a856"
