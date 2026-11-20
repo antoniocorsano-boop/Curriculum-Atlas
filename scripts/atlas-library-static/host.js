@@ -3,13 +3,40 @@ const $=id=>document.getElementById(id);
 const scene=$("scene"),status=$("status"),toggle=$("toggle");
 const routes=Object.freeze({curricolo:"/curricolo/",esperienze:"/esperienze/"});
 const ids=["shell","scenography","cupola","portals","bays","stars","sky","ambient"];
+const assetLabels={shell:"struttura",scenography:"allestimenti",cupola:"cupola",portals:"portali",bays:"scaffalature",stars:"luci",sky:"cielo",ambient:"illuminazione"};
+const megabytes=n=>(n/1000000).toLocaleString("it-IT",{maximumFractionDigits:1});
+function adaptMobileScene(original){
+  // The original scene is SHA-256 verified before these display-only edits.
+  const wait='},45000);',stage='nativePhase="decode:"+id;',
+    sequence='for(const id of ["shell","scenography","cupola","portals","bays","stars"]){await loadModel(id);assertActive();}';
+  if(original.split(wait).length!==2||original.split(stage).length!==2||original.split(sequence).length!==2)
+    throw Error("STRUTTURA_SCENA_INCOMPATIBILE");
+  return original.replace(wait,'},120000);')
+    .replace(stage,stage+'send("atlas-3d-phase",{step:"decode",id});')
+    .replace(sequence,`for(const id of ["shell","scenography","cupola","portals","bays","stars"]){
+      await loadModel(id);assertActive();
+      if(id==="shell"&&innerWidth<=650){
+        try{
+          const v=NATIVE_CAMERAS.find(item=>item.id==="vertical");
+          camera.position.set(...v.position);camera.lookAt(new THREE.Vector3(...v.target));
+          camera.aspect=Math.max(1,innerWidth)/Math.max(1,innerHeight);
+          camera.fov=65;camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
+          resizeRaster(Math.max(1,innerWidth),Math.max(1,innerHeight));
+          renderer.render(scene,camera);
+          status.style.cssText="position:fixed;inset:auto 0 0 0;min-height:48px;padding:12px;background:#122536dd;display:grid;place-items:center;font:13px system-ui;pointer-events:none";
+          send("atlas-3d-phase",{step:"preview",id});
+        }catch(error){console.warn("ATLAS_MOBILE_EARLY_RENDER",error?.message??String(error));}
+      }
+    }`);
+}
+
 let frame=null,channel=null,active=false,ready=false,closing=false,controller=null,timeout=0;
 const setStatus=text=>status.textContent=text;
 const hex=bytes=>Array.from(new Uint8Array(bytes),v=>v.toString(16).padStart(2,"0")).join("");
 async function hash(bytes){return hex(await crypto.subtle.digest("SHA-256",bytes));}
 // A cellular browser can fail a transfer even when the page and files
 // are healthy. Retry transient reads without relaxing SHA-256 verification.
-async function readFile(url,signal){
+async function readFile(url,signal,onProgress,expectedBytes){
   const immutable=url.startsWith("/atlas-gateway-native/");
   for(let attempt=0;attempt<3;attempt++){
     try{
@@ -17,10 +44,26 @@ async function readFile(url,signal){
       const finalUrl=new URL(response.url,location.href);
       if(finalUrl.origin!==location.origin)throw Error("ORIGINE_NON_AUTORIZZATA");
       if(!response.ok||response.type==="opaque"||!response.body)throw Error("HTTP_"+response.status);
-      return new Uint8Array(await response.arrayBuffer());
+      if(!onProgress)return new Uint8Array(await response.arrayBuffer());
+      if(!Number.isSafeInteger(expectedBytes)||expectedBytes<1||expectedBytes>40000000)throw Error("DIMENSIONE_NON_VALIDA");
+      const data=new Uint8Array(expectedBytes),reader=response.body.getReader();
+      let length=0;
+      try{
+        for(;;){
+          const part=await reader.read();
+          if(part.done)break;
+          if(length+part.value.length>expectedBytes)throw Error("DIMENSIONE_ECCESSIVA");
+          data.set(part.value,length);length+=part.value.length;
+          onProgress(length,expectedBytes);
+        }
+      }finally{reader.releaseLock();}
+      if(length!==expectedBytes)throw Error("DIMENSIONE_INCOMPLETA");
+      onProgress(length,expectedBytes);
+      return data;
     }catch(error){
       if(signal?.aborted||String(error?.message).includes("ORIGINE_NON_AUTORIZZATA"))throw error;
       if(attempt===2)throw error;
+      onProgress?.(0,expectedBytes);
       await new Promise(resolve=>setTimeout(resolve,450*(attempt+1)));
     }
   }
@@ -101,10 +144,12 @@ async function start(){
     const html=new TextDecoder().decode(sceneBytes);
     if(html.split("__ATLAS_PARENT_ORIGIN_JSON__").length!==2||html.split("__ATLAS_CHANNEL_JSON__").length!==2)throw Error("Scena non compatibile");
     channel=hex(crypto.getRandomValues(new Uint8Array(24)));
-    const seen=new Set();
+    const seen=new Set(),bytesReceived=new Map();
+    const allBytes=manifest.assets.reduce((sum,a)=>sum+a.bytes,0);
+    let lastPaint=0;
     let source=html.replace("__ATLAS_PARENT_ORIGIN_JSON__",JSON.stringify(location.origin))
                    .replace("__ATLAS_CHANNEL_JSON__",JSON.stringify(channel));
-    if(window.innerWidth<=650)source=phoneControls(source);
+    if(window.innerWidth<=650)source=adaptMobileScene(phoneControls(source));
     function handle(event){
       if(closing||event.source!==frame?.contentWindow||event.origin!=="null"||!event.data||event.data.channel!==channel)return;
       const data=event.data;
@@ -113,14 +158,26 @@ async function start(){
         if(!asset||seen.has(data.id))return;
         seen.add(data.id);
         const target=frame.contentWindow;
+        const progress=(received)=>{
+          bytesReceived.set(data.id,received);
+          const now=performance.now();
+          if(now-lastPaint<300&&received!==asset.bytes)return;
+          lastPaint=now;
+          const sum=[...bytesReceived.values()].reduce((n,v)=>n+v,0);
+          setStatus("Caricamento "+assetLabels[data.id]+": "+megabytes(received)+"/"+megabytes(asset.bytes)+" MB · totale "+megabytes(sum)+"/"+megabytes(allBytes)+" MB");
+        };
+        progress(0);
         void (async()=>{
-          const bytes=await readFile("/atlas-gateway-native/"+asset.file,current.signal);
+          const bytes=await readFile("/atlas-gateway-native/"+asset.file,current.signal,progress,asset.bytes);
           if(bytes.byteLength!==asset.bytes||await hash(bytes)!==asset.sha256)throw Error("Risorsa non integra: "+data.id);
           if(closing||controller!==current||frame?.contentWindow!==target)return;
           const transferred=bytes.buffer;
           target.postMessage({type:"atlas-native-asset",channel,id:asset.id,bytes:transferred},"*",[transferred]);
         })().catch(()=>fallback("Una risorsa grafica non è stata caricata. Tocca «Riprova 3D».",true));
         return;
+      }
+      if(data.type==="atlas-3d-phase"&&typeof data.id==="string"&&Object.hasOwn(assetLabels,data.id)){
+        setStatus(data.step==="preview"?"La struttura è visibile · completamento della biblioteca…":"Preparazione di "+assetLabels[data.id]+"…");
       }
       if(data.type==="atlas-3d-ready"){
         ready=true;window.clearTimeout(timeout);
@@ -138,7 +195,7 @@ async function start(){
     frame.referrerPolicy="no-referrer";
     frame.srcdoc=source;
     scene.replaceChildren(frame);active=true;
-    timeout=window.setTimeout(()=>fallback("L'avvio 3D non è riuscito. Tocca «Riprova 3D».",true),90000);
+    timeout=window.setTimeout(()=>fallback("L'avvio 3D non è riuscito. Tocca «Riprova 3D».",true),210000);
   }catch(e){
     if(!closing){
       const code=String(e?.message||"ERRORE");
