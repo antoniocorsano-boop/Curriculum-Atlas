@@ -43,6 +43,23 @@ Il progetto geometrico non si ricava scegliendo una libreria di asset né copian
 
 L'esperimento AI-G0 e la calibrazione della telecamera possono svolgersi in parallelo. Il modello definitivo di Atlas deve comunque essere una geometria coerente, modificabile e fedele, verificata con HERO/SIDE/MOBILE; non una superficie 2,5D o un panorama.
 
+## 2-ter. Provenienza generativa e intenzione progettuale (verifica storica del 20/11/2026)
+
+**Premessa confermata dall'ideatore:** il fotogramma ART-DIR-02 fu generato da ChatGPT. La generazione di un'immagine non presuppone che sia stato creato e conservato un modello 3D, una pianta, una telecamera reale o un file Blender recuperabile.
+
+**Recupero effettivo eseguito:** dalla cronologia personale e dalla documentazione del progetto risultano conservati l'orientamento artistico di Atlas, i vincoli della rotonda, del lucernario, dei quattro portali, del basamento e della luce. In `ART-DIR-02` le caratteristiche visibili e gli obiettivi artistici sono descritti in dettaglio. **Non è stato recuperato il testo esatto dell'istruzione di generazione dell'immagine canonica, né parametri strutturali originali del generatore.** Non attribuire misure, focale, quote o topologia a quel prompt come se fossero dati storici certi.
+
+**Attenzione alle varianti:** nella cronologia compaiono anche riferimenti a versioni della biblioteca Atlas con tre portali (Curricolo/Esperienze/Studio Atlas); sono differenti dal riferimento corrente a **quattro portali** (Curricolo/Esplora/Percorsi/Esperienze). Non usarle per alterare l'immagine ART-DIR-02.
+
+**Uso operativo delle informazioni recuperate:**
+1. Redigere una **scheda di intenzione progettuale recuperata** dai testi e dalle scelte storiche (architettura, atmosfera, composizione, portali), identificando la fonte di ogni decisione.
+2. Estrarre dall'immagine canonica i **dati osservabili**: silhouette, punti prospettici plausibili, rapporti, allineamenti, colori e disegno delle superfici.
+3. Conservare separatamente le **ipotesi introdotte ora**: scala reale, geometrie non visibili, profondità, valori numerici della camera e modulo architettonico.
+4. Qualora in seguito venga recuperato il prompt esatto, aggiungerlo con la relativa provenienza e riconciliare le differenze; **non bloccare nel frattempo** la ricostruzione geometrica verificabile.
+5. Non assumere che il prompt, anche recuperato, possa sostituire una ricostruzione 3D o garantire geometrie fisicamente coerenti.
+
+**Principio:** usare la memoria della progettazione generativa come **brief architettonico**, l'immagine approvata come **vincolo visivo** e il confronto Blender HERO/SIDE/MOBILE come **prova di geometria**. Nessuna generazione aggiuntiva sostituisce il riferimento approvato.
+
 ## 3. Catena di inferenza, senza false certezze
 
 ### IG0 — Ricognizione visiva e tavola di riferimento
