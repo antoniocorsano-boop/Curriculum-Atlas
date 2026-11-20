@@ -5,6 +5,7 @@
 **Data:** 20 novembre 2026.  
 **Direzione artistica vincolante:** [ART-DIR-02](./ATLAS-GATEWAY-ART-DIRECTION-02.md).  
 **Piano esecutivo:** [ART-PROD-01](./ATLAS-GATEWAY-PRODUCTION-WORKFLOW-01.md).  
+**Decisione produttiva per risorse esterne:** [ASSET-KIT-01](./ASSET-KIT-01.md) — riuso qualificato e verificabile, vincolante per la selezione degli asset; nessuna risorsa esterna considerata approvata senza distinta e prova.  
 **Orchestrazione e verifiche:** [FLOW-02](./ATLAS-GATEWAY-CLOSED-LOOP-02.md).  
 **Infrastruttura tecnica candidata:** PR Atlas #152, in bozza; non pubblicata.
 
