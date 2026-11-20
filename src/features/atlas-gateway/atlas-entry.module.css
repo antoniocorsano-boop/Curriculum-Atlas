@@ -46,9 +46,9 @@
   z-index: 4;
   left: 0;
   top: 0;
-  width: 41%;
+  width: 44%;
   height: 13%;
-  background: linear-gradient(90deg, #081625 0%, #081625f6 57%, transparent 100%);
+  background: linear-gradient(90deg, #081625 0%, #081625f6 76%, transparent 100%);
   pointer-events: none;
 }
 .brand {
@@ -184,7 +184,15 @@
 .arrow { font-size: 1.3em; line-height: 1; }
 @media (max-width: 720px), (pointer: coarse) and (max-width: 980px) {
   .artboard { width: 100%; height: 100%; }
-  .plate { object-fit: cover; object-position: center; filter: brightness(.7); }
+  .plate { object-fit: cover; object-position: center; filter: blur(7px) brightness(.63); transform: scale(1.025); }
+  .artboard::after {
+    content: "";
+    position: absolute;
+    z-index: 2;
+    inset: 66% 0 0;
+    background: linear-gradient(180deg, transparent, #071a2bdf 23%, #07192ae8 90%);
+    pointer-events: none;
+  }
   .brandScreen {
     width: 100%; height: 14%;
     background: linear-gradient(180deg, #061426f7, #061426dd 65%, transparent);
@@ -194,9 +202,10 @@
   .wordmark { font-size: clamp(17px, 5.2vw, 24px); letter-spacing: .18em; }
   .brandDivider { margin: 0 2px; }
   .brandSubtitle { font-size: clamp(9px, 2.8vw, 13px); }
-  .podiumScreen, .podiumEmblem { display: none; }
+  .podiumScreen { display: block; left: 30%; top: 45%; width: 40%; height: 13%; }
+  .podiumEmblem { display: none; }
   .portals {
-    inset: 18% auto 19%;
+    inset: 21% auto 25%;
     left: 50%;
     transform: translateX(-50%);
     width: min(96%, 460px);
@@ -234,7 +243,7 @@
   }
 }
 @media(max-width: 360px) {
-  .portals { inset: 18% auto 23%; }
+  .portals { inset: 21% auto 28%; }
   .brandSubtitle { font-size: 9px; }
   .brandDivider { height: 1.35em; }
 }
