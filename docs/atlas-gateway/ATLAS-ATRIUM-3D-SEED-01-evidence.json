@@ -1,0 +1,199 @@
+{
+  "schema": "atlas.atrium.3d.seed-evidence/v1",
+  "artifact": "ATLAS-ATRIUM-3D-SEED-01.glb",
+  "sha256": "2800580409408efae6cc9181354a622959aee67ffb6620531f1db1e0b40b6ddf",
+  "size_bytes": 979996,
+  "status": "ACTUAL_EDITABLE_GEOMETRY_SEED_NOT_CANONICAL_IMAGE_FITTED",
+  "created_from": "ATLAS-ATRIUM-BLUEPRINT-01.json",
+  "blueprint_sha256": "b4ae8e8c0036e56fe9f897b7eda5fdda127be274f73c12503628aec3c4f6b46e",
+  "reference_sha256_expected": "7b3ffb9a355b89057acea02489020ad43d871e10b6cf5bbb29f8769ff3073336",
+  "reference_bytes_used": false,
+  "units": "R normalized; NOT confirmed meters",
+  "geometry_nodes": 308,
+  "triangles": 68796,
+  "bounds_R": [
+    [
+      -1.015,
+      -1.015,
+      -0.024
+    ],
+    [
+      1.015,
+      1.015,
+      1.3585
+    ]
+  ],
+  "portals": [
+    {
+      "id": "curricolo",
+      "name": "Curricolo",
+      "angle_from_rear_deg": -42,
+      "center_R": [
+        -0.428244,
+        0.475613,
+        0.26
+      ],
+      "tangent": [
+        0.743145,
+        0.669131
+      ],
+      "normal": [
+        -0.669131,
+        0.743145
+      ],
+      "width_R": 0.16,
+      "height_R": 0.46,
+      "thickness_R": 0.02
+    },
+    {
+      "id": "esplora",
+      "name": "Esplora",
+      "angle_from_rear_deg": -14,
+      "center_R": [
+        -0.15483,
+        0.620989,
+        0.26
+      ],
+      "tangent": [
+        0.970296,
+        0.241922
+      ],
+      "normal": [
+        -0.241922,
+        0.970296
+      ],
+      "width_R": 0.16,
+      "height_R": 0.46,
+      "thickness_R": 0.02
+    },
+    {
+      "id": "percorsi",
+      "name": "Percorsi",
+      "angle_from_rear_deg": 14,
+      "center_R": [
+        0.15483,
+        0.620989,
+        0.26
+      ],
+      "tangent": [
+        0.970296,
+        -0.241922
+      ],
+      "normal": [
+        0.241922,
+        0.970296
+      ],
+      "width_R": 0.16,
+      "height_R": 0.46,
+      "thickness_R": 0.02
+    },
+    {
+      "id": "esperienze",
+      "name": "Esperienze",
+      "angle_from_rear_deg": 42,
+      "center_R": [
+        0.428244,
+        0.475613,
+        0.26
+      ],
+      "tangent": [
+        0.743145,
+        -0.669131
+      ],
+      "normal": [
+        0.669131,
+        0.743145
+      ],
+      "width_R": 0.16,
+      "height_R": 0.46,
+      "thickness_R": 0.02
+    }
+  ],
+  "cameras_R": {
+    "CAM_HERO": {
+      "position": [
+        0,
+        -1.9,
+        0.25
+      ],
+      "target": [
+        0,
+        0,
+        0.61
+      ],
+      "horizontal_fov_deg": 70,
+      "ratio": [
+        16,
+        9
+      ],
+      "purpose": "frontal cinematic reference-fit camera; preliminary only"
+    },
+    "CAM_SIDE": {
+      "position": [
+        1.65,
+        -1.55,
+        0.62
+      ],
+      "target": [
+        0,
+        0,
+        0.55
+      ],
+      "horizontal_fov_deg": 70,
+      "ratio": [
+        16,
+        9
+      ],
+      "purpose": "side parallax and true geometry test"
+    },
+    "CAM_MOBILE": {
+      "position": [
+        0,
+        -1.85,
+        0.29
+      ],
+      "target": [
+        0,
+        0,
+        0.65
+      ],
+      "horizontal_fov_deg": 76,
+      "ratio": [
+        9,
+        16
+      ],
+      "purpose": "separate mobile vertical composition; pending actual crop validation"
+    }
+  },
+  "materials": "vertex colors conceptual; Blender must develop Cycles PBR materials",
+  "methods_not_executed": [
+    "Blender import and .blend save",
+    "Cycles photographic HERO/SIDE/MOBILE",
+    "ART-DIR-02 image fitting",
+    "Android WebGL profiling"
+  ],
+  "structural_checks": {
+    "has_four_separate_portal_glazing_meshes": true,
+    "has_full_roof_hole": true,
+    "real_3d_meshes": true,
+    "three_cameras_in_companion_json": true
+  },
+  "caution": "GLB is a geometric candidate, not a cinematic master or a visual match to the canonical reference.",
+  "roundtrip": {
+    "geometry_nodes": 308,
+    "triangles": 68796,
+    "bounds_R": [
+      [
+        -1.015,
+        -1.015,
+        -0.024
+      ],
+      [
+        1.015,
+        1.015,
+        1.3585
+      ]
+    ],
+    "valid": true
+  }
+}
