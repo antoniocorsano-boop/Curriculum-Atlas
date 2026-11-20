@@ -1,6 +1,6 @@
 "use strict";
 const $=id=>document.getElementById(id);
-const scene=$("scene"),status=$("status"),toggle=$("toggle");
+const scene=$("scene"),status=$("status"),toggle=$("toggle"),viewer=$("viewer"),expand=$("expand");
 const routes=Object.freeze({curricolo:"/curricolo/",esperienze:"/esperienze/"});
 const ids=["shell","scenography","cupola","portals","bays","stars","sky","ambient"];
 const assetLabels={shell:"struttura",scenography:"allestimenti",cupola:"cupola",portals:"portali",bays:"scaffalature",stars:"luci",sky:"cielo",ambient:"illuminazione"};
@@ -8,10 +8,16 @@ const megabytes=n=>(n/1000000).toLocaleString("it-IT",{maximumFractionDigits:1})
 function adaptMobileScene(original){
   // The original scene is SHA-256 verified before these display-only edits.
   const wait='},45000);',stage='nativePhase="decode:"+id;',
-    sequence='for(const id of ["shell","scenography","cupola","portals","bays","stars"]){await loadModel(id);assertActive();}';
+    sequence='for(const id of ["shell","scenography","cupola","portals","bays","stars"]){await loadModel(id);assertActive();}',
+    raster='const scale=Math.min(1,Math.sqrt(NATIVE_MAX_RASTER_PIXELS/(w*h)));';
+  if(original.split(raster).length!==2)throw Error("SCENA_RISOLUZIONE_NON_COMPATIBILE");
   if(original.split(wait).length!==2||original.split(stage).length!==2||original.split(sequence).length!==2)
     throw Error("STRUTTURA_SCENA_INCOMPATIBILE");
-  return original.replace(wait,'},120000);')
+  // 1.35 physical pixels per CSS pixel sharpens portal signs on
+  // high-DPI phones; the original hard cap of 1,048,576 remains intact.
+  return original.replace(raster,
+      'const scale=Math.min(Math.min(1.35,devicePixelRatio||1),Math.sqrt(NATIVE_MAX_RASTER_PIXELS/(w*h)));')
+    .replace(wait,'},120000);')
     .replace(stage,stage+'send("atlas-3d-phase",{step:"decode",id});')
     // The early 3D preview sets display:grid inline. Hidden alone does not
     // override it: reset only the display declaration on final readiness.
@@ -89,8 +95,20 @@ function phoneControls(original){
     .replace(nav,'<details id="atlas-controls-panel"><summary>Comandi 3D</summary>'+nav)
     .replace("</nav><script>","</nav></details><script>");
 }
+function setExpanded(value){
+  const on=Boolean(value);
+  viewer.classList.toggle("expanded",on);
+  document.body.classList.toggle("viewer-expanded",on);
+  expand.textContent=on?"Riduci":"Espandi";
+  expand.setAttribute("aria-pressed",String(on));
+  expand.setAttribute("aria-label",on?"Riduci la biblioteca tridimensionale":"Espandi la biblioteca tridimensionale");
+}
+expand.addEventListener("click",()=>setExpanded(!viewer.classList.contains("expanded")));
+window.addEventListener("keydown",event=>{
+  if(event.key==="Escape"&&viewer.classList.contains("expanded")){setExpanded(false);expand.focus();}
+});
 function stop(){
-  if(closing)return;closing=true;ready=false;active=false;
+  if(closing)return;setExpanded(false);closing=true;ready=false;active=false;
   window.clearTimeout(timeout);controller?.abort();controller=null;
   if(frame)frame.remove();frame=null;channel=null;
 }
