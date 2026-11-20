@@ -72,7 +72,7 @@ jobs:
           tar -xOf "$p/loader/three-0.128.0.tgz" package/examples/js/loaders/GLTFLoader.js > "$p/loader-r128.js"
           node -e 'const fs=require("fs"),crypto=require("crypto");const b=fs.readFileSync(process.argv[1]);const x=crypto.createHash("sha1").update(Buffer.concat([Buffer.from("blob "+b.length+"\0"),b])).digest("hex");if(x!=="cfa518ede1b0893f1da14347d78fcd19355f3686")throw Error("GLTFLoader identity")' "$p/loader-r128.js"
       - name: Install Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm exec playwright install chromium
       - name: Export unchanged 11-object real bay
         run: |
           p="$RUNNER_TEMP/asc-bay-bridge-input"
