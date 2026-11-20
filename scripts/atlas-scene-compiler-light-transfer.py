@@ -102,6 +102,7 @@ def render(name):
 def uv_check(mesh,uv):
     mesh.calc_loop_triangles()
     coords=np.array([tuple(x.uv) for x in uv.data],dtype=np.float64)
+    report["bake"]["uvDiagnostic"]={"min":float(coords.min()),"max":float(coords.max()),"activeIndex":mesh.uv_layers.active_index,"layers":[v.name for v in mesh.uv_layers]};persist()
     require(np.isfinite(coords).all() and coords.min()>=-1e-6 and coords.max()<=1.000001,"UV2 out of range")
     size=256;mask=np.zeros((size,size),np.uint16)
     for t in mesh.loop_triangles:
@@ -151,12 +152,13 @@ try:
     baseline=render("context-original")
     clone=source.copy();clone.name="ASC-P2C probe UV2 "+source.name;o.data=clone
     require(len(clone.uv_layers)>=1,"no UV0")
-    uv0=clone.uv_layers[0].name;atlas=clone.uv_layers.new(name="AtlasLightmap",do_init=False)
+    uv0=clone.uv_layers[0].name;atlas=clone.uv_layers.new(name="AtlasLightmap",do_init=True)
     clone.uv_layers.active_index=len(clone.uv_layers)-1
     bpy.ops.object.select_all(action="DESELECT");o.select_set(True);bpy.context.view_layer.objects.active=o
-    bpy.ops.object.mode_set(mode="EDIT");bpy.ops.mesh.select_all(action="SELECT")
+    bpy.ops.object.mode_set(mode="EDIT");clone.uv_layers.active_index=len(clone.uv_layers)-1;bpy.ops.mesh.select_all(action="SELECT")
     bpy.ops.uv.smart_project(angle_limit=math.radians(66),island_margin=.012)
     bpy.ops.object.mode_set(mode="OBJECT")
+    atlas=clone.uv_layers["AtlasLightmap"]
     require(clone.uv_layers[0].name==uv0 and clone.uv_layers[-1].name=="AtlasLightmap","UV layer drift")
     report["bake"]["uv"]=uv_check(clone,atlas)
     clone.uv_layers.active_index=0;clone.uv_layers[0].active_render=True
