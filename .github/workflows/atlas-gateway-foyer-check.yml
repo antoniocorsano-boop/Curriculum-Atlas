@@ -1,0 +1,39 @@
+name: Atlas Gateway 3D — verifica primo atrio
+on:
+  push:
+    branches: [work/atlas-gateway-01-foyer]
+    paths:
+      - "scripts/atlas-gateway-foyer/**"
+      - "scripts/build-atlas-gateway-foyer.mjs"
+      - "scripts/test-atlas-gateway-foyer.mjs"
+      - ".github/workflows/atlas-gateway-foyer-check.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  foyer-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check scripts/atlas-gateway-foyer/foyer.mjs
+          node --check scripts/atlas-gateway-foyer/portal-contract.mjs
+          node --check scripts/build-atlas-gateway-foyer.mjs
+          node --check scripts/test-atlas-gateway-foyer.mjs
+      - name: Test gateway contracts
+        run: node scripts/test-atlas-gateway-foyer.mjs
+      - name: Build self-contained foyer sample without deployment
+        env:
+          ATLAS_GATEWAY_FOYER_PREVIEW: 'true'
+        run: |
+          mkdir -p out/curricolo out/esplora out/percorsi out/esperienze
+          for route in curricolo esplora percorsi esperienze; do printf '%s\n' '<!doctype html><html lang="it"><title>Route sample</title></html>' > "out/$route/index.html"; done
+          node scripts/build-atlas-gateway-foyer.mjs out
+          test -f out/atrio/three.min.js
+          test -f out/atrio/preview-receipt.json
+          echo "ATLAS_FOYER_PACKAGE_PASS (no public deploy)"
