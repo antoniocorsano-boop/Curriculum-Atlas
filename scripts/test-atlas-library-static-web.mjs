@@ -35,6 +35,13 @@ try{
     await context.route("**/*",r=>new URL(r.request().url()).origin===origin?r.continue():(
       report.externalRequests.push(r.request().url()),r.abort()));
     const page=await context.newPage();
+    await page.addInitScript(()=>{
+      window.__atlasObservedPhases=[];
+      window.addEventListener("message",event=>{
+        if(event.data?.type==="atlas-3d-phase"&&typeof event.data.id==="string")
+          window.__atlasObservedPhases.push(event.data.step+":"+event.data.id);
+      });
+    });
     let manifestReads=0;
     page.on("request",request=>{if(new URL(request.url()).pathname==="/biblioteca/native-manifest.json")manifestReads++;});
     page.on("pageerror",e=>report.errors.push(String(e)));
@@ -42,6 +49,13 @@ try{
     await page.goto(origin+"/biblioteca/",{waitUntil:"domcontentloaded"});
     await page.waitForFunction(()=>document.querySelector("#status")?.textContent?.startsWith("Biblioteca pronta"),null,{timeout:90000});
     assert.equal(manifestReads,1,"the signed manifest must be fetched once per scene startup");
+    if(dim.name==="phone"){
+      const phases=await page.evaluate(()=>window.__atlasObservedPhases);
+      assert(phases.includes("decode:shell"),"mobile must report the architectural decoding stage");
+      assert(phases.includes("preview:shell"),"mobile must show the shell before the full library finishes");
+      assert(phases.includes("decode:bays"),"mobile must report shelving decoding stage");
+      report.progressivePreview=phases;
+    }
     const frame=page.frameLocator("iframe");
     const result=await frame.locator("canvas").evaluate(el=>{
       const m=nativeMaterialBridge?.evidence()??[];
