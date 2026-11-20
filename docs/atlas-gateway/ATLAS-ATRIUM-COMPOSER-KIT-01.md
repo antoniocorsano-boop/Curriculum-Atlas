@@ -69,3 +69,16 @@ La prima consegna, **[ATLAS-ATRIUM-BLUEPRINT-01](./ATLAS-ATRIUM-BLUEPRINT-01.md)
 - [Procedura Blender autonoma](../../.github/workflows/atlas-atrium-seed-blender.yml): codice di esecuzione reale su GitHub Actions **salvato e letto**, ma senza evidenza acquisita del suo esito nella conversazione attuale. Nessuna affermazione di aver già generato `.blend` o render Cycles.
 
 **Decisione di proseguimento:** i prossimi interventi produttivi devono risolvere la geometria della copertura e calibrare l'inquadratura HERO sul PNG canonico. Evitare di scambiare la correzione del campo visivo per l'approvazione artistica.
+
+## Avanzamento effettivo — SEED-03, 20/11/2026
+
+**Geometria prodotta, non approvata:** [ATLAS-ATRIUM-3D-SEED-03](./ATLAS-ATRIUM-3D-SEED-03.md) con [BLUEPRINT-03](./ATLAS-ATRIUM-BLUEPRINT-03.json), [evidenze](./ATLAS-ATRIUM-3D-SEED-03-evidence.json), [generatore](../../scripts/atlas-gateway-production/generate-atrium-seed-03.py) e [importatore Blender](../../scripts/atlas-gateway-production/import-atrium-seed-03-blender.py).
+
+- **308 mesh**, **62.652 triangoli**, GLB **885.152 byte**, SHA-256 `7ac7ef7de6560ffa53f952df9634ca78037a6ba8b9e121a5d1a5b41c825f10ba`.
+- **Archivio verificato** [Drive — SEED-03](https://drive.google.com/file/d/1qmY_CtiOjOdrAxDlJXvbgibdCfxU5nSP/view), 2.508.885 byte, SHA-256 `4fefb233c93cf021a14ebd35808472c67ae22a57748920292f3295560bee7c17`.
+- Il confronto con SEED-02 è stato eseguito con la **stessa camera HERO**: la fascia geometrica anteriore che occultava il lucernario è stata eliminata creando un vero ingresso frontale aperto.
+- La modifica introduce una rotonda **non chiusa a 360°** verso l'ingresso: scelta ipotetica da validare sulla foto definitiva e sulle altre viste.
+- Immagini reali **VTK da GLB**, non render Blender. [Workflow Blender SEED-03](../../.github/workflows/atlas-atrium-seed-03-blender.yml) salvato ma **nessuna esecuzione ancora verificata**.
+- **Blocco persistente:** il PNG canonico a quattro portali (SHA `7b3ffb9a355b89057acea02489020ad43d871e10b6cf5bbb29f8769ff3073336`) è stato inviato in altra chat, ma i byte non sono ancora accessibili al ciclo di confronto; non inventare calibrazione, fedeltà fotografica o approvazione.
+
+**Prossima soglia di avanzamento:** `.blend` e tre render reali da Blender verificati; acquisizione dei byte canonici e correzione delle geometrie su ART-DIR-02. Nessun merge/deploy.
