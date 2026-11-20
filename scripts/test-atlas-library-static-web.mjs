@@ -78,11 +78,17 @@ try{
       report.results.push({device:"phone-first-screen",layout});
     }
     if(dim.name==="phone"){
+      const nativeStatus=await frame.locator("#native-status").evaluate(el=>({hidden:el.hidden,display:getComputedStyle(el).display}));
+      assert.equal(nativeStatus.hidden,true,"ready scene must hide the temporary loading overlay");
+      assert.equal(nativeStatus.display,"none","no loading overlay may remain visible after 3D ready");
       const panel=frame.locator("#atlas-controls-panel");
       assert.equal(await panel.count(),1,"mobile camera panel must exist");
       assert.equal(await panel.evaluate(el=>el.open),false,"mobile camera panel must initially be collapsed");
       await panel.locator("summary").click();
       assert.equal(await panel.evaluate(el=>el.open),true,"mobile camera controls must open");
+      const menuHeight=await frame.locator("#native-controls").evaluate(el=>el.getBoundingClientRect().height);
+      assert(menuHeight>=88&&menuHeight<=140,"mobile camera controls must fit in two compact rows");
+      report.mobileMenuHeightPx=menuHeight;
       await frame.locator('#native-controls button[data-action="left"]').click();
       await frame.locator('#native-controls button[data-action="reset"]').click();
       assert.equal(await frame.locator("canvas").evaluate(()=>ready&&!closing),true,"camera controls must preserve the live scene");
