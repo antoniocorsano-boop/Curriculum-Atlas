@@ -122,6 +122,11 @@
       "path": "docs/atlas-gateway/ATLAS-GATEWAY-CLOSED-LOOP-02.md",
       "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
       "reason": "Canonical immutable GitHub repository URL is a technical locator, not curricolo-domain vocabulary; the product prose keeps the canonical term."
+    },
+    {
+      "path": "docs/atlas-gateway/MASTER-BLENDER-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "reason": "GitHub repository URL is an immutable technical locator; product-facing text uses canonical curricolo vocabulary."
     }
   ]
 }
