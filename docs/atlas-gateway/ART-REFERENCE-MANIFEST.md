@@ -35,3 +35,25 @@ Il master sarà confrontato con il **PNG canonico** e non con una ricostruzione 
 
 ---
 **Nessun modello tridimensionale né alcuna sua approvazione è implicato dal presente registro.**
+
+
+## Archivio persistente delle fonti della conversazione — 20 novembre 2026
+
+**Archivio Drive del progetto:** [Cartella Curriculum Atlas](https://drive.google.com/drive/folders/11tt7SPHgQSDAp8p-s6Iflg56fdYkH1ti). Due file ricevuti nella conversazione corrente sono stati trasferiti tramite riferimento ai byte dell'allegato originale e verificati mediante rilettura dei metadati sul Drive.
+
+| Oggetto | File Drive verificato | Formato, dimensioni, SHA-256 della copia ricevuta | Ruolo |
+|---|---|---|---|
+| Screenshot della prima immagine ARENA, 5 pannelli | [ARENA storico](https://drive.google.com/file/d/1zgktMO7gy8kyq7goShilSFSUR__TEcd9/view) | PNG, 1536×864, 214093 B, `1a5a75b661bc47c21655465e78cdb052027ef858a8c7b73390431f1ccda78bc8` | **ARCHIVIATO**, documento storico; non corrisponde al PNG originale salvato sul telefono |
+| Dettagli Android del file ARENA | [Metadati ARENA](https://drive.google.com/file/d/1azZRSAFXh1_Qx1eVQPQotvetjPUQ8gL_/view) | JPEG, 691×1536, 36494 B, `240b1bff4cff6c142da0b85d662cf4aaed1d226fc25c2873d2a1ab9ef0b09c6c` | **ARCHIVIATO**, prova che il file ARENA originario fu salvato il 16/11/2026 alle 06:25 ora locale |
+| ART-DIR-02 definitivo, 4 portali | **NON ANCORA PRESENTE NEL DRIVE**, origine da conversazione del 20/11 | PNG, 1672×941, 2288614 B, SHA-256 canonico `7b3ffb9a355b89057acea02489020ad43d871e10b6cf5bbb29f8769ff3073336` | **DA ACQUISIRE**, unica sorgente ammessa per il compositore finale |
+| Pacchetto delle sorgenti ART-DIR-02 | **NON DISPONIBILE IN QUESTA SESSIONE** | `atlas_art_dir_02_reference_kit_2026-11-20.zip`, creato nella conversazione precedente | Da recuperare dalla stessa conversazione e caricare integralmente nel deposito autorizzato |
+
+**Ricerca eseguita:** verifica dei file della sessione, ricerca Library e Drive con i nomi dell'originale e del pacchetto. L'originale non è stato trovato in forma scaricabile nell'attuale sessione. La precedente conversazione aveva prodotto la copia all'indirizzo locale `sandbox:/mnt/data/atrio_futuristico_atlas_della_conoscenza.png` e il pacchetto di sorgenti; un percorso locale di un'altra conversazione non rende automaticamente i byte accessibili qui.
+
+**Procedura di acquisizione finale senza rigenerazione:**
+1. Aprire la conversazione del 20/11 in cui il PNG originale e il file ZIP sono stati prodotti. In quel contesto chiedere il **trasferimento diretto degli allegati in Google Drive / Curriculum Atlas**, preservando i byte, senza ricompressione, ritaglio, conversione o generazione.
+2. Verificare sul file appena archiviato formato PNG, dimensioni 1672×941, lunghezza 2288614 B e soprattutto SHA-256 esatta `7b3ffb9a355b89057acea02489020ad43d871e10b6cf5bbb29f8769ff3073336`. Se non coincide, conservare come variante e **non** impostare `P0-REF=PASS`.
+3. Registrare qui ID e URL permanente restituiti dal Drive, più impronta e identificativo della versione, quindi fornire i byte a `visual-factory/atlas-gateway/reference/atlas-hero-approved.png` nell'archivio produttivo GitHub/CI appropriato. Controllare nuovamente la SHA in preflight.
+4. Il riferimento a 4 portali va trattato separatamente da ARENA (5) e AG04 (3). I file storici non devono mai essere caricati al posto del riferimento canonico.
+
+**Esito reale al 20/11:** due fonti storiche ARCHIVIATE E RILETTE; PNG canonico 4 portali **NON ANCORA ARCHIVIATO**; P0-REF resta aperto.
