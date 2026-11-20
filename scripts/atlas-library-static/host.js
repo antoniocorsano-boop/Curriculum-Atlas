@@ -172,6 +172,8 @@ async function start(){
     let source=html.replace("__ATLAS_PARENT_ORIGIN_JSON__",JSON.stringify(location.origin))
                    .replace("__ATLAS_CHANNEL_JSON__",JSON.stringify(channel));
     if(window.innerWidth<=650)source=adaptMobileScene(phoneControls(source));
+    if(typeof window.atlasLightingBridge!=="function")throw Error("MODULO_LUCI_MANCANTE");
+    source=window.atlasLightingBridge(source);
     function handle(event){
       if(closing||event.source!==frame?.contentWindow||event.origin!=="null"||!event.data||event.data.channel!==channel)return;
       const data=event.data;
