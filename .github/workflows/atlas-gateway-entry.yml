@@ -4,6 +4,7 @@ on:
     branches: [work/atlas-library-web-delivery]
     paths:
       - "src/app/page.tsx"
+      - "next.config.ts"
       - "src/features/atlas-gateway/atlas-entry.tsx"
       - "src/features/atlas-gateway/atlas-entry.module.css"
       - "public/atlas-gateway-entry/**"
