@@ -179,12 +179,11 @@ try{
         "diagnostic must recognize real pointer gestures");
       assert(Number.isInteger(localData.intervalli_in_movimento)&&localData.intervalli_in_movimento>=0,
         "active motion interval count must be valid even if the renderer misses events");
-      if(localData.intervalli_in_movimento<3){
-        assert.equal(localData.intervallo_movimento_p95_ms,
-          localData.intervalli_in_movimento===0?null:localData.intervallo_movimento_p95_ms,
-          "diagnostic must not invent absent render samples");
-      }else assert(localData.intervallo_movimento_p95_ms!==null,
-          "diagnostic must calculate percentile from multiple motion frames");
+      if(localData.intervalli_in_movimento===0){
+        assert.equal(localData.intervallo_movimento_p95_ms,null,
+          "diagnostic must not invent a percentile with no active render intervals");
+      }else assert(Number.isFinite(localData.intervallo_movimento_p95_ms)&&localData.intervallo_movimento_p95_ms>0,
+          "diagnostic must calculate a finite percentile from available active frames");
       assert(localData.durata_movimento_rilevata_ms>=300,"diagnostic must measure active movement duration");
       assert.equal(localData.misurazione_tempo_gpu,"non disponibile","CPU submissions must not be mistaken for GPU FPS");
       assert.equal(localData.contenuto_personale,"nessuno");
