@@ -60,7 +60,7 @@ const hex=bytes=>Array.from(new Uint8Array(bytes),v=>v.toString(16).padStart(2,"
 async function hash(bytes){return hex(await crypto.subtle.digest("SHA-256",bytes));}
 // A cellular browser can fail a transfer even when the page and files
 // are healthy. Retry transient reads without relaxing SHA-256 verification.
-async function readFile(url,signal,onProgress,expectedBytes){
+async function readFile(url,signal,onProgress,expectedBytes,compressed=false){
   const immutable=url.startsWith("/atlas-gateway-native/");
   for(let attempt=0;attempt<3;attempt++){
     try{
@@ -70,7 +70,10 @@ async function readFile(url,signal,onProgress,expectedBytes){
       if(!response.ok||response.type==="opaque"||!response.body)throw Error("HTTP_"+response.status);
       if(!onProgress)return new Uint8Array(await response.arrayBuffer());
       if(!Number.isSafeInteger(expectedBytes)||expectedBytes<1||expectedBytes>40000000)throw Error("DIMENSIONE_NON_VALIDA");
-      const data=new Uint8Array(expectedBytes),reader=response.body.getReader();
+      const decoded=compressed&&response.headers.get("content-encoding")!=="gzip"
+        ?response.body.pipeThrough(new DecompressionStream("gzip"))
+        :response.body;
+      const data=new Uint8Array(expectedBytes),reader=decoded.getReader();
       let length=0;
       try{
         for(;;){
@@ -176,6 +179,28 @@ async function start(){
          a.file!==a.id+"-"+a.sha256+"."+({sky:"png",ambient:"hdr"}[a.id]||"glb"))throw Error("Risorsa non autorizzata");
       map.set(a.id,a);
     });
+    // Original asset SHA-256 is authoritative. Gzip only reduces transport;
+    // if an older mobile browser cannot decode it, use the original files.
+    const gzipById=new Map();
+    if(typeof DecompressionStream==="function"){
+      try{
+        const transport=parseJson(await readFile("./asset-transport.json",current.signal),"transport");
+        if(transport.schema!=="atlas.library.gzip/v1"||
+           transport.sourceManifestSha256!==receipt.manifestSha256||
+           transport.assets?.length!==ids.length-1)throw Error("GZIP_MANIFEST");
+        const unique=new Set();
+        for(const item of transport.assets){
+          const original=map.get(item.id);
+          if(!original||item.id==="sky"||unique.has(item.id)||
+             item.file!==original.file+".gz"||item.originalBytes!==original.bytes||
+             !Number.isSafeInteger(item.bytes)||item.bytes<=0||item.bytes>=original.bytes||
+             !/^[0-9a-f]{64}$/.test(item.sha256))throw Error("GZIP_IDENTITY");
+          unique.add(item.id);gzipById.set(item.id,item);
+        }
+      }catch(error){
+        gzipById.clear();console.warn("ATLAS_GZIP_FALLBACK",error?.message??String(error));
+      }
+    }
     if(closing||current!==controller)return;
     const html=new TextDecoder().decode(sceneBytes);
     if(html.split("__ATLAS_PARENT_ORIGIN_JSON__").length!==2||html.split("__ATLAS_CHANNEL_JSON__").length!==2)throw Error("Scena non compatibile");
@@ -202,11 +227,22 @@ async function start(){
           if(now-lastPaint<300&&received!==asset.bytes)return;
           lastPaint=now;
           const sum=[...bytesReceived.values()].reduce((n,v)=>n+v,0);
-          setStatus("Caricamento "+assetLabels[data.id]+": "+megabytes(received)+"/"+megabytes(asset.bytes)+" MB · totale "+megabytes(sum)+"/"+megabytes(allBytes)+" MB");
+          setStatus("Preparazione "+assetLabels[data.id]+": "+megabytes(received)+"/"+megabytes(asset.bytes)+" MB · risorse elaborate "+megabytes(sum)+"/"+megabytes(allBytes)+" MB");
         };
         progress(0);
         void (async()=>{
-          const bytes=await readFile("/atlas-gateway-native/"+asset.file,current.signal,progress,asset.bytes);
+          let bytes;
+          const compressed=gzipById.get(asset.id);
+          if(compressed){
+            try{
+              bytes=await readFile("/atlas-gateway-gzip/"+compressed.file,current.signal,progress,asset.bytes,true);
+            }catch(error){
+              if(current.signal.aborted)throw error;
+              console.warn("ATLAS_GZIP_RESOURCE_FALLBACK",asset.id);
+              bytesReceived.set(asset.id,0);
+            }
+          }
+          if(!bytes)bytes=await readFile("/atlas-gateway-native/"+asset.file,current.signal,progress,asset.bytes);
           if(bytes.byteLength!==asset.bytes||await hash(bytes)!==asset.sha256)throw Error("Risorsa non integra: "+data.id);
           if(closing||controller!==current||frame?.contentWindow!==target)return;
           const transferred=bytes.buffer;
