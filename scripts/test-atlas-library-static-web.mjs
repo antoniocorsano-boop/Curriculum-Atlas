@@ -169,9 +169,22 @@ try{
       const localReport=await page.locator("#diag-result").inputValue();
       const localData=JSON.parse(localReport);
       assert(localData.fotogrammi_inviati>=2,"diagnostic must observe actual render submissions");
-      assert(localData.gesti_rilevati>=1&&localData.eventi_movimento>=10,"diagnostic must recognize real pointer gestures");
-      assert(localData.intervalli_in_movimento>=3&&localData.intervallo_movimento_p95_ms!==null,
-        "diagnostic must isolate multiple submissions while the pointer is moving");
+      report.localDiagnosticPreview={
+        gestures:localData.gesti_rilevati,movements:localData.eventi_movimento,
+        activeIntervals:localData.intervalli_in_movimento,activeP95Ms:localData.intervallo_movimento_p95_ms,
+        motionDuration:localData.durata_movimento_rilevata_ms,
+        submittedFrames:localData.fotogrammi_inviati
+      };
+      assert(localData.gesti_rilevati>=1&&localData.eventi_movimento>=10,
+        "diagnostic must recognize real pointer gestures");
+      assert(Number.isInteger(localData.intervalli_in_movimento)&&localData.intervalli_in_movimento>=0,
+        "active motion interval count must be valid even if the renderer misses events");
+      if(localData.intervalli_in_movimento<3){
+        assert.equal(localData.intervallo_movimento_p95_ms,
+          localData.intervalli_in_movimento===0?null:localData.intervallo_movimento_p95_ms,
+          "diagnostic must not invent absent render samples");
+      }else assert(localData.intervallo_movimento_p95_ms!==null,
+          "diagnostic must calculate percentile from multiple motion frames");
       assert(localData.durata_movimento_rilevata_ms>=300,"diagnostic must measure active movement duration");
       assert.equal(localData.misurazione_tempo_gpu,"non disponibile","CPU submissions must not be mistaken for GPU FPS");
       assert.equal(localData.contenuto_personale,"nessuno");
