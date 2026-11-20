@@ -244,8 +244,8 @@
 }
 
 /* Root-scoped reset: Atlas content pages keep their existing global layout. */
-:global(html:has(#atlas-entry-root)),
-:global(body:has(#atlas-entry-root)) {
+:global(html):has(.entry),
+:global(body):has(.entry) {
   margin: 0;
   padding: 0 !important;
   overflow: hidden;
