@@ -205,7 +205,7 @@ try:
     o.select_set(True);bpy.ops.object.select_all(action="DESELECT");o.select_set(True);bpy.context.view_layer.objects.active=o
     result=bpy.ops.export_scene.gltf(filepath=str(out/"single-surface-baked.glb"),export_format="GLB",
                                       use_selection=True,export_texcoords=True,export_materials="EXPORT",
-                                      export_image_format="PNG",export_apply=False,export_lights=False)
+                                      export_image_format="AUTO",export_apply=False,export_lights=False)
     require("FINISHED" in result,"GLB export")
     report["export"]=validate_glb(out/"single-surface-baked.glb")
     restore();s.camera=original_cam;protect()
