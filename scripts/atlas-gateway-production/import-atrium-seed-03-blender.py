@@ -158,7 +158,15 @@ def main():
     scene.camera=cams['CAM_HERO']
     scene.render.engine='CYCLES'
     scene.cycles.samples=a.samples
-    if hasattr(scene.cycles,'use_denoising'):scene.cycles.use_denoising=True
+    # Ubuntu's Blender 4.0.2 is built without OpenImageDenoiser.
+    # Denoising is optional for diagnostic Cycles renders and must not
+    # prevent production or verification of the actual .blend.
+    if hasattr(scene.cycles,'use_denoising'):
+        scene.cycles.use_denoising=False
+    for vl in scene.view_layers:
+        cycles_layer=getattr(vl,'cycles',None)
+        if cycles_layer is not None and hasattr(cycles_layer,'use_denoising'):
+            cycles_layer.use_denoising=False
     scene.render.image_settings.file_format='PNG'
     scene.render.film_transparent=False
     # Seed lighting; artist must replace with final physically validated lights.
