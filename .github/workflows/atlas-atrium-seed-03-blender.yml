@@ -83,18 +83,16 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends blender
           blender --version | head -3
-      - name: Give Blender its own compatible NumPy and test the actual interpreter
+      - name: Install NumPy for Blender's actual Ubuntu Python 3.12 interpreter
         run: |
-          # Ubuntu's Blender has its own Python environment; dependencies
-          # installed by actions/setup-python do not automatically reach it.
-          python -m pip install --no-deps --disable-pip-version-check \
-            --target "$RUNNER_TEMP/atlas-blender-py" "numpy==1.26.4"
-          PYTHONPATH="$RUNNER_TEMP/atlas-blender-py" blender --background \
-            --python-use-system-env --python-exit-code 1 \
-            --python-expr "import sys,numpy; print('BLENDER PYTHON',sys.version); print('BLENDER NUMPY',numpy.__version__)"
+          # Ubuntu 24.04 Blender 4.0.2 executes /usr/bin/python3.12.
+          # Use distro NumPy built for THAT interpreter, not setup-python 3.11 wheels.
+          sudo apt-get install -y -qq --no-install-recommends python3-numpy
+          blender --background --python-use-system-env --python-exit-code 1 \
+            --python-expr "import sys,numpy; print('BLENDER PYTHON',sys.version); print('BLENDER NUMPY',numpy.__version__); print('NUMPY FILE',numpy.__file__)"
       - name: Import actual GLB into Blender and produce .blend / three draft Cycles views
         run: |
-          PYTHONPATH="$RUNNER_TEMP/atlas-blender-py" blender --background --factory-startup --threads 2 \
+          blender --background --factory-startup --threads 2 \
             --python-use-system-env --python-exit-code 1 \
             --python scripts/atlas-gateway-production/import-atrium-seed-03-blender.py -- \
             --glb "$EVIDENCE/geometry/ATLAS-ATRIUM-3D-SEED-03.glb" \
