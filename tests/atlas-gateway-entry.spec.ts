@@ -22,6 +22,8 @@ test("Desktop: l'intera finestra è occupata dall'atrio e i portali sono navigab
     await expect(page.locator('[data-portal="' + id + '"]')).toBeVisible();
   }
   expect(await page.locator(".entry-logo-globe").count()).toBe(0);
+  // The original art already contains branding on the convex podium and the CTA.
+  await expect(page.locator('[class*="podiumScreen"], [class*="podiumEmblem"]')).toHaveCount(0);
   const photo = page.locator('img[src*="plate-prova.jpg"]');
   await expect(photo).toBeVisible();
   expect(await photo.evaluate((e) => (e as HTMLImageElement).naturalWidth)).toBeGreaterThan(1000);
@@ -53,12 +55,21 @@ test("Telefono verticale: atrio unitario 9:16 con quattro portali cliccabili sul
     const el = page.locator('[data-mobile-portal="' + id + '"]');
     await expect(el).toBeVisible();
     await expect(el).toHaveAttribute("href", href);
+    await expect(el).toHaveAttribute("aria-label", new RegExp("^" + id, "i"));
+    // Portal visuals belong to the image; the hit area has no superimposed label.
+    await expect(el).toBeEmpty();
     const box = await el.boundingBox();
     expect(box).not.toBeNull();
     expect(box!.width).toBeGreaterThanOrEqual(44);
     expect(box!.height).toBeGreaterThanOrEqual(44);
     expect(box!.x).toBeGreaterThanOrEqual(-1);
     expect(box!.x + box!.width).toBeLessThanOrEqual(391);
+    // The center of the interactive panel must resolve to the link itself.
+    const exposed = await el.evaluate((node) => {
+      const rect = node.getBoundingClientRect();
+      return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2) === node;
+    });
+    expect(exposed).toBe(true);
     yCenters.push(box!.y + box!.height / 2);
   }
   // A single architectural row; the previous layout detached portals into a 2x2 grid.
