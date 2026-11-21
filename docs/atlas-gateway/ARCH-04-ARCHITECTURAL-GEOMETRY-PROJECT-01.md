@@ -87,3 +87,38 @@ I raccordi fra gli elementi sono definiti nel [registro parametrico dei nodi ARC
 
 ## 14. Confronto tra progetto e prima costruzione completa dei nodi
 Il progetto ha generato una candidata Blender reale **ARCH-04B R2**, verificata con [otto immagini e ricevuta hash](https://drive.google.com/file/d/1aaqZFB3Etg4IFjnb1qpOnI3C7HdUx4zH/view). Dettagli, difetti residui, limiti delle viste e confronto fotografico sono nel [rapporto ARCH-04B](./ARCH-04B-CONSTRUCTION-RESULT-01.md). I nodi di appoggio al pavimento, ai parapetti e alla corona sono stati realizzati con mesh tridimensionali, ma la vista principale mostra ancora un oculo molto tagliato. L'approvazione GEO-08 **non** è stata concessa. Prima di VIS-01 occorre ARCH-04C, calibrazione compositiva congiunta.
+
+
+## 15. Correzione geometrica incrementale: pannelli vetrati emergenti dal pavimento
+
+**Non costituisce un nuovo progetto.** Questa revisione sviluppa PL-01, SE-01, SE-02, PR-01 e i nodi `N-POR-01/02/03` del presente ARCH-04, con priorità emersa dal confronto ART-DIR-02 / ARCH-04B / ART-PROOF-01B. [Analisi artistica estesa, §15](./ATLAS-ARCH-VIS-REFERENCE-ANALYSIS-01.md), [contratto geometrico con ipotesi revisionata](./ARCH-04-ARCHITECTURAL-GEOMETRY-PROJECT-01.json).
+
+**Geometria da preservare:** la disposizione su arco e le quattro identità Curricolo, Esplora, Percorsi, Esperienze; non si eliminano immagini, testi, marchio, oculo, podio, materiali, arredi, riflessi o studio luministico. Si corregge il significato fisico degli appoggi: **la lastra attraversa una feritoia reale nel pavimento**, con soglia metallica quasi a filo, luce radente e assenza di piedistallo dominante.
+
+**Errore storico documentato:** centro geometrico del vecchio arco `(0,-6.3836)` e centro del podio `(0,-2)` distano 4.3836 BU. Inoltre gli angoli precedenti `(-.29,-.11,+.11,+.29)` non sono tangenti alla circonferenza. Il generatore del master crea uno zoccolo rettangolare e la revisione ARCH-04B crea un secondo piede volumetrico: questi elementi possono produrre l'effetto di pannelli appoggiati, contrario alla nuova lettura.
+
+### 15.1 PL-01 modificata per ipotesi, senza cancellare la tavola storica
+**Centro proposto:** `C_p=(0,-2)` (centro della cupoletta nella **scena corrente**, dato di progetto e non misura certa dell'immagine). **Raggio R e due ampiezze angolari** sono variabili da ottimizzare. Per quattro angoli simmetrici `[-α_e,-α_i,+α_i,+α_e]`:
+- `x = R sin(α)`; `y = -2 + R cos(α)` (ramo retrostante, verso +Y).
+- Pannelli disposti con i **centrali più arretrati in Y**, laterali più prossimi alla camera, senza inventare altezze fisiche differenti.
+- `yaw = -α` se la faccia vetrata usa piano locale XZ e normale frontale locale −Y. La tangente ha direzione `(cos α,-sin α)`, il raggio `(sin α,cos α)`; prodotto scalare = 0.
+- Da verificare **raggio, larghezza della curva, visibilità frontale dei pannelli e confronto in pixel**. Il centro del lucernario/resto della rotonda rimane `(0,1.3)` finché un confronto non dimostra che vada cambiato; NON imporre concentricità indiscriminata a oculo e rotonda.
+
+### 15.2 SE-01 e SE-02: dettaglio del bordo emergente
+Definire un solo modulo vetrato con:
+1. Lastra verticale sottile, spessore credibile e profilo superiore stondato, **prolungata sotto quota pavimento** per apparire innestata.
+2. Feritoia reale nel rivestimento in pietra (non linea emissiva dipinta): per i primi test quattro tagli tangenziali in continuità formale con la curva; eventuale canale unico ad arco da progettare soltanto se la larghezza delle lastre e la curvatura consentono un accoppiamento geometrico corretto.
+3. Sottofondo/canaletta tecnica scura reale, fissaggio nascosto della lastra, bordini metallici sottili con lieve rilievo.
+4. Inserto luminoso sul perimetro del vetro e alla giunzione col pavimento: fonte emissiva distinta dal metallo riflettente, rimandando l'intensità definitiva a VIS-01.
+5. Icona, titolo, sottotitolo e illustrazione specifica applicati alla lastra: riprendere gli asset approvati già generati nel ciclo ART-PROOF-01B senza reintrodurre riquadri o piedistalli.
+
+**Indicazioni dimensionali iniziali:** feritoia profonda circa 0,10 BU, larghezza di apertura da calibrare intorno allo spessore effettivo del pannello, bordo emergente intorno a 0,025 BU; sono parametri candidati e non misure desunte dall'immagine.
+
+### 15.3 Controlli prima della sostituzione del modello
+- **PL-01:** verificare coincidenza del centro del nuovo arco col centro del podio, posizioni polari, simmetria delle coppie e tangenzialità.
+- **SE-01:** controllare vetro/fissaggio reale, spessore, feritoia tagliata nel pavimento e collarino minimo; niente due basi sovrapposte.
+- **PR-01/HERO:** confrontare i quattro bounding box originali, i fondi dei portali e i rapporti con podio e lucernario. Non misurare la qualità dal solo errore medio dei rettangoli.
+- **Obliqua:** dimostrare che pannelli, canali e contenuti hanno volume reale e non sono una grafica fissa.
+- **Esito:** l'ipotesi concentrica va promossa solo dopo un rendering comparativo chiaramente migliore di ART-PROOF-01B, con approvazione umana registrata. In caso contrario resta candidata testata e si ricalibra; la cronologia ARCH-04 rimane recuperabile.
+
+**Vincolo di gestione:** l'intervento appartiene alla stessa [PR Atlas #152](https://github.com/antoniocorsano-boop/Curriculum-Atlas/pull/152) e [TRAMA #354](https://github.com/antoniocorsano-boop/trama-ecosistema/issues/354). Sono bloccati integrazione in `main`, pubblicazione e promozione automatica dell'esito geometrico.
