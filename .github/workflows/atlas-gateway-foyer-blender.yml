@@ -4,6 +4,9 @@ on:
     branches: [work/atlas-library-web-delivery]
     paths:
       - "scripts/atlas-gateway-foyer/blender_master.py"
+      - "scripts/atlas-gateway-production/render_canonical_camera_candidates.py"
+      - "docs/atlas-gateway/ATLAS-CAMERA-FIT-CANONICAL-02.json"
+      - "docs/atlas-gateway/ART-REFERENCE-CANONICAL-2026-11-21.json"
       - "scripts/atlas-gateway-foyer/foyer.mjs"
       - "scripts/build-atlas-gateway-foyer.mjs"
       - "scripts/test-atlas-gateway-foyer-browser.mjs"
@@ -60,6 +63,15 @@ jobs:
           assert not any("uri" in x for x in schema.get("images",[]))
           print("ATLAS_FOYER_BLENDER_GLTF_PASS",r["meshes"],r["triangles_estimate"],len(data))
           PY
+      - name: Produce two isolated ART-DIR-02 camera diagnostics (master unchanged)
+        run: |
+          python3 -m py_compile scripts/atlas-gateway-production/render_canonical_camera_candidates.py
+          blender --background "$RUNNER_TEMP/atlas-foyer-master/atlas-foyer-master.blend" --threads 2 \
+            --python scripts/atlas-gateway-production/render_canonical_camera_candidates.py \
+            -- --fit-json docs/atlas-gateway/ATLAS-CAMERA-FIT-CANONICAL-02.json \
+            --out "$RUNNER_TEMP/atlas-foyer-master/canonical-camera-candidates"
+          test -s "$RUNNER_TEMP/atlas-foyer-master/canonical-camera-candidates/camera_only-cycles.png"
+          test -s "$RUNNER_TEMP/atlas-foyer-master/canonical-camera-candidates/camera_and_layout-cycles.png"
       - uses: pnpm/action-setup@v4
         with:
           version: 10.17.1
