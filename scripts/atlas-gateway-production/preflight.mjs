@@ -7,17 +7,43 @@ import {createHash} from "node:crypto";
 const root=resolve(process.env.GITHUB_WORKSPACE||".");
 const resolveFromRoot=p=>resolve(root,p);
 const paths={
-  reference:process.env.ATLAS_ART_REFERENCE||"visual-factory/atlas-gateway/reference/atlas-hero-approved.png",
+  reference:process.env.ATLAS_ART_REFERENCE||"visual-factory/atlas-gateway/reference/atlas-hero-approved.jpg",
   master:process.env.ATLAS_ART_MASTER_SOURCE||"visual-factory/atlas-gateway/source/atlas-foyer-master.blend",
   artdir:"docs/atlas-gateway/ATLAS-GATEWAY-ART-DIRECTION-02.md",
   plan:"docs/atlas-gateway/ATLAS-GATEWAY-PRODUCTION-WORKFLOW-01.md",
   report:process.env.ATLAS_ART_REPORT||"evidence/atlas-art-02/preflight.json"
 };
-const expected={
-  sha256:"7b3ffb9a355b89057acea02489020ad43d871e10b6cf5bbb29f8769ff3073336",
-  width:1672,height:941,
-  name:"atrio_futuristico_atlas_della_conoscenza.png"
-};
+// Single versioned source of truth: the user's explicit designation on 2026-11-21.
+// Historical PNG 1672x941 remains in provenance; it is not the active gate.
+const canonicalManifest=JSON.parse(readFileSync(resolveFromRoot(
+  "docs/atlas-gateway/ART-REFERENCE-CANONICAL-2026-11-21.json"),"utf8"));
+if(canonicalManifest.schema!=="atlas.art-dir-02.canonical-source/v2"||!canonicalManifest.active)
+  throw Error("Invalid canonical ART-DIR-02 manifest");
+const expected={...canonicalManifest.file};
+if(expected.mime_type!=="image/jpeg"||!/^([a-f0-9]{64})$/.test(expected.sha256))
+  throw Error("Canonical image identity invalid");
+
+// Parse actual JPEG dimensions without adding dependencies or decoding pixels.
+function jpegSize(buf){
+  if(buf.length<8||buf[0]!==0xff||buf[1]!==0xd8) return null;
+  let i=2;
+  while(i+4<=buf.length){
+    if(buf[i]!==0xff){i++;continue;}
+    while(i<buf.length&&buf[i]===0xff)i++;
+    const marker=buf[i++];
+    if(marker===0xd9||marker===0xda)break;
+    if(marker===0x01||(marker>=0xd0&&marker<=0xd7))continue;
+    if(i+2>buf.length)break;
+    const size=buf.readUInt16BE(i);
+    if(size<2||i+size>buf.length)break;
+    if([0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf].includes(marker)){
+      if(size<7)break;
+      return {w:buf.readUInt16BE(i+3),h:buf.readUInt16BE(i+1)};
+    }
+    i+=size;
+  }
+  return null;
+}
 const checks=[];
 const checked=(name,pass,details)=>checks.push({name,status:pass?"PASS":"BLOCKED",details});
 const hash=b=>createHash("sha256").update(b).digest("hex");
@@ -30,11 +56,13 @@ let refSha=null,masterSha=null,masterSize=0;
 if(existsSync(resolveFromRoot(paths.reference))){
   const b=readFileSync(resolveFromRoot(paths.reference));
   refSha=hash(b);
-  const png=b.length>=24&&b.toString("ascii",1,4)==="PNG";
-  const dims=png?{w:b.readUInt32BE(16),h:b.readUInt32BE(20)}:{w:null,h:null};
-  checked("reference",png&&dims.w===expected.width&&dims.h===expected.height&&refSha===expected.sha256,
-    {png,width:dims.w,height:dims.h,sha256:refSha,expected:expected.sha256});
-}else checked("reference",false,"Original ART-DIR-02 image is not archived under the expected path.");
+  const dims=jpegSize(b);
+  const valid=!!dims&&dims.w===expected.width&&dims.h===expected.height&&
+    b.length===expected.bytes&&refSha===expected.sha256;
+  checked("reference",valid,
+    {jpeg:!!dims,width:dims?.w??null,height:dims?.h??null,
+     bytes:b.length,sha256:refSha,expected:expected.sha256});
+}else checked("reference",false,"Canonical ART-DIR-02 JPEG is archived in Drive but not mounted in this CI workspace; set ATLAS_ART_REFERENCE to the downloaded verified file. File: ${canonicalManifest.drive.url}");
 if(existsSync(resolveFromRoot(paths.master))){
   const b=readFileSync(resolveFromRoot(paths.master));
   masterSha=hash(b);masterSize=b.length;
