@@ -99,6 +99,23 @@ for vertex in vault.data.vertices:
         vertex.co.y=cy+(vertex.co.y-cy)*ratio
 if not 4.30<new_sky_radius<4.55:raise RuntimeError("Oculus outside visual guardrail")
 
+# Grade the ORIGINAL packed sky texture: stronger cerulean blue without
+# new generated images, new downloads or a flat replacement billboard.
+sky_mat=sky.active_material
+if not sky_mat or not sky_mat.use_nodes:
+    raise RuntimeError("Missing packed original sky shader")
+sky_mat=sky_mat.copy();sky_mat.name="ATLAS R8 • enriched original cloud sky"
+tex=next((n for n in sky_mat.node_tree.nodes if n.bl_idname=="ShaderNodeTexImage"),None)
+emit=next((n for n in sky_mat.node_tree.nodes if n.bl_idname=="ShaderNodeEmission"),None)
+if not tex or not tex.image or not tex.image.packed_file or not emit:
+    raise RuntimeError("Missing packed original cloud map")
+hue=sky_mat.node_tree.nodes.new("ShaderNodeHueSaturation")
+hue.inputs["Saturation"].default_value=1.40
+hue.inputs["Value"].default_value=1.02
+sky_mat.node_tree.links.new(tex.outputs["Color"],hue.inputs["Color"])
+sky_mat.node_tree.links.new(hue.outputs["Color"],emit.inputs["Color"])
+apply(sky,sky_mat)
+
 # E03: the gallery bay panels are not white light boxes. The reference is
 # dark blue-black architectural glass, with sparse embedded amber warmth.
 shadow=pbr("ATLAS R8 • dark deep gallery recess",(.016,.026,.046),.035,.62)
