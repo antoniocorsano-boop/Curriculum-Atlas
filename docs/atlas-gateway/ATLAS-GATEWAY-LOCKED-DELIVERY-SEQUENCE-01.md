@@ -1,3 +1,5 @@
+> **REVISIONE DI GOVERNO APPROVATA — 21/11/2026, ART-PROOF-01.** La precedente sequenza “ARCH-04 → VIS-01 → WEB-01” rimane come riferimento storico, ma è **sospesa** per decisione espressa dell'ideatore. La procedura vigente è [ART-PROOF-01](./ATLAS-ART-PROOF-01-PROTOCOL.md): prima dimostrazione visiva con immagine canonica e prova artistica Blender a scena singola; dopo giudizio, scegliere percorso fotografico accessibile oppure 3D ottimizzato. Non avviare ARCH-04C né VIS-01 completo senza questa prova. Il prototipo HTML verificato e l'archivio sono [conservati in Drive](https://drive.google.com/file/d/11dIKw3ZgGnmAs2YO6sL6CFCjpIVhSXc9/view). **Non equivale a pubblicazione o approvazione del 3D.**
+
 # ATLAS-GATEWAY — SEQUENZA OPERATIVA VINCOLANTE 01
 ## Dalla geometria dell'atrio ART-DIR-02 alla fruizione WebGL
 **Blocco decisionale:** 21/11/2026 · **Stato:** sequenza progettuale registrata, non approvazione delle candidate Blender.
