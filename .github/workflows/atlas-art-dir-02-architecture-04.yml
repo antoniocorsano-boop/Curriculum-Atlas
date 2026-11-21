@@ -1,0 +1,102 @@
+name: "ATLAS ART-DIR-02 — candidate architettonica ARCH-04"
+# Independent 3D renders for visual approval, no publication.
+on:
+  pull_request:
+    branches: [work/atlas-library-web-delivery]
+    paths:
+      - "scripts/atlas-gateway-production/rebuild_architecture_04.py"
+      - "scripts/atlas-gateway-foyer/blender_master.py"
+      - ".github/workflows/atlas-art-dir-02-architecture-04.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: atlas-arch04-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  compare-architecture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify independent Blender reconstruction source
+        run: |
+          python3 -m py_compile scripts/atlas-gateway-foyer/blender_master.py
+          python3 -m py_compile scripts/atlas-gateway-production/rebuild_architecture_04.py
+          python3 scripts/atlas-gateway-production/validate_blender_execution_spec_01.py
+          python3 - <<'PY'
+          from pathlib import Path
+          src=Path('scripts/atlas-gateway-production/rebuild_architecture_04.py').read_text()
+          assert 'CANONICAL_SHA = "a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"' in src
+          for phrase in ('ATLAS ARCH04 • low elliptical convex canopy',
+                         'ARCH04 • genuine glass balustrade',
+                         'OCULUS ARCH04 • visible open sky',
+                         'CAM_HERO_ARCH04','CAM_SIDE_ARCH04','CAM_MOBILE_ARCH04'):
+              assert phrase in src,phrase
+          for phrase in ('CAM_MOBILE_LEFT_ARCH04','CAM_MOBILE_RIGHT_ARCH04','PORTAL_LAYOUT','roof_panels=18','PORTAL_ARC_CENTER_Y','OCULUS_SKY_Z'):
+              assert phrase in src,phrase
+          PY
+      - name: Install open-source Blender
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+          blender --version | head -2
+      - name: Produce baseline master unchanged
+        run: |
+          mkdir -p "$RUNNER_TEMP/atlas-arch04/baseline" "$RUNNER_TEMP/atlas-arch04/candidate"
+          blender --background --factory-startup --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-foyer/blender_master.py -- \
+            --out "$RUNNER_TEMP/atlas-arch04/baseline"
+      - name: Rebuild architecture and render HERO SIDE MOBILE + two MOBILE FOCUS views
+        run: |
+          blender --background "$RUNNER_TEMP/atlas-arch04/baseline/atlas-foyer-master.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/rebuild_architecture_04.py \
+            -- --out "$RUNNER_TEMP/atlas-arch04/candidate"
+      - name: Verify real independent master and non-approval
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json,os
+          p=Path(os.environ['RUNNER_TEMP'])/'atlas-arch04'
+          base=p/'baseline'/'atlas-foyer-master.blend'
+          candidate=p/'candidate'/'atlas-foyer-arch04-candidate.blend'
+          r=json.loads((p/'candidate'/'architecture-receipt.json').read_text())
+          h=lambda q:hashlib.sha256(q.read_bytes()).hexdigest()
+          assert base.is_file() and candidate.is_file()
+          assert h(base)==r['original_master_sha256']
+          assert h(candidate)==r['candidate_master_sha256']
+          assert h(base)!=h(candidate)
+          assert r['status']=='GEOMETRY_CANDIDATE_NOT_ART_APPROVED'
+          assert r['original_master_preserved'] and r['four_original_portals_preserved']
+          assert r['removed_legacy_meshes']>=12
+          assert r['architecture']['gallery_bays']==14
+          assert 6.8<r['architecture']['oculus_inner_radius']<7.0
+          assert 3.4<r['architecture']['podium_ellipse_semiaxes'][0]<3.8
+          assert not r['runtime_exported'] and not r['student_authorized'] and not r['public_release']
+          assert set(r['renders'])=={'hero','side','mobile','mobile_left','mobile_right'}
+          assert r['architecture']['roof_panels']==18
+          assert r['architecture']['mobile_focus_cameras']
+          assert r['architecture']['portal_arc_radius']>8.5
+          assert r['architecture']['oculus_sky_height']>8.4
+          layout=r['architecture']['portal_world_layout']
+          assert abs(layout['Curricolo'][1]-layout['Esperienze'][1])<1e-6
+          assert abs(layout['Esplora'][1]-layout['Percorsi'][1])<1e-6
+          for name,entry in r['renders'].items():
+              q=p/'candidate'/entry['file']
+              assert q.is_file() and q.stat().st_size>5000 and h(q)==entry['sha256']
+              assert set(entry['portal_boxes_normalized'])=={'Curricolo','Esplora','Percorsi','Esperienze'}
+              sky=entry['oculus_bbox_normalized']
+              assert len(sky)==4 and all(isinstance(v,(int,float)) and -2<v<3 for v in sky)
+              for bbox in entry['portal_boxes_normalized'].values():
+                  assert len(bbox)==4 and all(isinstance(v,(int,float)) and -2<v<3 for v in bbox)
+          print('ATLAS ARCH-04 FULL 5-VIEW GEOMETRY VERIFIED — ART NOT APPROVED')
+          PY
+      - name: Preserve baseline and independent candidate for artistic review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-arch04-candidate-${{ github.run_number }}
+          path: ${{ runner.temp }}/atlas-arch04/
+          retention-days: 30
+          if-no-files-found: error
