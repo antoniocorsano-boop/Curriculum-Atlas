@@ -7,7 +7,7 @@
 - **HERO**: 1280×720, 32 campioni, SHA-256 `fb0b02b21bf4bfd3b16c98a563738c3429bd12b99cabb9c0e39d6d41b3e44efc`.
 - **Obliqua 3D**: 1024×576, 24 campioni, SHA-256 `1e590e2cf516dbd88a61506d77b91fc4f71b1eacb0fc884dbadaa161f8b40e39`.
 - `.blend` artistico: SHA-256 `ebe34b412d4d2a28035126c440a41962e14043947e7a1ef9da7d87193dd6c1e3`. Sorgente geometrica indipendente SHA-256 `f5442cdbaa76c95173d0d49c605ff709038382b1384cd2eb1cf699907f994c03`.
-- [**Archivio ZIP in Drive, 7.382.788 byte**](https://drive.google.com/file/d/1AUkGQjGVD6OH0VUPQkhJySCBJSiRE-P4/view), digest ZIP `9b6902c9a3185ddda5be90d7393b90b4a9592031bcb75ef73c17a86d2c4650ae`; contiene il file Blender, le due immagini, il materiale sorgente, il generatore delle geometrie e le ricevute. Upload e dimensione riletti.
+- [**Archivio ZIP in Drive, 7.382.788 byte**](https://drive.google.com/file/d/1AUkGQjGVD6OH0VUPQkhJySCBJSiRE-P4/view), digest ZIP `9b6902c9a3185ddda5be90d7393b90b4a9592031bcb75ef73c17a86d2c4650ae`; contiene il file Blender artistico, le due immagini, i modelli di origine e geometria e le ricevute; i programmi generatori sono versionati separatamente nel repository GitHub. Upload e dimensione riletti.
 - [**Confronto a quattro viste in Drive, 688.460 byte**](https://drive.google.com/file/d/1Q8taZLAt-qcjQcwntue4aYmXTxh-u48Z/view), SHA-256 `948bd56e2f329ebd8c6c29e8cb27bed21d4888c6eb44b5fed863f3f640457d8c`: immagine ART-DIR-02, nuova HERO, vecchia ARCH-04B e vista obliqua. Rilettura metadati confermata.
 
 ## 2. Miglioramenti artistici realmente visibili rispetto ad ARCH-04B
