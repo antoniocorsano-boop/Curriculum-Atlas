@@ -1,0 +1,86 @@
+name: "ATLAS ART-DIR-02 — R8 regia integrata"
+on:
+  pull_request:
+    branches: [work/atlas-gateway-01-foyer]
+    paths:
+      - "scripts/atlas-gateway-production/r8_integrated_atmosphere.py"
+      - ".github/workflows/atlas-art-dir02-r8.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-r8-art-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  r8-genuine-cycles-visual-production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Qualify integrated Blender script
+        run: python3 -m py_compile scripts/atlas-gateway-production/r8_integrated_atmosphere.py
+      - name: Retrieve qualified original R7 corrected scene
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-art-dir02-r7-art-2
+          run-id: 44940701200
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/atlas-r7-qualified
+      - name: Verify R7 model integrity and ART-DIR-02 scene lineage
+        run: |
+          python3 - <<'PY'
+          import pathlib,hashlib,json,os
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])/"atlas-r7-qualified"
+          model=root/"atlas-art-dir02-r7-light-and-blue-glass.blend"
+          receipt=json.loads((root/"atlas-r7-receipt.json").read_text())
+          sha=hashlib.sha256(model.read_bytes()).hexdigest()
+          assert sha==receipt["blend_sha256"]=="4fb946a52b2c2c15e1a42643cf210e9a45c77428c3b9c63bb557d36c6f8a71dc"
+          assert receipt["source_r6abcd_sha256"]=="33768584496e16b7a545f236b6ac3a5da3231358547870f03f79815f54c0fa4d"
+          assert not receipt["human_art_approved"] and receipt["no_publication"]
+          print("QUALIFIED GENUINE R7 MASTER VERIFIED")
+          PY
+      - name: Install Blender and original glTF runtime
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Compose true R8 Blender scene and render Cycles HERO + detail
+        run: |
+          mkdir -p "$RUNNER_TEMP/atlas-r8"
+          blender -b "$RUNNER_TEMP/atlas-r7-qualified/atlas-art-dir02-r7-light-and-blue-glass.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/r8_integrated_atmosphere.py -- \
+            --out "$RUNNER_TEMP/atlas-r8"
+      - name: Inspect receipts and actual Blender and image byte hashes
+        run: |
+          python3 - <<'PY'
+          import pathlib,hashlib,json,os
+          out=pathlib.Path(os.environ["RUNNER_TEMP"])/"atlas-r8"
+          v=json.loads((out/"atlas-r8-receipt.json").read_text())
+          def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+          assert v["source_r7_sha256"]=="4fb946a52b2c2c15e1a42643cf210e9a45c77428c3b9c63bb557d36c6f8a71dc"
+          assert sha(out/"atlas-art-dir02-r8-integrated-atmosphere.blend")==v["blend_sha256"]
+          assert 4.30<v["skylight_radius_after"]<4.55 and v["skylight_radius_before"]>v["skylight_radius_after"]
+          assert len(v["four_original_oculus_mullions"])==4
+          assert v["gallery_bays_darkened"]>=25 and v["smoked_gallery_panels"]>=25
+          assert len(v["CC0_original_shelf_instances_adjusted"])==4
+          assert len(v["portal_original_geometries_adjusted"])==16
+          assert len(v["original_four_thin_metal_bases"])==4
+          assert len(v["licenced_CC0_source_collections"])==3
+          assert len(v["subtle_real_zenital_shafts"])==4
+          assert len(v["portal_roots_unchanged"])==4
+          assert v["no_merge"] and v["no_publication"] and not v["human_art_approved"]
+          assert set(v["renders"])=={"hero","gallery-portals"}
+          for rr in v["renders"].values():
+              img=out/rr["file"]
+              assert img.stat().st_size>12000 and sha(img)==rr["sha256"]
+          print("R8 TECHNICAL PASS; HUMAN ARTISTIC APPROVAL STILL REQUIRED")
+          PY
+      - name: Preserve real Blender model, Cycles images and source receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-r8-${{ github.run_number }}
+          path: ${{ runner.temp }}/atlas-r8/
+          retention-days: 30
+          if-no-files-found: warn
