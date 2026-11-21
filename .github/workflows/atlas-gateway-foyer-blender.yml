@@ -49,6 +49,9 @@ jobs:
           size=struct.unpack_from("<I",data,12)[0]
           schema=json.loads(data[20:20+size].decode("utf8"))
           assert len(schema.get("meshes",[]))>=30
+          assert r["offline_only_portal_titles"]==4
+          assert r["web_export_selected_meshes"]>=30
+          assert not any("Portale • titolo " in mesh.get("name","") for mesh in schema.get("meshes",[])), "duplicated visible portal titles in exported GLB"
           assert not any("uri" in x for x in schema.get("buffers",[]))
           assert not any("uri" in x for x in schema.get("images",[]))
           print("ATLAS_FOYER_BLENDER_GLTF_PASS",r["meshes"],r["triangles_estimate"],len(data))
