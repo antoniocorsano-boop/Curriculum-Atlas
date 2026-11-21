@@ -409,6 +409,7 @@ async function init(){
     window.addEventListener("resize",resize,{passive:true});
     canvas.addEventListener("webglcontextlost",e=>{e.preventDefault();fallback("Contesto grafico interrotto");});
     window.addEventListener("pagehide",()=>{stopped=true;cancelAnimationFrame(request);renderer?.dispose();});
+    document.body.classList.add("webgl-ready");
     resize();setStatus(artLoaded?"Atrio tridimensionale pronto · modello Blender verificato":
       artError?"Atrio tridimensionale pronto · versione geometrica di ripiego":"Atrio tridimensionale pronto · scegli una destinazione");
     console.info("ATLAS_FOYER_READY",FOYER_SCHEMA);
