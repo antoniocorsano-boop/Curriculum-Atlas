@@ -50,5 +50,25 @@
     "blender_fit": "NOT_APPROVED",
     "webgl_release": false,
     "student_use": false
+  },
+  "visual_reading": {
+    "version": "ATLAS-ART-DIR-02-VISUAL-READING-01",
+    "reading_date": "2026-11-21",
+    "github_path": "docs/atlas-gateway/ATLAS-ART-DIR-02-VISUAL-READING-01.md",
+    "archive_drive_id": "1MopbiQmx7-aoLoGwt_qylPVsSmuAAZR_",
+    "archive_url": "https://drive.google.com/file/d/1MopbiQmx7-aoLoGwt_qylPVsSmuAAZR_/view",
+    "archive_bytes": 474296,
+    "archive_sha256": "bf03940b5f16a654156bfbe2d393d1cb69e728b06de1320fa2187ceff3d887e2",
+    "interactive_drive_id": "1xi15jm8P-m_2WG_6ZFd7lF11MMja2-7q",
+    "interactive_url": "https://drive.google.com/file/d/1xi15jm8P-m_2WG_6ZFd7lF11MMja2-7q/view",
+    "inventory_objects": 26,
+    "original_jpeg_included_binary_identical": true,
+    "drive_folder_same_as_canonical": true,
+    "status": "ARCHIVED_SOURCE_READING__NOT_BLENDER_ART_APPROVAL"
+  },
+  "latest_art_decisions": {
+    "portal_base": "Single slim luminous metal plinth, no detailed slit/glass recess requirement",
+    "priority": "Finishes, interiors, foliage, gallery glass and dark cladding, smaller-looking skylight and bright sky, fewer exposed steel ribs, directional floor strips/reflections",
+    "status": "USER_APPROVED_DESIGN_INTENT_NOT_MODEL"
   }
 }
