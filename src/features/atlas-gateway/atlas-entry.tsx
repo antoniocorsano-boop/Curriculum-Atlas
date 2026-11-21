@@ -17,15 +17,6 @@ const portals = [
   { id: "esperienze", label: "Esperienze", detail: "Attività e mondi", href: "/esperienze/", image: "portal-esperienze.png" },
 ] as const;
 
-function AEmblem({ central = false }: { central?: boolean }) {
-  return (
-    <svg viewBox="0 0 64 64" fill="none" aria-hidden="true" focusable="false" className={central ? styles.largeA : styles.smallA}>
-      <path d="M9 54 31 10h2l22 44M20 39h24" stroke="currentColor" strokeWidth="4" strokeLinecap="square" strokeLinejoin="round" />
-      <path d="m32 17 6 12-6 5-6-5z" fill="currentColor" opacity=".35" />
-    </svg>
-  );
-}
-
 function onPortalMove(event: PointerEvent<HTMLAnchorElement>) {
   if (event.pointerType !== "mouse") return;
   const rect = event.currentTarget.getBoundingClientRect();
@@ -54,11 +45,15 @@ export function AtlasEntry() {
           draggable={false}
         />
         <div className={styles.brandScreen} aria-hidden="true" />
-        <div className={styles.brand} aria-label="ATLAS, mondi della conoscenza">
-          <AEmblem />
-          <span className={styles.wordmark}>ATLAS</span>
-          <span className={styles.brandDivider} aria-hidden="true" />
-          <span className={styles.brandSubtitle}>Mondi della conoscenza</span>
+        <div className={styles.brand}>
+          <img
+            src="./atlas-gateway-entry/atlas-logo-approved-01.svg"
+            alt="ATLAS"
+            className={styles.brandLogo}
+            width="1312"
+            height="286"
+            draggable={false}
+          />
         </div>
         <nav className={styles.portals} aria-label="Scegli una destinazione di Atlas">
           {portals.map((portal) => (
