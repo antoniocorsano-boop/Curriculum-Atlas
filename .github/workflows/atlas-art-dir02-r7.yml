@@ -1,0 +1,83 @@
+name: "ATLAS ART-DIR-02 — R7 prova di regia artistica"
+on:
+  pull_request:
+    branches: [work/atlas-gateway-01-foyer]
+    paths:
+      - "scripts/atlas-gateway-production/r7_art_light_proof.py"
+      - ".github/workflows/atlas-art-dir02-r7.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-r7-artdir-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  r7-real-blender-artistic-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 52
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check new scene script syntax
+        run: python3 -m py_compile scripts/atlas-gateway-production/r7_art_light_proof.py
+      - name: Obtain qualified real R6ABCD master
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-art-dir02-r6abcd-2
+          run-id: 44938236317
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/r6abcd
+      - name: Verify R6ABCD source SHA256, provenance and render
+        run: |
+          python3 - <<'PY'
+          import json,hashlib,os,pathlib
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])/"r6abcd"
+          m=root/"atlas-art-dir02-r6abcd-integrated.blend"
+          receipt=json.loads((root/"atlas-r6abcd-receipt.json").read_text())
+          h=hashlib.sha256(m.read_bytes()).hexdigest()
+          assert h==receipt["integrated_sha256"]=="33768584496e16b7a545f236b6ac3a5da3231358547870f03f79815f54c0fa4d"
+          assert receipt["no_merge"] and receipt["no_publication"] and not receipt["human_art_approved"]
+          assert len(receipt["cc0_assets"])==3 and receipt["basement_count"]==4
+          print("R6ABCD master and inherited CC0 / basements verified")
+          PY
+      - name: Install headless Blender
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Apply single R7 visual-lighting experiment and produce Cycles images
+        run: |
+          mkdir -p "$RUNNER_TEMP/atlas-r7"
+          blender -b "$RUNNER_TEMP/r6abcd/atlas-art-dir02-r6abcd-integrated.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/r7_art_light_proof.py -- \
+            --out "$RUNNER_TEMP/atlas-r7"
+      - name: Verify true model, camera, four roots, all three CC0 sources, images
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])/"atlas-r7"
+          v=json.loads((root/"atlas-r7-receipt.json").read_text())
+          def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+          assert v["source_r6abcd_sha256"]=="33768584496e16b7a545f236b6ac3a5da3231358547870f03f79815f54c0fa4d"
+          assert sha(root/"atlas-art-dir02-r7-light-and-blue-glass.blend")==v["blend_sha256"]
+          assert len(v["old_radial_panels_hidden"])==18
+          assert len(v["original_licenced_cc0_collections"])==3
+          assert len(v["original_4_r6d_bases"])==4
+          assert len(v["portal_roots_unchanged"])==4 and len(v["glass_targets"])==4
+          assert len(v["authored_volumetric_shafts"])==7
+          assert v["no_merge"] and v["no_publication"] and not v["human_art_approved"]
+          assert v["source_onyx_texture_retained"]
+          assert set(v["renders"])=={"hero","oculus-portals"}
+          for render in v["renders"].values():
+              p=root/render["file"]
+              assert p.stat().st_size>12000 and sha(p)==render["sha256"]
+          print("R7 TECHNICAL QUALIFICATION PASS — E-ARTISTIC APPROVAL SEPARATE")
+          PY
+      - name: Archive model, two genuine renders and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-r7-art-${{ github.run_number }}
+          path: ${{ runner.temp }}/atlas-r7/
+          retention-days: 30
+          if-no-files-found: warn
