@@ -184,6 +184,26 @@
           "source_model_untouched": true,
           "human_gate_pending": true
         }
+      },
+      "reassessment_result": {
+        "id": "ART-DIR-02-PORTAL-READING-R2",
+        "run": "https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/44876788900",
+        "source_sha256": "a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe",
+        "candidate_blend_sha256": "d477245479a29e39fcac5b08574f2465a3f404dda7b8d7c69fbd22c8f88badcb",
+        "result": "TECHNICAL_PASS__ARTISTIC_APPROVAL_PENDING",
+        "test": "same scene, podium centered arc R=7.30 BU, four glass panels tangent, actual Boolean floor slits, no external double plinths; 3 Blender views",
+        "visual_residuals": [
+          "outer pair still appears too oblique due to ~54.6-degree tangent",
+          "panels look small and receded from HERO compared to reference",
+          "floor-slot emergence needs readable sectional detail and lighting",
+          "top diagnostic camera now sees floor/podium/portals"
+        ],
+        "source_archive": "https://drive.google.com/file/d/1rN2O92uio8vXdAldXB5nhZmyGpLg-iXg/view",
+        "comparison": "https://drive.google.com/file/d/1Kt1NveSO73AlZg2oTtMafUjulh_FV7vH/view",
+        "report": "docs/atlas-gateway/ATLAS-ART-DIR-02-PORTAL-READING-R2-RESULT-01.md",
+        "approval": false,
+        "new_project": false,
+        "next": "Constrained joint fitting of radius/portal apparent size/camera within existing ART-PROOF-01B, keeping previous images, 3D geometry, lights, and canonical art direction"
       }
     }
   },
