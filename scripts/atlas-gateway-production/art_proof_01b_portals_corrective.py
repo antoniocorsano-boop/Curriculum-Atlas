@@ -136,7 +136,10 @@ if not hero or not oblique:raise RuntimeError("Art proof cameras absent")
 camera_data=bpy.data.cameras.new("PROOF R2 — true plan")
 top=bpy.data.objects.new("CAM_ART_PROOF_PORTALS_TOP_ORTHO",camera_data)
 bpy.context.collection.objects.link(top)
-top.location=(0,0.5,34)
+# Technical cutaway: the overhead sky/roof would obscure the portal arc at z=34.
+# Place the orthographic plan camera INSIDE the rotunda, above the portals,
+# below the oculus. This changes only the diagnostic camera, not geometry.
+top.location=(0,0.5,6.8)
 top.rotation_euler=(Vector((0,0.5,0))-top.location).to_track_quat("-Z","Y").to_euler()
 camera_data.type="ORTHO";camera_data.ortho_scale=27.0
 scene.render.engine="CYCLES"
