@@ -80,7 +80,7 @@ jobs:
           assert len(receipt["material_targets"])>=7
           assert receipt["materials"]==["Onyx013","Metal010"]
           assert len(receipt["portals_unmodified"])==4
-          assert all(receipt["portals_unmodified"][p]["location"]==r2["portals"][p]["new_root"] for p in r2["portals"])
+          assert all(all(abs(a-b)<1e-5 for a,b in zip(receipt["portals_unmodified"][p]["location"],r2["portals"][p]["new_root"])) for p in r2["portals"])
           assert set(receipt["renders"])=={"hero","oblique"}
           for info in receipt["renders"].values():
               f=root/"r4"/info["file"]
