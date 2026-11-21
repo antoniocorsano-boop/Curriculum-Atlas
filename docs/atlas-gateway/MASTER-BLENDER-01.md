@@ -250,3 +250,6 @@ L'ideatore ha stabilito il seguente ordine obbligatorio: **ARCH-04 geometria e p
 
 
 **Approfondimento dei dettagli costruttivi:** [registro dei 16 nodi ARCH-04](./ARCH-04-CONSTRUCTION-JOINTS-01.json), da utilizzare insieme a PL-01/SE-01/SE-02/PR-01. Raccordi di appoggio e incompatibilità geometriche del laboratorio devono essere risolti con mesh reali prima del passaggio a VIS-01.
+
+
+**Avanzamento ARCH-04B:** [rapporto reale di produzione e scostamenti](./ARCH-04B-CONSTRUCTION-RESULT-01.md), [8 rendering Blender](https://drive.google.com/file/d/1aaqZFB3Etg4IFjnb1qpOnI3C7HdUx4zH/view), 322 mesh, nodo geometrico d'ingresso ancora in prova. La geometria è stata effettivamente costruita in un master candidato separato, non ancora qualificata artisticamente. La priorità corrente è la calibrazione congiunta della scena ARCH-04C, non VIS-01.
