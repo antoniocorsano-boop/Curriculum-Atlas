@@ -16,8 +16,11 @@ for(const p of PORTALS){
   if(!existsSync(route))throw Error("Target route not present in export: "+p.href);
 }
 const sources=["index.html","foyer.css","foyer.mjs","portal-contract.mjs"];
+const logoFile="atlas-logo-approved-01.png";
+const logoSource=resolve("public/atlas-gateway-entry",logoFile);
 const sourceDir=resolve("scripts/atlas-gateway-foyer");
 for(const file of sources)if(!existsSync(join(sourceDir,file)))throw Error("Missing foyer source: "+file);
+if(!existsSync(logoSource))throw Error("Missing approved Atlas logo texture");
 const temp=mkdtempSync(join(tmpdir(),"atlas-foyer-r128-"));
 const sha=b=>createHash("sha256").update(b).digest("hex");
 let engine,loader,license;
@@ -38,6 +41,7 @@ try{
 }finally{rmSync(temp,{recursive:true,force:true});}
 mkdirSync(dest,{recursive:true});
 for(const file of sources)copyFileSync(join(sourceDir,file),join(dest,file));
+copyFileSync(logoSource,join(dest,logoFile));
 writeFileSync(join(dest,"three.min.js"),engine);
 writeFileSync(join(dest,"GLTFLoader.js"),loader);
 writeFileSync(join(dest,"THREE-LICENSE.txt"),license);
@@ -61,7 +65,7 @@ if(modelPath){
 }
 writeFileSync(join(dest,"visual-manifest.json"),JSON.stringify(visual,null,2)+"\n");
 const extra=visual.available?[visual.file]:[];
-const files=[...sources,"three.min.js","GLTFLoader.js","visual-manifest.json",...extra].map(file=>{
+const files=[...sources,logoFile,"three.min.js","GLTFLoader.js","visual-manifest.json",...extra].map(file=>{
   const contents=readFileSync(join(dest,file));
   return {name:file,bytes:contents.length,sha256:sha(contents)};
 });
