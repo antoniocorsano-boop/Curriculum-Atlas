@@ -182,7 +182,55 @@ def dome():
             beam("Atrio • costolone retrostante",points[j],points[j+1],.075,
                  bronze if i%4==0 else steel)
     ring("Atrio • arco frontale",11.43,5.89,bronze,.065,arc=math.pi)
-    ring("Atrio • corona lucernario",3.65,8.13,warm,.075,arc=math.pi)
+    ring("Atrio • corona lucernario",3.65,8.13,bronze,.055,arc=math.pi)
+    # A real opening looking onto a low-cost environment texture, not a dark
+    # ceiling lid or a fake luminous cone. The disk is above the architecture;
+    # 8 structural glazing ribs belong to the oculus rather than the sky.
+    sky_res=192
+    sky_img=bpy.data.images.new("OCULUS • daylight source",width=sky_res,
+                                height=sky_res,alpha=False)
+    pixels=[]
+    for j in range(sky_res):
+        v=j/(sky_res-1)
+        for i in range(sky_res):
+            u=i/(sky_res-1)
+            low=math.sin(14*u+2*math.sin(7*v))*math.sin(11*v)
+            medium=.55*math.cos(21*u-17*v)
+            fine=.20*math.sin(48*u+23*v)
+            cloud=max(0.0,min(1.0, (low+medium+fine-.2)*.8))
+            cloud=cloud*cloud*(3-2*cloud)
+            # Luminous blue sky / cloud forms are bounded and desaturated.
+            pixels.extend((.31+.57*cloud,.57+.38*cloud,
+                           .83+.15*cloud,1.0))
+    sky_img.pixels=pixels
+    sky_img.pack()
+    sky_mat=material("OCULUS • sky above real glass",0x76b2de,
+                     .0,.9,0x76b2de,.35)
+    tex=sky_mat.node_tree.nodes.new("ShaderNodeTexImage")
+    tex.image=sky_img
+    shader=sky_mat.node_tree.nodes.get("Principled BSDF")
+    sky_mat.node_tree.links.new(tex.outputs["Color"],
+                                 shader.inputs["Base Color"])
+    if "Emission Color" in shader.inputs:
+        sky_mat.node_tree.links.new(tex.outputs["Color"],
+                                     shader.inputs["Emission Color"])
+    bpy.ops.mesh.primitive_circle_add(vertices=64,radius=3.52,
+                                       fill_type="NGON",
+                                       location=(0,1.3,8.38))
+    glass=bpy.context.object
+    glass.name="OCULUS • cielo osservabile sopra i vetri"
+    assign(glass,sky_mat)
+    uv=glass.data.uv_layers.active or glass.data.uv_layers.new(name="SKY-UV")
+    for face in glass.data.polygons:
+        for k in face.loop_indices:
+            vtx=glass.data.vertices[glass.data.loops[k].vertex_index].co
+            uv.data[k].uv=(.5+vtx.x/(2*3.52),.5+vtx.y/(2*3.52))
+    for j in range(8):
+        a=math.tau*j/8
+        beam("OCULUS • nervatura vetrata",
+             (0,1.3,8.27),
+             (3.50*math.cos(a),1.3+3.50*math.sin(a),8.27),
+             .037,steel)
 
 # The four portals share a genuine, rounded architectural mesh rather
 # than being separate sets of square cards, glow strips and overlaid effects.
