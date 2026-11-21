@@ -1,3 +1,5 @@
+> **Scheda di lettura canonica, 21/11/2026:** [ART-DIR-02-VISUAL-READING-01](./ATLAS-ART-DIR-02-VISUAL-READING-01.md) raccoglie in modo permanente 26 oggetti e zone della **medesima immagine canonica**, con caratteristiche, colori, materiali, arredi, vegetazione, lucernario, cielo, strutture da attenuare, bande prospettiche e priorità. [Pacchetto completo: JPEG immutato + lettura + inventario + consultazione interattiva](https://drive.google.com/file/d/1MopbiQmx7-aoLoGwt_qylPVsSmuAAZR_/view), conservato nella **stessa cartella Drive** dell'immagine originale, SHA-256 verificato. **Ultima decisione dell'ideatore:** i portali hanno **un solo basamento metallico sottile luminoso**, senza perfezionamento tecnico dell'incasso nelle feritoie; fermare microcorrezioni geometriche e dare priorità a rivestimenti, arredi, profondità e regia luminosa. La lettura conserva osservazioni distinte dalle ipotesi e non equivale ad approvazione artistica del modello R5.
+
 # ATLAS — ART-DIR-02
 ## Revisione artistica del portale tridimensionale di accesso
 
