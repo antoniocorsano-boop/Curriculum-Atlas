@@ -1,3 +1,5 @@
+> **Risultato di archiviazione verificato:** [prototipo HTML V2 in Google Drive](https://drive.google.com/file/d/1VbiuhCg7aAd-Mi8YG8I_8HNYhVaVACmN/view), 1.511.122 byte, SHA-256 `a4b2001cce167e618eac21bc813017383221bbb2e59d17e42a030fbac4c1c1d7`; [pacchetto V2 completo e riproducibile](https://drive.google.com/file/d/11dIKw3ZgGnmAs2YO6sL6CFCjpIVhSXc9/view), 2.274.084 byte. Upload e dimensioni verificati con rilettura dei metadati. Contiene sorgente JPEG canonica, rendering ARCH-04B, programma generatore, pagina HTML e manifesto. L'eventuale anteprima Drive può richiedere il download del file HTML per l'apertura nel navigatore. Il test eseguito usa Chromium su ambiente simulato, non uno smartphone fisico.
+
 # ATLAS GATEWAY — ART-PROOF-01: decisione e prova di fattibilità artistica
 **Data e provenienza:** 21 novembre 2026, approvazione esplicita dell'ideatore nella conversazione Atlas World Composer; indirizzo diretto della conversazione non disponibile, quindi non inventato.  
 **Stato:** decisione APPROVATA; **prototipo interattivo della fotografia originale realizzato**, prova della fedeltà del modello Blender 3D ancora **NON ESEGUITA**.
