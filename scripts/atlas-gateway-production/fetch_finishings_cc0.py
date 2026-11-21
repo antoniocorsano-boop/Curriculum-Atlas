@@ -76,6 +76,9 @@ try:
         raise RuntimeError("Plant publisher checksum mismatch")
     # The official publisher may serve a ZIP/gzip wrapper rather than bare .blend.
     # Only extract a genuine Blender scene; never treat an HTML error as an asset.
+    if raw.startswith(b"\x28\xb5\x2f\xfd"):
+        import zstandard
+        raw=zstandard.ZstdDecompressor().decompress(raw,max_output_size=48_000_000)
     if raw.startswith(b"\x1f\x8b"):
         raw=gzip.decompress(raw)
     if raw.startswith(b"PK\x03\x04"):
