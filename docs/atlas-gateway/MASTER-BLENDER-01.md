@@ -1,3 +1,5 @@
+> **Aggiornamento prioritario ART-PROOF-01, 21/11/2026:** la sequenza geometrica ARCH-04C è **sospesa**, non cancellata. Prima verificare la [fattibilità artistica](./ATLAS-ART-PROOF-01-PROTOCOL.md). L'originale ART-DIR-02 è preservato, un prototipo interattivo con immagine esatta e confronto ARCH-04B è [archiviato in Drive](https://drive.google.com/file/d/1VbiuhCg7aAd-Mi8YG8I_8HNYhVaVACmN/view). Il Blender 3D resta candidato non approvato; nessuna integrazione e nessuna sostituzione del riferimento. La documentazione sottostante resta valida come banca di geometrie, non come ordine operativo immediato.
+
 # ATLAS — MASTER-BLENDER-01
 ## Specifica tecnica e artistica del modello Blender professionale dell'Atrio della Conoscenza
 
