@@ -1,6 +1,9 @@
 # ATLAS — IMAGE-GEOMETRY-01
 ## Riprogettazione geometrica dell'atrio a partire dall'immagine ART-DIR-02
 
+**Aggiornamento fonte, 21/11/2026:** l'ideatore ha designato come canonico l'allegato **JPEG 1536×864**, SHA-256 `a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe`, [archiviato in Drive](https://drive.google.com/file/d/1vSC_ynSxAF-pxR071TiKjEE0OtaFjXCn/view?usp=drivesdk) e [registrato nel manifest](./ART-REFERENCE-CANONICAL-2026-11-21.json). **Sostituisce operativamente il PNG 1672×941 citato nelle sezioni storiche**, senza convertire i byte o attribuire quote fisiche all'immagine sintetica. [Rilievo canonico](./ART-DIR-02-CANONICAL-LANDMARKS.json) e [calibrazione candidata](./ATLAS-CAMERA-FIT-CANONICAL-02.json) sono prodotti: la calibrazione numerica non è ancora applicata come geometria approvata. Tutte le eventuali condizioni `P0-REF` delle sezioni preesistenti vanno intese come riferite alla **vecchia** fonte, non alla nuova immagine canonica già archiviata.
+
+
 **Decisione dell'ideatore:** 20 novembre 2026.  
 **Stato:** **MANDATO ADOTTATO; RILIEVO E MODELLO GEOMETRICO ANCORA DA ESEGUIRE.**  
 **Riferimento vincolante:** [ART-DIR-02](./ATLAS-GATEWAY-ART-DIRECTION-02.md) e [ART-REFERENCE-MANIFEST](./ART-REFERENCE-MANIFEST.md).
