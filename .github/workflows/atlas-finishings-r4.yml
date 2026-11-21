@@ -29,6 +29,7 @@ jobs:
           PY
       - name: Download two real 1K ambientCG CC0 materials and inspect a small Poly Haven plant
         run: |
+          python3 -m pip install --quiet zstandard==0.25.0
           mkdir -p "$RUNNER_TEMP/atlas-finishings-r4/assets"
           python3 scripts/atlas-gateway-production/fetch_finishings_cc0.py --out "$RUNNER_TEMP/atlas-finishings-r4/assets"
       - name: Install Blender production environment
