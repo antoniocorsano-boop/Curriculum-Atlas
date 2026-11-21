@@ -61,7 +61,14 @@ try{
     assert(info.canvas[0]*info.canvas[1]<=1048576,"Raster exceeds 1 Mi pixel");
     assert.equal(info.nav.length,4);assert(info.nav.every(r=>r.height>=44&&r.width>=44));
     assert.equal(info.scrollWidth<=info.viewport,true,"Horizontal scrolling");
+    assert.equal(await page.locator("body.webgl-ready").count(),1,"3D-ready state must enable uncluttered composition");
+    const navOpacity=await page.locator(".destinations").evaluate(el=>getComputedStyle(el).opacity);
+    assert.equal(navOpacity,"0","avoid a second visible title row under the portals");
     await page.screenshot({path:join(output,dim.name+"-foyer.png"),fullPage:true});
+    // Keyboard access reveals the otherwise visually discreet HTML fallback.
+    await page.locator(".destinations a").first().focus();
+    await page.waitForFunction(()=>getComputedStyle(document.querySelector(".destinations")).opacity==="1",null,{timeout:5000});
+    assert.equal(await page.locator(".destinations a").first().getAttribute("href"),"/curricolo/");
     // Controlled camera motion must preserve the 3D scene and usable portals.
     await page.locator("#camera-right").click();
     await page.locator("#camera-reset").click();
