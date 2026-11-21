@@ -62,6 +62,7 @@ try{
     assert.equal(info.nav.length,4);assert(info.nav.every(r=>r.height>=44&&r.width>=44));
     assert.equal(info.scrollWidth<=info.viewport,true,"Horizontal scrolling");
     assert.equal(await page.locator("body.webgl-ready").count(),1,"3D-ready state must enable uncluttered composition");
+    await page.waitForFunction(()=>getComputedStyle(document.querySelector(".destinations")).opacity==="0",null,{timeout:5000});
     const navOpacity=await page.locator(".destinations").evaluate(el=>getComputedStyle(el).opacity);
     assert.equal(navOpacity,"0","avoid a second visible title row under the portals");
     await page.screenshot({path:join(output,dim.name+"-foyer.png"),fullPage:true});
