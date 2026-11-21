@@ -558,7 +558,10 @@ for label,cam in cameras.items():
         ((420,744) if label.startswith("mobile") else (920,720)))
     image_path=os.path.join(OUT,label+"-arch04b-"+("ortho" if label.endswith("_ortho") else "cycles")+".png")
     scene.render.filepath=image_path
-    scene.render.engine="BLENDER_WORKBENCH" if label.endswith("_ortho") else "CYCLES"
+    # Headless GitHub Actions lacks EGL; Workbench aborts even when all geometry
+    # and five perspective images are valid. Use low-sample Cycles for orthos.
+    scene.render.engine="CYCLES"
+    scene.cycles.samples=4 if label.endswith("_ortho") else 16
 # Record objective image-space framing in addition to the PNG evidence.
     bpy.context.view_layer.update()
     from bpy_extras.object_utils import world_to_camera_view
