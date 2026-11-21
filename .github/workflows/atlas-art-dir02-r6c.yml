@@ -1,0 +1,95 @@
+name: "ATLAS ART-DIR-02 — R6C arredi CC0 e librerie"
+on:
+  pull_request:
+    branches: [work/atlas-gateway-01-foyer]
+    paths:
+      - "scripts/atlas-gateway-production/fetch_r6c_assets.py"
+      - "scripts/atlas-gateway-production/r6c_furnishings.py"
+      - ".github/workflows/atlas-art-dir02-r6c.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-r6c-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  real-r6c-furniture-and-plants:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Python sources
+        run: |
+          python3 -m py_compile scripts/atlas-gateway-production/fetch_r6c_assets.py scripts/atlas-gateway-production/r6c_furnishings.py
+      - name: Download and verify source R5 Blender
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-art-dir02-r5-gallery-section-2
+          run-id: 44927621648
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/atlas-r5-baseline
+      - name: Qualify source lineage and publisher dependencies
+        run: |
+          python3 - <<'PY'
+          import hashlib,os,pathlib,json
+          base=pathlib.Path(os.environ["RUNNER_TEMP"])/"atlas-r5-baseline"/"r5"
+          blend=base/"atlas-art-dir02-gallery-finishings-r5.blend"
+          receipt=json.loads((base/"atlas-finishings-r5-receipt.json").read_text())
+          sha=hashlib.sha256(blend.read_bytes()).hexdigest()
+          assert sha==receipt["candidate_blend_sha256"]=="e97dcf65e7cd6a97f031cef99d2d81398c5d42d6493807b4e29cf35e5236b278"
+          PY
+      - name: Acquire three official 1K glTF assets, record exact URLs and hashes
+        run: |
+          python3 -m pip install --quiet zstandard==0.25.0
+          mkdir -p "$RUNNER_TEMP/atlas-r6c-assets"
+          python3 scripts/atlas-gateway-production/fetch_r6c_assets.py --out "$RUNNER_TEMP/atlas-r6c-assets"
+      - name: Install headless Blender
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender
+      - name: Import professional prefabs, reduce geometry and produce true Blender renders
+        run: |
+          mkdir -p "$RUNNER_TEMP/atlas-r6c"
+          blender -b "$RUNNER_TEMP/atlas-r5-baseline/r5/atlas-art-dir02-gallery-finishings-r5.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/r6c_furnishings.py -- \
+            --out "$RUNNER_TEMP/atlas-r6c" \
+            --assets "$RUNNER_TEMP/atlas-r6c-assets"
+      - name: Verify actual separate plant families, prefab sources, assets and art proof
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])
+          out=root/"atlas-r6c"
+          receipt=json.loads((out/"atlas-r6c-receipt.json").read_text())
+          def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+          assert receipt["source_r5_sha256"]=="e97dcf65e7cd6a97f031cef99d2d81398c5d42d6493807b4e29cf35e5236b278"
+          assert sha(out/"atlas-r6c-furnishings.blend")==receipt["candidate_blend_sha256"]
+          assert set(receipt["official_cc0_assets"])=={"pachira_aquatica_01","potted_plant_02","wooden_display_shelves_01"}
+          for ident,a in receipt["official_cc0_assets"].items():
+              assert a["license"]=="CC0-1.0"
+              assert a["LOD_triangles"]>0 and a["LOD_triangles"]<30000
+          assert len(receipt["instances_by_family"]["tall_tree"])==2
+          assert len(receipt["instances_by_family"]["ground_shrub"])==2
+          assert len(receipt["instances_by_family"]["bookcase"])==4
+          assert len(receipt["existing_banners_finished"])==2
+          assert len(receipt["new_planters"])==4
+          assert receipt["hero_camera_unchanged"] and receipt["portal_roots_unchanged"]
+          assert receipt["no_publication"] and not receipt["human_art_approved"]
+          assert set(receipt["renders"])=={"hero","furnishings"}
+          for item in receipt["renders"].values():
+              p=out/item["file"]
+              assert p.stat().st_size>10000 and sha(p)==item["sha256"]
+          print("R6C REAL CC0 ASSETS AND TWO DISTINCT BOTANICAL FAMILIES — TECHNICAL PASS")
+          PY
+      - name: Archive exact publisher files, manifests, Blender models and real images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-r6c-${{ github.run_number }}
+          path: |
+            ${{ runner.temp }}/atlas-r6c/
+            ${{ runner.temp }}/atlas-r6c-assets/
+          if-no-files-found: warn
+          retention-days: 30
