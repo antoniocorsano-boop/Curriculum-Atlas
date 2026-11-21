@@ -21,6 +21,14 @@ assert.match(js,/logoGeometry\.computeVertexNormals/);
 assert.match(js,/Math\.sqrt\(radial\)/);
 assert.ok(!js.includes("ctx.fillText(\"ATLAS\""),"no generic wordmark plane");
 assert.match(js,/TubeGeometry/);
+assert.match(js,/roundedPortalShape/,"physical 3D panels must use rounded geometry");
+assert.match(js,/ExtrudeGeometry/,"portal frames must have depth");
+assert.match(js,/ctx.fillText\\(portal.label,256,285/,"single embedded portal title raised to readable position");
+const landmarkReport=JSON.parse(readFileSync("docs/atlas-gateway/PORTALS-LIGHT-01-REFERENCE-LANDMARKS.json","utf8"));
+assert.equal(landmarkReport.portals.length,4,"exactly four image-measured portal silhouettes");
+assert.deepEqual(landmarkReport.portals.map(p=>p.id),PORTALS.map(p=>p.id));
+assert.ok(landmarkReport.portals.every(p=>p.bbox_normalized.every(v=>v>=0&&v<=1)),"normalized reference geometry");
+
 assert.match(js,/Math\.sqrt\(maxPixels\/\(w\*h\)\)/);
 assert.match(js,/camera-reset/);
 assert.match(js,/fallback\(/);
