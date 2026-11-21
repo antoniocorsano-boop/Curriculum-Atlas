@@ -1,0 +1,510 @@
+#!/usr/bin/env python3
+"""ATLAS-GATEWAY-01 — generatore Blender del master artistico originale.
+
+Invocazione: blender -b --python blender_master.py -- --out /percorso/cartella
+Marchio ATLAS locale verificato e incorporato nel GLB; nessun dato personale. Coordinate Z-up Blender;
+l'esportatore glTF applica la trasformazione di asse richiesta da Three.js.
+Non modifica il modello canonico della precedente biblioteca.
+"""
+import bpy
+import math
+import json
+import os
+import sys
+import hashlib
+from mathutils import Vector
+
+def output_directory():
+    args = sys.argv[sys.argv.index("--")+1:] if "--" in sys.argv else []
+    if "--out" not in args or args.index("--out") + 1 >= len(args):
+        raise ValueError("Usage: blender --python blender_master.py -- --out OUTPUT_DIR")
+    out = os.path.abspath(args[args.index("--out") + 1])
+    os.makedirs(out, exist_ok=True)
+    return out
+
+OUT = output_directory()
+bpy.ops.object.select_all(action="SELECT")
+bpy.ops.object.delete(use_global=False)
+for datablock in bpy.data.materials:
+    if datablock.users == 0:
+        bpy.data.materials.remove(datablock)
+scene = bpy.context.scene
+scene.unit_settings.system = "METRIC"
+scene.render.resolution_x = 1280
+scene.render.resolution_y = 720
+scene.render.resolution_percentage = 100
+scene.render.image_settings.file_format = "PNG"
+scene.render.film_transparent = False
+scene.render.engine = "CYCLES"
+scene.cycles.samples = 24
+if hasattr(scene.cycles,"use_denoising"):
+    scene.cycles.use_denoising = True
+
+def rgba(rgb):
+    return ((rgb >> 16 & 255)/255.0, (rgb >> 8 & 255)/255.0,
+            (rgb & 255)/255.0, 1.0)
+
+def material(name, color, metallic=0.0, roughness=0.45, emission=None, strength=0.0):
+    m = bpy.data.materials.new(name)
+    m.diffuse_color = rgba(color)
+    m.use_nodes = True
+    node = m.node_tree.nodes.get("Principled BSDF")
+    node.inputs["Base Color"].default_value = rgba(color)
+    node.inputs["Metallic"].default_value = metallic
+    node.inputs["Roughness"].default_value = roughness
+    if emission is not None:
+        sockets = node.inputs
+        if "Emission Color" in sockets:
+            sockets["Emission Color"].default_value = rgba(emission)
+        elif "Emission" in sockets:
+            sockets["Emission"].default_value = rgba(emission)
+        if "Emission Strength" in sockets:
+            sockets["Emission Strength"].default_value = strength
+    return m
+
+basalt = material("Atrium • pietra basaltica scura", 0x111c2a, .26, .29)
+wall = material("Atrium • pareti blu grafite", 0x132337, .26, .58)
+recess = material("Atrium • nicchia blu notte", 0x071b32, .14, .54)
+steel = material("Atrium • metallo ossidato", 0x274865, .68, .29)
+bronze = material("Atrium • ottone satinato", 0xa78b59, .74, .31)
+polished = material("Atrium • grafite lucida", 0x0a1b2e, .58, .20)
+blue = material("Atrium • vetro portale luminoso", 0x123b63, .24, .34, 0x1a5487, .18)
+halo = material("Atrium • taglio luce cielo", 0x5899da, .12, .39, 0x5b9ef1, .55)
+warm = material("Atrium • taglio luce bronzo", 0xd2aa6b, .28, .34, 0xe5b874, 1.5)
+
+def assign(obj, mat, smooth=False):
+    obj.data.materials.append(mat)
+    if smooth and obj.type == "MESH":
+        for polygon in obj.data.polygons:
+            polygon.use_smooth = True
+    return obj
+
+def cube(name, loc, scale, mat, bevel=0.0):
+    bpy.ops.mesh.primitive_cube_add(size=1, location=loc)
+    obj = bpy.context.object
+    obj.name = name
+    obj.dimensions = scale
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    assign(obj, mat)
+    if bevel:
+        mod = obj.modifiers.new("Raccordo architettonico", "BEVEL")
+        mod.width = bevel
+        mod.segments = 2
+        if hasattr(mod, "affect"):
+            mod.affect = "EDGES"
+        obj.modifiers.new("Normali ponderate", "WEIGHTED_NORMAL")
+    return obj
+
+def cylinder(name, loc, radius, depth, mat, segments=80):
+    bpy.ops.mesh.primitive_cylinder_add(vertices=segments, radius=radius,
+        depth=depth, location=loc)
+    obj=bpy.context.object
+    obj.name=name
+    assign(obj,mat,smooth=True)
+    return obj
+
+def beam(name, p1, p2, width, mat):
+    p1=Vector(p1);p2=Vector(p2);vec=p2-p1
+    obj=cube(name,(p1+p2)/2,(width,width,vec.length),mat)
+    obj.rotation_euler=vec.to_track_quat("Z","Y").to_euler()
+    return obj
+
+def ring(name, radius, z, mat, thickness=.055, arc=math.tau):
+    # True mesh ring; geometry carries no runtime-specific DOM labels.
+    count=max(32,int(72*arc/math.tau))
+    verts=[];faces=[]
+    for i in range(count+1):
+        a = arc*i/count
+        x=math.cos(a)*radius
+        y=math.sin(a)*radius + 1.3
+        for dx,dz in [(-thickness,-thickness),(thickness,-thickness),
+                      (thickness,thickness),(-thickness,thickness)]:
+            x2=math.cos(a)*(radius+dx)
+            y2=math.sin(a)*(radius+dx)+1.3
+            verts.append((x2,y2,z+dz))
+    for i in range(count):
+        for j in range(4):
+            a=i*4+j;b=i*4+(j+1)%4
+            faces.append((a,b,b+4,a+4))
+    mesh=bpy.data.meshes.new(name);mesh.from_pydata(verts,[],faces);mesh.update()
+    obj=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(obj)
+    return assign(obj,mat)
+
+def semicircle_wall():
+    # The rear semicircle only: no wall is placed between camera and portals.
+    radius=11.55;segments=64
+    verts=[]
+    for i in range(segments+1):
+        a=-math.pi/2+math.pi*i/segments
+        x=math.sin(a)*radius
+        y=1.3+math.cos(a)*radius
+        verts.extend([(x,y,.13),(x,y,6.28)])
+    faces=[(2*i,2*i+1,2*i+3,2*i+2) for i in range(segments)]
+    mesh=bpy.data.meshes.new("Curvatura muraria");mesh.from_pydata(verts,[],faces);mesh.update()
+    wall_obj=bpy.data.objects.new("Atrio • parete di fondo semicircolare",mesh)
+    bpy.context.collection.objects.link(wall_obj)
+    assign(wall_obj,wall)
+    solid=wall_obj.modifiers.new("Spessore parete", "SOLIDIFY")
+    solid.thickness=.24
+    return wall_obj
+
+def dome():
+    # Rear half-vault: the front is open towards the visitor and never masks
+    # the navigational portals. This is an architectural roof, not a blue lid.
+    sectors=32
+    levels=8
+    vertices=[]
+    for j in range(levels+1):
+        t=j/levels
+        r=11.44*(1-t)+3.6*t
+        z=5.88+2.24*math.sin(t*math.pi/2)
+        for i in range(sectors+1):
+            a=-math.pi/2+math.pi*i/sectors
+            vertices.append((math.sin(a)*r,1.3+math.cos(a)*r,z))
+    faces=[]
+    for j in range(levels):
+        for i in range(sectors):
+            a=j*(sectors+1)+i
+            faces.append((a,a+1,a+sectors+2,a+sectors+1))
+    mesh=bpy.data.meshes.new("Semicupola posteriore")
+    mesh.from_pydata(vertices,[],faces);mesh.update()
+    obj=bpy.data.objects.new("Atrio • copertura posteriore",mesh)
+    bpy.context.collection.objects.link(obj)
+    assign(obj,wall)
+    for i in range(0,sectors+1,2):
+        a=-math.pi/2+math.pi*i/sectors
+        points=[]
+        for j in range(levels+1):
+            t=j/levels;r=11.45*(1-t)+3.61*t
+            z=5.90+2.24*math.sin(t*math.pi/2)
+            points.append((math.sin(a)*r,1.3+math.cos(a)*r,z))
+        for j in range(len(points)-1):
+            beam("Atrio • costolone retrostante",points[j],points[j+1],.075,
+                 bronze if i%4==0 else steel)
+    ring("Atrio • arco frontale",11.43,5.89,bronze,.065,arc=math.pi)
+    ring("Atrio • corona lucernario",3.65,8.13,bronze,.055,arc=math.pi)
+    # A real opening looking onto a low-cost environment texture, not a dark
+    # ceiling lid or a fake luminous cone. The disk is above the architecture;
+    # 8 structural glazing ribs belong to the oculus rather than the sky.
+    sky_res=192
+    sky_img=bpy.data.images.new("OCULUS • daylight source",width=sky_res,
+                                height=sky_res,alpha=False)
+    pixels=[]
+    for j in range(sky_res):
+        v=j/(sky_res-1)
+        for i in range(sky_res):
+            u=i/(sky_res-1)
+            low=math.sin(14*u+2*math.sin(7*v))*math.sin(11*v)
+            medium=.55*math.cos(21*u-17*v)
+            fine=.20*math.sin(48*u+23*v)
+            cloud=max(0.0,min(1.0, (low+medium+fine-.2)*.8))
+            cloud=cloud*cloud*(3-2*cloud)
+            # Luminous blue sky / cloud forms are bounded and desaturated.
+            pixels.extend((.31+.57*cloud,.57+.38*cloud,
+                           .83+.15*cloud,1.0))
+    sky_img.pixels=pixels
+    sky_img.pack()
+    sky_mat=material("OCULUS • sky above real glass",0x76b2de,
+                     .0,.9,0x76b2de,.35)
+    tex=sky_mat.node_tree.nodes.new("ShaderNodeTexImage")
+    tex.image=sky_img
+    shader=sky_mat.node_tree.nodes.get("Principled BSDF")
+    sky_mat.node_tree.links.new(tex.outputs["Color"],
+                                 shader.inputs["Base Color"])
+    if "Emission Color" in shader.inputs:
+        sky_mat.node_tree.links.new(tex.outputs["Color"],
+                                     shader.inputs["Emission Color"])
+    bpy.ops.mesh.primitive_circle_add(vertices=64,radius=3.52,
+                                       fill_type="NGON",
+                                       location=(0,1.3,8.38))
+    glass=bpy.context.object
+    glass.name="OCULUS • cielo osservabile sopra i vetri"
+    assign(glass,sky_mat)
+    uv=glass.data.uv_layers.active or glass.data.uv_layers.new(name="SKY-UV")
+    for face in glass.data.polygons:
+        for k in face.loop_indices:
+            vtx=glass.data.vertices[glass.data.loops[k].vertex_index].co
+            uv.data[k].uv=(.5+vtx.x/(2*3.52),.5+vtx.y/(2*3.52))
+    for j in range(8):
+        a=math.tau*j/8
+        beam("OCULUS • nervatura vetrata",
+             (0,1.3,8.27),
+             (3.50*math.cos(a),1.3+3.50*math.sin(a),8.27),
+             .037,steel)
+
+# The four portals share a genuine, rounded architectural mesh rather
+# than being separate sets of square cards, glow strips and overlaid effects.
+# Reference proportions: PORTALS-LIGHT-01-REFERENCE-LANDMARKS.json.
+_portal_mesh_cache={}
+def rounded_outline(width,height,radius,segments=8):
+    radius=min(radius,width*.49,height*.49)
+    corners=((width/2-radius,height/2-radius,0),
+             (-width/2+radius,height/2-radius,90),
+             (-width/2+radius,-height/2+radius,180),
+             (width/2-radius,-height/2+radius,270))
+    return [(cx+radius*math.cos(math.radians(angle+90*i/segments)),
+             cz+radius*math.sin(math.radians(angle+90*i/segments)))
+            for cx,cz,angle in corners for i in range(segments+1)]
+
+def rounded_slab(label,root,part_name,width,height,depth,radius,y,z,mat):
+    key=("slab",width,height,depth,radius,mat.name)
+    mesh=_portal_mesh_cache.get(key)
+    if mesh is None:
+        outline=rounded_outline(width,height,radius)
+        n=len(outline)
+        verts=[(x,-depth/2,h) for x,h in outline]+[(x,depth/2,h) for x,h in outline]
+        faces=[tuple(range(n)),tuple(range(2*n-1,n-1,-1))]
+        faces.extend((i,(i+1)%n,n+(i+1)%n,n+i) for i in range(n))
+        mesh=bpy.data.meshes.new("MASTER • rounded portal "+part_name)
+        mesh.from_pydata(verts,[],faces);mesh.update()
+        mesh.materials.append(mat)
+        _portal_mesh_cache[key]=mesh
+    obj=bpy.data.objects.new(label+" • "+part_name,mesh)
+    bpy.context.collection.objects.link(obj);obj.parent=root
+    obj.location=(0,y,z)
+    return obj
+
+def portal_rim(label,root,width,height,radius,thickness,y,z,mat):
+    key=("rim",width,height,radius,thickness,mat.name)
+    mesh=_portal_mesh_cache.get(key)
+    if mesh is None:
+        outer=rounded_outline(width,height,radius)
+        inner=rounded_outline(width-2*thickness,height-2*thickness,
+                              max(.05,radius-thickness))
+        n=len(outer)
+        verts=[(x,-.015,h) for x,h in outer]+[(x,-.015,h) for x,h in inner]
+        verts+= [(x,.015,h) for x,h in outer]+[(x,.015,h) for x,h in inner]
+        faces=[]
+        for i in range(n):
+            j=(i+1)%n
+            faces.extend(((i,j,n+j,n+i),
+                          (2*n+n+i,2*n+n+j,2*n+j,2*n+i),
+                          (i,2*n+i,2*n+j,j),
+                          (n+i,n+j,3*n+j,3*n+i)))
+        mesh=bpy.data.meshes.new("MASTER • continuous portal perimeter")
+        mesh.from_pydata(verts,[],faces);mesh.update()
+        mesh.materials.append(mat)
+        _portal_mesh_cache[key]=mesh
+    obj=bpy.data.objects.new(label+" • cornice continua",mesh)
+    bpy.context.collection.objects.link(obj);obj.parent=root
+    obj.location=(0,y,z)
+    return obj
+
+def portal_symbol(label,root):
+    # One sparse physically located icon; curve stays in the Cycles master.
+    # The runtime draws the same symbol from the accessible portal contract.
+    paths={
+        "Curricolo":[[(-.52,-.35),(-.52,.35),(-.25,.45),(0,.32),(0,-.42)],
+                     [(0,-.42),(0,.32),(.25,.45),(.52,.35),(.52,-.35),(0,-.42)]],
+        "Esplora":[[(.52*math.cos(t*math.tau/24),.52*math.sin(t*math.tau/24))
+                    for t in range(25)],
+                   [(-.18,-.36),(.23,.35),(.12,-.1),(-.18,-.36)]],
+        "Percorsi":[[(-.54,-.38),(-.05,-.38),(.04,.31),(.49,.31)],
+                    [[(x,z)][0] for x,z in ((-.54,-.38),(.49,.31))]],
+        "Esperienze":[[(-.49,-.39),(-.49,.43),(.49,.43),(.49,-.39)],
+                      [(-.21,-.39),(-.21,.08),(.23,.08),(.23,-.39)]]
+    }
+    for idx,points in enumerate(paths[label]):
+        if len(points)<2:continue
+        data=bpy.data.curves.new(label+" • tratto simbolo","CURVE")
+        data.dimensions="3D";data.resolution_u=1
+        data.bevel_depth=.014;data.bevel_resolution=2
+        spline=data.splines.new("POLY");spline.points.add(len(points)-1)
+        for control,(x,z) in zip(spline.points,points):
+            control.co=(x,0,z,1)
+        data.materials.append(bronze)
+        icon=bpy.data.objects.new("Portale • simbolo "+label+" "+str(idx),data)
+        bpy.context.collection.objects.link(icon);icon.parent=root
+        icon.location=(0,-.40,4.10)
+
+def portal(label,x,y,rotation_deg):
+    # Shared physical silhouette and a single warm outline. No stack of LED
+    # strips, mini cards, fake glow cones, or subtitle panels.
+    root=bpy.data.objects.new("Portale • "+label,None)
+    bpy.context.collection.objects.link(root)
+    root.location=(x,y,0)
+    root.rotation_euler.z=math.radians(rotation_deg)
+    base=cube(label+" • zoccolo",(0,0,.25),(3.22,.62,.28),polished,bevel=.06)
+    base.parent=root
+    rounded_slab(label,root,"telaio",3.16,5.04,.20,.38,0,2.72,steel)
+    rounded_slab(label,root,"retro",2.99,4.85,.12,.33,-.15,2.72,recess)
+    rounded_slab(label,root,"vetro cobalto",2.79,4.60,.055,.28,-.25,2.72,blue)
+    portal_rim(label,root,3.07,4.94,.35,.055,-.31,2.72,bronze)
+    portal_symbol(label,root)
+    # Signage is authored on the master but omitted from GLB, because the web
+    # generates one visible title and icon from the same portal data contract.
+    bpy.ops.object.text_add(location=(x,y-.42,3.42),
+                            rotation=(math.pi/2,0,math.radians(rotation_deg)))
+    title=bpy.context.object;title.name="Portale • titolo "+label
+    title.data.body=label.upper();title.data.align_x="CENTER"
+    title.data.size=.32;title.data.extrude=.003
+    title.data.materials.append(warm)
+    bpy.ops.object.convert(target="MESH")
+
+# Floors, recessed gallery and structural depth.
+cylinder("Atrio • pavimento lapideo",(0,1.3,-.24),11.76,.40,basalt)
+cylinder("Atrio • fascia basamento",(0,1.3,-.49),11.81,.16,bronze)
+ring("Atrio • cerchio di orientamento",8.6,-.031,bronze,.035)
+ring("Atrio • cerchio centrale",3.3,-.025,warm,.045)
+semicircle_wall()
+for i in range(17):
+    a=-math.pi/2+math.pi*i/16
+    x=math.sin(a)*11.49;y=1.3+math.cos(a)*11.49
+    cube("Atrio • pilastro esterno",(x,y,3.17),(.30,.28,6.25),
+         bronze if i%4==0 else steel,bevel=.025)
+    if i<16:
+        m=a+math.pi/32
+        xx=math.sin(m)*11.28;yy=1.3+math.cos(m)*11.28
+        cube("Atrio • pannello incassato",(xx,yy,2.75),(1.06,.12,3.6),recess)
+        cube("Atrio • profilo balconata",(xx,yy,4.57),(1.07,.17,.09),bronze)
+dome()
+
+# Monumental central platform with a flattened dome, directly facing the camera.
+cylinder("ATLAS • podio ottagonale",(0,-2.0,.24),3.28,.48,polished,80)
+ring("ATLAS • bordo del podio",3.29,.46,bronze,.075)
+bpy.ops.mesh.primitive_uv_sphere_add(segments=64,ring_count=32,radius=2.94,location=(0,-2.0,.56))
+central=bpy.context.object
+central.name="ATLAS • volume centrale"
+central.scale.z=.54
+assign(central,steel,smooth=True)
+# The exact approved gold-A/ivory logo is mapped onto the 3D curved surface.
+# Geometry follows the front hemisphere of the flattened ellipsoid, rather than
+# adding a floating text plane. The PNG is local, hashed, packed in .blend and
+# embedded in GLB; no font lookup, CDN or nonreproducible late typography.
+logo_path=os.path.abspath(os.path.join(os.path.dirname(__file__),"..","..",
+    "public","atlas-gateway-entry","atlas-logo-approved-01.png"))
+logo_hash="0d3d266b7a889f590c900f49ec3bce43bdc1bb48685b4bdf9ff883420dd46f86"
+if not os.path.isfile(logo_path):
+    raise FileNotFoundError("Approved Atlas logo texture missing: "+logo_path)
+with open(logo_path,"rb") as handle:
+    actual_logo_hash=hashlib.sha256(handle.read()).hexdigest()
+if actual_logo_hash!=logo_hash:
+    raise ValueError("Approved Atlas logo texture changed; provenance mismatch")
+logo_image=bpy.data.images.load(logo_path,check_existing=True)
+logo_image.pack()
+logo_material=material("ATLAS • marchio approvato aderente al podio",0xffffff,.22,.39)
+logo_nodes=logo_material.node_tree.nodes
+image_node=logo_nodes.new("ShaderNodeTexImage")
+image_node.image=logo_image
+shader=logo_nodes.get("Principled BSDF")
+logo_material.node_tree.links.new(image_node.outputs["Color"],shader.inputs["Base Color"])
+logo_material.node_tree.links.new(image_node.outputs["Alpha"],shader.inputs["Alpha"])
+try:
+    logo_material.blend_method="BLEND"
+except (AttributeError,TypeError,ValueError):
+    if hasattr(logo_material,"surface_render_method"):
+        logo_material.surface_render_method="DITHERED"
+columns,rows=64,14
+radius=2.94
+height_radius=radius*.54
+vertices=[]
+for row in range(rows+1):
+    z=.71+row/rows*.65
+    for column in range(columns+1):
+        x=-1.56+column/columns*3.12
+        radial=1.0-(x/radius)**2-((z-.56)/height_radius)**2
+        if radial<=0:
+            raise ValueError("Atlas logo exceeds convex ellipsoid surface")
+        y=-2.0-radius*math.sqrt(radial)-.027
+        vertices.append((x,y,z))
+faces=[]
+for row in range(rows):
+    for column in range(columns):
+        a=row*(columns+1)+column
+        faces.append((a,a+1,a+columns+2,a+columns+1))
+logo_mesh=bpy.data.meshes.new("ATLAS • mappatura UV su calotta")
+logo_mesh.from_pydata(vertices,[],faces)
+logo_mesh.update()
+logo_uv=logo_mesh.uv_layers.new(name="Logo UV")
+for polygon in logo_mesh.polygons:
+    for loop_idx in polygon.loop_indices:
+        vert_idx=logo_mesh.loops[loop_idx].vertex_index
+        column=vert_idx%(columns+1)
+        row=vert_idx//(columns+1)
+        logo_uv.data[loop_idx].uv=(column/columns,row/rows)
+logo_obj=bpy.data.objects.new("ATLAS • logotipo approvato fisicamente curvo",logo_mesh)
+bpy.context.collection.objects.link(logo_obj)
+assign(logo_obj,logo_material,smooth=True)
+
+# Front-facing panels stand at the same locations as the WebGL gateway.
+portal("Curricolo",-4.8,1.0,math.degrees(-.24))
+portal("Esplora",-1.6,2.7,math.degrees(-.08))
+portal("Percorsi",1.6,2.7,math.degrees(.08))
+portal("Esperienze",4.8,1.0,math.degrees(.24))
+
+# A reference art render, never a substitute for the navigable GLB.
+def area(name,loc,target,energy,color,size):
+    bpy.ops.object.light_add(type="AREA", location=loc)
+    obj=bpy.context.object;obj.name=name
+    obj.data.energy=energy;obj.data.color=tuple(rgba(color)[:3])
+    obj.data.shape="DISK";obj.data.size=size
+    obj.rotation_euler=(Vector(target)-obj.location).to_track_quat("-Z","Y").to_euler()
+
+area("Luce • volta blu",(-2,1.3,10),(0,1.3,0),720,0x5d9fef,8)
+area("Luce • riflesso caldo",(4,-4,6),(0,2,2),450,0xffd6a1,6)
+area("Luce • riempimento sinistro",(-9,0,5),(0,3,2),550,0x8cbde8,5)
+area("Luce • fronte",(0,-8,5),(0,1,2),300,0xffe2bf,9)
+
+bpy.ops.object.camera_add(location=(0,-15.5,4.6))
+camera=bpy.context.object
+camera.name="Fotocamera • ingresso Atlas"
+camera.rotation_euler=(Vector((0,2.9,3.0))-camera.location).to_track_quat("-Z","Y").to_euler()
+camera.data.lens=29
+scene.camera=camera
+scene.world.use_nodes=True
+bg=scene.world.node_tree.nodes.get("Background")
+bg.inputs["Color"].default_value=rgba(0x091626)
+bg.inputs["Strength"].default_value=.4
+try:
+    scene.view_settings.view_transform="AgX"
+except (TypeError,ValueError):
+    scene.view_settings.view_transform="Standard"
+
+reference=os.path.join(OUT,"foyer-reference.png")
+scene.render.filepath=reference
+bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT,"atlas-foyer-master.blend"))
+bpy.ops.render.render(write_still=True)
+# Keep the authored reference lighting in .blend, but do not double the web lights.
+glb=os.path.join(OUT,"atlas-foyer-master.glb")
+# The editable Cycles master retains signage for artistic review, while
+# the web GLB excludes title meshes: its one visible title per portal comes
+# from the accessible Atlas portal contract through the shared runtime texture.
+# Selection is changed AFTER the .blend was saved and the Cycles image rendered.
+bpy.ops.object.select_all(action="DESELECT")
+selected_for_web=0
+excluded_titles=0
+for obj in scene.objects:
+    if obj.type!="MESH":
+        continue
+    if obj.name.startswith("Portale • titolo "):
+        excluded_titles+=1
+        continue
+    obj.select_set(True)
+    selected_for_web+=1
+if excluded_titles!=4:
+    raise ValueError("Expected four authored portal titles before GLB export")
+bpy.ops.export_scene.gltf(filepath=glb,export_format="GLB",
+                          use_selection=True,
+                          export_cameras=False,export_lights=False)
+def sha(filename):
+    with open(filename,"rb") as f:return hashlib.sha256(f.read()).hexdigest()
+meshes=[o for o in scene.objects if o.type=="MESH"]
+receipt={
+    "schema":"atlas.visual-factory.foyer-source/v1",
+    "source":"procedural Blender master, original geometry",
+    "blender":bpy.app.version_string,
+    "meshes":len(meshes),
+    "triangles_estimate":sum(sum(max(1,len(p.vertices)-2) for p in o.data.polygons) for o in meshes),
+    "material_count":len(bpy.data.materials),
+    "web_export_selected_meshes":selected_for_web,
+    "offline_only_portal_titles":excluded_titles,
+    "approved_logo_sha256":logo_hash,
+    "approved_logo_geometry":"ellipsoid-front-uv-grid-64x14",
+    "has_student_data":False,
+    "student_authorized":False,
+    "files":{name:{"bytes":os.stat(os.path.join(OUT,name)).st_size,"sha256":sha(os.path.join(OUT,name))}
+       for name in ("atlas-foyer-master.blend","atlas-foyer-master.glb","foyer-reference.png")}
+}
+with open(os.path.join(OUT,"source-receipt.json"),"w",encoding="utf-8") as f:
+    json.dump(receipt,f,indent=2,ensure_ascii=False)
+print("ATLAS_FOYER_BLENDER_SOURCE",json.dumps(receipt,ensure_ascii=False))

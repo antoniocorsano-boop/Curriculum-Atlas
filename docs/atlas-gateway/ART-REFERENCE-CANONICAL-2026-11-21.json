@@ -1,0 +1,54 @@
+{
+  "schema": "atlas.art-dir-02.canonical-source/v2",
+  "status": "CANONICAL_BY_EXPLICIT_USER_DECISION_2026-11-21",
+  "active": true,
+  "decision": "L'utente considera l'immagine JPEG allegata il vero originale per ART-DIR-02; utilizzo come sorgente vincolante, senza esigere la vecchia copia PNG.",
+  "file": {
+    "archive_name": "ATLAS-ART-DIR-02-CANONICO-2026-11-21.jpg",
+    "uploaded_name": "1000032808.png",
+    "format": "JPEG",
+    "mime_type": "image/jpeg",
+    "width": 1536,
+    "height": 864,
+    "bytes": 224117,
+    "sha256": "a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+  },
+  "drive": {
+    "id": "1vSC_ynSxAF-pxR071TiKjEE0OtaFjXCn",
+    "url": "https://drive.google.com/file/d/1vSC_ynSxAF-pxR071TiKjEE0OtaFjXCn/view?usp=drivesdk",
+    "metadata_verified": true,
+    "remote_hash_recomputed": false
+  },
+  "archive": {
+    "id": "1qCcL9ioPFoE33eFx0OdPrnNezmmoF-EO",
+    "url": "https://drive.google.com/file/d/1qCcL9ioPFoE33eFx0OdPrnNezmmoF-EO/view?usp=drivesdk",
+    "zip_sha256": "aeaf9c0ca536a9a2315468a8b9f3830ff740554cee3b4f541a6f6533e9ab9241",
+    "includes": [
+      "original image",
+      "manual landmarks",
+      "camera-fit diagnostic",
+      "Python fit script",
+      "portal contract snapshot",
+      "README"
+    ]
+  },
+  "landmarks": "docs/atlas-gateway/ART-DIR-02-CANONICAL-LANDMARKS.json",
+  "prefit": "docs/atlas-gateway/ATLAS-CAMERA-FIT-CANONICAL-02.json",
+  "history": {
+    "former_png_sha256": "7b3ffb9a355b89057acea02489020ad43d871e10b6cf5bbb29f8769ff3073336",
+    "former_png_size": [
+      1672,
+      941
+    ],
+    "role": "SUPERSEDED_AS_PRODUCTION_REFERENCE__RETAIN_HISTORY",
+    "former_auxiliary_portal_jpeg_sha256": "b3bb8bb9c184acee97f479c522669059602c0797e4d8e7033a0627fc88ed0e81"
+  },
+  "gates": {
+    "canonical_source_archived": "PASS",
+    "canonical_sha_local": "PASS",
+    "ci_file_mount": "NOT_VERIFIED",
+    "blender_fit": "NOT_APPROVED",
+    "webgl_release": false,
+    "student_use": false
+  }
+}

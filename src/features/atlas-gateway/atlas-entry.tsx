@@ -1,0 +1,114 @@
+"use client";
+
+import Link from "next/link";
+import type { PointerEvent } from "react";
+import styles from "./atlas-entry.module.css";
+
+/**
+ * ATLAS-GATEWAY-HYBRID-ENTRY-01
+ * Responsive full-screen Atlas gateway: desktop uses the panorama and four\n * CSS-tilting panels; portrait uses an integrated 9:16 architectural artwork\n * and four invisible, accessible, calibrated HTML link hotspots.
+ * The photographic cuts are a preliminary 2.5D visual implementation,
+ * not the final ART-DIR-02 approved image and not WebGL 3D meshes.
+ */
+const portals = [
+  { id: "curricolo", label: "Curricolo", detail: "Struttura e obiettivi", href: "/curricolo/", image: "portal-curricolo.png" },
+  { id: "esplora", label: "Esplora", detail: "Relazioni e connessioni", href: "/esplora/", image: "portal-esplora.png" },
+  { id: "percorsi", label: "Percorsi", detail: "Itinerari formativi", href: "/percorsi/", image: "portal-percorsi.png" },
+  { id: "esperienze", label: "Esperienze", detail: "Attività e mondi", href: "/esperienze/", image: "portal-esperienze.png" },
+] as const;
+
+function onPortalMove(event: PointerEvent<HTMLAnchorElement>) {
+  if (event.pointerType !== "mouse") return;
+  const rect = event.currentTarget.getBoundingClientRect();
+  const x = Math.max(-1, Math.min(1, (2 * (event.clientX - rect.left)) / rect.width - 1));
+  const y = Math.max(-1, Math.min(1, (2 * (event.clientY - rect.top)) / rect.height - 1));
+  event.currentTarget.style.setProperty("--tilt-y", (x * 4).toFixed(2) + "deg");
+  event.currentTarget.style.setProperty("--tilt-x", (-y * 3).toFixed(2) + "deg");
+}
+function resetPortal(event: PointerEvent<HTMLAnchorElement>) {
+  event.currentTarget.style.removeProperty("--tilt-x");
+  event.currentTarget.style.removeProperty("--tilt-y");
+}
+
+export function AtlasEntry() {
+  return (
+    <main id="atlas-entry-root" className={styles.entry}>
+      <h1 className={styles.visuallyHidden}>ATLAS — Mondi della conoscenza</h1>
+      <section className={styles.artboard} aria-label="Atrio della conoscenza e accesso alle quattro aree di Atlas">
+        <img
+          className={styles.plate}
+          src="./atlas-gateway-entry/plate-prova.jpg"
+          alt=""
+          aria-hidden="true"
+          width="1672"
+          height="941"
+          draggable={false}
+        />
+        <div className={styles.brandScreen} aria-hidden="true" />
+        <div className={styles.brand}>
+          <img
+            src="./atlas-gateway-entry/atlas-logo-approved-01.svg"
+            alt="ATLAS"
+            className={styles.brandLogo}
+            width="1312"
+            height="286"
+            draggable={false}
+          />
+        </div>
+        <nav className={styles.portals} aria-label="Scegli una destinazione di Atlas">
+          {portals.map((portal) => (
+            <Link
+              key={portal.id}
+              href={portal.href}
+              data-portal={portal.id}
+              className={styles.portal}
+              aria-label={portal.label + " — " + portal.detail}
+              onPointerMove={onPortalMove}
+              onPointerLeave={resetPortal}
+              onPointerCancel={resetPortal}
+            >
+              <img
+                src={"./atlas-gateway-entry/" + portal.image}
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+                width="320"
+                height="430"
+              />
+            </Link>
+          ))}
+        </nav>
+
+        {/* Portrait uses a single architectural composition, not four detached cards.
+            Transparent links are calibrated to the four portals already in the mobile artwork. */}
+        <div className={styles.mobileUnderlay} aria-hidden="true" />
+        <div className={styles.mobileComposition}>
+          <img
+            className={styles.mobileImage}
+            src="./atlas-gateway-entry/mobile-atrium-01.png"
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+            width="948"
+            height="1659"
+          />
+          <nav className={styles.mobileHotspots} aria-label="Accessi Atlas nell'atrio verticale">
+            {portals.map((portal) => (
+              <Link
+                key={portal.id}
+                href={portal.href}
+                data-mobile-portal={portal.id}
+                className={styles.mobileHotspot}
+                aria-label={portal.label + " — " + portal.detail}
+              >
+              </Link>
+            ))}
+          </nav>
+        </div>
+        <Link href="/esplora/" className={styles.enter} aria-label="Entra in Atlas: esplora la conoscenza">
+          <span>Entra in Atlas</span><span aria-hidden="true" className={styles.arrow}>→</span>
+        </Link>
+      </section>
+    </main>
+  );
+}

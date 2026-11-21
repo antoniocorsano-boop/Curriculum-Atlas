@@ -1,0 +1,107 @@
+name: Atlas Visual Factory 3D — master Blender
+on:
+  pull_request:
+    branches: [work/atlas-library-web-delivery]
+    paths:
+      - "scripts/atlas-gateway-foyer/blender_master.py"
+      - "scripts/atlas-gateway-production/render_canonical_camera_candidates.py"
+      - "docs/atlas-gateway/ATLAS-CAMERA-FIT-CANONICAL-02.json"
+      - "docs/atlas-gateway/ART-REFERENCE-CANONICAL-2026-11-21.json"
+      - "scripts/atlas-gateway-foyer/foyer.mjs"
+      - "scripts/build-atlas-gateway-foyer.mjs"
+      - "scripts/test-atlas-gateway-foyer-browser.mjs"
+      - ".github/workflows/atlas-gateway-foyer-blender.yml"
+  workflow_dispatch:
+concurrency:
+  group: atlas-foyer-blender-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  produce-3d-master:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Python source syntax
+        run: python3 -m py_compile scripts/atlas-gateway-foyer/blender_master.py
+      - name: Install open-source Blender
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+          blender --version | head -2
+          blender --background --python-expr 'import numpy; print("ATLAS_BLENDER_NUMPY",numpy.__version__)'
+      - name: Produce original Blender master, GLB and reference render
+        run: |
+          mkdir -p "$RUNNER_TEMP/atlas-foyer-master"
+          blender --background --factory-startup --threads 2 --python scripts/atlas-gateway-foyer/blender_master.py -- --out "$RUNNER_TEMP/atlas-foyer-master"
+      - name: Verify exported model and source evidence
+        run: |
+          python3 - "$RUNNER_TEMP/atlas-foyer-master" <<'PY'
+          import sys, os, json, hashlib, struct
+          root=sys.argv[1]
+          with open(os.path.join(root,"source-receipt.json"),encoding="utf8") as f: r=json.load(f)
+          assert r["schema"]=="atlas.visual-factory.foyer-source/v1"
+          assert r["meshes"]>=30 and r["triangles_estimate"]>500
+          assert r["has_student_data"] is False and r["student_authorized"] is False
+          for name,entry in r["files"].items():
+              file=os.path.join(root,name)
+              data=open(file,"rb").read()
+              assert len(data)==entry["bytes"] and hashlib.sha256(data).hexdigest()==entry["sha256"]
+          data=open(os.path.join(root,"atlas-foyer-master.glb"),"rb").read()
+          assert data[:4]==b"glTF"
+          assert struct.unpack_from("<I",data,4)[0]==2
+          assert struct.unpack_from("<I",data,8)[0]==len(data)
+          assert struct.unpack_from("<I",data,16)[0]==0x4E4F534A
+          size=struct.unpack_from("<I",data,12)[0]
+          schema=json.loads(data[20:20+size].decode("utf8"))
+          assert len(schema.get("meshes",[]))>=30
+          assert r["offline_only_portal_titles"]==4
+          assert r["web_export_selected_meshes"]>=30
+          assert not any("Portale • titolo " in mesh.get("name","") for mesh in schema.get("meshes",[])), "duplicated visible portal titles in exported GLB"
+          assert not any("uri" in x for x in schema.get("buffers",[]))
+          assert not any("uri" in x for x in schema.get("images",[]))
+          print("ATLAS_FOYER_BLENDER_GLTF_PASS",r["meshes"],r["triangles_estimate"],len(data))
+          PY
+      - name: Produce two isolated ART-DIR-02 camera diagnostics (master unchanged)
+        run: |
+          python3 -m py_compile scripts/atlas-gateway-production/render_canonical_camera_candidates.py
+          blender --background "$RUNNER_TEMP/atlas-foyer-master/atlas-foyer-master.blend" --threads 2 \
+            --python scripts/atlas-gateway-production/render_canonical_camera_candidates.py \
+            -- --fit-json docs/atlas-gateway/ATLAS-CAMERA-FIT-CANONICAL-02.json \
+            --out "$RUNNER_TEMP/atlas-foyer-master/canonical-camera-candidates"
+          test -s "$RUNNER_TEMP/atlas-foyer-master/canonical-camera-candidates/camera_only-cycles.png"
+          test -s "$RUNNER_TEMP/atlas-foyer-master/canonical-camera-candidates/camera_and_layout-cycles.png"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser verification dependencies
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+      - name: Assemble actual Blender master into isolated Atlas preview
+        env:
+          ATLAS_GATEWAY_FOYER_PREVIEW: 'true'
+          ATLAS_FOYER_ART_MASTER: ${{ runner.temp }}/atlas-foyer-master/atlas-foyer-master.glb
+        run: |
+          mkdir -p out/curricolo out/esplora out/percorsi out/esperienze
+          for route in curricolo esplora percorsi esperienze; do
+            printf '%s\n' '<!doctype html><html lang="it"><title>Route sample</title></html>' > "out/$route/index.html"
+          done
+          node scripts/build-atlas-gateway-foyer.mjs out
+          node -e 'const d=require("./out/atrio/visual-manifest.json");if(!d.available||!d.sha256)process.exit(1)'
+      - name: Capture browser WebGL scene from original Blender GLB
+        env:
+          ATLAS_FOYER_EXPECT_ART: 'true'
+        run: node scripts/test-atlas-gateway-foyer-browser.mjs out "$RUNNER_TEMP/atlas-foyer-master/browser-evidence"
+      - name: Archive editable master and exported resources
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-gateway-visual-factory-master
+          path: ${{ runner.temp }}/atlas-foyer-master/
+          if-no-files-found: warn
+          retention-days: 14

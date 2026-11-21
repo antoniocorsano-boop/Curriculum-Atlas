@@ -1,0 +1,538 @@
+{
+  "schema": "atlas.gateway.arch04.construction-node-register/v1",
+  "date": "2026-11-21",
+  "status": "NODE_GEOMETRY_DESIGN__NOT_RENDERED_OR_APPROVED",
+  "architectural_project": "docs/atlas-gateway/ARCH-04-ARCHITECTURAL-GEOMETRY-PROJECT-01.json",
+  "explanation": "Detailed modeling connection conditions based on lab source; target dimensions proposal only, not certified civil engineering",
+  "units": "relative Blender units BU",
+  "joins": [
+    {
+      "id": "N-FLO-01",
+      "system": "ARCH_FLOOR",
+      "name": "Raccordo piano finito e sottofondo",
+      "lab_reading": {
+        "floor_center_z": -0.24,
+        "slab_thickness": 0.4,
+        "finished_level": -0.04
+      },
+      "target_design": {
+        "ideal_finish_z": 0,
+        "slab_solid_mesh": true,
+        "join_gap_max_bu": 0,
+        "action": "promote finish plane to zero in next geometry candidate; preserve original baseline as history; recalibrate contact shadows"
+      },
+      "dependent": [
+        "N-POR-02",
+        "N-POD-01",
+        "N-ROT-01"
+      ],
+      "test": "orthographic closeup: all bearing elements touch solid floor"
+    },
+    {
+      "id": "N-ROT-01",
+      "system": "ARCH_ROTUNDA",
+      "name": "Basamento della parete curva sul pavimento",
+      "lab_reading": {
+        "r_span": [
+          11.05,
+          11.85
+        ],
+        "z_span": [
+          0.02,
+          0.45
+        ],
+        "floor_top_z": -0.04
+      },
+      "target_design": {
+        "footing_band_radial": [
+          11.05,
+          11.85
+        ],
+        "bridge_z": "from floor top to .02",
+        "contact_in_section": true
+      },
+      "dependent": [
+        "N-FLO-01"
+      ],
+      "test": "nonfloating continuous radial shell plinth from floor"
+    },
+    {
+      "id": "N-GAL-01",
+      "system": "ARCH_GALLERIES",
+      "name": "Nodo pilastro-solaio a entrambi i livelli",
+      "lab_reading": {
+        "pier_axis_r": 11.52,
+        "pier_section_xy": [
+          0.25,
+          0.46
+        ],
+        "pier_spans": [
+          [
+            0.4,
+            2.43
+          ],
+          [
+            2.64,
+            5.18
+          ],
+          [
+            5.4,
+            7.03
+          ]
+        ],
+        "decks": [
+          [
+            2.45,
+            2.63
+          ],
+          [
+            5.2,
+            5.38
+          ]
+        ],
+        "vertical_gaps_bu": [
+          0.02,
+          0.01,
+          0.02,
+          0.02
+        ]
+      },
+      "target_design": {
+        "joint_sleeve_1_z": [
+          2.41,
+          2.66
+        ],
+        "joint_sleeve_2_z": [
+          5.16,
+          5.42
+        ],
+        "joint_encloses_pier": true,
+        "material_slots": [
+          "dark_metal",
+          "structural_plinth"
+        ],
+        "postprocess": "merge coincident faces and inspect no interpenetration into walkable gallery"
+      },
+      "dependent": [
+        "N-GAL-02",
+        "N-GAL-03"
+      ],
+      "test": "two section images show no visibly floating pier and a coherent connection"
+    },
+    {
+      "id": "N-GAL-02",
+      "system": "ARCH_GALLERIES",
+      "name": "Parapetto vetrato e canalina strutturale",
+      "lab_reading": {
+        "deck1_top": 2.63,
+        "glass1_bottom": 2.68,
+        "glass1_top": 3.34,
+        "handrail1_bottom": 3.35,
+        "deck2_top": 5.38,
+        "glass2_bottom": 5.43,
+        "glass2_top": 6.09,
+        "handrail2_bottom": 6.1
+      },
+      "target_design": {
+        "first_clamp_z": [
+          2.62,
+          2.71
+        ],
+        "second_clamp_z": [
+          5.37,
+          5.46
+        ],
+        "upper_channel_height_bu": 0.08,
+        "materials_separate": [
+          "glass",
+          "bronze",
+          "dark_metal"
+        ],
+        "repeated_mesh_shared": true
+      },
+      "dependent": [
+        "N-GAL-01"
+      ],
+      "test": "section and SIDE: glass physically seated, metal continuous with rail"
+    },
+    {
+      "id": "N-GAL-03",
+      "system": "ARCH_GALLERIES",
+      "name": "Nicchie, fondali e profondità delle logge",
+      "lab_reading": {
+        "guardrail_r": 10.13,
+        "pier_axis_r": 11.52,
+        "backplane_r_variants": [
+          11.94,
+          12.32
+        ]
+      },
+      "target_design": {
+        "min_real_depth_between_balustrade_and_backwall_bu": 1.8,
+        "staggered_niches": "alternate 11.94 and 12.32 as candidates",
+        "avoid_faux_grid": true,
+        "shared_module": "COL_GALLERY_BAY_ASSEMBLY"
+      },
+      "dependent": [
+        "N-GAL-01"
+      ],
+      "test": "SIDE camera demonstrates recess beyond railing; no plane overlaps"
+    },
+    {
+      "id": "N-OCU-01",
+      "system": "ARCH_OCULUS",
+      "name": "Sezione corona, luce integrata e bordo vetrato",
+      "lab_reading": {
+        "roof_inner_r": 6.85,
+        "roof_z_inner": 8.44,
+        "ring_r": [
+          6.76,
+          6.98
+        ],
+        "ring_z": [
+          8.22,
+          8.4
+        ],
+        "sky_z": 8.55,
+        "roof_glass_thickness": 0.045
+      },
+      "target_design": {
+        "cap_ring_return_z": [
+          8.36,
+          8.46
+        ],
+        "ring_and_glass_separate": true,
+        "emissive_channel": "later in VIS-01, leave a dedicated continuous groove",
+        "no_opaque_disc": true
+      },
+      "dependent": [
+        "N-OCU-02",
+        "N-OCU-03"
+      ],
+      "test": "cutaway shows real ring thickness, glass seating and sky opening"
+    },
+    {
+      "id": "N-OCU-02",
+      "system": "ARCH_OCULUS",
+      "name": "Raccordo copertura alla cornice alta",
+      "lab_reading": {
+        "roof_outer_r": 11.55,
+        "roof_outer_z": 7.27,
+        "cornice_r": [
+          11.16,
+          11.92
+        ],
+        "cornice_z": [
+          7.03,
+          7.21
+        ],
+        "vertical_gap_bu": 0.06
+      },
+      "target_design": {
+        "radial_bridge_r": [
+          11.5,
+          11.62
+        ],
+        "bridge_z": [
+          7.18,
+          7.32
+        ],
+        "real_mesh_junction": true
+      },
+      "dependent": [
+        "N-OCU-03"
+      ],
+      "test": "SE-01 and SE-02 show physically connecting roof and upper rim"
+    },
+    {
+      "id": "N-OCU-03",
+      "system": "ARCH_OCULUS",
+      "name": "Anello di ripartizione delle nervature",
+      "lab_reading": {
+        "primary_gallery_bays": 14,
+        "primary_pier_axes": 15,
+        "secondary_roof_panels": 18,
+        "outer_roof_radius": 11.55
+      },
+      "target_design": {
+        "distribution_ring_radius_bu": [
+          11.5,
+          11.64
+        ],
+        "height_z": [
+          7.18,
+          7.32
+        ],
+        "type": "separate continuous annular mesh",
+        "require_each_secondary_rib_to_touch_ring": true,
+        "visual_only_no_structural_compliance_claim": true
+      },
+      "dependent": [
+        "N-GAL-01",
+        "N-OCU-02"
+      ],
+      "test": "unconnected rib endpoint count 0 by geometry and SIDE review"
+    },
+    {
+      "id": "N-POR-01",
+      "system": "ARCH_PORTALS",
+      "name": "Telaio master del portale, stratigrafia",
+      "lab_reading": {
+        "frame_local_whd": [
+          3.16,
+          5.04,
+          0.2
+        ],
+        "frame_corner_radius": 0.38,
+        "back_local_whd": [
+          2.99,
+          4.85,
+          0.12
+        ],
+        "glass_local_whd": [
+          2.79,
+          4.6,
+          0.055
+        ],
+        "rounded_rim_local_wh": [
+          3.07,
+          4.94
+        ],
+        "root_scale": [
+          1.2,
+          1,
+          1
+        ]
+      },
+      "target_design": {
+        "one_shared_master_mesh_for_four": true,
+        "curved_corners_nonzero_radius": true,
+        "glass_frame_distinct_material_sockets": true,
+        "graphics_mounting_independent": true
+      },
+      "dependent": [
+        "N-POR-02",
+        "N-POR-03"
+      ],
+      "test": "identical topology and thickness on four portals, no zfighting"
+    },
+    {
+      "id": "N-POR-02",
+      "system": "ARCH_PORTALS",
+      "name": "Appoggio dei quattro portali sulla pavimentazione",
+      "lab_reading": {
+        "base_center_z": 0.25,
+        "base_height": 0.28,
+        "base_bottom_z": 0.11,
+        "floor_top_z": -0.04,
+        "unsupported_gap_bu": 0.15
+      },
+      "target_design": {
+        "foot_support_from_z": "target floor finished level -> lowest portal plinth underside",
+        "support_has_solid_volume": true,
+        "finish_z_to_reconcile": 0,
+        "avoid_monolithic_platform": true
+      },
+      "dependent": [
+        "N-FLO-01",
+        "N-POR-01"
+      ],
+      "test": "no unsupported portals in 5 camera views and section"
+    },
+    {
+      "id": "N-POR-03",
+      "system": "ARCH_PORTALS",
+      "name": "Posizionamento e orientamento sull'arco",
+      "lab_reading": {
+        "circle_center_y": -6.3836,
+        "circle_r": 9.144182903,
+        "centers_x": [
+          -5.95,
+          -2.4,
+          2.4,
+          5.95
+        ],
+        "existing_yaw_rad": [
+          -0.29,
+          -0.11,
+          0.11,
+          0.29
+        ]
+      },
+      "target_design": {
+        "enforce_paired_symmetry": true,
+        "test_tangent_yaw_candidates": true,
+        "keep_original_visible_bbox": true,
+        "retain_titles_same_strings": true,
+        "fit_both_base_and_top_projection": true
+      },
+      "dependent": [
+        "N-POR-01",
+        "N-CAM-01"
+      ],
+      "test": "circular residual <1e-4 BU, bbox MAE and no mesh collision"
+    },
+    {
+      "id": "N-POD-01",
+      "system": "ATLAS_PODIUM",
+      "name": "Supporto reale calotta/anelli/pavimento",
+      "lab_reading": {
+        "floor_top_z": -0.04,
+        "outer_ring_center_z": 0.22,
+        "outer_ring_half_height": 0.08,
+        "outer_ring_bottom_z": 0.14,
+        "unsupported_gap_bu": 0.18,
+        "cap_base_z": 0.58
+      },
+      "target_design": {
+        "support_between_floor_and_outer_ring": true,
+        "elliptical_continuous_shell": true,
+        "transition_to_cap_base_z": 0.58,
+        "materials_independent": true
+      },
+      "dependent": [
+        "N-FLO-01",
+        "N-POD-02",
+        "N-POD-03"
+      ],
+      "test": "orthographic section shows closed solid contact, no floating ring"
+    },
+    {
+      "id": "N-POD-02",
+      "system": "ATLAS_PODIUM",
+      "name": "Sezione tre profili ellittici concentrici",
+      "lab_reading": {
+        "rings": [
+          [
+            4.89,
+            3.13,
+            0.22
+          ],
+          [
+            4.42,
+            2.85,
+            0.44
+          ],
+          [
+            4.37,
+            2.8,
+            0.54
+          ]
+        ],
+        "cap_semi_axes": [
+          3.58,
+          2.38
+        ],
+        "cap_height": 1.59
+      },
+      "target_design": {
+        "continuous_curves": true,
+        "metal_separate_from_emissive_mesh": true,
+        "avoid_zfighting": true,
+        "show_gold_edge_not_a_glowing_pillow": true
+      },
+      "dependent": [
+        "N-POD-01"
+      ],
+      "test": "rings closed, nested, specular highlights from VIS-01 unaffected by topology"
+    },
+    {
+      "id": "N-POD-03",
+      "system": "ATLAS_PODIUM",
+      "name": "Marchio ATLAS aderente alla calotta",
+      "lab_reading": {
+        "uv_grid": [
+          64,
+          18
+        ],
+        "logo_height_z": [
+          0.84,
+          1.48
+        ],
+        "logo_halfwidth_x": 1.88,
+        "original_logo_sha256": "0d3d266b7a889f590c900f49ec3bce43bdc1bb48685b4bdf9ff883420dd46f86"
+      },
+      "target_design": {
+        "projection": "front ellipse y=-2−2.38√(1−(x/3.58)²−((z−.58)/1.59)²)−.018",
+        "preserve_uv_and_texture_sha": true,
+        "not_new_font": true
+      },
+      "dependent": [
+        "N-POD-01"
+      ],
+      "test": "no clipping or texture loss after geometry adjustment"
+    },
+    {
+      "id": "N-CAM-01",
+      "system": "ARCH_CAMERA",
+      "name": "Calibrazione ottica integrata di tutta la scena",
+      "lab_reading": {
+        "hero_location": [
+          0,
+          -15.8,
+          3.38
+        ],
+        "hero_target": [
+          0,
+          2.2,
+          2.05
+        ],
+        "lens_mm": 30,
+        "prior_portal_mae_norm_arch03": 0.0119,
+        "prior_portal_mae_norm_arch04": 0.01248
+      },
+      "target_design": {
+        "image_targets": [
+          "4 portal visible bboxes",
+          "visible skylight area not full disk",
+          "podium cap and rings",
+          "two mezzanine arc silhouettes"
+        ],
+        "method": "multiobjective constrained fit with human art direction",
+        "keep_cameras": [
+          "HERO",
+          "SIDE",
+          "MOBILE",
+          "MOBILE_LEFT",
+          "MOBILE_RIGHT"
+        ],
+        "never_approve_with_bbox_only": true
+      },
+      "dependent": [
+        "N-OCU-01",
+        "N-POR-03",
+        "N-POD-01"
+      ],
+      "test": "HERO qualitative + quantitative fit and side/mobile valid"
+    },
+    {
+      "id": "N-ENTRY-01",
+      "system": "ARCH_ROTUNDA",
+      "name": "Settore anteriore ed ingresso fisico",
+      "lab_reading": {
+        "observed_in_reference": false,
+        "diagnostic_front_roof_open": true,
+        "source_view": "frontal synthetic hero"
+      },
+      "target_design": {
+        "design_status": "REQUIRES_DESIGN_DECISION",
+        "opening_width_bu": null,
+        "opening_height_bu": null,
+        "front_retaining_geometry": null,
+        "requirements": [
+          "navigable front passage",
+          "no foreground opaque ceiling occluding HERO",
+          "physical depth from side views",
+          "consistent circular architecture"
+        ],
+        "prohibition": "do not invent exact front structure from photo"
+      },
+      "dependent": [
+        "N-ROT-01",
+        "N-CAM-01"
+      ],
+      "test": "documented alternative with 5-view comparison and chosen solution"
+    }
+  ],
+  "release": false
+}

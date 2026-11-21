@@ -1,0 +1,87 @@
+name: "ATLAS ART-DIR-02 — candidate architettonica ARCH-01"
+# Independent 3D renders for visual approval, no publication.
+on:
+  pull_request:
+    branches: [work/atlas-library-web-delivery]
+    paths:
+      - "scripts/atlas-gateway-production/rebuild_architecture_01.py"
+      - "scripts/atlas-gateway-foyer/blender_master.py"
+      - ".github/workflows/atlas-art-dir-02-architecture.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: atlas-arch01-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  compare-architecture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify independent Blender reconstruction source
+        run: |
+          python3 -m py_compile scripts/atlas-gateway-foyer/blender_master.py
+          python3 -m py_compile scripts/atlas-gateway-production/rebuild_architecture_01.py
+          python3 - <<'PY'
+          from pathlib import Path
+          src=Path('scripts/atlas-gateway-production/rebuild_architecture_01.py').read_text()
+          assert 'CANONICAL_SHA = "a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"' in src
+          for phrase in ('ATLAS ARCH01 • low elliptical convex canopy',
+                         'ARCH01 • genuine glass balustrade',
+                         'OCULUS ARCH01 • visible open sky',
+                         'CAM_HERO_ARCH01','CAM_SIDE_ARCH01','CAM_MOBILE_ARCH01'):
+              assert phrase in src,phrase
+          PY
+      - name: Install open-source Blender
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+          blender --version | head -2
+      - name: Produce baseline master unchanged
+        run: |
+          mkdir -p "$RUNNER_TEMP/atlas-arch01/baseline" "$RUNNER_TEMP/atlas-arch01/candidate"
+          blender --background --factory-startup --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-foyer/blender_master.py -- \
+            --out "$RUNNER_TEMP/atlas-arch01/baseline"
+      - name: Rebuild geometry and render actual HERO SIDE MOBILE
+        run: |
+          blender --background "$RUNNER_TEMP/atlas-arch01/baseline/atlas-foyer-master.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/rebuild_architecture_01.py \
+            -- --out "$RUNNER_TEMP/atlas-arch01/candidate"
+      - name: Verify real independent master and non-approval
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json,os
+          p=Path(os.environ['RUNNER_TEMP'])/'atlas-arch01'
+          base=p/'baseline'/'atlas-foyer-master.blend'
+          candidate=p/'candidate'/'atlas-foyer-arch01-candidate.blend'
+          r=json.loads((p/'candidate'/'architecture-receipt.json').read_text())
+          h=lambda q:hashlib.sha256(q.read_bytes()).hexdigest()
+          assert base.is_file() and candidate.is_file()
+          assert h(base)==r['original_master_sha256']
+          assert h(candidate)==r['candidate_master_sha256']
+          assert h(base)!=h(candidate)
+          assert r['status']=='GEOMETRY_CANDIDATE_NOT_ART_APPROVED'
+          assert r['original_master_preserved'] and r['four_original_portals_preserved']
+          assert r['removed_legacy_meshes']>=12
+          assert r['architecture']['gallery_bays']==20
+          assert r['architecture']['oculus_inner_radius']>5.5
+          assert r['architecture']['podium_ellipse_semiaxes'][0]>4
+          assert not r['runtime_exported'] and not r['student_authorized'] and not r['public_release']
+          assert set(r['renders'])=={'hero','side','mobile'}
+          for name,entry in r['renders'].items():
+              q=p/'candidate'/entry['file']
+              assert q.is_file() and q.stat().st_size>5000 and h(q)==entry['sha256']
+          print('ATLAS ARCH-01 ACTUAL BLENDER GEOMETRY VERIFIED — ART NOT APPROVED')
+          PY
+      - name: Preserve baseline and independent candidate for artistic review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-architecture-candidate-${{ github.run_number }}
+          path: ${{ runner.temp }}/atlas-arch01/
+          retention-days: 30
+          if-no-files-found: warn

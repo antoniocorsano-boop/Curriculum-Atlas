@@ -1,0 +1,94 @@
+{
+  "schema": "atlas.gateway.camera-prefit/v1",
+  "status": "AUXILIARY_REFERENCE_ONLY_DO_NOT_APPLY_TO_MASTER",
+  "date": "2026-11-21",
+  "repository_branch": "work/atlas-gateway-01-foyer",
+  "source": {
+    "file_name": "1000089007.png",
+    "sha256": "b3bb8bb9c184acee97f479c522669059602c0797e4d8e7033a0627fc88ed0e81",
+    "width": 1536,
+    "height": 960,
+    "role": "riferimento complementare per i 4 portali; NON PNG ART-DIR-02",
+    "source_bytes_sha256_verified": true,
+    "original_drive": "https://drive.google.com/file/d/1kD4mwQ30zWeP8dMmM_HKtOyVRF4eGsvm/view?usp=drivesdk"
+  },
+  "canonical_art_dir_02": {
+    "expected_name": "atrio_futuristico_atlas_della_conoscenza.png",
+    "expected_sha256": "7b3ffb9a355b89057acea02489020ad43d871e10b6cf5bbb29f8769ff3073336",
+    "expected_width": 1672,
+    "expected_height": 941,
+    "verified_accessible_source": false,
+    "status": "P0-REF OPEN"
+  },
+  "input_landmarks_path": "docs/atlas-gateway/PORTALS-LIGHT-01-REFERENCE-LANDMARKS.json",
+  "method": {
+    "projection": "Blender Z-up pinhole projection with 36mm sensor width",
+    "optimizer": "deterministic pure Python Nelder Mead, bounding-box residuals and soft priors",
+    "inputs": [
+      "4 portal bounding boxes in normalized image coordinates",
+      "4 named portal transforms read from portal-contract.mjs",
+      "Blender nominal portal width 3.16 height 5.04 world units"
+    ],
+    "parameters": [
+      "camera_y",
+      "camera_z",
+      "target_z",
+      "lens_mm",
+      "portal_x_scale",
+      "portal_width_scale"
+    ],
+    "restrictions": [
+      "diagnostic fit, not exact historical camera recovery",
+      "do not apply auxiliary settings to the published or canonical Blender master"
+    ]
+  },
+  "original": {
+    "parameters": {
+      "camera_y": -15.5,
+      "camera_z": 4.6,
+      "target_z": 3,
+      "lens_mm": 29,
+      "portal_x_scale": 1,
+      "portal_width_scale": 1
+    },
+    "rms_px": 116.26,
+    "max_error_px": 202.15
+  },
+  "camera_only": {
+    "parameters": {
+      "camera_y": -9.71012,
+      "camera_z": 5.24,
+      "target_z": 1.66033,
+      "lens_mm": 24.41594,
+      "portal_x_scale": 1,
+      "portal_width_scale": 1
+    },
+    "rms_px": 42.07,
+    "max_error_px": 65.6
+  },
+  "camera_and_layout_candidate": {
+    "parameters": {
+      "camera_y": -22.03197,
+      "camera_z": 2.5,
+      "target_z": 1.88261,
+      "lens_mm": 44.73635,
+      "portal_x_scale": 1.31363,
+      "portal_width_scale": 1.24843
+    },
+    "rms_px": 15.84,
+    "max_error_px": 33.34,
+    "changes_applied_to_blender": false,
+    "limitations": "The monocular silhouette fit underdetermines camera scale and portal geometry."
+  },
+  "verified_production": {
+    "python_determinism": "PASS",
+    "image_sha256_match": "PASS",
+    "visual_overlay": "GENERATED",
+    "art_dir_02_fitted": "NOT TESTED",
+    "approval": "NOT GRANTED"
+  },
+  "files": {
+    "complete_reproducible_archive": "https://drive.google.com/file/d/1zHk2BRTDntn15M8jk-YcQu8FJ3lccpoa/view?usp=drivesdk",
+    "comparison_overlay": "https://drive.google.com/file/d/1t5KGhnVhUxNAdWFSd59aH7ZlIEVkslYb/view?usp=drivesdk"
+  }
+}

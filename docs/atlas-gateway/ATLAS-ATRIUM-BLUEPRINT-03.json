@@ -1,0 +1,301 @@
+{
+  "schema": "atlas.atrium.blueprint/v1",
+  "id": "ATLAS-ATRIUM-BLUEPRINT-03-EXPERIMENTAL",
+  "created": "2026-11-20",
+  "status": "EXPERIMENTAL_ARCHITECTURAL_REAR_GALLERY_OPEN_ENTRANCE_NOT_CANONICAL_IMAGE_FITTED",
+  "original_seed": "ATLAS-COMPOSER-SEED-01.json",
+  "geometric_reference": "ATLAS-GEO-SPEC-01.md",
+  "design_reference": "ATLAS-PROMPT-ART-01.md",
+  "art_direction": "ATLAS-GATEWAY-ART-DIRECTION-02.md",
+  "reference": {
+    "name": "atrio_futuristico_atlas_della_conoscenza.png",
+    "sha256": "7b3ffb9a355b89057acea02489020ad43d871e10b6cf5bbb29f8769ff3073336",
+    "canonical_file_in_production": false,
+    "pixel_landmarks_measured": false
+  },
+  "coordinate_system": {
+    "origin": "center of rotunda at finished-floor elevation",
+    "X": "positive to the viewer's right",
+    "Y": "positive to the rear of the atrium; viewer at negative Y",
+    "Z": "vertical upward",
+    "units": "normalized R (rotunda radius), not meters"
+  },
+  "dimensions_R": {
+    "rotunda_outer_radius": 1,
+    "gallery_inner_radius": 0.82,
+    "wall_shell_thickness": 0.06,
+    "levels_z": [
+      0.42,
+      0.78
+    ],
+    "visible_top_z": 1.27,
+    "skylight_center": [
+      0,
+      0,
+      1.35
+    ],
+    "skylight_radius": 0.55,
+    "skylight_shape_3d": "candidate_circle_not_yet_fitted",
+    "platform_radius": 0.36,
+    "platform_top_z": 0.03,
+    "podium_major_semiaxis_x": 0.275,
+    "podium_minor_semiaxis_y": 0.225,
+    "podium_top_z": 0.18,
+    "portal_radius": 0.64,
+    "portal_angles_from_rear_y_deg": [
+      -42,
+      -14,
+      14,
+      42
+    ],
+    "portal_width": 0.18,
+    "portal_height": 0.6,
+    "portal_thickness": 0.02,
+    "portal_base_z": 0.03,
+    "roof_edge_z_R": 1.05
+  },
+  "portals": [
+    {
+      "id": "curricolo",
+      "name": "Curricolo",
+      "subtitle": "Struttura e obiettivi",
+      "illustration": "piani traslucidi sovrapposti"
+    },
+    {
+      "id": "esplora",
+      "name": "Esplora",
+      "subtitle": "Relazioni e connessioni",
+      "illustration": "rete tridimensionale di nodi"
+    },
+    {
+      "id": "percorsi",
+      "name": "Percorsi",
+      "subtitle": "Itinerari formativi",
+      "illustration": "scala luminosa crescente"
+    },
+    {
+      "id": "esperienze",
+      "name": "Esperienze",
+      "subtitle": "Attività e mondi",
+      "illustration": "pianeta blu e tracciati digitali"
+    }
+  ],
+  "cameras_R": {
+    "CAM_HERO": {
+      "position": [
+        0,
+        -1.32,
+        0.18
+      ],
+      "target": [
+        0,
+        0.2,
+        0.66
+      ],
+      "horizontal_fov_deg": 80,
+      "ratio": [
+        16,
+        9
+      ],
+      "purpose": "entry perspective with open sky and dominant portal facade; non-fitted"
+    },
+    "CAM_SIDE": {
+      "position": [
+        0.56,
+        -0.77,
+        0.34
+      ],
+      "target": [
+        0,
+        0.14,
+        0.49
+      ],
+      "horizontal_fov_deg": 82,
+      "ratio": [
+        16,
+        9
+      ],
+      "purpose": "parallax and true volume checks, within entrance"
+    },
+    "CAM_MOBILE": {
+      "position": [
+        0,
+        -1.16,
+        0.26
+      ],
+      "target": [
+        0,
+        0.3,
+        0.59
+      ],
+      "horizontal_fov_deg": 58,
+      "ratio": [
+        9,
+        16
+      ],
+      "purpose": "independent portrait view with readable portali; non-fitted"
+    }
+  },
+  "overrides_from_seed": {
+    "portal_radius": {
+      "old": 0.46,
+      "new": 0.64,
+      "rationale": "prevent portal crowding in the initial concept, and keep rear arc passage"
+    },
+    "portal_angles_deg": {
+      "old": [
+        -34,
+        -12,
+        12,
+        34
+      ],
+      "new": [
+        -42,
+        -14,
+        14,
+        42
+      ],
+      "rationale": "provide visible separation for four panels, hypothetical pending real image matching"
+    },
+    "portal_width": {
+      "old": 0.18,
+      "new": 0.16,
+      "rationale": "retain safe modeled clearances between adjacent panels"
+    },
+    "hero_camera": {
+      "old": [
+        0,
+        -1.15,
+        0.18
+      ],
+      "new": [
+        0,
+        -1.9,
+        0.25
+      ],
+      "rationale": "provide wider vertical room for oculus and platform, pending actual render fitting"
+    },
+    "podium_semiaxes": {
+      "old": "not established",
+      "new": [
+        0.22,
+        0.18
+      ],
+      "rationale": "candidate low elliptical convex footprint; not measured"
+    }
+  },
+  "deliverables": {
+    "drawing": "ATLAS-ATRIUM-BLUEPRINT-01.svg",
+    "report": "ATLAS-ATRIUM-BLUEPRINT-01-measures.json",
+    "generator": "scripts/atlas-gateway-production/render-blueprint.py"
+  },
+  "limits": [
+    "Not reverse-engineered from the final four-portal image; dimensional values are hypotheses",
+    "Cannot assert exact image-space alignment, photogrammetric reconstruction or real-world architectural scale",
+    "An SVG is a 2D technical proposal, not a rendered Blender .blend or a navigable 3D scene",
+    "Preserve original ATLAS-COMPOSER-SEED-01, record all local overrides in this versioned proposal"
+  ],
+  "previous_blueprint": "ATLAS-ATRIUM-BLUEPRINT-02.json",
+  "revisions_vs_blueprint_01": [
+    {
+      "parameter": "skylight_radius",
+      "from": 0.34,
+      "to": 0.53,
+      "reason": "Oculus insufficiently visible under dark roof in actual 3D view"
+    },
+    {
+      "parameter": "visible_top_z",
+      "from": 1.35,
+      "to": 1.28,
+      "reason": "Rebalance roof profile; experimental"
+    },
+    {
+      "parameter": "portal_height",
+      "from": 0.46,
+      "to": 0.6,
+      "reason": "Portals appear underscaled in HERO view"
+    },
+    {
+      "parameter": "portal_width",
+      "from": 0.16,
+      "to": 0.18,
+      "reason": "Portals appear underscaled in HERO view"
+    },
+    {
+      "parameter": "platform_radius",
+      "from": 0.3,
+      "to": 0.36,
+      "reason": "Central stage needs more presence"
+    },
+    {
+      "parameter": "podium_major_semiaxis_x",
+      "from": 0.22,
+      "to": 0.275,
+      "reason": "Central mass underscaled"
+    },
+    {
+      "parameter": "podium_minor_semiaxis_y",
+      "from": 0.18,
+      "to": 0.225,
+      "reason": "Preserve elliptical proportions"
+    },
+    {
+      "parameter": "podium_top_z",
+      "from": 0.14,
+      "to": 0.18,
+      "reason": "Increase mass visibility"
+    },
+    {
+      "parameter": "CAM_HERO.target_z",
+      "from": 0.61,
+      "to": 0.76,
+      "reason": "Better oculus exposure without cropping floor"
+    },
+    {
+      "parameter": "CAM_SIDE",
+      "reason": "Place camera inside rotunda, away from side wall obstruction"
+    },
+    {
+      "parameter": "CAM_MOBILE",
+      "reason": "Correct extreme vertical FOV to usable portrait"
+    }
+  ],
+  "approval": "NOT APPROVED - calibration against canonical ART-DIR-02 still blocked",
+  "roof_gallery_design": {
+    "mode": "rear_arcs_open_front_entry",
+    "rear_start_deg": -130,
+    "rear_end_deg": 130,
+    "roof_support_angle_start_deg": -25,
+    "roof_support_angle_end_deg": 205,
+    "roof_shell_front_opening_deg": 130,
+    "reason": "remove foreground opaque overhang occluding upper stage; retain true rear volume and accessible entry; experimental until matched to image",
+    "is_physically_complete_360_enclosure": false,
+    "current_status": "ARCHITECTURAL_CANDIDATE_NOT_APPROVED"
+  },
+  "revisions_vs_blueprint_02": [
+    {
+      "parameter": "foremost gallery and opaque roof",
+      "from": "full 360 degree gallery ring and roof",
+      "to": "rear architectural sector with open front entrance",
+      "reason": "prevent enormous dark ring across image, show skylight and rear volume; validate from side"
+    },
+    {
+      "parameter": "CAM_HERO",
+      "from": "-1.90 R / hFOV 70",
+      "to": "-1.32 R / hFOV 80",
+      "reason": "reduce overhead occlusion from outer entrance camera"
+    },
+    {
+      "parameter": "CAM_MOBILE",
+      "from": "-1.30 R / hFOV 50",
+      "to": "-1.16 R / hFOV 58",
+      "reason": "show roof and core in one composition"
+    },
+    {
+      "parameter": "skylight_radius",
+      "from": 0.53,
+      "to": 0.55,
+      "reason": "small experimental change to aperture frame"
+    }
+  ]
+}

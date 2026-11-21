@@ -1,0 +1,98 @@
+name: "ATLAS ART-PROOF-01B — Prova artistica Blender Cycles"
+# Independent proof of visual feasibility. No runtime upload or public publishing.
+on:
+  pull_request:
+    branches: [work/atlas-library-web-delivery]
+    paths:
+      - "scripts/atlas-gateway-production/art_proof_01_cinematic.py"
+      - "scripts/atlas-gateway-production/build_architecture_04_geometry.py"
+      - ".github/workflows/atlas-art-proof-01b.yml"
+      - "docs/atlas-gateway/ATLAS-ART-PROOF-01-DECISION.json"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: atlas-art-proof-01b-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  cinematic-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate scope and script syntax
+        run: |
+          python3 -m py_compile scripts/atlas-gateway-foyer/blender_master.py \
+            scripts/atlas-gateway-production/build_architecture_04_geometry.py \
+            scripts/atlas-gateway-production/art_proof_01_cinematic.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          dec=json.loads(Path("docs/atlas-gateway/ATLAS-ART-PROOF-01-DECISION.json").read_text())
+          code=Path("scripts/atlas-gateway-production/art_proof_01_cinematic.py").read_text()
+          assert dec["authority"]["canonical_image"]["sha256"] in code
+          assert "source=bpy.data.filepath" in code
+          assert "ATLAS ART-PROOF-01/B" in code
+          assert "ARTISTIC_FEASIBILITY_CANDIDATE__HUMAN_DECISION_REQUIRED" in code
+          assert '("hero",hero,1280,720,32)' in code
+          assert '("oblique",oblique,1024,576,24)' in code
+          assert dec["decision_gate"]["no_automatic_3d_promotion"]
+          print("ART-PROOF isolated feasibility gate: no deploy")
+          PY
+      - name: Install Blender CPU for headless Cycles
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+          blender --version | head -2
+      - name: Regenerate unchanged baseline geometry
+        run: |
+          mkdir -p "$RUNNER_TEMP/art-proof/baseline" "$RUNNER_TEMP/art-proof/geometry" "$RUNNER_TEMP/art-proof/art"
+          blender -b --factory-startup --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-foyer/blender_master.py -- \
+            --out "$RUNNER_TEMP/art-proof/baseline"
+      - name: Assemble ARCH-04B geometry, preserving previous art candidate
+        run: |
+          blender -b "$RUNNER_TEMP/art-proof/baseline/atlas-foyer-master.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/build_architecture_04_geometry.py \
+            -- --out "$RUNNER_TEMP/art-proof/geometry" --geometry-only
+      - name: Render actual cinematic HERO and oblique 3D
+        run: |
+          blender -b "$RUNNER_TEMP/art-proof/geometry/atlas-foyer-arch04b-geometric-candidate.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/art_proof_01_cinematic.py \
+            -- --out "$RUNNER_TEMP/art-proof/art"
+      - name: Check evidence, hashes and prohibited release
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,os,json
+          b=Path(os.environ["RUNNER_TEMP"])/"art-proof"
+          r=json.loads((b/"art"/"art-proof-receipt.json").read_text())
+          h=lambda f:hashlib.sha256(f.read_bytes()).hexdigest()
+          a=b/"geometry"/"atlas-foyer-arch04b-geometric-candidate.blend"
+          final=b/"art"/"atlas-art-proof-01b-cinematic.blend"
+          assert r["input_arch04b_blend_sha256"]==h(a)
+          assert r["candidate_blend_sha256"]==h(final)
+          assert r["candidate_blend_sha256"] !=r["input_arch04b_blend_sha256"]
+          assert r["status"]=="ARTISTIC_FEASIBILITY_CANDIDATE__HUMAN_DECISION_REQUIRED"
+          assert r["original_arch04b_preserved"] and r["logo_preserved"]
+          assert len(r["four_physical_portals"])==4
+          assert r["images_are_photographed_3d_not_reference_plane"]
+          assert set(r["renders"])=={"hero","oblique"}
+          for item in r["renders"].values():
+              p=b/"art"/item["file"]
+              assert p.exists() and p.stat().st_size>9000
+              assert item["sha256"]==h(p)
+              assert len(item["oculus_projected_bbox_norm"])==4
+          assert not r["web_exported"] and not r["public_release"] and not r["student_authorized"]
+          print("CYCLES ART PROOF 2-VIEW PRODUCTION VERIFIED — ARTISTIC DECISION STILL OPEN")
+          PY
+      - name: Preserve editable Blender and two image outputs, even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-proof-01b-${{ github.run_number }}
+          path: ${{ runner.temp }}/art-proof/
+          retention-days: 30
+          if-no-files-found: warn
