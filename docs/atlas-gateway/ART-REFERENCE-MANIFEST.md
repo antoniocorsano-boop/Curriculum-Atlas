@@ -1,5 +1,21 @@
 # ATLAS ART-DIR-02 — Registro dell'immagine di riferimento
 
+## Decisione canonica vigente — 21 novembre 2026
+
+**STATO ATTUALE: ARCHIVIATO E IDENTIFICATO.** Per decisione esplicita dell'ideatore, l'allegato del 21/11/2026 costituisce da ora la **sorgente originale canonica operativa di ART-DIR-02**: file denominato nella conversazione `1000032808.png`, ma in formato **JPEG 1536 × 864**, **224.117 byte**, SHA-256 dei byte ricevuti `a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe`. Non convertirlo in PNG per simulare un'identità precedente.
+
+- [Originale archiviato e metadati riletti in Google Drive](https://drive.google.com/file/d/1vSC_ynSxAF-pxR071TiKjEE0OtaFjXCn/view?usp=drivesdk)
+- [Manifest canonico verificabile](./ART-REFERENCE-CANONICAL-2026-11-21.json)
+- [Landmark geometrici sull'immagine originale scelta](./ART-DIR-02-CANONICAL-LANDMARKS.json) e [tavola annotata Drive](https://drive.google.com/file/d/1pIQnPjaPV7m4mOUdK_93vMYZJZ2ttDAs/view?usp=drivesdk)
+- [Calibrazione matematica diagnostica](./ATLAS-CAMERA-FIT-CANONICAL-02.json) e [pacchetto di ricostruzione completo](https://drive.google.com/file/d/1qCcL9ioPFoE33eFx0OdPrnNezmmoF-EO/view?usp=drivesdk)
+
+**Il precedente PNG 1672×941 e SHA-256 `7b3ffb9a...` non è più un prerequisito produttivo né la fonte di verità attiva.** Il testo cronologico qui sotto descrive lo stato anteriore a questa decisione e resta conservato esclusivamente per provenienza, senza riaprire P0-REF. La copia Drive dell'immagine è stata verificata nei metadati (identificativo, formato e numero di byte), non mediante ricalcolo dell'SHA dopo il caricamento. **P0-REF (identificazione e archiviazione della sorgente)=CHIUSO; acquisizione dei byte nella procedura automatica CI=ancora da predisporre.** La calibrazione geometrica definitiva e l'approvazione artistica restano distinte.
+
+---
+
+### Cronologia delle identificazioni precedenti (non più vincolanti)
+
+
 **Stato:** identità e metadati verificati, **file binario da depositare** in una posizione permanente e accessibile al progetto.
 
 - **Titolo:** Atrio Atlas — immagine artistica di riferimento approvata nella conversazione del 20 novembre 2026.
