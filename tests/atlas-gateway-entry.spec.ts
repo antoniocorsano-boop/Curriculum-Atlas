@@ -24,6 +24,10 @@ test("Desktop: l'intera finestra è occupata dall'atrio e i portali sono navigab
   expect(await page.locator(".entry-logo-globe").count()).toBe(0);
   // The original art already contains branding on the convex podium and the CTA.
   await expect(page.locator('[class*="podiumScreen"], [class*="podiumEmblem"]')).toHaveCount(0);
+  const approvedBrand = page.locator('img[src*="atlas-logo-approved-01.svg"]');
+  await expect(approvedBrand).toBeVisible();
+  await expect(approvedBrand).toHaveAttribute("alt", "ATLAS");
+  await expect(approvedBrand).toHaveJSProperty("naturalWidth", 1312);
   const photo = page.locator('img[src*="plate-prova.jpg"]');
   await expect(photo).toBeVisible();
   expect(await photo.evaluate((e) => (e as HTMLImageElement).naturalWidth)).toBeGreaterThan(1000);
@@ -47,6 +51,7 @@ test("Telefono verticale: atrio unitario 9:16 con quattro portali cliccabili sul
   await page.goto("/");
   await expect(page.locator("#atlas-entry-root")).toBeVisible();
   await expect(page.locator('img[src*="mobile-atrium-01.png"]')).toBeVisible();
+  await expect(page.locator('img[src*="atlas-logo-approved-01.svg"]')).toBeVisible();
   const art = page.locator('img[src*="mobile-atrium-01.png"]');
   expect(await art.evaluate(e => (e as HTMLImageElement).naturalWidth)).toBe(948);
   await expect(page.locator('[data-portal="curricolo"]')).toBeHidden();
