@@ -4,6 +4,7 @@ on:
     branches: [work/atlas-library-web-delivery]
     paths:
       - "docs/atlas-gateway/ARCH-04-ARCHITECTURAL-GEOMETRY-PROJECT-01.json"
+      - "docs/atlas-gateway/ARCH-04-CONSTRUCTION-JOINTS-01.json"
       - "docs/atlas-gateway/ARCH-04-ARCHITECTURAL-GEOMETRY-PROJECT-01.md"
       - "docs/atlas-gateway/drawings/ARCH-04-*"
       - "docs/atlas-gateway/ATLAS-GATEWAY-LOCKED-DELIVERY-SEQUENCE-01.md"
