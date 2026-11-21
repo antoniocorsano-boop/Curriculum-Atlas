@@ -25,6 +25,14 @@ assert.match(js,/camera-reset/);
 assert.match(js,/fallback\(/);
 assert.match(css,/@media\(max-width:650px\)/);
 assert.match(css,/focus-visible/);
+assert.match(js,/portalTextureCache/,"four portal graphics share a cached authored design");
+assert.match(js,/labelTexture\\(portal,true\\)/,"Blender GLB signage must be transparent");
+assert.ok(!js.includes("ctx.fillText(line,"),"no descriptive subtitles inside portal surfaces");
+assert.ok(!js.includes("new T.Points(starsGeo"),"no floating star effects");
+assert.ok(!js.includes("new T.ConeGeometry(2.25,5.6"),"no fake volumetric light cones");
+assert.match(css,/grid-template-columns:repeat\\(4,minmax\\(0,1fr\\)\\)/,"compact four-link navigation");
+assert.match(css,/\\.destinations span\\{display:none\\}/,"subtitle labels not repeatedly displayed");
+
 assert.ok(!/https?:\/\//.test(html+js+css),"no external resources");
 assert.ok(!/\/biblioteca\//.test(html+js+css),"foyer is not the library");
 console.log("ATLAS_GATEWAY_FOYER_CONTRACT_PASS",PORTALS.length);
