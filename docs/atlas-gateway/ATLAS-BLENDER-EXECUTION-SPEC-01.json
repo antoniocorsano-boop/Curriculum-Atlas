@@ -1,0 +1,1060 @@
+{
+  "schema": "atlas.gateway.blender.execution-contract/v1",
+  "title": "ATLAS — ARCH-04 / VIS-01 · Specifica esecutiva Blender",
+  "state": "DESIGN_SPECIFICATION__NOT_RENDERED__NOT_APPROVED",
+  "date": "2026-11-21",
+  "reference": {
+    "path": "docs/atlas-gateway/ART-REFERENCE-CANONICAL-2026-11-21.json",
+    "drive_id": "1vSC_ynSxAF-pxR071TiKjEE0OtaFjXCn",
+    "sha256": "a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe",
+    "px": [
+      1536,
+      864
+    ],
+    "source_landmarks": "docs/atlas-gateway/ART-DIR-02-CANONICAL-LANDMARKS.json"
+  },
+  "hierarchy": {
+    "authority": [
+      "ART-DIR-02 canonical JPEG",
+      "ART-DIR-02 approved art-direction",
+      "user architectural clarifications",
+      "this initial unapproved parametric specification"
+    ],
+    "approximation_policy": "an image only defines 2D evidence; 3D distances, optics, light powers and hex values below are candidate settings"
+  },
+  "coordinate_system": {
+    "axis": "X right, Y depth positive toward rear, Z up",
+    "units": "current Blender laboratory scene units, not real-world meters",
+    "origin": "center of rotunda at finished floor Z=0"
+  },
+  "cameras": [
+    {
+      "id": "CAM_HERO",
+      "ratio": [
+        16,
+        9
+      ],
+      "goal": "match 2D landmarks; skylight partially cut by upper frame, not oversized dark ceiling"
+    },
+    {
+      "id": "CAM_SIDE",
+      "ratio": [
+        16,
+        9
+      ],
+      "goal": "verify real thickness of portal glass, alcoves, two balcony levels and oculus"
+    },
+    {
+      "id": "CAM_MOBILE_OVERVIEW",
+      "ratio": [
+        9,
+        16
+      ],
+      "goal": "four portals and podio recognizable; text delegated to DOM"
+    },
+    {
+      "id": "CAM_MOBILE_LEFT",
+      "ratio": [
+        9,
+        16
+      ],
+      "goal": "Curricolo and Esplora fully visible"
+    },
+    {
+      "id": "CAM_MOBILE_RIGHT",
+      "ratio": [
+        9,
+        16
+      ],
+      "goal": "Percorsi and Esperienze fully visible"
+    }
+  ],
+  "relative_portal_constraints": {
+    "plan_geometry": "four fronts positioned along a common semi-circular / curved layout; center pair symmetric and outer pair symmetric",
+    "paired_heights_in_world": "inner pair same, outer pair same; interpretation of user higher = central BASE altitude may be elevated relative to outer (do not force portal mesh height without camera fit)",
+    "image_bbox_px": [
+      {
+        "portal": "PORTAL_CURRICOLO",
+        "bbox": [
+          171,
+          166,
+          449,
+          572
+        ]
+      },
+      {
+        "portal": "PORTAL_ESPLORA",
+        "bbox": [
+          468,
+          193,
+          727,
+          542
+        ]
+      },
+      {
+        "portal": "PORTAL_PERCORSI",
+        "bbox": [
+          817,
+          194,
+          1078,
+          541
+        ]
+      },
+      {
+        "portal": "PORTAL_ESPERIENZE",
+        "bbox": [
+          1105,
+          167,
+          1375,
+          571
+        ]
+      }
+    ],
+    "observed_top_y_px": {
+      "outer": [
+        166,
+        167
+      ],
+      "inner": [
+        193,
+        194
+      ]
+    },
+    "observed_bottom_y_px": {
+      "outer": [
+        572,
+        571
+      ],
+      "inner": [
+        542,
+        541
+      ]
+    },
+    "observational_warning": "outer portals appear taller in pixels while their lower edges extend lower; center lower edges higher due to perspective/occlusion; choose world geometry by fitting both pairs, not by assumption"
+  },
+  "material_parameters_are": "INITIAL_ART_DIRECTION_RANGES_NOT_SAMPLED_FROM_IMAGE",
+  "materials": [
+    {
+      "id": "MAT_FLOOR_STONE_BLUE",
+      "object": "pavimento in pietra levigata",
+      "base_hex": "#111E30",
+      "metallic": [
+        0,
+        0.06
+      ],
+      "roughness": [
+        0.18,
+        0.34
+      ],
+      "maps": [
+        "base_color",
+        "normal",
+        "roughness",
+        "ambient_occlusion"
+      ],
+      "detail": "venature irregolari sottili, giunti reali, riflessi diffusi longitudinali"
+    },
+    {
+      "id": "MAT_WALL_NAVY",
+      "object": "pareti e nicchie blu-notte",
+      "base_hex": "#101E32",
+      "metallic": [
+        0,
+        0.13
+      ],
+      "roughness": [
+        0.57,
+        0.83
+      ],
+      "maps": [
+        "base_color",
+        "roughness"
+      ],
+      "detail": "variazioni fra pannelli; niente muro uniforme"
+    },
+    {
+      "id": "MAT_STEEL_BLACK",
+      "object": "costole e pilastri in metallo brunito",
+      "base_hex": "#263442",
+      "metallic": [
+        0.78,
+        1
+      ],
+      "roughness": [
+        0.29,
+        0.49
+      ],
+      "maps": [
+        "normal",
+        "roughness"
+      ],
+      "detail": "sottili riflessi e bordi smussati"
+    },
+    {
+      "id": "MAT_BRASS_SATIN",
+      "object": "cornici e parti metalliche calde",
+      "base_hex": "#B99256",
+      "metallic": [
+        0.92,
+        1
+      ],
+      "roughness": [
+        0.24,
+        0.42
+      ],
+      "maps": [
+        "normal",
+        "roughness"
+      ],
+      "detail": "oro caldo senza effetto plastico o giallo uniforme"
+    },
+    {
+      "id": "MAT_GLASS_RAIL",
+      "object": "parapetti trasparenti",
+      "base_hex": "#B3D7E6",
+      "metallic": [
+        0,
+        0.08
+      ],
+      "roughness": [
+        0.07,
+        0.2
+      ],
+      "transmission_candidate": [
+        0.4,
+        0.95
+      ],
+      "maps": [
+        "roughness"
+      ],
+      "detail": "parapetto reale con spessore; doppia versione Cycles/semplificata web"
+    },
+    {
+      "id": "MAT_OCULUS_GLASS",
+      "object": "vetri del lucernario",
+      "base_hex": "#ADD9F4",
+      "metallic": [
+        0,
+        0.1
+      ],
+      "roughness": [
+        0.04,
+        0.18
+      ],
+      "transmission_candidate": [
+        0.65,
+        1
+      ],
+      "maps": [
+        "roughness"
+      ],
+      "detail": "separare vetro, cielo, struttura e sorgente luminosa"
+    },
+    {
+      "id": "MAT_SKY_BACKDROP",
+      "object": "cielo dietro il lucernario",
+      "base_hex": "#71B4EA",
+      "metallic": [
+        0,
+        0
+      ],
+      "roughness": [
+        0.8,
+        1
+      ],
+      "maps": [
+        "base_color"
+      ],
+      "detail": "immagine del cielo distinta dalla luce; non trasmettere come cupola opaca"
+    },
+    {
+      "id": "MAT_PORTAL_COBALT",
+      "object": "pannelli di vetro digitale blu",
+      "base_hex": "#12365B",
+      "metallic": [
+        0,
+        0.15
+      ],
+      "roughness": [
+        0.14,
+        0.34
+      ],
+      "transmission_candidate": [
+        0.08,
+        0.45
+      ],
+      "maps": [
+        "base_color",
+        "emissive",
+        "roughness"
+      ],
+      "detail": "gradienti interni, doppio pannello, differenze di profondità"
+    },
+    {
+      "id": "MAT_PORTAL_RIM",
+      "object": "filo luminoso continuo del portale",
+      "base_hex": "#FFE3AA",
+      "metallic": [
+        0,
+        0.1
+      ],
+      "roughness": [
+        0.23,
+        0.4
+      ],
+      "emission_candidate": [
+        1.2,
+        3.5
+      ],
+      "maps": [
+        "emissive"
+      ],
+      "detail": "profilo geometrico sagomato, emissione senza alone permanente"
+    },
+    {
+      "id": "MAT_CENTER_BLUE_GLOSS",
+      "object": "calotta ellittica ATLAS",
+      "base_hex": "#091D3C",
+      "metallic": [
+        0.15,
+        0.45
+      ],
+      "roughness": [
+        0.16,
+        0.32
+      ],
+      "maps": [
+        "roughness",
+        "normal"
+      ],
+      "detail": "blu profondo con riflessi morbidi e leggibilità marchio"
+    },
+    {
+      "id": "MAT_RING_EMISSIVE_GOLD",
+      "object": "inserto luminoso anelli podio e oculo",
+      "base_hex": "#FFD39A",
+      "metallic": [
+        0,
+        0.15
+      ],
+      "roughness": [
+        0.25,
+        0.5
+      ],
+      "emission_candidate": [
+        1.3,
+        4
+      ],
+      "maps": [
+        "emissive"
+      ],
+      "detail": "fascio caldo integrato in profilo metallico"
+    },
+    {
+      "id": "MAT_BANNER_FABRIC",
+      "object": "stendardi Atlas blu",
+      "base_hex": "#10274A",
+      "metallic": [
+        0,
+        0.05
+      ],
+      "roughness": [
+        0.66,
+        0.93
+      ],
+      "maps": [
+        "base_color",
+        "normal"
+      ],
+      "detail": "pieghe fisiche, stemma in texture distinta"
+    },
+    {
+      "id": "MAT_PLANTER_METAL",
+      "object": "fioriere in metallo satinato",
+      "base_hex": "#9D8164",
+      "metallic": [
+        0.82,
+        1
+      ],
+      "roughness": [
+        0.29,
+        0.47
+      ],
+      "maps": [
+        "roughness"
+      ],
+      "detail": "sezione cilindrica/svasata; bordo e appoggio al pavimento"
+    },
+    {
+      "id": "MAT_FOLIAGE",
+      "object": "fogliame vivo",
+      "base_hex": "#274A31",
+      "metallic": [
+        0,
+        0
+      ],
+      "roughness": [
+        0.6,
+        0.92
+      ],
+      "maps": [
+        "base_color",
+        "normal"
+      ],
+      "detail": "chiome sparse, gruppi differenziati, istanze LOD"
+    },
+    {
+      "id": "MAT_SIGN_IVORY",
+      "object": "titoli e simboli grafici",
+      "base_hex": "#F6F2E8",
+      "metallic": [
+        0,
+        0.1
+      ],
+      "roughness": [
+        0.35,
+        0.65
+      ],
+      "emission_candidate": [
+        0.05,
+        0.65
+      ],
+      "maps": [
+        "base_color",
+        "emissive"
+      ],
+      "detail": "marchi esatti con UV o curve; accessibilità via testo DOM"
+    }
+  ],
+  "lights": [
+    {
+      "id": "L_SUN",
+      "type": "SUN",
+      "collection": "COL_70_LIGHTS_MAIN",
+      "appearance": "daylight cool",
+      "temp_range_kelvin": [
+        4700,
+        6500
+      ],
+      "implementation": "sole orientato attraverso il lucernario; ombre coerenti",
+      "delivery": "OFFLINE_AND_RUNTIME_REBUILD",
+      "status": "CANDIDATE_NOT_MEASURED"
+    },
+    {
+      "id": "L_SKY_AREA",
+      "type": "AREA",
+      "collection": "COL_70_LIGHTS_MAIN",
+      "appearance": "large cool zenith fill",
+      "temp_range_kelvin": [
+        5200,
+        7500
+      ],
+      "implementation": "area ampia e morbida sopra l'apertura; separata dal cielo visibile",
+      "delivery": "OFFLINE_ONLY_BAKE_FOR_WEB",
+      "status": "CANDIDATE_NOT_MEASURED"
+    },
+    {
+      "id": "L_OCULUS_RING",
+      "type": "EMISSIVE_MESH",
+      "collection": "COL_71_LIGHTS_ARCH",
+      "appearance": "warm architectural strip",
+      "temp_range_kelvin": [
+        2700,
+        3400
+      ],
+      "implementation": "anello sotto profilo di ottone: materiale emissivo + luce fisica di supporto in Cycles",
+      "delivery": "EMISSIVE_WITH_BAKED_INFLUENCE",
+      "status": "CANDIDATE_NOT_MEASURED"
+    },
+    {
+      "id": "L_PORTAL_LOCAL",
+      "type": "AREA",
+      "collection": "COL_71_LIGHTS_ARCH",
+      "appearance": "soft local blue/gold portal fill",
+      "temp_range_kelvin": [
+        3400,
+        5600
+      ],
+      "implementation": "quattro luci associate alle cornici; niente grandi coni uniformi",
+      "delivery": "OFFLINE_ONLY_BAKE_OR_LIMITED_RUNTIME",
+      "status": "CANDIDATE_NOT_MEASURED"
+    },
+    {
+      "id": "L_PODIUM_RING",
+      "type": "EMISSIVE_MESH",
+      "collection": "COL_71_LIGHTS_ARCH",
+      "appearance": "warm elliptical luminous insert",
+      "temp_range_kelvin": [
+        2600,
+        3300
+      ],
+      "implementation": "luce continua negli anelli ellittici con riflessi sul pavimento",
+      "delivery": "EMISSIVE_WITH_BAKED_INFLUENCE",
+      "status": "CANDIDATE_NOT_MEASURED"
+    },
+    {
+      "id": "L_PODIUM_FILL",
+      "type": "AREA",
+      "collection": "COL_71_LIGHTS_ARCH",
+      "appearance": "soft blue center front reflection",
+      "temp_range_kelvin": [
+        4200,
+        6200
+      ],
+      "implementation": "piano ampio per rivelare la curvatura senza coprire il logo",
+      "delivery": "OFFLINE_ONLY_BAKE_FOR_WEB",
+      "status": "CANDIDATE_NOT_MEASURED"
+    },
+    {
+      "id": "L_GALLERY_AMBIENT",
+      "type": "AREA",
+      "collection": "COL_70_LIGHTS_MAIN",
+      "appearance": "subtle gallery fill",
+      "temp_range_kelvin": [
+        4200,
+        6000
+      ],
+      "implementation": "riempimento dei ballatoi senza schiarire uniformemente tutto",
+      "delivery": "OFFLINE_ONLY_BAKE_FOR_WEB",
+      "status": "CANDIDATE_NOT_MEASURED"
+    },
+    {
+      "id": "L_GALLERY_STRIPS",
+      "type": "EMISSIVE_MESH",
+      "collection": "COL_71_LIGHTS_ARCH",
+      "appearance": "discreet gallery warm linear accents",
+      "temp_range_kelvin": [
+        2800,
+        3800
+      ],
+      "implementation": "tagli sottili su profili, non moltiplicazione di strisce",
+      "delivery": "EMISSIVE_WITH_BAKED_INFLUENCE",
+      "status": "CANDIDATE_NOT_MEASURED"
+    },
+    {
+      "id": "L_GALLERY_POINTS",
+      "type": "POINT",
+      "collection": "COL_72_LIGHTS_ACCENT",
+      "appearance": "sparse warm niches",
+      "temp_range_kelvin": [
+        2600,
+        3400
+      ],
+      "implementation": "punti caldi variati per nicchie, densità e potenza da regolare",
+      "delivery": "BAKED_OR_REDUCED_RUNTIME",
+      "status": "CANDIDATE_NOT_MEASURED"
+    },
+    {
+      "id": "L_SHELF_POINTS",
+      "type": "SPOT",
+      "collection": "COL_72_LIGHTS_ACCENT",
+      "appearance": "focused shelf warm",
+      "temp_range_kelvin": [
+        2800,
+        3800
+      ],
+      "implementation": "spot leggeri orientati su scaffali e oggetti laterali",
+      "delivery": "BAKED_ONLY",
+      "status": "CANDIDATE_NOT_MEASURED"
+    },
+    {
+      "id": "L_PLANT_SPOTS",
+      "type": "SPOT",
+      "collection": "COL_72_LIGHTS_ACCENT",
+      "appearance": "warm foliage uplight",
+      "temp_range_kelvin": [
+        2700,
+        3900
+      ],
+      "implementation": "punti piccoli sui vasi e piante, contrasto alto ma morbido",
+      "delivery": "BAKED_ONLY",
+      "status": "CANDIDATE_NOT_MEASURED"
+    },
+    {
+      "id": "L_RAYS_VOLUME",
+      "type": "VOLUME_MEDIUM",
+      "collection": "COL_73_ATMOSPHERE",
+      "appearance": "cool volumetric shafts",
+      "temp_range_kelvin": [
+        4500,
+        7500
+      ],
+      "implementation": "volume tenue + sole/occhio: in web proxy con effetto controllato; non esportare shader volume come glTF",
+      "delivery": "OFFLINE_ONLY_RUNTIME_ALTERNATIVE",
+      "status": "CANDIDATE_NOT_MEASURED"
+    }
+  ],
+  "objects": [
+    {
+      "id": "OBJ_ROTUNDA_SHELL",
+      "collection": "COL_10_ARCH_SHELL",
+      "role": "architettonica",
+      "geometry_type": "mesh_sector_curved_shell",
+      "material_ids": [
+        "MAT_WALL_NAVY",
+        "MAT_STEEL_BLACK"
+      ],
+      "light_ids": [
+        "L_GALLERY_AMBIENT"
+      ],
+      "construction": "Raggi reali e spessori visibili; retro della scena navigabile",
+      "priority": "P0",
+      "status": "SPECIFIED_NOT_BUILT_OR_APPROVED"
+    },
+    {
+      "id": "OBJ_ARCH_PILASTERS",
+      "collection": "COL_10_ARCH_SHELL",
+      "role": "architettonica",
+      "geometry_type": "modular_pier_instances",
+      "material_ids": [
+        "MAT_STEEL_BLACK",
+        "MAT_BRASS_SATIN"
+      ],
+      "light_ids": [
+        "L_GALLERY_POINTS"
+      ],
+      "construction": "Passo variabile; gerarchia, non griglia fitta uniforme",
+      "priority": "P0",
+      "status": "SPECIFIED_NOT_BUILT_OR_APPROVED"
+    },
+    {
+      "id": "OBJ_GALLERY_DECKS",
+      "collection": "COL_20_MEZZANINE_BALCONIES",
+      "role": "architettonica",
+      "geometry_type": "two_annular_sector_decks",
+      "material_ids": [
+        "MAT_FLOOR_STONE_BLUE",
+        "MAT_BRASS_SATIN"
+      ],
+      "light_ids": [
+        "L_GALLERY_STRIPS"
+      ],
+      "construction": "Due livelli di balconate reali con spessori; alias pietra da pavimento",
+      "priority": "P0",
+      "status": "SPECIFIED_NOT_BUILT_OR_APPROVED"
+    },
+    {
+      "id": "OBJ_GALLERY_GLASS",
+      "collection": "COL_20_MEZZANINE_BALCONIES",
+      "role": "architettonica",
+      "geometry_type": "curved_glass_panels",
+      "material_ids": [
+        "MAT_GLASS_RAIL",
+        "MAT_STEEL_BLACK"
+      ],
+      "light_ids": [
+        "L_GALLERY_POINTS"
+      ],
+      "construction": "Parapetti con distanza dalla parete di fondo",
+      "priority": "P1",
+      "status": "SPECIFIED_NOT_BUILT_OR_APPROVED"
+    },
+    {
+      "id": "OBJ_OCULUS_OPENING",
+      "collection": "COL_25_SKYLIGHT_OCULUS",
+      "role": "architettonica",
+      "geometry_type": "circular_oval_in_projection_cutout",
+      "material_ids": [
+        "MAT_OCULUS_GLASS",
+        "MAT_STEEL_BLACK"
+      ],
+      "light_ids": [
+        "L_SKY_AREA",
+        "L_SUN"
+      ],
+      "construction": "Dimensione vera da dedurre dalla proiezione HERO: il bordo superiore è tagliato",
+      "priority": "P0",
+      "status": "SPECIFIED_NOT_BUILT_OR_APPROVED"
+    },
+    {
+      "id": "OBJ_OCULUS_RADIAL_STRUCTURE",
+      "collection": "COL_25_SKYLIGHT_OCULUS",
+      "role": "architettonica",
+      "geometry_type": "radial_ribs_and_glazing",
+      "material_ids": [
+        "MAT_STEEL_BLACK",
+        "MAT_OCULUS_GLASS"
+      ],
+      "light_ids": [
+        "L_SUN"
+      ],
+      "construction": "Nervature reali, modulate con sequenze non ridondanti; no disco fotografico unico",
+      "priority": "P0",
+      "status": "SPECIFIED_NOT_BUILT_OR_APPROVED"
+    },
+    {
+      "id": "OBJ_OCULUS_RING",
+      "collection": "COL_25_SKYLIGHT_OCULUS",
+      "role": "architettonica",
+      "geometry_type": "annular_metal_profile_plus_strip",
+      "material_ids": [
+        "MAT_BRASS_SATIN",
+        "MAT_RING_EMISSIVE_GOLD"
+      ],
+      "light_ids": [
+        "L_OCULUS_RING"
+      ],
+      "construction": "Corona calda luminosa articolata ma non pesante",
+      "priority": "P0",
+      "status": "SPECIFIED_NOT_BUILT_OR_APPROVED"
+    },
+    {
+      "id": "OBJ_SKY",
+      "collection": "COL_25_SKYLIGHT_OCULUS",
+      "role": "ambiente",
+      "geometry_type": "sky_dome_or_uv_disc",
+      "material_ids": [
+        "MAT_SKY_BACKDROP"
+      ],
+      "light_ids": [
+        "L_SKY_AREA",
+        "L_SUN"
+      ],
+      "construction": "Cielo visibile attraverso vetrata, non usato come sostituto della luce fisica",
+      "priority": "P1",
+      "status": "SPECIFIED_NOT_BUILT_OR_APPROVED"
+    },
+    {
+      "id": "OBJ_FLOOR_STONE",
+      "collection": "COL_10_ARCH_SHELL",
+      "role": "architettonica",
+      "geometry_type": "joined_tiles_with_sparse_seams",
+      "material_ids": [
+        "MAT_FLOOR_STONE_BLUE"
+      ],
+      "light_ids": [
+        "L_SKY_AREA",
+        "L_PORTAL_LOCAL"
+      ],
+      "construction": "Riflessi longitudinali non perfettamente speculari",
+      "priority": "P0",
+      "status": "SPECIFIED_NOT_BUILT_OR_APPROVED"
+    },
+    {
+      "id": "OBJ_PODIUM_ELLIPSOID",
+      "collection": "COL_40_ATLAS_CENTERPIECE",
+      "role": "scenografica",
+      "geometry_type": "low_ellipsoidal_cap",
+      "material_ids": [
+        "MAT_CENTER_BLUE_GLOSS"
+      ],
+      "light_ids": [
+        "L_PODIUM_FILL"
+      ],
+      "construction": "Volume basso largo con marchio frontale esatto; no emisfera standard",
+      "priority": "P0",
+      "status": "SPECIFIED_NOT_BUILT_OR_APPROVED"
+    },
+    {
+      "id": "OBJ_PODIUM_RINGS",
+      "collection": "COL_40_ATLAS_CENTERPIECE",
+      "role": "scenografica",
+      "geometry_type": "nested_elliptical_profiling",
+      "material_ids": [
+        "MAT_BRASS_SATIN",
+        "MAT_RING_EMISSIVE_GOLD"
+      ],
+      "light_ids": [
+        "L_PODIUM_RING"
+      ],
+      "construction": "Due o tre bordi concentrici, luce integrata e ombre di contatto",
+      "priority": "P0",
+      "status": "SPECIFIED_NOT_BUILT_OR_APPROVED"
+    },
+    {
+      "id": "OBJ_ATLAS_BRAND",
+      "collection": "COL_40_ATLAS_CENTERPIECE",
+      "role": "identità",
+      "geometry_type": "curved_uv_decal_on_ellipsoid",
+      "material_ids": [
+        "MAT_SIGN_IVORY"
+      ],
+      "light_ids": [
+        "L_PODIUM_FILL"
+      ],
+      "construction": "Riutilizzare il marchio approvato con integrità hash; no font reinterpretato",
+      "priority": "P0",
+      "status": "SPECIFIED_NOT_BUILT_OR_APPROVED"
+    },
+    {
+      "id": "OBJ_PORTAL_FRAMES_4",
+      "collection": "COL_30_PORTALS",
+      "role": "interattiva",
+      "geometry_type": "rounded_3d_glazing_and_continuous_rim",
+      "material_ids": [
+        "MAT_PORTAL_COBALT",
+        "MAT_PORTAL_RIM",
+        "MAT_BRASS_SATIN"
+      ],
+      "light_ids": [
+        "L_PORTAL_LOCAL"
+      ],
+      "construction": "Quattro strutture su arco, due coppie simmetriche; profondità reale",
+      "priority": "P0",
+      "status": "SPECIFIED_NOT_BUILT_OR_APPROVED"
+    },
+    {
+      "id": "OBJ_PORTAL_GRAPHICS_4",
+      "collection": "COL_35_PORTAL_VISUALS",
+      "role": "narrativa",
+      "geometry_type": "per_portal_curves_textures_and_layered_geometry",
+      "material_ids": [
+        "MAT_SIGN_IVORY",
+        "MAT_PORTAL_COBALT"
+      ],
+      "light_ids": [
+        "L_PORTAL_LOCAL"
+      ],
+      "construction": "Simbolo/titolo/sottotitolo/illustrazione esatti e distinti per portale",
+      "priority": "P0",
+      "status": "SPECIFIED_NOT_BUILT_OR_APPROVED"
+    },
+    {
+      "id": "OBJ_GALLERY_SHELVES",
+      "collection": "COL_60_SCENOGRAPHY",
+      "role": "arredo",
+      "geometry_type": "curved_library_module_instances",
+      "material_ids": [
+        "MAT_WALL_NAVY",
+        "MAT_BRASS_SATIN"
+      ],
+      "light_ids": [
+        "L_SHELF_POINTS"
+      ],
+      "construction": "Scaffali laterali solo scenografici; evitare biblioteca percorribile",
+      "priority": "P1",
+      "status": "SPECIFIED_NOT_BUILT_OR_APPROVED"
+    },
+    {
+      "id": "OBJ_BANNERS_LEFT_RIGHT",
+      "collection": "COL_50_BANNERS",
+      "role": "arredo",
+      "geometry_type": "cloth_mesh_with_approved_atlas_roundel",
+      "material_ids": [
+        "MAT_BANNER_FABRIC",
+        "MAT_SIGN_IVORY"
+      ],
+      "light_ids": [
+        "L_GALLERY_POINTS"
+      ],
+      "construction": "Due stendardi blu con stemma Atlas e piega reale",
+      "priority": "P1",
+      "status": "SPECIFIED_NOT_BUILT_OR_APPROVED"
+    },
+    {
+      "id": "OBJ_PLANTERS_FOREGROUND",
+      "collection": "COL_60_SCENOGRAPHY",
+      "role": "arredo",
+      "geometry_type": "truncated_cylinder_mesh",
+      "material_ids": [
+        "MAT_PLANTER_METAL"
+      ],
+      "light_ids": [
+        "L_PLANT_SPOTS"
+      ],
+      "construction": "Coppia in primo piano + piante secondarie ai lati",
+      "priority": "P1",
+      "status": "SPECIFIED_NOT_BUILT_OR_APPROVED"
+    },
+    {
+      "id": "OBJ_PLANT_FOLIAGE",
+      "collection": "COL_60_SCENOGRAPHY",
+      "role": "arredo",
+      "geometry_type": "instanced_trunk_leaf_clusters",
+      "material_ids": [
+        "MAT_FOLIAGE"
+      ],
+      "light_ids": [
+        "L_PLANT_SPOTS"
+      ],
+      "construction": "Chiome reali a varianti, LOD e asset con licenza tracciata",
+      "priority": "P1",
+      "status": "SPECIFIED_NOT_BUILT_OR_APPROVED"
+    },
+    {
+      "id": "OBJ_GALLERY_FEATURE_NICHES",
+      "collection": "COL_60_SCENOGRAPHY",
+      "role": "arredo",
+      "geometry_type": "alternating_recesses_with_backing",
+      "material_ids": [
+        "MAT_STEEL_BLACK",
+        "MAT_WALL_NAVY"
+      ],
+      "light_ids": [
+        "L_GALLERY_POINTS"
+      ],
+      "construction": "Zone calde e buie alternate, con profondità e oggetti espositivi minimali",
+      "priority": "P1",
+      "status": "SPECIFIED_NOT_BUILT_OR_APPROVED"
+    },
+    {
+      "id": "OBJ_ENTRY_BUTTON",
+      "collection": "COL_95_WEB_UI_REFERENCE",
+      "role": "interfaccia",
+      "geometry_type": "DOM_ONLY_NOT_EXPORT",
+      "material_ids": [
+        "MAT_RING_EMISSIVE_GOLD"
+      ],
+      "light_ids": [],
+      "construction": "Pulsante «Entra in Atlas» reso in HTML accessibile, non mesh runtime",
+      "priority": "P0",
+      "status": "SPECIFIED_NOT_BUILT_OR_APPROVED"
+    }
+  ],
+  "portals": [
+    {
+      "id": "PORTAL_CURRICOLO",
+      "name": "Curricolo",
+      "subtitle": "Struttura e obiettivi",
+      "icon": "libro aperto",
+      "artwork": "quattro lastre geometriche semitrasparenti a piani sovrapposti",
+      "art_model": "mesh_layers_glass_with_gold_underlight",
+      "source_bbox_px": [
+        171,
+        166,
+        449,
+        572
+      ],
+      "position_pair": "outer",
+      "design_note": "stessa quota strutturale del portale Esperienze; silhouette apparente esterna più estesa",
+      "graphics_layers": [
+        "icon",
+        "title",
+        "subtitle",
+        "illustration"
+      ],
+      "geometry": "shared curved shell; independent embedded graphics; no single flat full-scene plane",
+      "text_source": "reuse portal-contract.mjs for accessible HTML and same canonical strings in artistic texture; runtime authoritative text from DOM only",
+      "graphic_state": "NOT_YET_RECONSTRUCTED"
+    },
+    {
+      "id": "PORTAL_ESPLORA",
+      "name": "Esplora",
+      "subtitle": "Relazioni e connessioni",
+      "icon": "bussola/freccia circolare",
+      "artwork": "rete di nodi luminosi interconnessi con archi sottili",
+      "art_model": "node_instances_and_bezier_curves",
+      "source_bbox_px": [
+        468,
+        193,
+        727,
+        542
+      ],
+      "position_pair": "inner",
+      "design_note": "stessa quota strutturale del portale Percorsi; apparente base rialzata rispetto agli esterni",
+      "graphics_layers": [
+        "icon",
+        "title",
+        "subtitle",
+        "illustration"
+      ],
+      "geometry": "shared curved shell; independent embedded graphics; no single flat full-scene plane",
+      "text_source": "reuse portal-contract.mjs for accessible HTML and same canonical strings in artistic texture; runtime authoritative text from DOM only",
+      "graphic_state": "NOT_YET_RECONSTRUCTED"
+    },
+    {
+      "id": "PORTAL_PERCORSI",
+      "name": "Percorsi",
+      "subtitle": "Itinerari formativi",
+      "icon": "percorso curvo con punti terminali",
+      "artwork": "gradini luminosi ascendenti in prospettiva",
+      "art_model": "stepped_mesh_with_individual_emission_surfaces",
+      "source_bbox_px": [
+        817,
+        194,
+        1078,
+        541
+      ],
+      "position_pair": "inner",
+      "design_note": "stessa quota e scala del portale Esplora",
+      "graphics_layers": [
+        "icon",
+        "title",
+        "subtitle",
+        "illustration"
+      ],
+      "geometry": "shared curved shell; independent embedded graphics; no single flat full-scene plane",
+      "text_source": "reuse portal-contract.mjs for accessible HTML and same canonical strings in artistic texture; runtime authoritative text from DOM only",
+      "graphic_state": "NOT_YET_RECONSTRUCTED"
+    },
+    {
+      "id": "PORTAL_ESPERIENZE",
+      "name": "Esperienze",
+      "subtitle": "Attività e mondi",
+      "icon": "porta ad archi concentrici",
+      "artwork": "orizzonte di globo terrestre curvo blu azzurro",
+      "art_model": "partial_sphere_with_uv_texture_and_atmosphere_rim",
+      "source_bbox_px": [
+        1105,
+        167,
+        1375,
+        571
+      ],
+      "position_pair": "outer",
+      "design_note": "stessa quota del portale Curricolo",
+      "graphics_layers": [
+        "icon",
+        "title",
+        "subtitle",
+        "illustration"
+      ],
+      "geometry": "shared curved shell; independent embedded graphics; no single flat full-scene plane",
+      "text_source": "reuse portal-contract.mjs for accessible HTML and same canonical strings in artistic texture; runtime authoritative text from DOM only",
+      "graphic_state": "NOT_YET_RECONSTRUCTED"
+    }
+  ],
+  "atmosphere": {
+    "renderer": "CYCLES",
+    "method": "weak principled_volume coupled to sun and oculus",
+    "strength": "to calibrate; no invented density",
+    "occlusion": "architectural rays must be physically related to source opening",
+    "web": "separate lightweight runtime approximation, not glTF export of Cycles fog"
+  },
+  "export_policy": {
+    "authoring": "Blender editable .blend; image textures, UV, material library, packed source art",
+    "runtime": "optimized glTF 2.0 / GLB after approval only",
+    "web_engine": "reuse existing Atlas/Three.js; no duplicate renderer",
+    "web_material_warning": "area lights, Blender world lighting and Cycles volumetric medium are not automatically reproduced by GLB; use texture baking and runtime lighting plan",
+    "asset_licensing": "record author/source/licence/sha for every external texture or model",
+    "release": false
+  },
+  "acceptance": [
+    {
+      "id": "G0_SOURCE",
+      "test": "canonical source SHA and source landmark manifest unchanged",
+      "required": true
+    },
+    {
+      "id": "G1_SCENE",
+      "test": "all declared object and material IDs instantiated and mesh volume present for arch elements",
+      "required": true
+    },
+    {
+      "id": "G2_IMAGE",
+      "test": "HERO projection matched against approved landmarks, including oculus relative visual mass and four portal bboxes",
+      "required": true
+    },
+    {
+      "id": "G3_VISUAL",
+      "test": "symbols, text, subtitles and four narrative illustrations visibly faithful; gold-blue materials, reflections, rays and gallery depth pass artistic review",
+      "required": true
+    },
+    {
+      "id": "G4_MOBILE",
+      "test": "four reachable links and two-focus views on real phone, accessible DOM equivalent and no unwanted horizontal scroll",
+      "required": true
+    },
+    {
+      "id": "G5_WEB",
+      "test": "runtime GLB and texture budget, frame pacing, accessibility, real handset tests; evidence recorded before release",
+      "required": true
+    }
+  ],
+  "references": {
+    "art_direction": "docs/atlas-gateway/ATLAS-GATEWAY-ART-DIRECTION-02.md",
+    "previous_arch": "docs/atlas-gateway/ATLAS-ART-DIR-02-ARCH-03.md",
+    "blender_official": "https://docs.blender.org/manual/en/4.5/render/lights/light_object.html",
+    "gltf_official": "https://docs.blender.org/manual/en/latest/addons/scene_gltf2.html",
+    "khronos_pbr": "https://www.khronos.org/gltf/pbr"
+  }
+}
