@@ -146,7 +146,17 @@
         "Portal shapes and graphics still only approximate"
       ],
       "recommended_decision": "NO_GO_FOR_3D_GATEWAY_AS_IS__RETAIN_CANONICAL_IMAGE_BASELINE",
-      "requires_final_user_art_decision": true
+      "requires_final_user_art_decision": true,
+      "reassessment": {
+        "scope": "The user provides a new physical interpretation of the four portals: glass emerges through floor slots, arranged on a likely circle concentric with the central podium.",
+        "interpretation": "New hypothesis explains nonfaithful 'standalone sign/totem' portal reading. Prior Cycles result is baseline and cannot be counted as final test of the revised geometry.",
+        "exact_code_mismatch": "Old portal arc center (0,-6.3836) vs podium center (0,-2), separate yaw angles, plinth and extra feet",
+        "authorized_next": "Test correction IN THE SAME ARCH-04 and ART-PROOF-01B branch: concentric podio-centered ring, tangential portal facing, actual floor slot, minimal lip, keep existing illustrations and lights, compare HERO/TOP/OBLIQUE against original",
+        "new_project": false,
+        "source_immutable": true,
+        "prior_art_proof_valid_as_history": true,
+        "art_acceptance_still_open": true
+      }
     }
   },
   "decision_gate": {
@@ -160,6 +170,12 @@
       "Replace canonical image",
       "Claim 3D fidelity",
       "Create costly services"
+    ],
+    "preferred_next_validation": "Correct the portal physical model before final verdict on 3D artistic feasibility; compare to already-produced 01B candidate and ART-DIR-02.",
+    "reasons_to_preserve": [
+      "all previous Cycles images and blender masters",
+      "canonical JPEG exact bytes",
+      "registered materials, oculus, podio, art lighting and narrative portal visuals"
     ]
   },
   "github_pr": "https://github.com/antoniocorsano-boop/Curriculum-Atlas/pull/152",
