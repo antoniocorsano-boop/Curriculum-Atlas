@@ -56,3 +56,17 @@ I giudizi sono valutazioni qualitative esplicite, **non misure automatiche arbit
 6. Nessun nuovo costo, nuovo servizio, merge, deploy o rilascio agli studenti.
 
 **Esito finale E (oggi):** `ARTISTIC_FAIL` con tre correzioni delimitate. Non ripetere altri cicli di qualificazione astratta: una sola vera candidata visiva è il prossimo lavoro.
+
+## Appendice A — Riscontro quantitativo sulle due immagini (non punteggio estetico)
+
+Campionamento eseguito sulle immagini **canonico 1536×864** e **R6ABCD HERO 1152×648**, a stessa proporzione 16:9. Per ciascuna zona normalizzata è stata calcolata la media del segnale 8-bit RGB convertito in **luma indicativa** `Y'=0.2126R+0.7152G+0.0722B`. **Non è una misura fotometrica, non è una misura diretta della trasparenza delle vetrate e non valuta la fedeltà della composizione.** È solo una verifica orientativa del contrasto complessivo.
+
+| Regione relativa all'immagine | Canonico, Y' 0–255 | R6ABCD, Y' 0–255 | Differenza R6ABCD–canone |
+|---|---:|---:|---:|
+| Volta/oculo: x 5–95%, y 5–23% | 69,4 | 88,2 | +18,8 |
+| Gallerie: x 2–98%, y 20–40% | 70,0 | 79,8 | +9,8 |
+| Portali e scena centrale: x 10–90%, y 30–62% | 80,7 | 109,1 | +28,4 |
+| Pavimento: x 6–94%, y 78–97% | 80,2 | 97,1 | +16,9 |
+| Fotogramma complessivo | 75,4 | 92,1 | +16,7 |
+
+**Lettura:** R6ABCD appare globalmente più chiara e grigia del canonico, con il divario maggiore nell'area dei portali. La prova R7 non deve semplicemente abbassare l'esposizione globale: deve **redistribuire la luce** per proteggere cielo e bordi ottici e mantenere scure le superfici più estese. Le misure non descrivono da sole il risultato artistico e vanno ricalcolate dopo le immagini reali R7.
