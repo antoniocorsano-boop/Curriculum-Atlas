@@ -381,8 +381,8 @@
           "image_required": true
         }
       ],
-      "design_rule": "paired symmetry and same actual frame height within each pair; apparent upper/lower positions evaluated in image not hardwired as physical height",
-      "current_yaw_discrepancy": "Current yaw ±0.29/±0.11 rad is NOT equal to geometrical radial/tangent normal angle arcsin(x/R): the portal orientation requires dedicated artistic camera-fit solving",
+      "design_rule": "paired symmetry and same actual frame height within each pair; apparent upper/lower positions evaluated in image not hardwired as physical height Revision of reading (2026-11-21): test concentric podium arc with tangent glass sheets inset into floor rather than monumental plinths; old values remain the diagnostic baseline.",
+      "current_yaw_discrepancy": "Current yaw ±0.29/±0.11 rad is NOT equal to geometrical radial/tangent normal angle arcsin(x/R): the portal orientation requires dedicated artistic camera-fit solving This is now a prioritized geometric correction hypothesis, not merely a later optional adjustment.",
       "content_contract": "each of the four preserves individual original icon, exact title, exact subtitle and original illustration; visual graphics VIS-01, not geometry if beyond framing",
       "layout_tests": [
         "four ordered x coordinates",
@@ -390,7 +390,117 @@
         "portal base and platform intersection analysis",
         "HERO bbox alignment, preserve reference MAE ~0.01190",
         "no duplicate web labels in GLB"
-      ]
+      ],
+      "reading_revision": {
+        "id": "ARCH-04-PORTAL-READING-02",
+        "date": "2026-11-21",
+        "state": "USER_DIRECTED_DESIGN_HYPOTHESIS__NOT_RENDERED_OR_ART_APPROVED",
+        "change_class": "REFINEMENT_OF_EXISTING_ART_DIR_02_AND_ARCH04_NOT_NEW_PROJECT",
+        "evidence": [
+          "user's latest reading: glass slabs emerge from illuminated incision in floor",
+          "canonical 2D portal bboxes preserved in ART-DIR-02-CANONICAL-LANDMARKS.json",
+          "existing ARCH-04B ring center differs from podium center by 4.3836 BU",
+          "current independent yaw angles do not follow arc tangents",
+          "master includes rectangular plinth plus ARCH-04B adds separate foot block"
+        ],
+        "reference_center_in_existing_model": {
+          "podium_xy": [
+            0,
+            -2
+          ],
+          "previous_arc_center_xy": [
+            0,
+            -6.3836
+          ],
+          "distance_bu": 4.3836,
+          "status": "FACT_OF_EXISTING_CODE_NOT_IMAGE_MEASUREMENT"
+        },
+        "candidate_geometry": {
+          "hypothesis": "Portal-center circle concentric with the Atlas podium, distinct from rotunda/oculus centers unless evidence validates a common center",
+          "center_xy": [
+            0,
+            -2
+          ],
+          "R_bu": {
+            "initial_test": 7.3,
+            "minimum": "greater than absolute maximum portal x offset",
+            "status": "OPTIMIZE_NOT_LOCKED"
+          },
+          "angles_symbolic": [
+            "-alpha_outer",
+            "-alpha_inner",
+            "+alpha_inner",
+            "+alpha_outer"
+          ],
+          "angular_constraints": "0<alpha_inner<alpha_outer<PI/2",
+          "position": "x = cx + R*sin(alpha), y = cy + R*cos(alpha), z = shared slot datum",
+          "rotation_rad": "yaw_z = -alpha for a local XZ panel whose front normal is -Y, pointing towards the podium center",
+          "geometry_orientation": "tangent vector (cos alpha,-sin alpha) perpendicular to radial vector (sin alpha,cos alpha)",
+          "radial_normal": "pointing from each panel to circle center (-sin alpha,-cos alpha) in world XY",
+          "front_back": "central pair farther rear Y than outer pair in candidate, apparent altitude to be solved via perspective",
+          "source_landmarks": "docs/atlas-gateway/ART-DIR-02-CANONICAL-LANDMARKS.json",
+          "notes": "Do not infer actual world heights from 2D apparent top and bottom."
+        },
+        "physical_portal_assembly": {
+          "role": "SINGLE_THIN_VERTICAL_GLASS_SLAB_RISING_FROM_FLOOR_SLOT",
+          "mandatory_layers": [
+            "stone floor with actual cut",
+            "dark recessed technical channel",
+            "nearly flush low brass edging",
+            "thin blue glass extending into channel",
+            "continuous delicate illuminated rim",
+            "icon title subtitle and unique illustration integrated with panel"
+          ],
+          "exclude": [
+            "large independent footblocks",
+            "raised rectangular podium for each panel",
+            "second stacked sole or double pedestal",
+            "plane merely image-mapped for entire four-portals composition"
+          ],
+          "slot": "Four physical tangent-aligned recesses (or an arc-shaped slot where geometrically viable), integrated with actual floor mesh; low lip only, side profile demonstrable",
+          "proposed_slot_dimensions_bu": {
+            "width": "panel actual projected width + local margin, test",
+            "depth": 0.1,
+            "opening": 0.16,
+            "edge_lip_height": 0.025,
+            "approval": "PARAMETRIC_INITIAL_CANDIDATE"
+          },
+          "glass": "single pane curved-corner, physical thickness and inset bottom, preserve four independent graphics"
+        },
+        "supersession_scope": {
+          "obsolete_as_target": [
+            "arc_center_xy [-6.3836] in the old candidate",
+            "manual non-tangent yaw ±0.29/±0.11",
+            "3.22×0.62×0.28 monolithic pedestal",
+            "ARCH-04B auxiliary foot 3.78×0.52×0.144"
+          ],
+          "preserve_as_historical_cad": [
+            "all existing instances and coordinates for reproduction of old candidate",
+            "original four portal graphics and strings",
+            "floor, podio, skylight, art direction, lighting and library"
+          ],
+          "change_requires_render_before_promote": true
+        },
+        "validation": {
+          "required_cameras": [
+            "HERO",
+            "TOP_ORTHO",
+            "OBLIQUE"
+          ],
+          "checks": [
+            "same circle center as podium for candidate",
+            "exact paired symmetry",
+            "tangent dot radial ~ 0",
+            "slot depth + glass foot contact with finished floor",
+            "no free-standing visible plinth",
+            "2D landmark overlap without substantial regressions",
+            "oculus, podium, galleries visual relationship not degraded",
+            "real parallax and 4 individual portal images"
+          ],
+          "release_forbidden": true,
+          "human_art_gate": true
+        }
+      }
     },
     "podium": {
       "id": "ATLAS_PODIUM",
@@ -759,7 +869,7 @@
     {
       "id": "P2",
       "name": "ARCH-04 costruzione parametricamente coerente da progetto, HERO/SIDE/MOBILE, revisione e approvazione",
-      "status": "PENDING_P1"
+      "status": "SUPERSEDED_AS_AUTOMATIC_NEXT_STEP__ART_PROOF_PORTAL_READING_TEST_FIRST"
     },
     {
       "id": "P3",
