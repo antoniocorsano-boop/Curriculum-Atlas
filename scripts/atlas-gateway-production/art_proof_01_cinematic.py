@@ -326,6 +326,11 @@ bpy.context.view_layer.update()
 candidate=os.path.join(OUT,"atlas-art-proof-01b-cinematic.blend")
 scene.camera=hero
 bpy.ops.wm.save_as_mainfile(filepath=candidate)
+# A later corrective portal reading uses this same artistic base, without
+# redundantly rendering the already documented HERO and OBLIQUE from R1.
+if "--model-only" in args:
+    print("ATLAS_ART_PROOF_01B_MODEL_ONLY",candidate)
+    raise SystemExit(0)
 
 receipt={
  "schema":"atlas.gateway.art-proof-01b.cycles-v1",
