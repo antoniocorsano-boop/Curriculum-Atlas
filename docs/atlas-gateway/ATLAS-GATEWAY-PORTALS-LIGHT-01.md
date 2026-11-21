@@ -1,5 +1,8 @@
 # ATLAS-GATEWAY-PORTALS-LIGHT-01 — Quattro portali: presenza architettonica, leggerezza visiva
 
+**Aggiornamento canonico del 21/11/2026:** la fonte artistica principale è ora l'[immagine JPEG 1536×864 designata dall'ideatore](https://drive.google.com/file/d/1vSC_ynSxAF-pxR071TiKjEE0OtaFjXCn/view?usp=drivesdk), con [manifest](./ART-REFERENCE-CANONICAL-2026-11-21.json) e [nuovo rilievo geometrico](./ART-DIR-02-CANONICAL-LANDMARKS.json). L'immagine JPEG 1536×960 descritta sotto rimane un **precedente riferimento complementare**, non la sorgente canonica di produzione. Confermato il mandato **alleggerire senza impoverire**.
+
+
 **Data della decisione:** 21 novembre 2026  
 **Stato:** specifica artistica e tecnica da implementare; **non** render approvato, non modello Blender concluso, non modifica già applicata al runtime.  
 **Inquadramento:** affinamento di [ART-DIR-02](./ATLAS-GATEWAY-ART-DIRECTION-02.md) e [MASTER-BLENDER-01](./MASTER-BLENDER-01.md), subordinato a [IMAGE-GEOMETRY-01](./IMAGE-GEOMETRY-01.md). Attuazione dentro la [PR #152](https://github.com/antoniocorsano-boop/Curriculum-Atlas/pull/152), non in una nuova esperienza parallela.
