@@ -1,0 +1,102 @@
+name: "ATLAS ART-DIR-02 — Materiali e arredi CC0 R4"
+on:
+  pull_request:
+    branches: [work/atlas-library-web-delivery]
+    paths:
+      - "scripts/atlas-gateway-production/fetch_finishings_cc0.py"
+      - "scripts/atlas-gateway-production/apply_finishings_r4.py"
+      - ".github/workflows/atlas-finishings-r4.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: atlas-art-finishings-r4-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  pbr-finishings-real-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Python and approved canonical source
+        run: |
+          python3 -m py_compile scripts/atlas-gateway-production/fetch_finishings_cc0.py scripts/atlas-gateway-production/apply_finishings_r4.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          source=json.loads(Path("docs/atlas-gateway/ART-DIR-02-CANONICAL-LANDMARKS.json").read_text())
+          assert source["source"]["sha256"]=="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+          PY
+      - name: Download two real 1K ambientCG CC0 materials and inspect a small Poly Haven plant
+        run: |
+          mkdir -p "$RUNNER_TEMP/atlas-finishings-r4/assets"
+          python3 scripts/atlas-gateway-production/fetch_finishings_cc0.py --out "$RUNNER_TEMP/atlas-finishings-r4/assets"
+      - name: Install Blender production environment
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Reproduce existing original master without replacing it
+        run: |
+          mkdir -p "$RUNNER_TEMP/atlas-finishings-r4/master" "$RUNNER_TEMP/atlas-finishings-r4/geometry" "$RUNNER_TEMP/atlas-finishings-r4/art" "$RUNNER_TEMP/atlas-finishings-r4/r2" "$RUNNER_TEMP/atlas-finishings-r4/r4"
+          blender -b --factory-startup --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-foyer/blender_master.py -- \
+            --out "$RUNNER_TEMP/atlas-finishings-r4/master"
+      - name: Reproduce ARCH04B geometry unchanged
+        run: |
+          blender -b "$RUNNER_TEMP/atlas-finishings-r4/master/atlas-foyer-master.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/build_architecture_04_geometry.py -- \
+            --out "$RUNNER_TEMP/atlas-finishings-r4/geometry" --geometry-only
+      - name: Reproduce artistic R2 precursor without new materials
+        run: |
+          blender -b "$RUNNER_TEMP/atlas-finishings-r4/geometry/atlas-foyer-arch04b-geometric-candidate.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/art_proof_01_cinematic.py -- \
+            --out "$RUNNER_TEMP/atlas-finishings-r4/art" --model-only
+          blender -b "$RUNNER_TEMP/atlas-finishings-r4/art/atlas-art-proof-01b-cinematic.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/art_proof_01b_portals_corrective.py -- \
+            --out "$RUNNER_TEMP/atlas-finishings-r4/r2"
+      - name: Apply imported CC0 materials and prefabricated furniture in real Blender
+        run: |
+          blender -b "$RUNNER_TEMP/atlas-finishings-r4/r2/atlas-art-proof-01b-portal-reading-r2.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/apply_finishings_r4.py -- \
+            --assets "$RUNNER_TEMP/atlas-finishings-r4/assets" \
+            --out "$RUNNER_TEMP/atlas-finishings-r4/r4"
+      - name: Validate Blender material provenance and non-destructive geometry
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])/"atlas-finishings-r4"
+          receipt=json.loads((root/"r4"/"atlas-finishings-r4-receipt.json").read_text())
+          r2=json.loads((root/"r2"/"portal-reading-r2-receipt.json").read_text())
+          sha=lambda f:hashlib.sha256(f.read_bytes()).hexdigest()
+          candidate=root/"r4"/"atlas-art-dir02-finishings-r4-candidate.blend"
+          assert candidate.is_file() and sha(candidate)==receipt["candidate_blend_sha256"]
+          assert sha(root/"r2"/"atlas-art-proof-01b-portal-reading-r2.blend")==receipt["source_r2_sha256"]
+          assert receipt["no_publication"] and receipt["art_approved"] is False
+          assert len(receipt["material_targets"])>=7
+          assert receipt["materials"]==["Onyx013","Metal010"]
+          assert len(receipt["portals_unmodified"])==4
+          assert all(receipt["portals_unmodified"][p]["location"]==r2["portals"][p]["new_root"] for p in r2["portals"])
+          assert set(receipt["renders"])=={"hero","oblique"}
+          for info in receipt["renders"].values():
+              f=root/"r4"/info["file"]
+              assert f.is_file() and f.stat().st_size>12000 and sha(f)==info["sha256"]
+          if receipt["plant_source_status"]=="ACQUIRED_CC0":
+              assert len(receipt["plant_instances"])==2
+          else:
+              assert len(receipt["plant_instances"])==0
+              print("PLANT NOT IMPORTED; honest partial proof with real CC0 surface materials")
+          print("REAL CC0 PBR FINISHINGS TECHNICAL PASS; ARTISTIC HUMAN GATE PENDING")
+          PY
+      - name: Preserve all source assets and actual Blender models even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-finishings-r4-${{ github.run_number }}
+          path: ${{ runner.temp }}/atlas-finishings-r4/
+          retention-days: 30
+          if-no-files-found: warn
