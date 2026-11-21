@@ -53,3 +53,39 @@ body.no-webgl .stage canvas,body.no-webgl .controls{display:none}
 }
 @media(max-width:360px){.stage{height:clamp(330px,59dvh,580px);min-height:330px}.intro{display:none}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+/* PORTALS-LIGHT-01: the actual four architectural portals are the visible
+   navigation. Keep semantic anchors keyboard reachable and reveal them on focus
+   or when WebGL is unavailable. Do not print an extra row of titles. */
+body.webgl-ready:not(.no-webgl) .destinations {
+  position:fixed;left:0;right:0;bottom:0;z-index:12;
+  opacity:0;pointer-events:none;transform:translateY(110%);
+  transition:opacity .16s ease,transform .16s ease;
+}
+body.webgl-ready:not(.no-webgl) .destinations:focus-within {
+  opacity:1;pointer-events:auto;transform:none;
+  background:#081827f2;
+}
+body.webgl-ready:not(.no-webgl) .stage {
+  height:calc(100dvh - 66px);min-height:0;
+}
+body.webgl-ready:not(.no-webgl) .status,
+body.webgl-ready:not(.no-webgl) footer,
+body.webgl-ready:not(.no-webgl) .preview-label {
+  position:absolute!important;width:1px!important;height:1px!important;
+  overflow:hidden!important;clip-path:inset(50%)!important;
+  white-space:nowrap!important;
+}
+body.webgl-ready:not(.no-webgl) .controls {bottom:16px}
+body.webgl-ready:not(.no-webgl) .controls button {
+  min-width:44px;min-height:44px;padding:6px 10px;
+  background:#10283caa;border-color:#e2c38f66;
+}
+body.webgl-ready:not(.no-webgl) #camera-reset {font-size:22px;line-height:1}
+@media(max-width:650px){
+ body.webgl-ready:not(.no-webgl) .stage {height:calc(100dvh - 55px)}
+ body.webgl-ready:not(.no-webgl) .controls {bottom:calc(12px + env(safe-area-inset-bottom))}
+}
+@media(prefers-reduced-motion:reduce){
+ body.webgl-ready:not(.no-webgl) .destinations {transition:none}
+}
