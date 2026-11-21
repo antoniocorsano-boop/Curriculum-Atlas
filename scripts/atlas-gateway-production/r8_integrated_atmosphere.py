@@ -108,8 +108,8 @@ bays=sorted((o for o in scene.objects if o.name.startswith("ARCH04 • recessed 
 if len(bays)<25:raise RuntimeError("Expected genuine two-level 14-bay galleries")
 for k,o in enumerate(bays):
     apply(o,amber if k%6 in (1,4) else shadow)
-smokeglass=pbr("ATLAS R8 • smoked gallery parapet",(.023,.043,.070),
-               .035,.34,.22)
+smokeglass=pbr("ATLAS R8 • smoked gallery parapet",(.013,.028,.049),
+               .018,.46,.09)
 rails=[]
 for o in scene.objects:
     if o.name.startswith("ARCH04 • genuine glass balustrade"):
@@ -137,8 +137,8 @@ if len(shelves)!=4:raise RuntimeError("Four genuine CC0 bookshelf instances miss
 # Only enlarge the original four slab families about their local centers;
 # do not move the roots or the R6D actual sole metal plinths.
 darkblue=pbr("ATLAS R8 • deep laminated cobalt architectural glass",
-             (.003,.016,.055),.05,.23,.045,
-             emit=(.018,.080,.20),strength=.18)
+             (.002,.011,.045),.035,.32,.025,
+             emit=(.014,.065,.16),strength=.11)
 warm=pbr("ATLAS R8 • thin warm portal perimeter",
          (.29,.19,.077),.28,.32,emit=(.92,.48,.17),strength=1.56)
 changed=[]
