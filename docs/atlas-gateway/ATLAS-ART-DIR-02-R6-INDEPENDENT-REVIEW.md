@@ -70,3 +70,15 @@ Campionamento eseguito sulle immagini **canonico 1536×864** e **R6ABCD HERO 115
 | Fotogramma complessivo | 75,4 | 92,1 | +16,7 |
 
 **Lettura:** R6ABCD appare globalmente più chiara e grigia del canonico, con il divario maggiore nell'area dei portali. La prova R7 non deve semplicemente abbassare l'esposizione globale: deve **redistribuire la luce** per proteggere cielo e bordi ottici e mantenere scure le superfici più estese. Le misure non descrivono da sole il risultato artistico e vanno ricalcolate dopo le immagini reali R7.
+
+## Appendice B — Riesame della variante artistica R7 corretta
+
+**Evidenza successiva al primo verdetto E**, non retroattiva: [Rapporto produzione e confronto R7](https://github.com/antoniocorsano-boop/Curriculum-Atlas/blob/work/atlas-gateway-01-foyer/docs/atlas-gateway/ATLAS-ART-DIR-02-R7-ART-RESULT-01.md), [Cycles qualificato #44940701200](https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/44940701200), [file e due render autentici in Drive](https://drive.google.com/file/d/1wwzdaMIZFTBELKYgGIFCHsjo7nezclWI/view). [Vista diretta canonico vs R7 corretta](https://drive.google.com/file/d/1OnZudpNXt_cZsyl3a6GxKt-eWuSyBzoH/view).
+
+**E-01: progresso parziale.** Le 18 alternanze radiali non governano più la volta; un contorno oro autentico e continuo è ora visibile perché disposto al di sotto dell'opaco collare nella vista dal basso. Il cielo resta un ovale piatto sospeso e i fasci sono ancora troppo simili a tende verticali, non all'atmosfera sofisticata del canone.
+
+**E-02: progresso parziale, non approvato.** Quattro lastre, quattro basi metalliche originali, radici e camera invariati. I vetri non raggiungono la profondità blu e la scala apparente del riferimento. La diminuzione di luma nell'area dei portali (109,1 a 103,6, contro 80,7 nel canonico) documenta una diminuzione di luminosità media, **non certifica una maggiore somiglianza percettiva**.
+
+**E-03: non affrontata in R7, difetti confermati.** Vegetazione reale e librerie CC0 preservate ma marginali; gallerie ancora grigie e poco profonde. In futuro modificare l'illuminazione e l'inquadratura degli oggetti già presenti, non aggiungere risorse.
+
+**Verdetto E aggiornato: `R7_TECH_PASS__ARTISTIC_NOT_APPROVED`.** Non aprire nuove corsie indipendenti per piccoli parametri. È necessaria una revisione artistica integrata dell'oculo, del rapporto scala vetri–podio e della profondità di gallerie, mantenendo un'unica fonte e la HERO comparabile. La valutazione umana dell'ideatore rimane l'atto finale; nessun rilascio Web è autorizzato.
