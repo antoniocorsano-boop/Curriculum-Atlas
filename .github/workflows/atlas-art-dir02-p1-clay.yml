@@ -1,0 +1,81 @@
+name: "ATLAS ART-DIR-02 — P1 modello neutro prospettico"
+on:
+  pull_request:
+    branches: [work/atlas-gateway-01-foyer]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-perceptual-p1-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  real-clay-source-model:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'work/atlas-artdir02-p1-clay-spatial'
+    runs-on: ubuntu-latest
+    timeout-minutes: 48
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile P1 Blender model builder
+        run: python3 -m py_compile scripts/atlas-gateway-production/p1_perceptual_clay.py
+      - name: Get R8 corrected full Blender master
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-art-dir02-r8-5
+          run-id: 44942787690
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/atlas-r8
+      - name: Verify exact R8 source and historic provenance
+        run: |
+          python3 - <<'PY'
+          import pathlib,os,hashlib,json
+          src=pathlib.Path(os.environ["RUNNER_TEMP"])/"atlas-r8"
+          model=src/"atlas-art-dir02-r8-integrated-atmosphere.blend"
+          info=json.loads((src/"atlas-r8-receipt.json").read_text())
+          checksum=hashlib.sha256(model.read_bytes()).hexdigest()
+          assert checksum==info["blend_sha256"]=="2d39c43e0690334ce40627266d083e78d4d4238d25a28d0aaec6be33ef6550f8"
+          assert not info["human_art_approved"] and info["no_publication"]
+          print("R8 EXACT ARCHIVED SOURCE VERIFIED")
+          PY
+      - name: Install headless Blender
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Make real P1 neutral before/after and parametric master
+        run: |
+          mkdir -p "$RUNNER_TEMP/atlas-p1"
+          blender -b "$RUNNER_TEMP/atlas-r8/atlas-art-dir02-r8-integrated-atmosphere.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/p1_perceptual_clay.py -- \
+            --out "$RUNNER_TEMP/atlas-p1"
+      - name: Verify editable model, two Cycles renders, provenance and actual fit
+        run: |
+          python3 - <<'PY'
+          import pathlib,json,hashlib,os
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])/"atlas-p1"
+          r=json.loads((root/"atlas-p1-clay-receipt.json").read_text())
+          def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+          assert r["source_r8_sha256"]=="2d39c43e0690334ce40627266d083e78d4d4238d25a28d0aaec6be33ef6550f8"
+          assert sha(root/"atlas-art-dir02-p1-perceptual-clay.blend")==r["model_sha256"]
+          assert r["candidate_score"]<r["baseline_score"]
+          assert r["architectural_objects_transformed"]>=80
+          assert len(r["portal_roots_before"])==len(r["portal_roots_after"])==4
+          assert len(r["cc0_collections"])==3 and len(r["single_metal_portal_bases"])==4
+          assert not r["fspy_calibration_performed"]
+          assert r["website_hotspots_must_be_revalidated_in_P2"]
+          assert r["no_merge"] and r["no_publication"] and not r["human_art_approved"]
+          assert set(r["renders"])=={"baseline","clay_candidate"}
+          for val in r["renders"].values():
+              f=root/val["file"]
+              assert f.stat().st_size>12000 and sha(f)==val["sha256"]
+          print("P1 TECHNICAL PASS: ONE REAL CLAY MODEL; ARTISTIC APPROVAL SEPARATE")
+          PY
+      - name: Preserve editable .blend, projected anchor tables and original renders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-p1-clay-${{ github.run_number }}
+          path: ${{ runner.temp }}/atlas-p1/
+          retention-days: 30
+          if-no-files-found: warn
