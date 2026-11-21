@@ -44,3 +44,7 @@ L'intensità di luce, i parametri dei materiali e i tempi di rendering non sono 
 Il patrimonio ARCH-04 rimane disponibile senza essere riscritto e VIS-01 completo resta **sospeso** fino all'esito della prova B. Nessuna fusione su `main`, nessuna pubblicazione agli studenti e nessun servizio a pagamento autorizzato.
 
 **Tracciabilità:** [PR Atlas #152](https://github.com/antoniocorsano-boop/Curriculum-Atlas/pull/152), [TRAMA #354](https://github.com/antoniocorsano-boop/trama-ecosistema/issues/354), [sequenza storica precedente](./ATLAS-GATEWAY-LOCKED-DELIVERY-SEQUENCE-01.md) da leggere alla luce della presente decisione.
+
+
+## 6. Verifica addizionale della lettura dei portali, R2
+[Rapporto geometrico e artistico](./ATLAS-ART-DIR-02-PORTAL-READING-R2-RESULT-01.md): il modello correttivo dei quattro pannelli di vetro tangenti alla circonferenza concentrica del podio, con feritoie reali nel pavimento, è stato generato e verificato tecnicamente su [GitHub Actions #44876788900](https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/44876788900). Le tre viste sono disponibili [nel confronto archiviato](https://drive.google.com/file/d/1Kt1NveSO73AlZg2oTtMafUjulh_FV7vH/view). L'esito **non** è un'approvazione artistica: la curva appare troppo appuntita per l'angolo dei laterali, e i pannelli sono piccoli/arretrati. Questa prova non chiude negativamente in via definitiva la fattibilità 3D, ma impone un'unica calibrazione controllata prima di altre rifiniture.
