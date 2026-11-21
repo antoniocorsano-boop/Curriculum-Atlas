@@ -1,6 +1,9 @@
 # ATLAS — MASTER-BLENDER-01
 ## Specifica tecnica e artistica del modello Blender professionale dell'Atrio della Conoscenza
 
+**Fonte artistica canonica aggiornata, 21/11/2026:** [ART-REFERENCE-CANONICAL-2026-11-21.json](./ART-REFERENCE-CANONICAL-2026-11-21.json). Il JPEG 1536×864, SHA-256 `a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe`, è stato esplicitamente adottato come originale di lavoro e [archiviato in Drive](https://drive.google.com/file/d/1vSC_ynSxAF-pxR071TiKjEE0OtaFjXCn/view?usp=drivesdk). **Il precedente requisito di recupero del PNG 1672×941 riportato nella sezione 2 è superato.** Il master Blender di laboratorio esiste ma **non è ancora qualificato artisticamente**. La pre-calibrazione sulla fonte attiva è [qui](./ATLAS-CAMERA-FIT-CANONICAL-02.json): non applicarla al master senza verifiche HERO/SIDE/MOBILE e dell'architettura completa.
+
+
 **Stato:** specifica di produzione salvata e versionata, **non** modello Blender già realizzato.  
 **Data:** 20 novembre 2026.  
 **Direzione artistica vincolante:** [ART-DIR-02](./ATLAS-GATEWAY-ART-DIRECTION-02.md).  
