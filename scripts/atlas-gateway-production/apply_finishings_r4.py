@@ -35,7 +35,7 @@ def img(asset,kind,color=False):
     t.colorspace_settings.name="sRGB" if color else "Non-Color"
     t.pack()
     return t
-def material(name,asset,tint,metal,scale,rough_low,rough_factor,nstrength):
+def material(name,asset,tint,metal,scale,rough_low,rough_factor,nstrength,texture_mix):
     mat=bpy.data.materials.new(name)
     mat.use_nodes=True
     nodes=mat.node_tree.nodes;links=mat.node_tree.links
@@ -48,10 +48,12 @@ def material(name,asset,tint,metal,scale,rough_low,rough_factor,nstrength):
     links.new(src.outputs["Generated"],mapping.inputs["Vector"])
     color=nodes.new("ShaderNodeTexImage");color.image=img(asset,"Color",True)
     links.new(mapping.outputs["Vector"],color.inputs["Vector"])
-    tintnode=nodes.new("ShaderNodeMixRGB");tintnode.blend_type="MULTIPLY"
-    tintnode.inputs[0].default_value=.63
-    tintnode.inputs[2].default_value=(*tint,1.0)
-    links.new(color.outputs["Color"],tintnode.inputs[1])
+    # Original art direction is plain blue-black polished stone, not busy marble.
+    # Preserve the real CC0 texture as a subtle (15%) material variation only.
+    tintnode=nodes.new("ShaderNodeMixRGB");tintnode.blend_type="MIX"
+    tintnode.inputs[0].default_value=texture_mix
+    tintnode.inputs[1].default_value=(*tint,1.0)
+    links.new(color.outputs["Color"],tintnode.inputs[2])
     links.new(tintnode.outputs["Color"],bs.inputs["Base Color"])
     r=nodes.new("ShaderNodeTexImage");r.image=img(asset,"Roughness")
     links.new(mapping.outputs["Vector"],r.inputs["Vector"])
@@ -70,9 +72,9 @@ def material(name,asset,tint,metal,scale,rough_low,rough_factor,nstrength):
         links.new(nm.outputs["Normal"],bs.inputs["Normal"])
     return mat
 stone=material("ATLAS R4 • Onyx013 blue polished stone CC0","Onyx013",
-               (.36,.56,.92),.13,(4.0,4.0,1.0),.13,.35,.22)
+               (.030,.075,.135),.13,(3.0,3.0,1.0),.17,.17,.05,.15)
 bronze=material("ATLAS R4 • Metal010 satin gold CC0","Metal010",
-                (.92,.66,.30),.88,(2.8,2.8,1.0),.20,.37,.14)
+                (.55,.36,.13),.88,(2.8,2.8,1.0),.24,.18,.08,.12)
 floor=bpy.data.objects.get("Atrio • pavimento lapideo")
 if not floor or floor.type!="MESH":raise RuntimeError("Real floor mesh missing")
 floor.data=floor.data.copy()
