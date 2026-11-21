@@ -234,3 +234,16 @@ La conclusione del lavoro sarà determinata dalla **conformità artistica verifi
 **Prove superate:** export/rilettura GLB, 4 portali distinti, chiusura di ogni mesh, 3 camere nel JSON, script Python sintatticamente validi. **NON eseguito:** importazione con Blender, salvataggio di `.blend`, rendering Cycles, confronto con PNG canonico, approvazione artistica, test WebGL/Android. L'ambiente locale non disponeva di Blender e l'installazione non è riuscita.
 
 **Prossimo ingresso:** eseguire lo script Blender su un runner dotato di Blender e acquisire il PNG canonico, senza sostituirlo con ARENA 5 portali o Biblioteca Atlas 3 portali; poi effettuare la calibrazione mediante sintesi/confronto. Il lavoro appena salvato è un prototipo geometrico, non un risultato fotorealistico.
+
+
+---
+
+## Addendum operativo vincolante — ARCH-04 / 21 novembre 2026
+
+L'ideatore ha stabilito il seguente ordine obbligatorio: **ARCH-04 geometria e progetto architettonico completo → approvazione esplicita → VIS-01 grafiche/materiali/luci/raggi/arredi → approvazione → WEB-01 derivato leggero e prove smartphone**. Nessuna delle tre fasi può essere considerata compiuta dal solo completamento dei test automatici, né autorizza l'integrazione in `main` o la pubblicazione.
+
+**Documenti autorevoli attuali, senza sostituzione di ART-DIR-02:** [sequenza vincolante](./ATLAS-GATEWAY-LOCKED-DELIVERY-SEQUENCE-01.md); [progetto geometrico architettonico](./ARCH-04-ARCHITECTURAL-GEOMETRY-PROJECT-01.md); [contratto di quote e formule](./ARCH-04-ARCHITECTURAL-GEOMETRY-PROJECT-01.json); tavole [PL-01](./drawings/ARCH-04-PL-01-PLAN.svg), [SE-01](./drawings/ARCH-04-SE-01-TRANSVERSE.svg), [SE-02](./drawings/ARCH-04-SE-02-LONGITUDINAL.svg), [PR-01](./drawings/ARCH-04-PR-01-CANONICAL-FIT.svg).
+
+**Conservazione Drive, copie consultabili:** [progetto geometrico](https://docs.google.com/document/d/1iaGT0h8vebP7dFQAk0MFwm4drD4DgwUWJStQHHFsnTU/edit) e [sequenza permanente](https://docs.google.com/document/d/1T1Ls_nIgFVOeF3u2wnwXshq-XYp8J66jcnIYqM5r3po/edit). Il riferimento canonico resta il [JPEG approvato del 21/11](https://drive.google.com/file/d/1vSC_ynSxAF-pxR071TiKjEE0OtaFjXCn/view), SHA-256 `a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe`, non i vecchi PNG citati nella storia della sezione 2.
+
+**Problemi aperti (non dare per risolti):** la copertura anteriore ancora parzialmente non modellata; corona e cielo troppo ritagliati in HERO; raccordi di basamenti e anelli al pavimento; connessioni travi/pilastri/solai; differenza fra 14 campate portanti e 18 pannelli di copertura; rotazioni dei portali non necessariamente tangenti all'arco; allineamento prospettico congiunto di portali, oculo e podio. L'ARCH-04 R2 rimane una **candidata** tecnicamente verificata e non approvata artisticamente.
