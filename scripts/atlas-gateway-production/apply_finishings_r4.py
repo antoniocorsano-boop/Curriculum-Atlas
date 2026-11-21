@@ -95,30 +95,50 @@ if len(targets)<7:raise RuntimeError("Too few metal finish targets: "+str(len(ta
 # instance. It is not replicated with simple spheres and its source is preserved.
 model=receipt["model"]
 plant_instances=[]
+plant_issue=None
 if model.get("status")=="ACQUIRED_CC0":
-    blendfile=Path(model["file"])
-    if not blendfile.is_file() or sha(blendfile)!=model["sha256"]:
+    plantfile=Path(model["file"])
+    if not plantfile.is_file() or sha(plantfile)!=model["sha256"]:
         raise RuntimeError("Plant source checksum mismatch")
-    with bpy.data.libraries.load(str(blendfile),link=False) as (src,dst):
-        picks=[c for c in src.collections if "plant" in c.lower()]
-        dst.collections=picks[:1] if picks else src.collections[:1]
-    collection=next((v for v in dst.collections if v is not None),None)
-    if collection is None or not any(o.type=="MESH" for o in collection.all_objects):
-        raise RuntimeError("Real planted model collection is empty")
-    # Architectural planters already exist; no new pedestal or plinth.
-    planters=[o for o in scene.objects if o.name.startswith("ARCH04 • raised botanical planter")]
-    if len(planters)!=2:raise RuntimeError("Expected two preserved architectural planters")
-    for j,planter in enumerate(sorted(planters,key=lambda ob:ob.location.x)):
-        ins=bpy.data.objects.new("ATLAS R4 • real CC0 potted plant "+str(j+1),None)
-        scene.collection.objects.link(ins)
-        ins.instance_type="COLLECTION";ins.instance_collection=collection
-        ins.location=(planter.location.x,planter.location.y,.89)
-        ins.scale=(3.3,3.3,3.3)
-        ins.rotation_euler.z=(.22 if j==0 else -.18)
-        plant_instances.append(ins.name)
-    for ob in scene.objects:
-        if ob.name.startswith("ARCH04 • botanical main stem") or ob.name.startswith("ARCH04 • restrained botanical foliage"):
-            ob.hide_render=True
+    imported=[]
+    try:
+        if model.get("format")=="gltf":
+            old_names=set(bpy.data.objects.keys())
+            bpy.ops.import_scene.gltf(filepath=str(plantfile))
+            imported=[ob for ob in bpy.data.objects if ob.name not in old_names]
+            collection=bpy.data.collections.new("ATLAS R4 • CC0 Poly Haven plant source")
+            for ob in imported:
+                collection.objects.link(ob)
+                for other in list(ob.users_collection):
+                    if other!=collection:other.objects.unlink(ob)
+        else:
+            with bpy.data.libraries.load(str(plantfile),link=False) as (src,dst):
+                picks=[c for c in src.collections if "plant" in c.lower()]
+                dst.collections=picks[:1] if picks else src.collections[:1]
+            collection=next((v for v in dst.collections if v is not None),None)
+        if collection is None or not any(ob.type=="MESH" for ob in collection.all_objects):
+            raise RuntimeError("Imported model contains no usable 3D mesh")
+        planters=[ob for ob in scene.objects if ob.name.startswith("ARCH04 • raised botanical planter")]
+        if len(planters)!=2:raise RuntimeError("Expected two preserved architectural planters")
+        for j,planter in enumerate(sorted(planters,key=lambda ob:ob.location.x)):
+            ins=bpy.data.objects.new("ATLAS R4 • prefabricated CC0 plant "+str(j+1),None)
+            scene.collection.objects.link(ins)
+            ins.instance_type="COLLECTION";ins.instance_collection=collection
+            ins.location=(planter.location.x,planter.location.y,.89)
+            ins.scale=(3.3,3.3,3.3)
+            ins.rotation_euler.z=(.22 if j==0 else -.18)
+            plant_instances.append(ins.name)
+        for ob in scene.objects:
+            if ob.name.startswith("ARCH04 • botanical main stem") or ob.name.startswith("ARCH04 • restrained botanical foliage"):
+                ob.hide_render=True
+    except Exception as e:
+        plant_issue=str(e)[:320]
+        for name in list(plant_instances):
+            ob=bpy.data.objects.get(name)
+            if ob:bpy.data.objects.remove(ob,do_unlink=True)
+        plant_instances=[]
+        for ob in imported:
+            if ob.name in bpy.data.objects:bpy.data.objects.remove(ob,do_unlink=True)
 # Technical invariant: no geometry or location of architectural portals modified.
 portals={}
 for n in ("Curricolo","Esplora","Percorsi","Esperienze"):
@@ -144,7 +164,7 @@ result={"schema":"atlas.gateway.art-dir02.finishings-first-r4/v1",
  "source_r2_sha256":sha(source),"candidate_blend_sha256":sha(candidate),
  "materials":["Onyx013","Metal010"],"material_targets":targets,
  "floor_object":floor.name,"plant_source":model.get("source_page"),
- "plant_source_status":model.get("status"),"plant_instances":plant_instances,
+ "plant_source_status":("IMPORTED_CC0" if len(plant_instances)==2 else ("ACQUIRED_BUT_NOT_IMPORTED" if model.get("status")=="ACQUIRED_CC0" else model.get("status"))),"plant_issue":plant_issue,"plant_instances":plant_instances,
  "portals_unmodified":portals,"no_publication":True,"art_approved":False,
  "source_asset_receipt":receipt,"renders":{}}
 # HERO is kept exactly on the R2 camera, to make the before/after honest.
