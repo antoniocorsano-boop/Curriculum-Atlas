@@ -1,3 +1,5 @@
+> **Disponibile la lettura successiva:** [ATLAS-ART-DIR-02-VISUAL-READING-02](./ATLAS-ART-DIR-02-VISUAL-READING-02.md), con dossier approfondito conservato [insieme all'immagine canonica in Drive](https://drive.google.com/file/d/16Rnkm8FNzDH_TfXY2QtzKSpFAtOazcWY/view). **Questo documento VISUAL-READING-01 rimane integralmente valido come storico e non è sovrascritto.**
+
 # ATLAS — ART-DIR-02-VISUAL-READING-01
 
 ## Lettura canonica permanente dell'immagine di riferimento
