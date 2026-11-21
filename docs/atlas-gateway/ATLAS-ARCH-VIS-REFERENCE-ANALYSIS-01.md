@@ -78,3 +78,38 @@ Il master .blend comprende geometria, microstruttura, luci Cycles, atmosfera e a
 
 ## 14. Inventario collegato e responsabilità
 La fonte è il JPEG ART-DIR-02; il catalogo JSON codifica id, collezioni, primitive, materiali, luci, testi, immagini narrative, camere e criteri di accettazione. Le decisioni e revisioni successive devono essere aggiunte come manifest o sezioni versionate senza sovrascrivere fonte canonica e ARCH-03 R2. Governance: [PR #152](https://github.com/antoniocorsano-boop/Curriculum-Atlas/pull/152), [TRAMA #354](https://github.com/antoniocorsano-boop/trama-ecosistema/issues/354).
+
+
+## 15. Revisione interpretativa dei quattro portali — lettura incrementale ART-DIR-02 (21/11/2026)
+
+**Motivazione della revisione.** Il committente ha precisato che i quattro accessi non devono leggersi come totem separati: sono **lastre vetrate luminose che emergono da feritoie nel pavimento**, con rialzo quasi impercettibile, ordinate su una **curva apparentemente circolare** collegata alla cupoletta ATLAS. Questa lettura raffina le interpretazioni precedenti, non sostituisce il JPEG approvato o gli studi su luce, materiali, illustrazioni e profondità. Le ultime due viste Cycles ART-PROOF-01B hanno confermato che le illustrazioni possono essere tridimensionali, ma che geometria/composizione dei portali non è ancora fedele.
+
+### 15.1. Catena di evidenze, senza cancellare i tentativi
+- **Fonte visiva:** i quattro rettangoli vetrati, la luce lungo il perimetro, la base prossima al piano riflettente, i quattro contenuti distinti e il podio centrale sono visibili nell'ART-DIR-02. Le loro coordinate apparenti, con incertezze da sovrapposizione, restano nel [manifest originale](./ART-DIR-02-CANONICAL-LANDMARKS.json).
+- **Interpretazione approvata ora come obiettivo progettuale:** gli elementi sono **pannelli vetrati incassati**, non basamenti autonomi; **feritoia vera** nella pietra, lieve collarino e luce radente; il vetro deve emergere da un alloggiamento fisico.
+- **Ipotesi geometrica da provare:** la curva dei centri sia **concentrica in pianta al podio**. L'immagine singola non fornisce in maniera univoca la profondità Y o il raggio reale; la concentricità va valutata con vista dall'alto e proiezione HERO.
+- **Dato tecnico verificato nel codice:** ARCH-04B usa centro dell'arco `C_old=(0,-6.3836)`, mentre il podio usa `C_podio=(0,-2.0)`, **distanza 4.3836 BU**. Non è concentricità. Le rotazioni locali correnti sono `[-.29,-.11,+.11,+.29]` rad, non calcolate dalla tangente. La funzione `portal()` del master genera un grande `zoccolo` `3.22×.62×.28` e ARCH-04B aggiunge un secondo supporto `3.78×.52×.144`: la lettura visiva come totem nasce anche dalla geometria.
+- **Correzione dell'interpretazione precedente:** è improprio presentare come *misurata* una maggiore altezza fisica dei pannelli centrali. Nel riferimento le sommità dei laterali risultano persino più alte in pixel, mentre le basi centrali appaiono più arretrate/in alto. La configurazione prospettica deve spiegare entrambe le evidenze senza cambiare arbitrariamente la sagoma delle coppie.
+
+### 15.2. Sezione funzionale richiesta per ogni portale
+**Pavimento in pietra** → taglio reale a profondità contenuta → **canale tecnico scuro incassato** → due labbri/profili metallici sottili a filo quota → **lastra vetrata verticale sottile** con angoli superiori raggiati → fibra/emissione perimetrale e radente nell'incastro → iconografia, titolo, sottotitolo e immagine distinti sospesi o integrati nel vetro. Non aggiungere un podio o una pedana rettangolare visibile: la luce deve *disegnare* il bordo di uscita, non sostituire l'appoggio. Il dettaglio va verificato lateralmente, non solamente nella HERO.
+
+### 15.3. Regola geometrica parametrica proposta (non ancora qualificata)
+Sistema Blender esistente: X destra, Y fondo, Z alto. Centro candidato `C=(0,-2.0)` = asse della cupoletta nel **modello attuale** (non un dato metrologico della fotografia). Angoli simmetrici `(-α_e,-α_i,+α_i,+α_e)`, con `0<α_i<α_e<π/2`, raggio R da ottimizzare:
+
+```python
+x = cx + R * sin(alpha)
+y = cy + R * cos(alpha)
+yaw = -alpha
+```
+
+L'orientamento suppone **lastra verticale nel piano XZ, normale anteriore locale -Y**; così la tangente ha direzione `(cos α, -sin α)` e la faccia visibile punta verso il centro `C`. Se il master ha una normale opposta, va orientata la **mesh/UV**, non invertito arbitrariamente il senso dell'arco.
+
+**Vincoli quantitativi:** stesso R per tutti, stesso centro XY del podio nello scenario candidato, `left/right` simmetrici, `z_base` in contatto con la feritoia, nessun basamento sporgente, tangente verificata con prodotto scalare radiale-tangente prossimo a zero; quattro etichette e contenuti invariati. R, angoli, larghezza dei canali, inclinazione, ottica e scala rimangono **parametri di prova** da confrontare con il riferimento prima di congelarli.
+
+### 15.4. Cosa non va perduto e cosa va sostituito
+**Da conservare:** marchio e geometria della calotta, curvatura dell'atrio, oculo, gallerie, dati delle luci/raggi/riflessi, 15 materiali e 12 ruoli luminosi, quattro rappresentazioni narrative, codice e archivio di ARCH-04B e ART-PROOF-01B, accessibilità dei comandi HTML.
+**Da correggere:** circonferenza dei centri e orientamento dei pannelli, fondazione doppia prominente, rapporto lastra/feritoia, proporzioni apparenti portali vs podio. **Non** rielaborare oculo, arredi, materiali e luce in questa prova specifica: il confronto deve isolare l'effetto della correzione dei portali.
+**Gate:** produrre **plani/top ORTHO, frontale HERO e obliqua** dalla *stessa scena*, misurare rettangoli apparenti contro ART-DIR-02, controllare tangenti e contatto col pavimento, dimostrare parallax reale. Se la disposizione non migliora la fedeltà, registrare l'ipotesi come non verificata e correggerne i parametri, senza retrodatare approvazione o cancellare versioni precedenti.
+
+Questa è una **revisione interna ART-DIR-02**, non una nuova direzione artistica, un nuovo progetto o un'autorizzazione a pubblicare.
