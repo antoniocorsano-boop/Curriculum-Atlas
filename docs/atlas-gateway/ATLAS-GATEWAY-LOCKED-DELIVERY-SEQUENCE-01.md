@@ -37,3 +37,7 @@ Ogni elaborato deve riportare **fonte**, **versione/commit**, **stato**, **metod
 - ARCH-04 R2 modello attuale: **prodotto, tecnicamente PASS, artisticamente non approvato**; occorre adeguarlo ai nodi costruttivi e all'allineamento globale.
 - VIS-01: **specificata, non realizzata sul master approvato**.
 - WEB-01 e pubblicazione: **non autorizzate**.
+
+
+## Allegato tecnico vincolante — Registro dei raccordi ARCH-04
+[ARCH-04-CONSTRUCTION-JOINTS-01.json](./ARCH-04-CONSTRUCTION-JOINTS-01.json) contiene **16 nodi di assemblaggio** con condizioni geometriche effettive, target di modellazione, dipendenze e prove. È parte integrante del Gate GEO-05/GEO-06: VIS-01 resta bloccata se appoggi, parapetti, giunti della copertura e ingresso anteriore non sono risolti e approvati.
