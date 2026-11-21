@@ -550,6 +550,12 @@ scene.render.film_transparent=False
 scene.camera=cameras["hero"]
 candidate=os.path.join(OUT,"atlas-foyer-arch04b-geometric-candidate.blend")
 bpy.ops.wm.save_as_mainfile(filepath=candidate)
+# ART-PROOF-01 uses the same physical architecture, but evaluates two carefully
+# lit frames instead of rerendering eight low-detail architectural checks.
+# Default ARCH-04B remains bit-for-bit behaviorally unchanged.
+if "--geometry-only" in ARGS:
+    print("ATLAS_ARCH04B_GEOMETRY_ONLY",candidate)
+    raise SystemExit(0)
 output_images={}
 for label,cam in cameras.items():
     scene.camera=cam
