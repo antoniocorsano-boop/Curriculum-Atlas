@@ -333,12 +333,18 @@ async function loadArtMaster(){
 }
 function setCamera(){
   const w=Math.max(1,stage.clientWidth),h=Math.max(1,stage.clientHeight);
-  const portrait=w/h<.85, z=portrait?19.7:16.1;
-  const target=new T.Vector3(0,3.1,-.65);
-  const offset=new T.Vector3(0,portrait?3.0:2.3,z);
+  const aspect=w/h,portrait=aspect<.85;
+  // A 9:16 phone has substantially less horizontal field of view than the
+  // previous 390x550 stage. Preserve all four architectural portals by
+  // increasing distance with the actual aspect rather than cropping edges.
+  const z=portrait?Math.min(36,Math.max(19.7,19.7*.72/Math.max(aspect,.42))):16.1;
+  const viewHeight=portrait?2.65:3.1;
+  const target=new T.Vector3(0,viewHeight,-.65);
+  const offset=new T.Vector3(0,portrait?2.7:2.3,z);
   offset.applyAxisAngle(new T.Vector3(0,1,0),orbit);
-  camera.position.copy(target).add(offset);camera.lookAt(new T.Vector3(0,3.1+vertical,-.65));
-  camera.aspect=w/h;camera.fov=portrait?60:53;camera.updateProjectionMatrix();
+  camera.position.copy(target).add(offset);
+  camera.lookAt(new T.Vector3(0,viewHeight+vertical,-.65));
+  camera.aspect=aspect;camera.fov=portrait?60:53;camera.updateProjectionMatrix();
 }
 function render(){
   request=0;if(stopped)return;
