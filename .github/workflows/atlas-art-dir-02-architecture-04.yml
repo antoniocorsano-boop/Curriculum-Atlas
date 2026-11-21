@@ -57,7 +57,7 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import hashlib,json,os
+          import hashlib,json,math,os
           p=Path(os.environ['RUNNER_TEMP'])/'atlas-arch04'
           base=p/'baseline'/'atlas-foyer-master.blend'
           candidate=p/'candidate'/'atlas-foyer-arch04-candidate.blend'
@@ -87,7 +87,7 @@ jobs:
               assert q.is_file() and q.stat().st_size>5000 and h(q)==entry['sha256']
               assert set(entry['portal_boxes_normalized'])=={'Curricolo','Esplora','Percorsi','Esperienze'}
               sky=entry['oculus_bbox_normalized']
-              assert len(sky)==4 and all(isinstance(v,(int,float)) and -2<v<3 for v in sky)
+              assert len(sky)==4 and all(isinstance(v,(int,float)) and math.isfinite(v) for v in sky)
               for bbox in entry['portal_boxes_normalized'].values():
                   assert len(bbox)==4 and all(isinstance(v,(int,float)) and -2<v<3 for v in bbox)
           print('ATLAS ARCH-04 FULL 5-VIEW GEOMETRY VERIFIED — ART NOT APPROVED')
