@@ -38,7 +38,7 @@ function jpegSize(buf){
     if(size<2||i+size>buf.length)break;
     if([0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf].includes(marker)){
       if(size<7)break;
-      return {w:buf.readUInt16BE(i+3),h:buf.readUInt16BE(i+1)};
+      return {w:buf.readUInt16BE(i+5),h:buf.readUInt16BE(i+3)};
     }
     i+=size;
   }
@@ -62,7 +62,7 @@ if(existsSync(resolveFromRoot(paths.reference))){
   checked("reference",valid,
     {jpeg:!!dims,width:dims?.w??null,height:dims?.h??null,
      bytes:b.length,sha256:refSha,expected:expected.sha256});
-}else checked("reference",false,"Canonical ART-DIR-02 JPEG is archived in Drive but not mounted in this CI workspace; set ATLAS_ART_REFERENCE to the downloaded verified file. File: ${canonicalManifest.drive.url}");
+}else checked("reference",false,"Canonical ART-DIR-02 JPEG is archived in Drive but not mounted in this CI workspace; set ATLAS_ART_REFERENCE to the downloaded verified file. File is available from the Drive URL in the canonical manifest.");
 if(existsSync(resolveFromRoot(paths.master))){
   const b=readFileSync(resolveFromRoot(paths.master));
   masterSha=hash(b);masterSize=b.length;
