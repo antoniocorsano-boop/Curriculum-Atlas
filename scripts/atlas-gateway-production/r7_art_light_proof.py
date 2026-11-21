@@ -59,7 +59,7 @@ bronzedark=pbr("ATLAS R7 • almost invisible oculus housing",
 gold=pbr("ATLAS R7 • continuous restrained warm skylight rim",
          (.37,.24,.075),.34,.28,emit=(1,.57,.22),strength=2.15)
 blue=pbr("ATLAS R7 • blue depth glass neutral reflected",
-         (.005,.023,.081),.045,.16,.13,emit=(.007,.063,.17),strength=.15)
+         (.003,.017,.061),.05,.24,.07,emit=(.003,.045,.13),strength=.055)
 frame=pbr("ATLAS R7 • gentle warm glass perimeter",
           (.40,.25,.100),.22,.35,emit=(1,.59,.26),strength=1.38)
 dome=pbr("ATLAS R7 • composed blue night ATLAS canopy",
@@ -118,7 +118,16 @@ circle.bevel_resolution=2
 spline=circle.splines.new("POLY");spline.points.add(n-1);spline.use_cyclic_u=True
 for j,p in enumerate(spline.points):
     a=math.tau*j/n
-    p.co=(5.51*math.cos(a),1.3+5.51*math.sin(a),8.486,1)
+    p.co=(5.51*math.cos(a),1.3+5.51*math.sin(a),8.405,1)
+# Previous 8.486 warm ring was ABOVE the 8.455 opaque collar.
+# The viewer is below: bring the one true ring down for clear visibility.
+ringnodes=gold.node_tree.nodes
+ringnodes.clear()
+ringout=ringnodes.new("ShaderNodeOutputMaterial")
+ringemit=ringnodes.new("ShaderNodeEmission")
+ringemit.inputs["Color"].default_value=(1.0,.61,.24,1)
+ringemit.inputs["Strength"].default_value=3.6
+gold.node_tree.links.new(ringemit.outputs["Emission"],ringout.inputs["Surface"])
 circle.materials.append(gold)
 rim=bpy.data.objects.new("ATLAS R7 • ONE golden oculus light seam",circle)
 scene.collection.objects.link(rim)
@@ -140,7 +149,7 @@ fog=fog.copy();fog.name="ATLAS R7 • subtle zenital blue participating media"
 volume=next((n for n in fog.node_tree.nodes
              if n.bl_idname=="ShaderNodeVolumePrincipled"),None)
 if not volume:raise RuntimeError("No true volumetric scattering node")
-volume.inputs["Density"].default_value=.045
+volume.inputs["Density"].default_value=.028
 if volume.inputs.get("Anisotropy"):
     volume.inputs["Anisotropy"].default_value=.60
 shafts=[]
@@ -152,7 +161,7 @@ if len(shafts)!=7:raise RuntimeError("Expected seven already authored zenital vo
 skylight=bpy.data.objects.get("PROOF • broad cool skylight")
 if not skylight or skylight.type!="LIGHT":raise RuntimeError("Authored area skylight missing")
 skylight.data=skylight.data.copy()
-skylight.data.energy=2850
+skylight.data.energy=2475
 skylight.data.size=6.0
 front=bpy.data.objects.get("PROOF • front soft fill")
 if front and front.type=="LIGHT":
