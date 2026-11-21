@@ -340,7 +340,25 @@ bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT,"atlas-foyer-master.blend"
 bpy.ops.render.render(write_still=True)
 # Keep the authored reference lighting in .blend, but do not double the web lights.
 glb=os.path.join(OUT,"atlas-foyer-master.glb")
+# The editable Cycles master retains signage for artistic review, while
+# the web GLB excludes title meshes: its one visible title per portal comes
+# from the accessible Atlas portal contract through the shared runtime texture.
+# Selection is changed AFTER the .blend was saved and the Cycles image rendered.
+bpy.ops.object.select_all(action="DESELECT")
+selected_for_web=0
+excluded_titles=0
+for obj in scene.objects:
+    if obj.type!="MESH":
+        continue
+    if obj.name.startswith("Portale • titolo "):
+        excluded_titles+=1
+        continue
+    obj.select_set(True)
+    selected_for_web+=1
+if excluded_titles!=4:
+    raise ValueError("Expected four authored portal titles before GLB export")
 bpy.ops.export_scene.gltf(filepath=glb,export_format="GLB",
+                          export_selected=True,
                           export_cameras=False,export_lights=False)
 def sha(filename):
     with open(filename,"rb") as f:return hashlib.sha256(f.read()).hexdigest()
@@ -352,6 +370,8 @@ receipt={
     "meshes":len(meshes),
     "triangles_estimate":sum(sum(max(1,len(p.vertices)-2) for p in o.data.polygons) for o in meshes),
     "material_count":len(bpy.data.materials),
+    "web_export_selected_meshes":selected_for_web,
+    "offline_only_portal_titles":excluded_titles,
     "approved_logo_sha256":logo_hash,
     "approved_logo_geometry":"ellipsoid-front-uv-grid-64x14",
     "has_student_data":False,
