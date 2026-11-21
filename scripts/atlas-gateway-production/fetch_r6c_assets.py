@@ -4,7 +4,7 @@ Every byte and dependency is recorded; no silent fabricated fallback.
 """
 import hashlib, urllib.request, json, gzip, io, zipfile, sys
 from pathlib import Path
-args=sys.argv[sys.argv.index("--")+1:] if "--" in sys.argv else []
+args=sys.argv[sys.argv.index("--")+1:] if "--" in sys.argv else sys.argv[1:]
 if "--out" not in args:raise RuntimeError("--out required")
 ROOT=Path(args[args.index("--out")+1]).resolve();ROOT.mkdir(parents=True,exist_ok=True)
 AGENT="Atlas ART-DIR-02 R6C original CC0 asset qualification/1.0"
