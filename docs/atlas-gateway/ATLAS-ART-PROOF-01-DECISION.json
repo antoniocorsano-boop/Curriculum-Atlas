@@ -59,14 +59,23 @@
         "4 portal regions + demo CTA",
         "dialog triggered and closed on desktop and mobile focused pairs",
         "comparison mode shown",
-        "no horizontal scroll in test viewports"
+        "no horizontal scroll in test viewports",
+        "Chromium mobile focused-pair keyboard interaction limited to visible portals"
       ],
       "untested": [
         "real Android touch responsiveness",
         "actual Atlas navigation",
         "GPU 3D performance",
         "3D visual equivalence"
-      ]
+      ],
+      "not_tested_on_real_device": true
+    },
+    "drive": {
+      "html_url": "https://drive.google.com/file/d/1VbiuhCg7aAd-Mi8YG8I_8HNYhVaVACmN/view",
+      "html_bytes": 1511122,
+      "zip_url": "https://drive.google.com/file/d/11dIKw3ZgGnmAs2YO6sL6CFCjpIVhSXc9/view",
+      "zip_bytes": 2274084,
+      "verification": "Google Drive upload accepted; metadata readback sizes matched original generated assets"
     }
   },
   "stage_b": {
