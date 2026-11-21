@@ -331,20 +331,20 @@ for poly in logo.data.polygons:
 # Only existing roots change position/scale; their identifiers, textures, routes,
 # operational text authority and pre-existing master asset remain unchanged.
 PORTAL_LAYOUT={
-    "Curricolo":(-6.12,.56,-.29),
-    "Esplora":(-2.03,2.44,-.11),
-    "Percorsi":(2.03,2.44,.11),
-    "Esperienze":(6.12,.56,.29)
+    "Curricolo":(-5.90,.56,-.29),
+    "Esplora":(-2.40,2.44,-.11),
+    "Percorsi":(2.40,2.44,.11),
+    "Esperienze":(6.00,.56,.29)
 }
 for label,(px,py,radians) in PORTAL_LAYOUT.items():
     root=bpy.data.objects.get("Portale • "+label)
     root.location=(px,py,0)
     root.rotation_euler.z=radians
-    root.scale=(1.14,1.0,1.085)
+    root.scale=(1.20,1.0,1.00)
     # Master render labels are intentionally not part of the public GLB.
     title=bpy.data.objects.get("Portale • titolo "+label)
     if title:
-        title.location=(px,py-.48,3.42*1.085)
+        title.location=(px,py-.48,3.42)
         title.rotation_euler.z=radians
         title.scale=(1.18,1.18,1.18)
 
@@ -372,11 +372,11 @@ def camera(name,position,target,lens):
     return o
 
 cameras={
-    "hero":camera("CAM_HERO_ARCH03",(0,-15.8,3.38),(0,2.2,3.17),30.0),
-    "side":camera("CAM_SIDE_ARCH03",(5.0,-13.8,3.56),(0,2.2,3.35),29.0),
-    "mobile":camera("CAM_MOBILE_ARCH03",(0,-18.3,3.54),(0,2.4,3.34),23.5),
-    "mobile_left":camera("CAM_MOBILE_LEFT_ARCH03",(-4.20,-11.4,3.42),(-4.05,1.72,3.15),42.0),
-    "mobile_right":camera("CAM_MOBILE_RIGHT_ARCH03",(4.20,-11.4,3.42),(4.05,1.72,3.15),42.0)
+    "hero":camera("CAM_HERO_ARCH03",(0,-15.8,3.38),(0,2.2,2.05),30.0),
+    "side":camera("CAM_SIDE_ARCH03",(5.0,-13.8,3.56),(0,2.2,2.22),29.0),
+    "mobile":camera("CAM_MOBILE_ARCH03",(0,-18.3,3.54),(0,2.4,2.59),23.5),
+    "mobile_left":camera("CAM_MOBILE_LEFT_ARCH03",(-4.20,-11.4,3.42),(-4.05,1.72,3.01),32.0),
+    "mobile_right":camera("CAM_MOBILE_RIGHT_ARCH03",(4.20,-11.4,3.42),(4.05,1.72,3.01),32.0)
 }
 scene.render.engine="CYCLES"
 scene.cycles.samples=16
@@ -418,7 +418,7 @@ for label,cam in cameras.items():
                               "sha256":hashlib.sha256(data.read()).hexdigest(),
                               "bytes":os.stat(image_path).st_size}
 receipt={
-    "schema":"atlas.gateway.art-dir02.architecture-candidate/v3",
+    "schema":"atlas.gateway.art-dir02.architecture-candidate/v3.1",
     "status":"GEOMETRY_CANDIDATE_NOT_ART_APPROVED",
     "canonical_reference_sha256":CANONICAL_SHA,
     "original_master_sha256":SOURCE_SHA,
