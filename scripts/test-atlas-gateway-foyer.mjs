@@ -12,6 +12,7 @@ for(const p of PORTALS){
 }
 assert.match(html,/id="foyer-canvas"/);
 assert.match(html,/name="viewport"/);
+assert.match(html,/connect-src [^"]*blob:/,"verified GLB embedded textures require blob URLs");
 assert.match(html,/type="module" src="\.\/foyer.mjs"/);
 assert.match(js,/WebGLRenderer/);
 assert.match(js,/CylinderGeometry/);
