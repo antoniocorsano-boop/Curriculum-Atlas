@@ -1,13 +1,16 @@
 name: Atlas Visual Factory 3D — master Blender
 on:
-  push:
-    branches: [work/atlas-gateway-01-foyer]
+  pull_request:
+    branches: [work/atlas-library-web-delivery]
     paths:
       - "scripts/atlas-gateway-foyer/blender_master.py"
       - "scripts/atlas-gateway-foyer/foyer.mjs"
       - "scripts/build-atlas-gateway-foyer.mjs"
       - ".github/workflows/atlas-gateway-foyer-blender.yml"
   workflow_dispatch:
+concurrency:
+  group: atlas-foyer-blender-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
