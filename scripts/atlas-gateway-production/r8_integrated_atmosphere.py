@@ -176,6 +176,29 @@ if len(changed)!=16:raise RuntimeError("Four pane geometries must be updated con
 # The graphic/labels remain original: no second floating cards, no new text.
 # The original four portal position/rotation/scale and R6D bases do not move.
 
+# The large white rectangles are specular overexposure, not the
+# intended luminous windows. Lower only frontal incidence and IOR reflection.
+for mat,level in ((smokeglass,.08),(darkblue,.09)):
+    shader=mat.node_tree.nodes.get("Principled BSDF")
+    socket=shader.inputs.get("Specular") or shader.inputs.get("Specular IOR Level")
+    if socket:socket.default_value=level
+front=bpy.data.objects.get("PROOF • front soft fill")
+if front and front.type=="LIGHT":
+    front.data=front.data.copy()
+    front.data.energy=230
+canopy=bpy.data.objects.get("ATLAS ARCH04 • low elliptical convex canopy")
+if canopy and canopy.active_material and canopy.active_material.use_nodes:
+    canopy.data=canopy.data.copy()
+    canopy_mat=canopy.active_material.copy()
+    canopy_mat.name="ATLAS R8 • softer deep blue podium"
+    shader=canopy_mat.node_tree.nodes.get("Principled BSDF")
+    if shader:
+        spec=shader.inputs.get("Specular") or shader.inputs.get("Specular IOR Level")
+        if spec:spec.default_value=.15
+        shader.inputs["Roughness"].default_value=.44
+    canopy.data.materials.clear()
+    canopy.data.materials.append(canopy_mat)
+
 # Concentrate warmth in the real library rather than large white rectangles.
 for o in scene.objects:
     if o.name.startswith("ATLAS R6C • hidden library light ") and o.type=="LIGHT":
