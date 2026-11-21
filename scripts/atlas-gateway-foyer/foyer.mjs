@@ -219,20 +219,30 @@ function drawFoyer(){
   const domeHighlight=new T.Mesh(new T.TorusGeometry(2.57,.038,6,64),
     new T.MeshBasicMaterial({color:0xe7be79,transparent:true,opacity:.5}));
   domeHighlight.rotation.x=-Math.PI/2;add(domeHighlight,0,.53,2.0);
-  function brandTexture(){
-    const c=document.createElement("canvas");c.width=512;c.height=256;
-    const ctx=c.getContext("2d");ctx.clearRect(0,0,512,256);
-    ctx.textAlign="center";ctx.shadowColor="#edb970";ctx.shadowBlur=15;
-    ctx.font="bold 105px Georgia,serif";ctx.fillStyle="#f6d7a0";ctx.fillText("A",256,105);
-    ctx.shadowBlur=3;ctx.font="bold 55px system-ui,sans-serif";
-    ctx.letterSpacing="12px";ctx.fillText("ATLAS",258,177);
-    ctx.font="18px system-ui,sans-serif";ctx.shadowBlur=0;ctx.fillStyle="#bbd7e7";
-    ctx.fillText("MONDI DELLA CONOSCENZA",256,216);
-    const tex=new T.CanvasTexture(c);tex.encoding=T.sRGBEncoding;return tex;
+  // Approved ATLAS logo: the same transparent brand artwork used by the
+  // responsive entry. Its vertices follow the actual flattened ellipsoid;
+  // a flat plane in front of the dome would be an unacceptable fake decal.
+  const brandLogoTexture = new T.TextureLoader().load("./atlas-logo-approved-01.png");
+  brandLogoTexture.encoding=T.sRGBEncoding;
+  brandLogoTexture.anisotropy=2;
+  const logoGeometry=new T.PlaneGeometry(3.10,.675,62,14);
+  const logoPositions=logoGeometry.getAttribute("position");
+  const radius=2.98, verticalRadius=radius*.49, centreY=.4, centreZ=2.0;
+  for(let i=0;i<logoPositions.count;i++){
+    const x=logoPositions.getX(i);
+    const y=.93+logoPositions.getY(i);
+    const radial=1-(x/radius)**2-((y-centreY)/verticalRadius)**2;
+    if(radial<=.001)throw Error("ATLAS_LOGO_CURVED_SURFACE_OVERFLOW");
+    const z=centreZ+radius*Math.sqrt(radial)+.035;
+    logoPositions.setXYZ(i,x,y,z);
   }
-  const brand=new T.Mesh(new T.PlaneGeometry(2.7,1.35),
-    new T.MeshBasicMaterial({map:brandTexture(),transparent:true,depthWrite:false,side:T.DoubleSide}));
-  add(brand,0,1.38,5.12);
+  logoGeometry.computeVertexNormals();
+  const logoSurface=new T.Mesh(logoGeometry,new T.MeshStandardMaterial({
+    map:brandLogoTexture,transparent:true,depthWrite:false,metalness:.15,
+    roughness:.41,side:T.FrontSide,polygonOffset:true,polygonOffsetFactor:-1
+  }));
+  logoSurface.name="ATLAS • marchio approvato aderente al volume ellissoidale";
+  scene.add(logoSurface);
   // Physical portal assemblies: recessed surround, glass face, bevel trim,
   // luminous perimeter and a faint reflection on the polished ground.
   for(const p of PORTALS){
