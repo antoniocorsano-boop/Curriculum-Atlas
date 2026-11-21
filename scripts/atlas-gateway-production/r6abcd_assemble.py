@@ -147,7 +147,7 @@ report={
     "master_r6ab_sha256":sha(BASE),"source_c_sha256":sha(C),
     "source_d_sha256":sha(D),"source_r5_sha256":R5,
     "integrated_sha256":sha(blend),"cc0_assets":CR["official_cc0_assets"],
-    "c_collections":sources,"c_objects_linked":c_linked,"d_objects_linked":d_linked,
+    "c_collections":[x.name if hasattr(x,"name") else x for x in sources],"c_objects_linked":c_linked,"d_objects_linked":d_linked,
     "d_portal_parent_duplicates_removed":duplicates,
     "c_plant_families":{k:len(v) for k,v in CR["instances_by_family"].items()},
     "basement_count":len(descendants("ATLAS R6D • sole luminous metal base")),
