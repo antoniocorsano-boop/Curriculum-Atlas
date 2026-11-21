@@ -2,7 +2,7 @@
 """ATLAS-GATEWAY-01 — generatore Blender del master artistico originale.
 
 Invocazione: blender -b --python blender_master.py -- --out /percorso/cartella
-Nessuna texture esterna e nessun dato personale. Le coordinate sono Z-up Blender;
+Marchio ATLAS locale verificato e incorporato nel GLB; nessun dato personale. Coordinate Z-up Blender;
 l'esportatore glTF applica la trasformazione di asse richiesta da Three.js.
 Non modifica il modello canonico della precedente biblioteca.
 """
@@ -241,13 +241,64 @@ central=bpy.context.object
 central.name="ATLAS • volume centrale"
 central.scale.z=.54
 assign(central,steel,smooth=True)
-# Raised metal logotype geometry; no web fonts or external assets.
-for value,z,size in [("A",1.3,1.1),("ATLAS",.62,.34)]:
-    bpy.ops.object.text_add(location=(0,-5.04,z),rotation=(math.pi/2,0,0))
-    obj=bpy.context.object;obj.name="ATLAS • logotipo "+value
-    obj.data.body=value;obj.data.align_x="CENTER";obj.data.size=size;obj.data.extrude=.006
-    obj.data.materials.append(warm)
-    bpy.ops.object.convert(target="MESH")
+# The exact approved gold-A/ivory logo is mapped onto the 3D curved surface.
+# Geometry follows the front hemisphere of the flattened ellipsoid, rather than
+# adding a floating text plane. The PNG is local, hashed, packed in .blend and
+# embedded in GLB; no font lookup, CDN or nonreproducible late typography.
+logo_path=os.path.abspath(os.path.join(os.path.dirname(__file__),"..","..",
+    "public","atlas-gateway-entry","atlas-logo-approved-01.png"))
+logo_hash="0d3d266b7a889f590c900f49ec3bce43bdc1bb48685b4bdf9ff883420dd46f86"
+if not os.path.isfile(logo_path):
+    raise FileNotFoundError("Approved Atlas logo texture missing: "+logo_path)
+with open(logo_path,"rb") as handle:
+    actual_logo_hash=hashlib.sha256(handle.read()).hexdigest()
+if actual_logo_hash!=logo_hash:
+    raise ValueError("Approved Atlas logo texture changed; provenance mismatch")
+logo_image=bpy.data.images.load(logo_path,check_existing=True)
+logo_image.pack()
+logo_material=material("ATLAS • marchio approvato aderente al podio",0xffffff,.22,.39)
+logo_nodes=logo_material.node_tree.nodes
+image_node=logo_nodes.new("ShaderNodeTexImage")
+image_node.image=logo_image
+shader=logo_nodes.get("Principled BSDF")
+logo_material.node_tree.links.new(image_node.outputs["Color"],shader.inputs["Base Color"])
+logo_material.node_tree.links.new(image_node.outputs["Alpha"],shader.inputs["Alpha"])
+try:
+    logo_material.blend_method="BLEND"
+except (AttributeError,TypeError,ValueError):
+    if hasattr(logo_material,"surface_render_method"):
+        logo_material.surface_render_method="DITHERED"
+columns,rows=64,14
+radius=2.94
+height_radius=radius*.54
+vertices=[]
+for row in range(rows+1):
+    z=.71+row/rows*.65
+    for column in range(columns+1):
+        x=-1.56+column/columns*3.12
+        radial=1.0-(x/radius)**2-((z-.56)/height_radius)**2
+        if radial<=0:
+            raise ValueError("Atlas logo exceeds convex ellipsoid surface")
+        y=-2.0-radius*math.sqrt(radial)-.027
+        vertices.append((x,y,z))
+faces=[]
+for row in range(rows):
+    for column in range(columns):
+        a=row*(columns+1)+column
+        faces.append((a,a+1,a+columns+2,a+columns+1))
+logo_mesh=bpy.data.meshes.new("ATLAS • mappatura UV su calotta")
+logo_mesh.from_pydata(vertices,[],faces)
+logo_mesh.update()
+logo_uv=logo_mesh.uv_layers.new(name="Logo UV")
+for polygon in logo_mesh.polygons:
+    for loop_idx in polygon.loop_indices:
+        vert_idx=logo_mesh.loops[loop_idx].vertex_index
+        column=vert_idx%(columns+1)
+        row=vert_idx//(columns+1)
+        logo_uv.data[loop_idx].uv=(column/columns,row/rows)
+logo_obj=bpy.data.objects.new("ATLAS • logotipo approvato fisicamente curvo",logo_mesh)
+bpy.context.collection.objects.link(logo_obj)
+assign(logo_obj,logo_material,smooth=True)
 
 # Front-facing panels stand at the same locations as the WebGL gateway.
 portal("Curricolo",-4.8,1.0,-12)
@@ -301,6 +352,8 @@ receipt={
     "meshes":len(meshes),
     "triangles_estimate":sum(sum(max(1,len(p.vertices)-2) for p in o.data.polygons) for o in meshes),
     "material_count":len(bpy.data.materials),
+    "approved_logo_sha256":logo_hash,
+    "approved_logo_geometry":"ellipsoid-front-uv-grid-64x14",
     "has_student_data":False,
     "student_authorized":False,
     "files":{name:{"bytes":os.stat(os.path.join(OUT,name)).st_size,"sha256":sha(os.path.join(OUT,name))}
