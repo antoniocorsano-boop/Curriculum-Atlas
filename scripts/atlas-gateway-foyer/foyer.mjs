@@ -247,7 +247,7 @@ function drawFoyer(){
   // Approved ATLAS logo: the same transparent brand artwork used by the
   // responsive entry. Its vertices follow the actual flattened ellipsoid;
   // a flat plane in front of the dome would be an unacceptable fake decal.
-  const brandLogoTexture = new T.TextureLoader().load("./atlas-logo-approved-01.png");
+  const brandLogoTexture = new T.TextureLoader().load("./atlas-logo-approved-01.png",()=>schedule());
   brandLogoTexture.encoding=T.sRGBEncoding;
   brandLogoTexture.anisotropy=2;
   const logoGeometry=new T.PlaneGeometry(3.10,.675,62,14);
