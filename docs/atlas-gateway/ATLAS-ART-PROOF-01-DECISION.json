@@ -1,0 +1,112 @@
+{
+  "schema": "atlas.gateway.art-feasibility-decision/v1",
+  "decision_id": "ATLAS-ART-PROOF-01",
+  "authorized_on": "2026-11-21",
+  "user_decision": "Approve a change from geometry-first iterations to visual-quality-first feasibility proof with canonical-image fallback.",
+  "state": "DECISION_LOCKED__PROTOTYPE_A_BUILT__BLENDER_3D_ART_PROOF_NOT_YET_EXECUTED",
+  "authority": {
+    "canonical_image": {
+      "drive_url": "https://drive.google.com/file/d/1vSC_ynSxAF-pxR071TiKjEE0OtaFjXCn/view",
+      "size_px": [
+        1536,
+        864
+      ],
+      "sha256": "a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe",
+      "bytes": 224117
+    },
+    "blender_comparison": {
+      "drive_url": "https://drive.google.com/file/d/1aaqZFB3Etg4IFjnb1qpOnI3C7HdUx4zH/view",
+      "run": "https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/44868819041",
+      "hero_png_sha256": "4c6a48cfe4f75e0c8c31ca3cbd2703f4a539652e5041fca9e2ea60fc1c5d0b37"
+    }
+  },
+  "priority_change": {
+    "before": "ARCH-04C geometry and camera fit, then VIS-01 materials, then WEB-01.",
+    "after": "ART-PROOF-01 canonical-faithful interactive reference + controlled Blender artistic proof; decision gate first, then choose image-led gateway or a 3D derivation; WEB only after artistic acceptance.",
+    "prior_geometry_status": "PRESERVED_NOT_DISCARDED",
+    "archived_master_status": "ARTISTICALLY_NOT_APPROVED",
+    "paused_tasks": [
+      "New ARCH-04 camera/oculus micro-adjustments",
+      "More mesh-count-optimizing work",
+      "New geometric parallel candidates",
+      "VIS-01 full scene deployment"
+    ]
+  },
+  "stage_a": {
+    "name": "CANONICAL_IMAGE_INTERACTION_PROTOTYPE",
+    "state": "PROTOTYPE_CREATED_OFFLINE__BROWSER_EMULATION_TESTED__NOT_DEPLOYED",
+    "output": "ATLAS-ART-PROOF-01.html (standalone, embedded exact source pixels)",
+    "output_sha256": "a4b2001cce167e618eac21bc813017383221bbb2e59d17e42a030fbac4c1c1d7",
+    "manifest": "ATLAS-ART-PROOF-01.json",
+    "package": "ATLAS-ART-PROOF-01.zip",
+    "evidence": {
+      "original_file_sha_match": true,
+      "hotspot_count": 4,
+      "demo_entry_button_count": 1,
+      "mobile_focus_options": [
+        "both-left",
+        "both-right",
+        "all"
+      ],
+      "image_modes": [
+        "source",
+        "blender",
+        "wipe-compare"
+      ],
+      "tested_in": "Headless Chromium via Playwright: 1440x900 desktop and 390x844 mobile viewport",
+      "passed": [
+        "image present without resynthesis",
+        "4 portal regions + demo CTA",
+        "dialog triggered and closed on desktop and mobile focused pairs",
+        "comparison mode shown",
+        "no horizontal scroll in test viewports"
+      ],
+      "untested": [
+        "real Android touch responsiveness",
+        "actual Atlas navigation",
+        "GPU 3D performance",
+        "3D visual equivalence"
+      ]
+    }
+  },
+  "stage_b": {
+    "name": "BLENDER_SINGLE_FRAME_CINEMATIC_ART_PROOF",
+    "state": "PLANNED_NOT_YET_RENDERED",
+    "source": "Independent copy of verified ARCH-04B .blend; original untouched",
+    "scope": "One fully art-directed HERO view and one oblique parallax check; complete four individual portal contents, realistic floor/brass/glass, skylight daylight, subtle rays, real reflections",
+    "inputs": [
+      "canonical ART-DIR-02 image and landmarks",
+      "ARCH-04B Blender master and previous render",
+      "15-material/12-light-role existing VIS-01 contract"
+    ],
+    "stop_conditions": [
+      "No perceivable artistic leap vs ARCH-04B and reference",
+      "Portals/text/icons/illustrations not recognized faithfully",
+      "Skylight/daylight/podium/floor fail as a visually unified composition",
+      "Only the front view looks convincing because entire scene is a 2D projection"
+    ],
+    "outputs": [
+      "Cycles HERO PNG",
+      "oblique view PNG",
+      "comparison board with canonical image",
+      "material and lighting rig receipt",
+      "Blender file with SHA256",
+      "human go/no-go decision"
+    ]
+  },
+  "decision_gate": {
+    "no_automatic_3d_promotion": true,
+    "if_3d_pass": "Derive lightweight web scene progressively and preserve canonical fallback.",
+    "if_3d_fails": "Use faithful canonical-image gateway with accessible DOM hotspot overlays; reserve Blender for educational worlds where depth adds value.",
+    "user_art_approval_required": true,
+    "explicitly_does_not_authorize": [
+      "Merge to main",
+      "Publish student interface",
+      "Replace canonical image",
+      "Claim 3D fidelity",
+      "Create costly services"
+    ]
+  },
+  "github_pr": "https://github.com/antoniocorsano-boop/Curriculum-Atlas/pull/152",
+  "trama_issue": "https://github.com/antoniocorsano-boop/trama-ecosistema/issues/354"
+}
