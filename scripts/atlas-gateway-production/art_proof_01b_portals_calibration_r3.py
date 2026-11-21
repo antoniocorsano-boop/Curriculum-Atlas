@@ -80,7 +80,10 @@ for x,name in xs:
     root=bpy.data.objects.get("Portale • "+name)
     if root is None:raise RuntimeError("Missing physical portal root "+name)
     before_xyz=tuple(root.location)
-    root.location=(x,y,-.16)
+    # A taller slab must still have its illuminated rim flush with the stone.
+    # Local rim foot is z ~= 0.25 before scaling, hence the adaptive datum.
+    root_z=-.24-(HFACT-1.0)*.25
+    root.location=(x,y,root_z)
     root.rotation_euler.z=yaw
     root.scale=(WFACT,1.0,HFACT)  # Scale the entire assembled portal consistently
     # Legacy raised podium / auxiliary rectangular foot: remove only in THIS
@@ -98,11 +101,17 @@ for x,name in xs:
     if not pane:raise RuntimeError("Glass sheet missing "+name)
     pane.data=pane.data.copy()
     min_z=min(v.co.z for v in pane.data.vertices)
+    target_glass_bottom_world=-.10  # inside the -0.14..0.03 physical slot
+    lower_extension=(root_z+(pane.location.z+min_z)*HFACT-target_glass_bottom_world)/HFACT
+    if lower_extension<=0:raise RuntimeError("Glass inset adjustment must be positive")
+    actual_bottom=root_z+(pane.location.z+min_z-lower_extension)*HFACT
+    if not (-.13<=actual_bottom<=-.065):
+        raise RuntimeError("Glass does not enter the actual stone cut")
     for v in pane.data.vertices:
         # Move the pane's lower contour below the stone opening, preserving
         # the existing upper rounded silhouette and icon/title placement.
         if v.co.z < min_z+.60:
-            v.co.z -= .30
+            v.co.z -= lower_extension
     # The slit has true negative volume, not a glow-only stripe.
     # A thin dark floor channel will remain visible through the opening.
     slot_width=3.94*WFACT;slot_depth=.18
@@ -134,11 +143,12 @@ for x,name in xs:
     report[name]={
         "width_factor":WFACT,"height_factor":HFACT,
         "previous_center_world":before_xyz,
-        "new_root":[x,y,-.16],"angle_from_rear_axis_rad":angle,
+        "new_root":[x,y,root_z],"angle_from_rear_axis_rad":angle,
         "yaw_tangent_rad":yaw,"tangent_radial_abs_dot":error,
         "previous_independent_bases_removed":removed,
         "real_floor_boolean":True,"slot_width_bu":slot_width,
-        "slot_depth_bu":slot_depth,"glass_lower_contour_extended_bu":.30,
+        "slot_depth_bu":slot_depth,"glass_lower_contour_extended_bu":lower_extension,
+        "glass_bottom_world_z":actual_bottom,"rim_ground_datum_world_z":root_z+.25*HFACT,
         "slot_raised_lip_bu":.024}
 bpy.context.view_layer.update()
 if len(floor.data.polygons)<=original_floor_polys:
