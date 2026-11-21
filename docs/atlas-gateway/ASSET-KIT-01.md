@@ -1,3 +1,5 @@
+> **Aggiornamento operativo 21/11/2026 — FINISHINGS-FIRST-01, precedenza sulla sequenza precedente.** Su decisione dell'ideatore, la nuova priorità è **rivestire e arredare professionalmente il modello 3D esistente**, riusando e adattando materiali PBR e modelli CC0 già pronti. Sospendere il perfezionamento minuto delle geometrie: R2/R3A sono basi di lavoro da conservare, non nuovi canoni. Procedere da campioni di materiali e arredi con la stessa camera e confronti HERO, lasciando una sola correzione macro-compositiva finale per occlusioni evidenti. Questo orientamento **non modifica** il riferimento ART-DIR-02, le quattro lastre vetrate nelle feritoie, la necessità di vera profondità 3D, il vincolo zero-costi o l'accettazione artistica umana. [Piano e inventario iniziale FINISHINGS-FIRST-01](./ATLAS-ART-DIR-02-FINISHINGS-FIRST-01.md). Cataloghi verificati come fonti, **non ancora importati o approvati i singoli file**.
+
 # ATLAS — ASSET-KIT-01
 ## Decisione produttiva vincolante: riuso qualificato di librerie Blender e risorse 3D
 
