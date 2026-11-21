@@ -1,3 +1,5 @@
+> **Montaggio reale R6ABCD del 21/11/2026:** tutti i quattro contributi A–D sono stati realizzati, verificati tecnicamente e [riuniti nella scena Blender unica](./ATLAS-ART-DIR-02-R6ABCD-PRODUCTION-RESULT-01.md), [modello integrato in Drive](https://drive.google.com/file/d/1eK5W_OcBEWa86vrN9r8CMLaAToVS-_Zj/view). Stato: **TECHNICAL PASS / ARTISTIC NOT APPROVED**; la revisione indipendente E e la prova web/mobile restano aperte. Le eventuali sezioni di stato più vecchie qui sotto sono storiche.
+
 > **Aggiornamento esecutivo del 21/11/2026 — R6C–R6D:** le due lavorazioni R6A e R6B e il montaggio Blender R6AB sono stati **realmente prodotti e tecnicamente qualificati**, ma non ancora approvati artisticamente. Il passo successivo è regolato dal [**piano esecutivo R6C–R6D**](./ATLAS-ART-DIR-02-R6C-R6D-EXECUTION-01.md): 2 corsie indipendenti R5→C/D, montaggio nell'unica scena R6AB, confronto con il JPEG canonico e revisione indipendente E. **Questa nota prevale sulle indicazioni di stato iniziale/avvio contenute più sotto.** Non confondere la creazione degli incarichi con l'esecuzione degli script C/D, che non è ancora avvenuta.
 
 # ATLAS ART-DIR-02 — MULTIWORK-R6-01
