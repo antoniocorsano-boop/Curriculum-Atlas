@@ -41,3 +41,7 @@ Ogni elaborato deve riportare **fonte**, **versione/commit**, **stato**, **metod
 
 ## Allegato tecnico vincolante — Registro dei raccordi ARCH-04
 [ARCH-04-CONSTRUCTION-JOINTS-01.json](./ARCH-04-CONSTRUCTION-JOINTS-01.json) contiene **16 nodi di assemblaggio** con condizioni geometriche effettive, target di modellazione, dipendenze e prove. È parte integrante del Gate GEO-05/GEO-06: VIS-01 resta bloccata se appoggi, parapetti, giunti della copertura e ingresso anteriore non sono risolti e approvati.
+
+
+## Avanzamento effettivo ARCH-04B — 21 novembre 2026
+**Costruzione geometrica di prova:** [report ARCH-04B](./ARCH-04B-CONSTRUCTION-RESULT-01.md), [esecuzione Blender PASS #44868819041](https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/44868819041), [archivio permanente in Drive](https://drive.google.com/file/d/1aaqZFB3Etg4IFjnb1qpOnI3C7HdUx4zH/view). Modello indipendente con 322 mesh, otto rendering effettivi e geometrie associate a 15 nodi costruttivi. La costruzione geometrica **è un avanzamento reale ma non chiude ARCH-04**: camera, lucernario, podio e ingresso richiedono ancora risoluzione. **ARCH-04C: calibrazione compositiva congiunta** è la priorità successiva. VIS-01 e WEB-01 restano bloccate; nessun merge/deploy.
