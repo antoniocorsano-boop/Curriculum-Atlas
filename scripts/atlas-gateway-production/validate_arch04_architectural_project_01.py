@@ -76,6 +76,21 @@ def validate():
     cam=g["cameras"]
     for name in ("hero","side","mobile_overview","mobile_left","mobile_right"):
         check(name in cam and cam[name]["lens_mm"]>0, "camera "+name)
+    # Section-to-section joints, interfaces and documented unresolved foreground.
+    nodes_path = ROOT / d["construction_nodes_path"]
+    nodes = json.loads(nodes_path.read_text(encoding="utf-8"))
+    check(nodes["schema"] == "atlas.gateway.arch04.construction-node-register/v1", "join schema")
+    check(nodes["release"] is False and "NOT_RENDERED" in nodes["status"], "join approval invariant")
+    check(len(nodes["joins"]) == 16, "expected 16 construction nodes")
+    ids = [x["id"] for x in nodes["joins"]]
+    check(len(set(ids)) == len(ids), "duplicate construction node ID")
+    for node in nodes["joins"]:
+        check(node.get("target_design") and node.get("test"), "undocumented node "+node["id"])
+        for dep in node.get("dependent", []):
+            check(dep in ids, "missing node dependency "+dep)
+    check(any(x["id"]=="N-ENTRY-01" and
+              x["target_design"]["design_status"]=="REQUIRES_DESIGN_DECISION"
+              for x in nodes["joins"]), "hidden foreground incorrectly assumed built")
     drawing_ids=set()
     for sheet in d["drawings"]:
         drawing_ids.add(sheet["id"])
@@ -100,6 +115,7 @@ def validate():
         "primary_bays":g["galleries"]["number_of_bays"],
         "oculus_roof_panels":o["roof_panels_rear"],
         "gates":len(d["gates"]),
+        "construction_nodes":len(nodes["joins"]),
         "source_sha256":CANONICAL_SHA
     }
 
