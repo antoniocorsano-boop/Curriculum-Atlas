@@ -1,3 +1,5 @@
+> **Aggiornamento di produzione (21/11/2026):** il piano R6C–R6D è stato **eseguito**: [R6C PR #164](https://github.com/antoniocorsano-boop/Curriculum-Atlas/pull/164) e [R6D PR #163](https://github.com/antoniocorsano-boop/Curriculum-Atlas/pull/163) hanno controlli Blender PASS; [R6ABCD PR #165](https://github.com/antoniocorsano-boop/Curriculum-Atlas/pull/165) ha montaggio 3D reale PASS, [Actions #44938236317](https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/44938236317). **Lettura e giudizio completo:** [R6ABCD-PRODUCTION-RESULT-01](./ATLAS-ART-DIR-02-R6ABCD-PRODUCTION-RESULT-01.md). **La qualità artistica canonica non è ancora raggiunta.** La parte descritta sotto conserva valore come piano storico ed esecutivo; non va più letta come stato corrente «non implementato». Nessun merge/deploy.
+
 # ATLAS ART-DIR-02 — R6C–R6D / PIANO ESECUTIVO 01
 
 **Data:** 21 novembre 2026 · **Stato:** PIANO PRONTO PER PRODUZIONE, **non** modelli R6C/D già realizzati.  
