@@ -86,7 +86,7 @@ jobs:
           for info in receipt["renders"].values():
               f=root/"r4"/info["file"]
               assert f.is_file() and f.stat().st_size>12000 and sha(f)==info["sha256"]
-          if receipt["plant_source_status"]=="ACQUIRED_CC0":
+          if receipt["plant_source_status"]=="IMPORTED_CC0":
               assert len(receipt["plant_instances"])==2
           else:
               assert len(receipt["plant_instances"])==0
