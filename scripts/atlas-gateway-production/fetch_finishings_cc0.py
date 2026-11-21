@@ -63,19 +63,23 @@ model={"asset_id":"potted_plant_04","source_page":"https://polyhaven.com/a/potte
        "license":"CC0-1.0","license_url":"https://polyhaven.com/about-contact"}
 try:
     table=json.loads(get(model["api_url"],3_000_000))
-    variants=table.get("blend",{})
     chosen=None
-    for resolution in ("1k","2k"):
-        item=variants.get(resolution,{}).get("blend")
-        if item and int(item.get("size",99_999_999))<=10_000_000:
-            chosen=item;model["resolution"]=resolution;break
-    if not chosen:raise RuntimeError("No lightweight Blender plant variant in public API")
+    chosen_format=None
+    for fmt in ("gltf","blend"):
+        variants=table.get(fmt,{})
+        for resolution in ("1k","2k"):
+            item=variants.get(resolution,{}).get(fmt)
+            if item and int(item.get("size",99_999_999))<=10_000_000:
+                chosen=item
+                chosen_format=fmt
+                model["resolution"]=resolution
+                break
+        if chosen:break
+    if not chosen:raise RuntimeError("No lightweight published glTF/Blender plant variant")
     raw=get(chosen["url"],12_000_000)
-    md5=hashlib.md5(raw).hexdigest()
-    if chosen.get("md5") and md5!=chosen["md5"]:
-        raise RuntimeError("Plant publisher checksum mismatch")
-    # The official publisher may serve a ZIP/gzip wrapper rather than bare .blend.
-    # Only extract a genuine Blender scene; never treat an HTML error as an asset.
+    archive_md5=hashlib.md5(raw).hexdigest()
+    if chosen.get("md5") and archive_md5!=chosen["md5"]:
+        raise RuntimeError("Publisher source checksum mismatch")
     if raw.startswith(b"\x28\xb5\x2f\xfd"):
         import zstandard
         raw=zstandard.ZstdDecompressor().decompress(raw,max_output_size=48_000_000)
@@ -83,13 +87,23 @@ try:
         raw=gzip.decompress(raw)
     if raw.startswith(b"PK\x03\x04"):
         with zipfile.ZipFile(io.BytesIO(raw)) as pack:
-            matches=[n for n in pack.namelist() if n.lower().endswith(".blend")]
-            if not matches:raise RuntimeError("Publisher ZIP has no Blender source")
+            suffix=".gltf" if chosen_format=="gltf" else ".blend"
+            matches=[n for n in pack.namelist() if n.lower().endswith(suffix)]
+            if not matches:raise RuntimeError("Publisher ZIP missing "+suffix)
             raw=pack.read(matches[0])
-    if not raw.startswith(b"BLENDER"):
-        raise RuntimeError("Unexpected plant source header "+raw[:18].hex()+" at "+chosen["url"])
-    folder=root/"potted_plant_04";folder.mkdir(exist_ok=True)
-    filename=folder/"potted_plant_04.blend";filename.write_bytes(raw)
+    if chosen_format=="gltf":
+        if raw.startswith(b"glTF"):ext=".glb"
+        elif raw.lstrip().startswith(b"{") and "asset" in json.loads(raw):
+            ext=".gltf"
+        else:raise RuntimeError("Unsupported glTF file header "+raw[:18].hex())
+    else:
+        if not raw.startswith(b"BLENDER"):
+            raise RuntimeError("Unsupported Blender file header "+raw[:18].hex())
+        ext=".blend"
+    folder=root/"potted_plant_04"
+    folder.mkdir(exist_ok=True)
+    filename=folder/("potted_plant_04"+ext)
+    filename.write_bytes(raw)
     dependencies=[]
     for rel,info in chosen.get("include",{}).items():
         dest=(folder/rel).resolve()
@@ -99,7 +113,7 @@ try:
             raise RuntimeError("Plant dependency checksum mismatch: "+rel)
         dest.parent.mkdir(exist_ok=True,parents=True);dest.write_bytes(data)
         dependencies.append({"file":str(dest),"sha256":checksum(data),"bytes":len(data)})
-    model.update(status="ACQUIRED_CC0",file=str(filename),
+    model.update(status="ACQUIRED_CC0",format=chosen_format,file=str(filename),
                  sha256=checksum(raw),bytes=len(raw),dependencies=dependencies,
                  source_url=chosen["url"],publisher_md5=chosen.get("md5"))
 except Exception as e:
