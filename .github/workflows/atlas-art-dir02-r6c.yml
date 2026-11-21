@@ -47,7 +47,7 @@ jobs:
       - name: Install headless Blender
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq --no-install-recommends blender
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
       - name: Import professional prefabs, reduce geometry and produce true Blender renders
         run: |
           mkdir -p "$RUNNER_TEMP/atlas-r6c"
