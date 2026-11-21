@@ -41,54 +41,37 @@
   pointer-events: none;
   user-select: none;
 }
+/* The approved 21/11 logo is a transparent, traceable vector.
+   A soft navy architectural mask replaces the former baked header lettering
+   in the temporary photographic panorama without affecting portal hit zones. */
 .brandScreen {
   position: absolute;
   z-index: 4;
   left: 0;
   top: 0;
-  width: 44%;
-  height: 13%;
-  background: linear-gradient(90deg, #081625 0%, #081625 80%, transparent 100%);
+  width: 43%;
+  height: 14%;
+  background: linear-gradient(90deg, #081625 0%, #081625fa 60%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 72%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 72%, transparent 100%);
   pointer-events: none;
-  display: none;
 }
 .brand {
-  display: none;
   position: absolute;
   z-index: 8;
-  top: 3.2%;
-  left: max(4.25%, calc((100% - 100vw) / 2 + 14px));
-  display: flex;
-  align-items: center;
-  gap: clamp(8px, .85vw, 16px);
-  white-space: nowrap;
-  color: #f7eee1;
-  text-shadow: 0 1px 8px #000c;
+  top: 2.4%;
+  left: max(4.5%, calc((100% - 100vw) / 2 + 24px));
+  pointer-events: none;
 }
-.smallA {
-  flex: none;
-  width: clamp(28px, 3.4vw, 52px);
-  height: clamp(28px, 3.4vw, 52px);
-  color: #e1be82;
-  filter: drop-shadow(0 0 6px #eab56555);
+.brandLogo {
+  display: block;
+  width: clamp(260px, 27vw, 460px);
+  max-width: 100%;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
 }
-.wordmark {
-  font-size: clamp(19px, 2.12vw, 33px);
-  letter-spacing: .23em;
-  font-weight: 500;
-  line-height: 1;
-}
-.brandDivider {
-  height: 1.65em;
-  width: 1px;
-  background: #eedcb6a8;
-  margin: 0 5px 0 3px;
-}
-.brandSubtitle {
-  font-size: clamp(10px, 1.14vw, 17px);
-  letter-spacing: .015em;
-  font-weight: 400;
-}
+
 .portals {
   position: absolute;
   z-index: 3;
@@ -259,21 +242,17 @@
     transform: translateY(-2px);
   }
   .brandScreen {
-    display: block;
     width: 100%;
-    height: 14%;
-    background: linear-gradient(180deg,#061426f4,#061426dd 62%,transparent);
+    height: 13%;
+    background: linear-gradient(180deg,#061426ed,#061426bf 63%,transparent);
+    -webkit-mask-image: none;
+    mask-image: none;
   }
   .brand {
-    display: flex;
     left: 4%;
-    top: max(2%, env(safe-area-inset-top));
-    gap: 8px;
+    top: max(1.5%, env(safe-area-inset-top));
   }
-  .smallA { width: clamp(28px, 7.5vw, 41px); height: clamp(28px, 7.5vw, 41px); }
-  .wordmark { font-size: clamp(17px, 5.2vw, 24px); letter-spacing: .18em; }
-  .brandDivider { margin: 0 2px; }
-  .brandSubtitle { font-size: clamp(9px, 2.8vw, 13px); }
+  .brandLogo { width: clamp(190px, 66vw, 300px); }
   .enter {
     border-color: #fff0bc;
     background: linear-gradient(180deg, #ffe9b4, #ddb06a 60%, #e6bd77);
@@ -287,8 +266,7 @@
   .enter span { opacity: 1; }
 }
 @media (orientation: portrait) and (max-width: 350px) {
-  .brandSubtitle { font-size: 9px; }
-  .brandDivider { height: 1.35em; }
+  .brandLogo { width: min(72vw, 245px); }
 }
 /* A rotated phone keeps the same panoramic composition as desktop;
    only the controls are moved away from the clipped edges. */
