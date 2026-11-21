@@ -56,7 +56,7 @@ function labelTexture(portal, transparentArtwork=false){
     light.addColorStop(1,"rgba(24,70,113,0)");
     ctx.fillStyle=light;ctx.fillRect(0,0,512,768);
   }
-  ctx.save();ctx.translate(256,242);
+  ctx.save();ctx.translate(256,190);
   ctx.strokeStyle="#e6d1aa";ctx.fillStyle="#e6d1aa";ctx.lineWidth=9;
   ctx.lineCap="round";ctx.lineJoin="round";
   if(portal.id==="curricolo"){
@@ -85,7 +85,7 @@ function labelTexture(portal, transparentArtwork=false){
   // The single visible name belongs to the portal surface, not HTML.
   ctx.fillStyle="#fff1d7";ctx.font="600 52px system-ui,sans-serif";
   ctx.textAlign="center";ctx.textBaseline="middle";
-  ctx.fillText(portal.label,256,423,454);
+  ctx.fillText(portal.label,256,285,454);
   // One subdued spatial motif below the title; never explanatory subtitles,
   // particle fields, duplicate icons, or decorative miniature cards.
   ctx.strokeStyle="rgba(104,185,221,.54)";ctx.lineWidth=4;
@@ -268,32 +268,64 @@ function drawFoyer(){
   }));
   logoSurface.name="ATLAS • marchio approvato aderente al volume ellissoidale";
   scene.add(logoSurface);
-  // Physical portal assemblies: a single restrained bronze frame and a readable blue glass face.
+  // The rounded silhouette is one architectural object, not multiple glowing
+  // rectangles or a flat card. One outline, one panel, one visual identifier.
+  const roundedPortalShape=(w,h,r)=>{
+    const x=-w/2,y=-h/2,shape=new T.Shape();
+    shape.moveTo(x+r,y);
+    shape.lineTo(x+w-r,y);
+    shape.quadraticCurveTo(x+w,y,x+w,y+r);
+    shape.lineTo(x+w,y+h-r);
+    shape.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    shape.lineTo(x+r,y+h);
+    shape.quadraticCurveTo(x,y+h,x,y+h-r);
+    shape.lineTo(x,y+r);
+    shape.quadraticCurveTo(x,y,x+r,y);
+    shape.closePath();
+    return shape;
+  };
+  const roundedFaceGeometry=(w,h,r)=>{
+    const geometry=new T.ShapeGeometry(roundedPortalShape(w,h,r),8);
+    const pos=geometry.getAttribute("position"),uv=geometry.getAttribute("uv");
+    for(let i=0;i<pos.count;i++)uv.setXY(i,pos.getX(i)/w+.5,pos.getY(i)/h+.5);
+    uv.needsUpdate=true;return geometry;
+  };
+  const outlineGeometry=()=>{
+    const pts=roundedPortalShape(3.08,4.96,.34).getPoints(64);
+    const curve=new T.CatmullRomCurve3(pts.map(p=>new T.Vector3(p.x,p.y,.10)),true);
+    return new T.TubeGeometry(curve,80,.032,5,true);
+  };
+  const panelShape=roundedFaceGeometry(2.77,4.55,.27);
+  const hitPaneShape=roundedFaceGeometry(2.68,4.43,.23);
+  const frameShape=new T.ExtrudeGeometry(roundedPortalShape(3.16,5.02,.37),
+    {depth:.21,bevelEnabled:false,curveSegments:8});
+  const sharedOutline=outlineGeometry();
   for(const p of PORTALS){
     const group=new T.Group();group.position.set(p.x,2.66,p.z);
     group.rotation.y=p.yaw;
-    const back=section(3.16,5.02,.23,0,0,-.18,darkBronze,0,group);
-    const frame=section(2.96,4.84,.11,0,0,-.055,glassFrame,0,group);
-    const pane=new T.Mesh(new T.PlaneGeometry(2.77,4.55),
+    const back=new T.Mesh(frameShape,glassFrame);add(back,0,0,-.19,group);
+    const pane=new T.Mesh(panelShape,
       new T.MeshBasicMaterial({map:labelTexture(p),transparent:false,opacity:1,
         side:T.DoubleSide}));
-    add(pane,0,0,.026,group);pane.userData.portalId=p.id;
-    for(const side of [-1,1]){
-      section(.082,4.95,.14,side*1.48,0,.05,bronze,0,group);
-      section(3.0,.086,.14,0,side*2.44,.05,bronze,0,group);
-    }
-    // Small plinths ground the portals in the architectural space.
+    add(pane,0,0,.040,group);pane.userData.portalId=p.id;
+    const trim=new T.Mesh(sharedOutline,bronze);add(trim,0,0,.01,group);
     section(3.30,.16,.6,0,-2.58,-.04,obsidian,0,group);
     scene.add(group);portalPanels.push({pane,portal:p});
   }
 }
+
 function buildArtPortalTargets(){
   // The Blender architecture is immutable. Dynamic labels/icons and click
   // targets are applied in Atlas from one authoritative portal contract.
   for(const portal of PORTALS){
-    const overlay=new T.Mesh(new T.PlaneGeometry(2.68,4.43),
+    const overlay=new T.Mesh(new T.ShapeGeometry((()=>{const shape=new T.Shape();const w=2.68,h=4.43,r=.23;shape.moveTo(-w/2+r,-h/2);shape.lineTo(w/2-r,-h/2);shape.quadraticCurveTo(w/2,-h/2,w/2,-h/2+r);shape.lineTo(w/2,h/2-r);shape.quadraticCurveTo(w/2,h/2,w/2-r,h/2);shape.lineTo(-w/2+r,h/2);shape.quadraticCurveTo(-w/2,h/2,-w/2,h/2-r);shape.lineTo(-w/2,-h/2+r);shape.quadraticCurveTo(-w/2,-h/2,-w/2+r,-h/2);return shape;})(),8),
       new T.MeshBasicMaterial({map:labelTexture(portal,true),transparent:true,opacity:1,
         depthWrite:false,side:T.DoubleSide}));
+    const overlayUv=overlay.geometry.getAttribute("uv");
+    const overlayPos=overlay.geometry.getAttribute("position");
+    for(let i=0;i<overlayPos.count;i++)
+      overlayUv.setXY(i,overlayPos.getX(i)/2.68+.5,overlayPos.getY(i)/4.43+.5);
+    overlayUv.needsUpdate=true;
     overlay.position.set(portal.x,2.72,portal.z+.36);
     overlay.rotation.y=portal.yaw;
     overlay.userData.portalId=portal.id;
