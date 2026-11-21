@@ -255,3 +255,6 @@ L'ideatore ha stabilito il seguente ordine obbligatorio: **ARCH-04 geometria e p
 
 
 **Avanzamento ARCH-04B:** [rapporto reale di produzione e scostamenti](./ARCH-04B-CONSTRUCTION-RESULT-01.md), [8 rendering Blender](https://drive.google.com/file/d/1aaqZFB3Etg4IFjnb1qpOnI3C7HdUx4zH/view), 322 mesh, nodo geometrico d'ingresso ancora in prova. La geometria è stata effettivamente costruita in un master candidato separato, non ancora qualificata artisticamente. La priorità corrente è la calibrazione congiunta della scena ARCH-04C, non VIS-01.
+
+
+**Decisione artistica prevalente del 21/11/2026 — ART-PROOF-01:** [protocollo](./ATLAS-ART-PROOF-01-PROTOCOL.md) e [contratto decisionale](./ATLAS-ART-PROOF-01-DECISION.json). Il metodo di costruzione architettonica resta preservato, ma non dà più automaticamente avvio a VIS-01 o a un'ulteriore fase geometrica. Prima occorre una prova effettiva HERO+obliqua ad alta qualità in Cycles, contro l'immagine originale, con esito artistico esplicito. La porta basata sull'immagine canonica e su regioni HTML accessibili resta un'alternativa da non sacrificare.
