@@ -1,6 +1,9 @@
 # ATLAS — ART-DIR-02
 ## Revisione artistica del portale tridimensionale di accesso
 
+**Riferimento originale scelto dall'ideatore il 21/11/2026:** JPEG 1536×864 (formato effettivo), SHA-256 `a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe`, [file archiviato in Drive](https://drive.google.com/file/d/1vSC_ynSxAF-pxR071TiKjEE0OtaFjXCn/view?usp=drivesdk). L'[identificativo canonico versionato](./ART-REFERENCE-CANONICAL-2026-11-21.json) sostituisce i precedenti riferimenti binari, conservati per sola storia. Restano validi i criteri di **fedeltà architettonica, quattro portali e alleggerimento visivo**. L'adozione dell'immagine non equivale ad approvazione del modello Blender.
+
+
 **Oggetto:** Atrio della Conoscenza — Atlas Gateway 3D  
 **Riferimento primario:** ultima immagine Atlas generata e discussa nella conversazione del 20 novembre 2026 (atrio circolare, lucernario, quattro portali luminosi e basamento ATLAS).  
 **Disciplina:** direzione artistica, visualizzazione architettonica, scenografia digitale, esperienza immersiva.  
