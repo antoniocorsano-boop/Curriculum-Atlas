@@ -626,7 +626,8 @@
         "podium ellipses",
         "walking and front entry sector"
       ],
-      "current_status": "DESIGN_DEFINED_DRAWING_TO_GENERATE"
+      "current_status": "DRAWN_VECTOR_EDITABLE__NOT_ART_APPROVED",
+      "file_path": "docs/atlas-gateway/drawings/ARCH-04-PL-01-PLAN.svg"
     },
     {
       "id": "SE-01",
@@ -643,7 +644,8 @@
         "cap ellipsoid and plinth rings",
         "portal top and base"
       ],
-      "current_status": "DESIGN_DEFINED_DRAWING_TO_GENERATE"
+      "current_status": "DRAWN_VECTOR_EDITABLE__NOT_ART_APPROVED",
+      "file_path": "docs/atlas-gateway/drawings/ARCH-04-SE-01-TRANSVERSE.svg"
     },
     {
       "id": "SE-02",
@@ -656,7 +658,8 @@
         "podium depth",
         "entry path and headroom"
       ],
-      "current_status": "DESIGN_DEFINED_DRAWING_TO_GENERATE"
+      "current_status": "DRAWN_VECTOR_EDITABLE__NOT_ART_APPROVED",
+      "file_path": "docs/atlas-gateway/drawings/ARCH-04-SE-02-LONGITUDINAL.svg"
     },
     {
       "id": "PR-01",
@@ -669,7 +672,8 @@
         "visible sky and ring",
         "gallery glazing"
       ],
-      "current_status": "DESIGN_DEFINED_DRAWING_TO_GENERATE"
+      "current_status": "DRAWN_VECTOR_EDITABLE__NOT_ART_APPROVED",
+      "file_path": "docs/atlas-gateway/drawings/ARCH-04-PR-01-CANONICAL-FIT.svg"
     }
   ],
   "tolerances": {
@@ -749,7 +753,7 @@
     {
       "id": "P1",
       "name": "ARCH-04 progettazione geometrie, disegni e parametri",
-      "status": "IN_PROGRESS_DESIGN_FILE"
+      "status": "DESIGN_ARTIFACTS_WRITTEN__VALIDATION_PENDING"
     },
     {
       "id": "P2",
