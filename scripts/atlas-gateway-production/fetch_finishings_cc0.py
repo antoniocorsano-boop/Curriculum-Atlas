@@ -3,7 +3,7 @@
 Only documented official hostnames; receipts contain source URL, checksums, licenses.
 No end-user service, API key, paid subscription or publication is required.
 """
-import hashlib, json, os, re, sys, urllib.request, zipfile
+import hashlib, io, gzip, json, os, re, sys, urllib.request, zipfile
 from pathlib import Path
 
 A= sys.argv[sys.argv.index("--out")+1] if "--out" in sys.argv else None
@@ -74,8 +74,17 @@ try:
     md5=hashlib.md5(raw).hexdigest()
     if chosen.get("md5") and md5!=chosen["md5"]:
         raise RuntimeError("Plant publisher checksum mismatch")
+    # The official publisher may serve a ZIP/gzip wrapper rather than bare .blend.
+    # Only extract a genuine Blender scene; never treat an HTML error as an asset.
+    if raw.startswith(b"\x1f\x8b"):
+        raw=gzip.decompress(raw)
+    if raw.startswith(b"PK\x03\x04"):
+        with zipfile.ZipFile(io.BytesIO(raw)) as pack:
+            matches=[n for n in pack.namelist() if n.lower().endswith(".blend")]
+            if not matches:raise RuntimeError("Publisher ZIP has no Blender source")
+            raw=pack.read(matches[0])
     if not raw.startswith(b"BLENDER"):
-        raise RuntimeError("Plant download is not a real Blender file")
+        raise RuntimeError("Unexpected plant source header "+raw[:18].hex()+" at "+chosen["url"])
     folder=root/"potted_plant_04";folder.mkdir(exist_ok=True)
     filename=folder/"potted_plant_04.blend";filename.write_bytes(raw)
     dependencies=[]
