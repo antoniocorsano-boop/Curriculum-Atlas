@@ -35,3 +35,23 @@ Dal confronto reale ARCH-01 vs riferimento ART-DIR-02 emergono una copertura tro
 7. Non si passa a materiali, luci finali, GLB o pubblicazione prima del giudizio sulla geometria.
 
 **Invarianti:** ARCH-01 e master originale preservati; nessuna approvazione artistica implicita; nessuna fusione in `main`, distribuzione a studenti o sostituzione delle pagine Atlas.
+
+## Verifica effettiva di ARCH-02 — 21 novembre 2026
+
+**Esito tecnico:** PASS — [GitHub Actions #44863392834](https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/44863392834), commit `45865c743eddedc83e5a315a8d5334665b440d9e`, 10/10 passi completati con successo. Modello prodotto con 201 mesh, 14 campate, due livelli di gallerie, raggio del lucernario 7,05 e quattro portali preservati. Il file `architecture-receipt.json` conferma master originale non modificato e divieto di pubblicazione.
+
+**Archivio Blender originale e candidata, prove e tre immagini:** [Drive ARCH-02](https://drive.google.com/file/d/1dXA76lWgadrdun35JXMsOUHhRWPeI2ZD/view), ZIP 5.643.977 byte lato GitHub, archiviazione in Drive verificata mediante metadati (il diverso valore può derivare dalla visualizzazione arrotondata). Hash artefatto GitHub: `sha256:ba8acf912a01519cfd6fd7c70451ccfb1ecb563527236a9fb126179476d9afe5`.
+
+**Confronto visuale HERO/SIDE/MOBILE con ART-DIR-02:** [Drive — diagnosi 4 viste](https://drive.google.com/file/d/1jkY-J3z-XJeEPE0FUCfOQ4P1k3H3DrFA/view).
+
+### Esito artistico: NON APPROVATO
+
+- La copertura resta scura e troppo dominante, nonostante l'aumento del lucernario; il cielo non appare integrato nella struttura come nel riferimento.
+- I quattro pannelli sono corretti come destinazioni ma **sottodimensionati** e quasi paralleli; mancano la profondità, la qualità visiva e i segni narrativi dell'immagine.
+- Le gallerie, pur reali e articolate su due livelli, risultano troppo regolari e prive di differenziazione laterale credibile.
+- Il basamento è più convesso, ma luce, materiali, riflessi e scala apparente non corrispondono ancora al riferimento canonico.
+- Il rendering MOBILE conserva la scena, ma i quattro accessi sono troppo piccoli per risultare ben leggibili su telefono.
+
+**Decisione di produzione:** non effettuare export web GLB né integrazione/pubblicazione. Conservare ARCH-02 come prova geometrica e avviare la fase successiva soltanto partendo da una correzione di **composizione e scala apparente** (camera matching/portali/podio/lucernario), seguita da allestimento laterale e qualità materica. Evitare cicli di aggiustamenti marginali che non riducano visibilmente la distanza dal riferimento.
+
+**Limite delle prove:** il superamento di GitHub Actions garantisce la produzione delle immagini e l'integrità dei file, non la conformità artistica né le prestazioni su smartphone fisico.
