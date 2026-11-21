@@ -2,9 +2,7 @@ name: "ATLAS ART-DIR-02 — R8 regia integrata"
 on:
   pull_request:
     branches: [work/atlas-gateway-01-foyer]
-    paths:
-      - "scripts/atlas-gateway-production/r8_integrated_atmosphere.py"
-      - ".github/workflows/atlas-art-dir02-r8.yml"
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
 permissions:
   contents: read
@@ -14,6 +12,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   r8-genuine-cycles-visual-production:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'work/atlas-artdir02-r8-atmosphere'
     runs-on: ubuntu-latest
     timeout-minutes: 55
     steps:
