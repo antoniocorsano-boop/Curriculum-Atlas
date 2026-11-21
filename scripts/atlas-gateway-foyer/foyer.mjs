@@ -22,8 +22,8 @@ function highlight(id){
   for(const {pane,portal} of portalPanels){
     const active=portal.id===id;
     if(!pane.userData.hitOnly){
-      pane.material.color.setHex(active?0xffffff:0xd7e7fa);
-      pane.material.opacity=active?1:.93;
+      pane.material.color.setHex(active?0xffffff:0xf0f4f6);
+      pane.material.opacity=active?1:.97;
     }
   }
   for(const link of links)link.dataset.active=String(link.dataset.portal===id);
@@ -35,51 +35,82 @@ function fallback(message){
   setStatus(message+" · Puoi usare direttamente gli accessi qui sotto.");
   if(renderer){try{renderer.dispose();renderer.forceContextLoss();}catch{}}
 }
-function labelTexture(portal){
+// One authoritative visual treatment for all four architectural portals.
+// The Blender-backed scene uses a transparent UV-like graphic layer; the geometric
+// fallback receives the same symbols and title over a restrained blue glass base.
+const portalTextureCache=new Map();
+function labelTexture(portal, transparentArtwork=false){
+  const key=portal.id+(transparentArtwork?":art":":glass");
+  if(portalTextureCache.has(key))return portalTextureCache.get(key);
   const c=document.createElement("canvas");c.width=512;c.height=768;
   const ctx=c.getContext("2d");if(!ctx)throw Error("Canvas2D assente");
-  const grad=ctx.createLinearGradient(0,0,512,768);
-  grad.addColorStop(0,"#1d87cd");grad.addColorStop(.45,"#124d8a");grad.addColorStop(1,"#081f48");
-  ctx.fillStyle=grad;ctx.fillRect(0,0,512,768);
-  const light=ctx.createRadialGradient(280,140,30,270,300,410);
-  light.addColorStop(0,"#80d8ff88");light.addColorStop(1,"#03336a00");
-  ctx.fillStyle=light;ctx.fillRect(0,0,512,768);
-  ctx.strokeStyle="#c1dbf5aa";ctx.lineWidth=5;ctx.strokeRect(22,22,468,724);
-  ctx.save();ctx.translate(256,290);
-  ctx.strokeStyle="#e8d2a4";ctx.fillStyle="#e8d2a4";ctx.lineWidth=11;
-  ctx.lineCap="round";ctx.lineJoin="round";
-  const sym=portal.label.toLowerCase();
-  if(sym==="curricolo"){
-    ctx.beginPath();ctx.moveTo(0,-53);ctx.bezierCurveTo(-24,-70,-57,-63,-76,-49);
-    ctx.lineTo(-76,49);ctx.bezierCurveTo(-50,35,-25,38,0,54);
-    ctx.bezierCurveTo(27,37,55,35,76,49);ctx.lineTo(76,-49);
-    ctx.bezierCurveTo(48,-63,22,-67,0,-53);ctx.lineTo(0,54);ctx.stroke();
-  }else if(sym==="esplora"){
-    ctx.beginPath();ctx.arc(0,0,76,0,Math.PI*2);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(27,-32);ctx.lineTo(-10,46);ctx.lineTo(-31,-32);ctx.closePath();ctx.stroke();
-    ctx.beginPath();ctx.arc(0,0,9,0,Math.PI*2);ctx.fill();
-  }else if(sym==="percorsi"){
-    ctx.beginPath();ctx.moveTo(-58,-45);ctx.lineTo(43,-45);ctx.lineTo(43,34);ctx.lineTo(-34,34);ctx.stroke();
-    for(const [px,py] of [[-58,-45],[43,-45],[43,34],[-34,34]]){
-      ctx.beginPath();ctx.arc(px,py,13,0,Math.PI*2);ctx.fill();
-    }
-  }else if(sym==="esperienze"){
-    ctx.beginPath();ctx.moveTo(-48,59);ctx.lineTo(-48,-55);ctx.lineTo(48,-55);ctx.lineTo(48,59);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(-22,57);ctx.lineTo(-22,-20);ctx.lineTo(25,-20);ctx.lineTo(25,57);ctx.stroke();
-    ctx.beginPath();ctx.arc(15,17,5,0,Math.PI*2);ctx.fill();
-  }else {
-    ctx.font="bold 104px Georgia,serif";ctx.textAlign="center";
-    ctx.fillText(portal.label.slice(0,1).toUpperCase(),0,34);
+  if(!transparentArtwork){
+    const grad=ctx.createLinearGradient(0,0,0,768);
+    grad.addColorStop(0,"#173a5a");
+    grad.addColorStop(.55,"#103052");
+    grad.addColorStop(1,"#081e37");
+    ctx.fillStyle=grad;ctx.fillRect(0,0,512,768);
+    // Leave the glass and its frame to the scene: no graphic second outline.
+    const light=ctx.createRadialGradient(256,260,40,256,365,450);
+    light.addColorStop(0,"rgba(69,149,207,.11)");
+    light.addColorStop(1,"rgba(24,70,113,0)");
+    ctx.fillStyle=light;ctx.fillRect(0,0,512,768);
   }
-  ctx.restore();ctx.textAlign="center";
-  ctx.font="bold 49px system-ui,sans-serif";ctx.fillStyle="#fff5d8";
-  ctx.fillText(portal.label.toUpperCase(),256,500);
-  ctx.fillStyle="#b8d8eb";ctx.font="28px system-ui,sans-serif";
-  const words=portal.detail.split(" ");let lines=[""];
-  for(const word of words){const row=lines.length-1;if(ctx.measureText(lines[row]+" "+word).width>390&&lines[row])lines.push(word);else lines[row]+=(lines[row]?" ":"")+word;}
-  lines.slice(0,2).forEach((line,i)=>ctx.fillText(line,256,561+i*39));
-  const texture=new T.CanvasTexture(c);texture.encoding=T.sRGBEncoding;
-  texture.anisotropy=2;texture.needsUpdate=true;return texture;
+  ctx.save();ctx.translate(256,242);
+  ctx.strokeStyle="#e6d1aa";ctx.fillStyle="#e6d1aa";ctx.lineWidth=9;
+  ctx.lineCap="round";ctx.lineJoin="round";
+  if(portal.id==="curricolo"){
+    ctx.beginPath();ctx.moveTo(0,-43);ctx.bezierCurveTo(-23,-58,-53,-55,-72,-40);
+    ctx.lineTo(-72,42);ctx.bezierCurveTo(-42,30,-19,32,0,48);
+    ctx.bezierCurveTo(20,32,43,30,72,42);ctx.lineTo(72,-40);
+    ctx.bezierCurveTo(50,-55,21,-58,0,-43);ctx.lineTo(0,48);ctx.stroke();
+  }else if(portal.id==="esplora"){
+    ctx.beginPath();ctx.arc(0,0,65,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(24,-30);ctx.lineTo(-9,39);
+    ctx.lineTo(-25,-30);ctx.closePath();ctx.stroke();
+    ctx.beginPath();ctx.arc(0,0,7,0,Math.PI*2);ctx.fill();
+  }else if(portal.id==="percorsi"){
+    ctx.beginPath();ctx.moveTo(-62,-39);ctx.lineTo(44,-39);ctx.lineTo(44,31);
+    ctx.lineTo(-24,31);ctx.stroke();
+    for(const [x,y] of [[-62,-39],[44,-39],[44,31],[-24,31]]){
+      ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);ctx.fill();
+    }
+  }else if(portal.id==="esperienze"){
+    ctx.beginPath();ctx.moveTo(-58,49);ctx.lineTo(-58,-53);
+    ctx.lineTo(58,-53);ctx.lineTo(58,49);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(-21,48);ctx.lineTo(-21,-15);
+    ctx.lineTo(24,-15);ctx.lineTo(24,48);ctx.stroke();
+  }else throw Error("Unknown ATLAS portal: "+portal.id);
+  ctx.restore();
+  // The single visible name belongs to the portal surface, not HTML.
+  ctx.fillStyle="#fff1d7";ctx.font="600 52px system-ui,sans-serif";
+  ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.fillText(portal.label,256,423,454);
+  // One subdued spatial motif below the title; never explanatory subtitles,
+  // particle fields, duplicate icons, or decorative miniature cards.
+  ctx.strokeStyle="rgba(104,185,221,.54)";ctx.lineWidth=4;
+  ctx.beginPath();
+  if(portal.id==="curricolo"){
+    for(let i=0;i<3;i++){
+      const y=556+i*31;
+      ctx.moveTo(128,y);ctx.lineTo(256,y-23);ctx.lineTo(384,y);
+      ctx.lineTo(256,y+23);ctx.closePath();
+    }
+  }else if(portal.id==="esplora"){
+    ctx.ellipse(256,587,128,53,-.16,Math.PI,Math.PI*2);
+    ctx.moveTo(140,612);ctx.quadraticCurveTo(256,525,372,612);
+  }else if(portal.id==="percorsi"){
+    ctx.moveTo(141,633);ctx.bezierCurveTo(202,639,185,552,256,590);
+    ctx.bezierCurveTo(304,617,318,538,372,550);
+  }else{
+    ctx.moveTo(147,636);ctx.lineTo(147,550);ctx.lineTo(365,550);
+    ctx.lineTo(365,636);ctx.moveTo(256,568);ctx.lineTo(256,632);
+  }
+  ctx.stroke();
+  const texture=new T.CanvasTexture(c);
+  texture.encoding=T.sRGBEncoding;texture.anisotropy=2;texture.needsUpdate=true;
+  portalTextureCache.set(key,texture);
+  return texture;
 }
 function box(w,h,d,color,metalness=.3,roughness=.4){
   return new T.Mesh(new T.BoxGeometry(w,h,d),new T.MeshStandardMaterial({color,metalness,roughness}));
@@ -200,13 +231,7 @@ function drawFoyer(){
     new T.MeshBasicMaterial({color:0x2762a6,side:T.DoubleSide,transparent:true,opacity:.42}));
   oculus.rotation.x=Math.PI/2;add(oculus,0,8.17,-1.3);
   circumference(3.38,8.17,bronze,.095);
-  // Architectural lighting: restrained light volume, no moving sources.
-  for(const x of [-5.4,0,5.4]){
-    const cone=new T.Mesh(new T.ConeGeometry(2.25,5.6,16,1,true),
-      new T.MeshBasicMaterial({color:0x4c95d8,transparent:true,opacity:.035,
-        side:T.DoubleSide,depthWrite:false}));
-    cone.rotation.z=Math.PI;add(cone,x,5.2,-4.6);
-  }
+  // The oculus lighting is provided by real scene lights, not fake luminous cones.
   // Central elliptical monument, inspired by the original Arena composition.
   // A low domed volume avoids blocking the essential portal titles.
   const pedestal=new T.Mesh(new T.CylinderGeometry(3.12,3.44,.44,64),obsidian);
@@ -243,47 +268,31 @@ function drawFoyer(){
   }));
   logoSurface.name="ATLAS • marchio approvato aderente al volume ellissoidale";
   scene.add(logoSurface);
-  // Physical portal assemblies: recessed surround, glass face, bevel trim,
-  // luminous perimeter and a faint reflection on the polished ground.
+  // Physical portal assemblies: a single restrained bronze frame and a readable blue glass face.
   for(const p of PORTALS){
     const group=new T.Group();group.position.set(p.x,2.66,p.z);
     group.rotation.y=p.yaw;
     const back=section(3.16,5.02,.23,0,0,-.18,darkBronze,0,group);
     const frame=section(2.96,4.84,.11,0,0,-.055,glassFrame,0,group);
     const pane=new T.Mesh(new T.PlaneGeometry(2.77,4.55),
-      new T.MeshBasicMaterial({map:labelTexture(p),transparent:true,opacity:.93,
+      new T.MeshBasicMaterial({map:labelTexture(p),transparent:false,opacity:1,
         side:T.DoubleSide}));
     add(pane,0,0,.026,group);pane.userData.portalId=p.id;
     for(const side of [-1,1]){
       section(.082,4.95,.14,side*1.48,0,.05,bronze,0,group);
-      section(.038,4.64,.15,side*1.39,0,.09,blueLight,0,group);
       section(3.0,.086,.14,0,side*2.44,.05,bronze,0,group);
-      section(2.78,.035,.15,0,side*2.31,.10,amberLight,0,group);
     }
     // Small plinths ground the portals in the architectural space.
     section(3.30,.16,.6,0,-2.58,-.04,obsidian,0,group);
     scene.add(group);portalPanels.push({pane,portal:p});
-    const reflect=new T.Mesh(new T.PlaneGeometry(2.1,3.3),
-      new T.MeshBasicMaterial({map:pane.material.map,transparent:true,opacity:.11,
-        depthWrite:false,side:T.DoubleSide}));
-    reflect.rotation.x=-Math.PI/2;reflect.rotation.z=Math.PI;
-    reflect.position.set(p.x,.004,p.z+2.0);scene.add(reflect);
   }
-  // Sparse stars only inside the overhead oculus, never a full-screen effect.
-  const starsGeo=new T.BufferGeometry(),vertices=[];
-  for(let i=0;i<40;i++){
-    const a=i*2.39996,r=1+(i*29%55)/10;
-    vertices.push(Math.sin(a)*r,7.15+(i%10)*.09,-1.3-Math.cos(a)*r);
-  }
-  starsGeo.setAttribute("position",new T.Float32BufferAttribute(vertices,3));
-  scene.add(new T.Points(starsGeo,new T.PointsMaterial({color:0x89bdf4,size:.045,sizeAttenuation:true})));
 }
 function buildArtPortalTargets(){
   // The Blender architecture is immutable. Dynamic labels/icons and click
   // targets are applied in Atlas from one authoritative portal contract.
   for(const portal of PORTALS){
     const overlay=new T.Mesh(new T.PlaneGeometry(2.68,4.43),
-      new T.MeshBasicMaterial({map:labelTexture(portal),transparent:true,opacity:.90,
+      new T.MeshBasicMaterial({map:labelTexture(portal,true),transparent:true,opacity:1,
         depthWrite:false,side:T.DoubleSide}));
     overlay.position.set(portal.x,2.72,portal.z+.36);
     overlay.rotation.y=portal.yaw;
@@ -366,8 +375,6 @@ async function init(){
     camera=new T.PerspectiveCamera(58,1,.05,90);
     scene.add(new T.HemisphereLight(0x90bcf0,0x121b2b,.67));
     const sun=new T.DirectionalLight(0xf7d4aa,.92);sun.position.set(2,11,8);scene.add(sun);
-    const blue=new T.PointLight(0x338fe4,.75,25);blue.position.set(0,7,-1);scene.add(blue);
-    const warm=new T.PointLight(0xffd3a6,.5,22);warm.position.set(0,5,6);scene.add(warm);
     let artLoaded=false,artError=null;
     try{artLoaded=await loadArtMaster();}
     catch(error){artError=String(error?.message||error);console.warn("ATLAS_ART_FALLBACK",artError);}
