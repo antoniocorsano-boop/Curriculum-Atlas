@@ -192,9 +192,12 @@ def portal(label,x,y,rotation_deg):
     root.location=(x,base_y,0)
     root.rotation_euler.z=math.radians(rotation_deg)
     def part(name,at,dim,mat):
-        o=cube(label+" • "+name,at,dim,mat,bevel=.04 if mat is bronze else 0)
+        # Local portal coordinates preserve the master's intended rotation.
+        # The old world-coordinate plus inverse-parent transform cancelled
+        # the tilt, while the web overlay still used the portal's yaw.
+        local=(at[0]-x,at[1]-base_y,at[2])
+        o=cube(label+" • "+name,local,dim,mat,bevel=.04 if mat is bronze else 0)
         o.parent=root
-        o.matrix_parent_inverse=root.matrix_world.inverted()
         return o
     # World coordinates are recorded; DOM links and click geometry stay authoritative in Atlas.
     part("zoccolo",(x,base_y, .26),(3.2,.68,.32),polished)
@@ -208,7 +211,7 @@ def portal(label,x,y,rotation_deg):
     part("corona luminosa",(x,base_y-.34,5.0),(2.77,.09,.08),warm)
     # Labels belong to the authored illustration, while actual destinations
     # and permissions remain defined only by the HTML portal contract.
-    bpy.ops.object.text_add(location=(x,base_y-.43,2.20),rotation=(math.pi/2,0,0))
+    bpy.ops.object.text_add(location=(x,base_y-.43,2.20),rotation=(math.pi/2,0,math.radians(rotation_deg)))
     title=bpy.context.object;title.name="Portale • titolo "+label
     title.data.body=label.upper()
     title.data.align_x="CENTER";title.data.size=.34
@@ -301,10 +304,10 @@ bpy.context.collection.objects.link(logo_obj)
 assign(logo_obj,logo_material,smooth=True)
 
 # Front-facing panels stand at the same locations as the WebGL gateway.
-portal("Curricolo",-4.8,1.0,-12)
-portal("Esplora",-1.6,2.7,-4)
-portal("Percorsi",1.6,2.7,4)
-portal("Esperienze",4.8,1.0,12)
+portal("Curricolo",-4.8,1.0,math.degrees(-.24))
+portal("Esplora",-1.6,2.7,math.degrees(-.08))
+portal("Percorsi",1.6,2.7,math.degrees(.08))
+portal("Esperienze",4.8,1.0,math.degrees(.24))
 
 # A reference art render, never a substitute for the navigable GLB.
 def area(name,loc,target,energy,color,size):
