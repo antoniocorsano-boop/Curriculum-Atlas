@@ -8,7 +8,8 @@ import {chromium} from "playwright";
 const root=resolve(process.argv[2]||"out"),output=resolve(process.argv[3]||"evidence/atlas-foyer");
 mkdirSync(output,{recursive:true});
 const contentTypes={".html":"text/html; charset=utf-8",".mjs":"text/javascript; charset=utf-8",
-  ".js":"text/javascript; charset=utf-8",".css":"text/css; charset=utf-8",".json":"application/json"};
+  ".js":"text/javascript; charset=utf-8",".css":"text/css; charset=utf-8",".json":"application/json",
+  ".png":"image/png",".svg":"image/svg+xml"};
 const server=createServer((req,res)=>{
   try{
     const path=new URL(req.url,"http://127.0.0.1").pathname;
