@@ -70,6 +70,10 @@ try{
     await page.locator(".destinations a").first().focus();
     await page.waitForFunction(()=>getComputedStyle(document.querySelector(".destinations")).opacity==="1",null,{timeout:5000});
     assert.equal(await page.locator(".destinations a").first().getAttribute("href"),"/curricolo/");
+    // Leaving keyboard navigation restores unobstructed pointer access to
+    // camera controls; focus must move before click while the nav overlay closes.
+    await page.locator("#camera-right").focus();
+    await page.waitForFunction(()=>getComputedStyle(document.querySelector(".destinations")).opacity==="0",null,{timeout:5000});
     // Controlled camera motion must preserve the 3D scene and usable portals.
     await page.locator("#camera-right").click();
     await page.locator("#camera-reset").click();
