@@ -27,7 +27,8 @@
     "verified_run": "https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/44867149465",
     "archive": "https://drive.google.com/file/d/1txZ0sBnOh6zeovEGHBx6n5f2DBnfNFcn/view",
     "comparison": "https://drive.google.com/file/d/1CFxylInmmUVTwZdaTxxgjHK1B7hqojJP/view",
-    "geometric_profile": "ARCH-04 R2 successful technically but not approved artistically"
+    "geometric_profile": "ARCH-04 R2 successful technically but not approved artistically",
+    "joints": "16 versioned construction nodes, including actual floor support gaps and front architecture unresolved"
   },
   "coordinate_frame": {
     "right_handed": true,
@@ -782,5 +783,6 @@
     "Do not invent exact 3D geometry of unseen foreground",
     "Do not merge PR or publish public pages",
     "Do not start VIS-01 until geometry gate is human approved"
-  ]
+  ],
+  "construction_nodes_path": "docs/atlas-gateway/ARCH-04-CONSTRUCTION-JOINTS-01.json"
 }
