@@ -68,8 +68,8 @@ recess = material("Atrium • nicchia blu notte", 0x071b32, .14, .54)
 steel = material("Atrium • metallo ossidato", 0x274865, .68, .29)
 bronze = material("Atrium • ottone satinato", 0xa78b59, .74, .31)
 polished = material("Atrium • grafite lucida", 0x0a1b2e, .58, .20)
-blue = material("Atrium • vetro portale luminoso", 0x124078, .32, .25, 0x124f93, .34)
-halo = material("Atrium • taglio luce cielo", 0x5899da, .12, .32, 0x5b9ef1, 2.2)
+blue = material("Atrium • vetro portale luminoso", 0x123b63, .24, .34, 0x1a5487, .18)
+halo = material("Atrium • taglio luce cielo", 0x5899da, .12, .39, 0x5b9ef1, .55)
 warm = material("Atrium • taglio luce bronzo", 0xd2aa6b, .28, .34, 0xe5b874, 1.5)
 
 def assign(obj, mat, smooth=False):
@@ -184,38 +184,113 @@ def dome():
     ring("Atrio • arco frontale",11.43,5.89,bronze,.065,arc=math.pi)
     ring("Atrio • corona lucernario",3.65,8.13,warm,.075,arc=math.pi)
 
+# The four portals share a genuine, rounded architectural mesh rather
+# than being separate sets of square cards, glow strips and overlaid effects.
+# Reference proportions: PORTALS-LIGHT-01-REFERENCE-LANDMARKS.json.
+_portal_mesh_cache={}
+def rounded_outline(width,height,radius,segments=8):
+    radius=min(radius,width*.49,height*.49)
+    corners=((width/2-radius,height/2-radius,0),
+             (-width/2+radius,height/2-radius,90),
+             (-width/2+radius,-height/2+radius,180),
+             (width/2-radius,-height/2+radius,270))
+    return [(cx+radius*math.cos(math.radians(angle+90*i/segments)),
+             cz+radius*math.sin(math.radians(angle+90*i/segments)))
+            for cx,cz,angle in corners for i in range(segments+1)]
+
+def rounded_slab(label,root,part_name,width,height,depth,radius,y,z,mat):
+    key=("slab",width,height,depth,radius,mat.name)
+    mesh=_portal_mesh_cache.get(key)
+    if mesh is None:
+        outline=rounded_outline(width,height,radius)
+        n=len(outline)
+        verts=[(x,-depth/2,h) for x,h in outline]+[(x,depth/2,h) for x,h in outline]
+        faces=[tuple(range(n)),tuple(range(2*n-1,n-1,-1))]
+        faces.extend((i,(i+1)%n,n+(i+1)%n,n+i) for i in range(n))
+        mesh=bpy.data.meshes.new("MASTER • rounded portal "+part_name)
+        mesh.from_pydata(verts,[],faces);mesh.update()
+        mesh.materials.append(mat)
+        _portal_mesh_cache[key]=mesh
+    obj=bpy.data.objects.new(label+" • "+part_name,mesh)
+    bpy.context.collection.objects.link(obj);obj.parent=root
+    obj.location=(0,y,z)
+    return obj
+
+def portal_rim(label,root,width,height,radius,thickness,y,z,mat):
+    key=("rim",width,height,radius,thickness,mat.name)
+    mesh=_portal_mesh_cache.get(key)
+    if mesh is None:
+        outer=rounded_outline(width,height,radius)
+        inner=rounded_outline(width-2*thickness,height-2*thickness,
+                              max(.05,radius-thickness))
+        n=len(outer)
+        verts=[(x,-.015,h) for x,h in outer]+[(x,-.015,h) for x,h in inner]
+        verts+= [(x,.015,h) for x,h in outer]+[(x,.015,h) for x,h in inner]
+        faces=[]
+        for i in range(n):
+            j=(i+1)%n
+            faces.extend(((i,j,n+j,n+i),
+                          (2*n+n+i,2*n+n+j,2*n+j,2*n+i),
+                          (i,2*n+i,2*n+j,j),
+                          (n+i,n+j,3*n+j,3*n+i)))
+        mesh=bpy.data.meshes.new("MASTER • continuous portal perimeter")
+        mesh.from_pydata(verts,[],faces);mesh.update()
+        mesh.materials.append(mat)
+        _portal_mesh_cache[key]=mesh
+    obj=bpy.data.objects.new(label+" • cornice continua",mesh)
+    bpy.context.collection.objects.link(obj);obj.parent=root
+    obj.location=(0,y,z)
+    return obj
+
+def portal_symbol(label,root):
+    # One sparse physically located icon; curve stays in the Cycles master.
+    # The runtime draws the same symbol from the accessible portal contract.
+    paths={
+        "Curricolo":[[(-.52,-.35),(-.52,.35),(-.25,.45),(0,.32),(0,-.42)],
+                     [(0,-.42),(0,.32),(.25,.45),(.52,.35),(.52,-.35),(0,-.42)]],
+        "Esplora":[[(.52*math.cos(t*math.tau/24),.52*math.sin(t*math.tau/24))
+                    for t in range(25)],
+                   [(-.18,-.36),(.23,.35),(.12,-.1),(-.18,-.36)]],
+        "Percorsi":[[(-.54,-.38),(-.05,-.38),(.04,.31),(.49,.31)],
+                    [[(x,z)][0] for x,z in ((-.54,-.38),(.49,.31))]],
+        "Esperienze":[[(-.49,-.39),(-.49,.43),(.49,.43),(.49,-.39)],
+                      [(-.21,-.39),(-.21,.08),(.23,.08),(.23,-.39)]]
+    }
+    for idx,points in enumerate(paths[label]):
+        if len(points)<2:continue
+        data=bpy.data.curves.new(label+" • tratto simbolo","CURVE")
+        data.dimensions="3D";data.resolution_u=1
+        data.bevel_depth=.014;data.bevel_resolution=2
+        spline=data.splines.new("POLY");spline.points.add(len(points)-1)
+        for control,(x,z) in zip(spline.points,points):
+            control.co=(x,0,z,1)
+        data.materials.append(bronze)
+        icon=bpy.data.objects.new("Portale • simbolo "+label+" "+str(idx),data)
+        bpy.context.collection.objects.link(icon);icon.parent=root
+        icon.location=(0,-.40,4.10)
+
 def portal(label,x,y,rotation_deg):
-    # Blender portal coordinates mirror the four live links, no routing is embedded in GLB.
-    base_y=y
+    # Shared physical silhouette and a single warm outline. No stack of LED
+    # strips, mini cards, fake glow cones, or subtitle panels.
     root=bpy.data.objects.new("Portale • "+label,None)
     bpy.context.collection.objects.link(root)
-    root.location=(x,base_y,0)
+    root.location=(x,y,0)
     root.rotation_euler.z=math.radians(rotation_deg)
-    def part(name,at,dim,mat):
-        # Local portal coordinates preserve the master's intended rotation.
-        # The old world-coordinate plus inverse-parent transform cancelled
-        # the tilt, while the web overlay still used the portal's yaw.
-        local=(at[0]-x,at[1]-base_y,at[2])
-        o=cube(label+" • "+name,local,dim,mat,bevel=.04 if mat is bronze else 0)
-        o.parent=root
-        return o
-    # World coordinates are recorded; DOM links and click geometry stay authoritative in Atlas.
-    part("zoccolo",(x,base_y, .26),(3.2,.68,.32),polished)
-    part("struttura",(x,base_y,2.72),(3.13,.18,5.05),steel)
-    part("retro pannello",(x,base_y-.15,2.72),(2.88,.18,4.72),recess)
-    part("vetro luminescente",(x,base_y-.27,2.72),(2.7,.06,4.48),blue)
-    for side in (-1,1):
-        part("bordo laterale",(x+side*1.53,base_y-.31,2.72),(.085,.18,5.0),bronze)
-        part("bordo orizzontale",(x,base_y-.31,2.72+side*2.43),(3.15,.18,.085),bronze)
-        part("luce verticale",(x+side*1.38,base_y-.35,2.72),(.027,.10,4.56),halo)
-    part("corona luminosa",(x,base_y-.34,5.0),(2.77,.09,.08),warm)
-    # Labels belong to the authored illustration, while actual destinations
-    # and permissions remain defined only by the HTML portal contract.
-    bpy.ops.object.text_add(location=(x,base_y-.43,2.20),rotation=(math.pi/2,0,math.radians(rotation_deg)))
+    base=cube(label+" • zoccolo",(0,0,.25),(3.22,.62,.28),polished,bevel=.06)
+    base.parent=root
+    rounded_slab(label,root,"telaio",3.16,5.04,.20,.38,0,2.72,steel)
+    rounded_slab(label,root,"retro",2.99,4.85,.12,.33,-.15,2.72,recess)
+    rounded_slab(label,root,"vetro cobalto",2.79,4.60,.055,.28,-.25,2.72,blue)
+    portal_rim(label,root,3.07,4.94,.35,.055,-.31,2.72,bronze)
+    portal_symbol(label,root)
+    # Signage is authored on the master but omitted from GLB, because the web
+    # generates one visible title and icon from the same portal data contract.
+    bpy.ops.object.text_add(location=(x,y-.42,3.42),
+                            rotation=(math.pi/2,0,math.radians(rotation_deg)))
     title=bpy.context.object;title.name="Portale • titolo "+label
-    title.data.body=label.upper()
-    title.data.align_x="CENTER";title.data.size=.34
-    title.data.extrude=.004;title.data.materials.append(warm)
+    title.data.body=label.upper();title.data.align_x="CENTER"
+    title.data.size=.32;title.data.extrude=.003
+    title.data.materials.append(warm)
     bpy.ops.object.convert(target="MESH")
 
 # Floors, recessed gallery and structural depth.
