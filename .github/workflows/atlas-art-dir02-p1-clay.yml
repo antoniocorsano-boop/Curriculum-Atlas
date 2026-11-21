@@ -22,7 +22,7 @@ jobs:
       - name: Get R8 corrected full Blender master
         uses: actions/download-artifact@v4
         with:
-          name: atlas-art-dir02-r8-2
+          name: atlas-art-dir02-r8-5
           run-id: 44942787690
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/atlas-r8
