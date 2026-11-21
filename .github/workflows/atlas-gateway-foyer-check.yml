@@ -5,6 +5,7 @@ on:
     paths:
       - "scripts/atlas-gateway-foyer/**"
       - "scripts/build-atlas-gateway-foyer.mjs"
+      - "scripts/test-atlas-gateway-foyer-browser.mjs"
       - "scripts/test-atlas-gateway-foyer.mjs"
       - ".github/workflows/atlas-gateway-foyer-check.yml"
   workflow_dispatch:
