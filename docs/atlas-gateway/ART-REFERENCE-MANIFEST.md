@@ -57,3 +57,12 @@ Il master sarà confrontato con il **PNG canonico** e non con una ricostruzione 
 4. Il riferimento a 4 portali va trattato separatamente da ARENA (5) e AG04 (3). I file storici non devono mai essere caricati al posto del riferimento canonico.
 
 **Esito reale al 20/11:** due fonti storiche ARCHIVIATE E RILETTE; PNG canonico 4 portali **NON ANCORA ARCHIVIATO**; P0-REF resta aperto.
+
+
+## Verifica P0-REF e pre-calibrazione del 21 novembre 2026
+
+La verifica dell'archivio con ricerca esatta dei nomi `atrio_futuristico_atlas_della_conoscenza`, `atlas_art_dir_02_reference_kit` e `atlas-hero-approved` non ha restituito il **PNG canonico 1672 × 941**, SHA-256 `7b3ffb9a355b89057acea02489020ad43d871e10b6cf5bbb29f8769ff3073336`. Il file risulta tuttora **non verificato come byte recuperabili** nella filiera corrente: `P0-REF=OPEN`. Non confondere con l'immagine **complementare** dei quattro portali inviata il 21/11 (JPEG 1536 × 960, SHA-256 `b3bb8bb9c184acee97f479c522669059602c0797e4d8e7033a0627fc88ed0e81`), invece archiviata.
+
+In attesa della fonte canonica è stata prodotta una calibrazione di **sola diagnostica** delle sagome dei quattro portali, dalla foto complementare, documentata in [ATLAS-CAMERA-PREFIT-01.json](./ATLAS-CAMERA-PREFIT-01.json) e nel [pacchetto di calcolo riproducibile su Drive](https://drive.google.com/file/d/1zHk2BRTDntn15M8jk-YcQu8FJ3lccpoa/view?usp=drivesdk), con [confronto grafico](https://drive.google.com/file/d/1t5KGhnVhUxNAdWFSd59aH7ZlIEVkslYb/view?usp=drivesdk). Metodo: proiezione geometrica, ricerca deterministica dei parametri e scostamento dei rettangoli; scostamento quadratico medio delle coordinate da 116,26 a 15,84 pixel sulla sola immagine **non canonica**, senza dedurre quote reali.
+
+**Vincolo operativo:** il candidato non è stato applicato al master Blender e non costituisce una revisione artistica accettata. Quando il PNG originale sarà recuperato, con identità SHA verificata, occorrerà rifare il rilevamento geometrico su quello, poi la taratura HERO e il confronto SIDE/MOBILE; solo dopo potrà essere modificato il master ufficiale. Qualsiasi configurazione fotocamera dedotta dal JPEG complementare ha stato `AUXILIARY_REFERENCE_ONLY_DO_NOT_APPLY_TO_MASTER`.
