@@ -358,7 +358,7 @@ for obj in scene.objects:
 if excluded_titles!=4:
     raise ValueError("Expected four authored portal titles before GLB export")
 bpy.ops.export_scene.gltf(filepath=glb,export_format="GLB",
-                          export_selected=True,
+                          use_selection=True,
                           export_cameras=False,export_lights=False)
 def sha(filename):
     with open(filename,"rb") as f:return hashlib.sha256(f.read()).hexdigest()
