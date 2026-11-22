@@ -1,0 +1,114 @@
+name: ATLAS ART-DIR-02 P1D-VIS-04
+on:
+  pull_request:
+    branches: [work/atlas-artdir02-p1d-oculus-manifold-03]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-vis04-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  occlusion-audit:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'work/atlas-artdir02-p1d-visibility-04'
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check diagnostic Python syntax
+        run: python3 -m py_compile scripts/atlas-gateway-production/p1d_visibility_audit_04.py
+      - name: Download qualified P1D-OCULUS-03 binary scenes and original Cycles HERO
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45008316673
+          pattern: atlas-art-dir02-p1d-oculus-03-1
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/qualified
+      - name: Independently check complete provenance of all 4 models
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os,hashlib,json
+          root=Path(os.environ["RUNNER_TEMP"])/"qualified"
+          def sha(p):
+            h=hashlib.sha256()
+            with open(p,"rb") as f:
+              for b in iter(lambda:f.read(1<<20),b""):h.update(b)
+            return h.hexdigest()
+          for a in ("A","B"):
+            r=json.loads((root/f"atlas-p1d-oculus-03-{a}-receipt.json").read_text())
+            assert r["schema"]=="atlas.artdir02.p1d-oculus-manifold/v1"
+            assert r["arch"]==a and not r["art_approved"] and r["no_merge"] and r["no_deploy"]
+            assert r["canonical_art_sha256"]=="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+            for v in ("J3","J4"):
+              m=r["variants"][v]["editable_blend"]
+              assert sha(root/m["file"])==m["sha256"]
+              assert (root/r["variants"][v]["render"]["file"]).is_file()
+              print("AUTHENTIC_SOURCE",a,v,m["sha256"])
+          PY
+      - name: Install same real Blender used for structural qualification
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Independently scan A and B, J3 and J4, camera-space first hits
+        run: |
+          mkdir -p "$RUNNER_TEMP/vis04"
+          for arch in A B; do
+            for mode in J3 J4; do
+              blender -b "$RUNNER_TEMP/qualified/atlas-p1d-oculus-03-$arch-$mode.blend" \
+                --threads 2 --python-exit-code 1 \
+                --python scripts/atlas-gateway-production/p1d_visibility_audit_04.py -- \
+                --arch "$arch" --variant "$mode" \
+                --receipt "$RUNNER_TEMP/qualified/atlas-p1d-oculus-03-$arch-receipt.json" \
+                --out "$RUNNER_TEMP/vis04"
+            done
+          done
+      - name: Verify 4 receipts, 4 masks, optical measurements and summary
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os,json,hashlib
+          root=Path(os.environ["RUNNER_TEMP"])/"vis04"
+          lines=["# ATLAS P1D-VIS-04 — Diagnostica aperture e gallerie","",
+            "Qualificazione della diagnosi geometrica, non approvazione artistica.","",
+            "| Architettura | Variante | Campioni oculo | Cielo libero (%) | Senza copertura (%) |",
+            "|---|---|---:|---:|---:|"]
+          for a in ("A","B"):
+            for v in ("J3","J4"):
+              r=json.loads((root/f"atlas-p1d-vis-04-{a}-{v}-receipt.json").read_text())
+              assert r["schema"]=="atlas.artdir02.p1d-visibility/v1"
+              assert r["arch"]==a and r["structural_variant"]==v
+              assert not r["art_approved"] and r["no_merge"] and r["no_deploy"]
+              assert r["roof_mesh_untouched"] and r["material_override_is_clay"]
+              assert not r["global_interference_certified"]
+              m=r["oculus"];n=m["samples_in_image"]
+              assert n>=0 and sum(m["actual_first_hit_categories"].values())==n
+              assert f"ARCH {a} upper parapet" in r["galleries"]
+              assert "P1D • B lower railing" in r["galleries"]
+              f=root/r["mask"]["file"]
+              assert f.stat().st_size>1000
+              assert hashlib.sha256(f.read_bytes()).hexdigest()==r["mask"]["sha256"]
+              sky=m["sky_unobstructed_fraction"]
+              roof=m["roof_hidden_sky_clear_fraction"]
+              pct=lambda x: "non misurabile" if x is None else f"{100*x:.1f}"
+              lines.append(f"| {a} | {v} | {n} | {pct(sky)} | {pct(roof)} |")
+              print("VISIBILITY_EVIDENCE_QUALIFIED",a,v,n,sky,roof)
+          lines.extend(["","Colori della maschera: azzurro cielo libero, arancione copertura, viola vetro, verde galleria, rosso altri elementi.",
+            "Prove senza copertura e senza vetri solo virtuali; nessun file .blend sovrascritto.",
+            "Materiali neutri attivi: non scambiare vetro reso opaco con trasparenza finale.",
+            "Interferenze globali e approvazione rispetto ad ART-DIR-02 restano sospese."])
+          text="\n".join(lines)+"\n"
+          (root/"ATLAS-P1D-VIS-04-RAPPORTO.md").write_text(text)
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as f:f.write(text)
+          PY
+      - name: Preserve complete camera-space evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-p1d-vis-04-${{ github.run_number }}
+          path: ${{ runner.temp }}/vis04/
+          if-no-files-found: warn
+          retention-days: 30
