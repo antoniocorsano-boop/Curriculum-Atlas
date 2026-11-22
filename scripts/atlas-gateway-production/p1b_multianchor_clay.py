@@ -56,7 +56,7 @@ def points(ob,maxn=240):
                 result.extend(ob.matrix_world@p.co for p in s.bezier_points)
             else:
                 result.extend(ob.matrix_world@Vector(p.co[:3]) for p in s.points)
-        return result
+        return result[::max(1,len(result)//maxn)]
     return [ob.matrix_world@Vector(v) for v in ob.bound_box]
 def project(coords,delta=0):
     result=[]
@@ -119,17 +119,17 @@ source_image=render("P1-before",960,540,12)
 for n in ("Esplora","Percorsi"):
     roots[n].location.x=roots_before[n]["location"][0]*.944
 bpy.context.view_layer.update()
-sample_rim=points(rim,320)
-sample_upper=points(upper,600)
-sample_lower=points(lower,600)
-sample_podium=points(podium,220)
+sample_rim=points(rim,50)
+sample_upper=points(upper,48)
+sample_lower=points(lower,48)
+sample_podium=points(podium,24)
 # Keep original 3D source points constant while testing possible upper-shell
 # changes; no geometry mutation in the camera-fitting loop.
 best=None
-for focal in (29.,31.,32.,33.):
- for camera_z in (3.35,3.55,3.75):
-  for aim_z in (2.50,2.70,2.90,3.10):
-   for shift_y in (-.11,-.075,-.04,0.0):
+for focal in (29.,31.5,33.):
+ for camera_z in (3.40,3.65):
+  for aim_z in (2.50,2.80,3.10):
+   for shift_y in (-.10,-.05,0.0):
     hero.location=(0,-18.3,camera_z)
     hero.rotation_euler=(Vector((0,2.7,aim_z))-hero.location).to_track_quat("-Z","Y").to_euler()
     hero.data.lens=focal;hero.data.shift_y=shift_y
@@ -139,7 +139,7 @@ for focal in (29.,31.,32.,33.):
     gap=portal_gap(ps)
     # Recompute camera-only features once; delta is a local scenic roof warp.
     pb=box(project(sample_podium))
-    for delta in (0.4,0.9,1.4,1.9,2.4,2.9,3.4):
+    for delta in (0.65,1.25,1.85,2.45,3.05,3.55):
         rb=box(project(sample_rim,delta))
         uy=statistics.median(v[1] for v in sorted(project(sample_upper,delta),
           key=lambda q:abs(q[0]-.5))[:35])
