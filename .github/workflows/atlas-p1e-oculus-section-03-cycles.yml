@@ -1,10 +1,5 @@
 name: ATLAS P1E-OCULUS-SECTION-03 closed skylight well Cycles
 on:
-  pull_request:
-    branches: [work/atlas-artdir02-p1e-volume-02]
-    types: [opened, synchronize, reopened]
-  push:
-    branches: [work/atlas-artdir02-p1e-oculus-section-03]
   workflow_dispatch:
 permissions:
   contents: read
