@@ -1,0 +1,83 @@
+name: "ATLAS ART-DIR-02 — R6B gallery-floor Blender"
+on:
+  pull_request:
+    branches: [work/atlas-gateway-01-foyer]
+    paths:
+      - "scripts/atlas-gateway-production/r6b_gallery_floor.py"
+      - ".github/workflows/atlas-art-dir02-r6b.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-r6b-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  genuine-r6b-blender-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Python before touching original scene
+        run: |
+          python3 -m py_compile scripts/atlas-gateway-production/r6b_gallery_floor.py
+      - name: Fetch immutable qualified R5 production artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-art-dir02-r5-gallery-section-2
+          run-id: 44927621648
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/atlas-r5-baseline
+      - name: Check R5 original source integrity before editing
+        run: |
+          python3 - <<'PY'
+          import os,json,hashlib,pathlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"atlas-r5-baseline"/"r5"
+          receipt=json.loads((p/"atlas-finishings-r5-receipt.json").read_text())
+          original=p/"atlas-art-dir02-gallery-finishings-r5.blend"
+          assert hashlib.sha256(original.read_bytes()).hexdigest()=="e97dcf65e7cd6a97f031cef99d2d81398c5d42d6493807b4e29cf35e5236b278"
+          assert receipt["candidate_blend_sha256"]=="e97dcf65e7cd6a97f031cef99d2d81398c5d42d6493807b4e29cf35e5236b278"
+          assert receipt["human_art_approved"] is False and receipt["no_publication"]
+          print("ARCHIVED R5 SOURCE HASH VERIFIED")
+          PY
+      - name: Install headless Blender
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender
+      - name: Apply specialist non-destructive Blender layer and produce real Cycles images
+        run: |
+          mkdir -p "$RUNNER_TEMP/atlas-r6b/"
+          blender -b "$RUNNER_TEMP/atlas-r5-baseline/r5/atlas-art-dir02-gallery-finishings-r5.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/r6b_gallery_floor.py -- \
+            --out "$RUNNER_TEMP/atlas-r6b"
+      - name: Validate production receipt, original geometry and renders
+        run: |
+          python3 - <<'PY'
+          import json,hashlib,os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          out=root/"atlas-r6b"
+          report=json.loads((out/"atlas-r6b-receipt.json").read_text())
+          def digest(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+          assert report["base_r5_sha256" if "b"=="a" else "source_r5_sha256"]=="e97dcf65e7cd6a97f031cef99d2d81398c5d42d6493807b4e29cf35e5236b278"
+          assert digest(out/"atlas-r6b-gallery-materials.blend")==report["blend_sha256"]
+          assert report["human_approved"] is False and report["no_publication"] is True
+          assert len(report["changed_objects"]["glass_railings"])>=14
+          assert len(report["changed_objects"]["dark_columns"])>=20
+          assert len(report["changed_objects"]["floor_seams"])==4
+          assert report["floor_seams_emission"]==0
+          assert set(report["renders"])=={"hero","glass_gallery"}
+          for entry in report["renders"].values():
+              p=out/entry["file"]
+              assert p.stat().st_size>10000 and digest(p)==entry["sha256"]
+          print("REAL R6B TECHNICAL QUALIFICATION PASS; ARTISTIC REVIEW NOT YET APPROVED")
+          PY
+      - name: Preserve model and images, including diagnostics on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-r6b-${{ github.run_number }}
+          path: ${{ runner.temp }}/atlas-r6b/
+          if-no-files-found: warn
+          retention-days: 30
