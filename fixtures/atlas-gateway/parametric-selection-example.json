@@ -9,10 +9,11 @@
     "archived_at": "https://drive.google.com/file/d/1vSC_ynSxAF-pxR071TiKjEE0OtaFjXCn/view"
   },
   "blender_baseline": {
-    "source_repository": "antoniocorsano-boop/Curriculum-Atlas",
+    "source_repository": "atlas",
     "qualified_pr": 185,
     "source_workflow_run": 45008316673,
-    "arch_and_variant": "B-J4"
+    "arch_and_variant": "B-J4",
+    "source_repository_id": 1376266693
   },
   "units": "BU",
   "coordinate_system": "Blender Z up",
