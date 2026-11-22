@@ -1,0 +1,127 @@
+name: "ATLAS ART-DIR-02 — P1D-OCULUS-03 integrazione strutturale"
+on:
+  pull_request:
+    branches: [work/atlas-artdir02-p1d-oculus-raccord-02]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-oculus-03-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  structural-oculus:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'work/atlas-artdir02-p1d-oculus-manifold-03'
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check integrated Blender mesh Python syntax
+        run: python3 -m py_compile scripts/atlas-gateway-production/p1d_oculus_manifold_03.py
+      - name: Download genuine qualified A-S1/B-S1 source Blender scenes
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 44981771278
+          pattern: atlas-art-dir02-p1d-opt-1
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/opt
+      - name: Verify source scene and provenance before creating topology
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,os,json
+          root=Path(os.environ['RUNNER_TEMP'])/'opt'
+          shas={
+            'A':'aaa26dadd12db864ed29e2417c565e4b8888b86f0953378c63918b5aef7fcbb9',
+            'B':'a6fa0e3ad34e55305eea3524a9cae652bb59df173da57e6680c79bc81583363f'}
+          sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+          for arch,digest in shas.items():
+              model=root/('atlas-p1d-opt-'+arch+'-S1.blend')
+              receipt=json.loads((root/('atlas-p1d-opt-'+arch+'-receipt.json')).read_text())
+              assert sha(model)==digest==receipt['cases']['S1']['editable_model']['sha256']
+              assert receipt['canonical_art_sha256']=='a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe'
+              assert receipt['schema']=='atlas.artdir02.p1d-optical-shift/v1'
+              assert receipt['no_merge'] and not receipt['human_art_approved']
+              print('SOURCE_SHA_VERIFIED',arch,digest)
+          PY
+      - name: Install real Blender and Cycles
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Generate connected open and watertight oculus shells ARCH-A
+        run: |
+          mkdir -p "$RUNNER_TEMP/oculus-03"
+          blender -b "$RUNNER_TEMP/opt/atlas-p1d-opt-A-S1.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/p1d_oculus_manifold_03.py -- \
+            --arch A --out "$RUNNER_TEMP/oculus-03"
+      - name: Generate connected open and watertight oculus shells ARCH-B
+        run: |
+          blender -b "$RUNNER_TEMP/opt/atlas-p1d-opt-B-S1.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/p1d_oculus_manifold_03.py -- \
+            --arch B --out "$RUNNER_TEMP/oculus-03"
+      - name: Independently qualify source identity, tangents, mesh topology and ten Cycles renders
+        run: |
+          python3 - <<'PY'
+          import os,json,hashlib
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])/'oculus-03'
+          expected={
+            'A':'aaa26dadd12db864ed29e2417c565e4b8888b86f0953378c63918b5aef7fcbb9',
+            'B':'a6fa0e3ad34e55305eea3524a9cae652bb59df173da57e6680c79bc81583363f'}
+          sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+          for arch,digest in expected.items():
+              receipt=json.loads((root/('atlas-p1d-oculus-03-'+arch+'-receipt.json')).read_text())
+              assert receipt['schema']=='atlas.artdir02.p1d-oculus-manifold/v1'
+              assert receipt['arch']==arch and receipt['source_opt_s1_sha256']==digest
+              assert receipt['canonical_art_sha256']=='a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe'
+              assert receipt['camera_and_original_meshes_unchanged']
+              assert receipt['topologically_joined_mesh_no_duplicate_internal_seam']
+              assert receipt['tangent_continuity_verified_on_128_radial_samples']
+              assert not receipt['all_scene_object_collisions_certified']
+              assert not receipt['art_approved'] and receipt['no_merge'] and receipt['no_deploy']
+              assert set(receipt['variants'])=={'J3','J4'}
+              images=[receipt['baseline']['render']]
+              for label,item in receipt['variants'].items():
+                  assert not item['art_approved'] and item['originals_preserved']
+                  m=item['metrics']; top=m['topology']
+                  assert m['oculus_shared_ring_index']==2
+                  assert m['oculus_C0_max_bu']<1e-4
+                  assert m['joint_tangent_angle_max_degrees']<=.5
+                  assert m['min_radial_step_bu']>.035
+                  assert top['connected_components']==1
+                  assert top['nonmanifold_edges_other_than_boundary']==0
+                  assert top['self_intersection_nonadjacent_pair_count']==0
+                  assert top['wire_edges']==0
+                  assert top['minimum_face_area_bu2']>1e-7
+                  if label=='J3':
+                      assert top['boundary_edges']==256
+                      assert not top['whole_shell_watertight']
+                  else:
+                      assert top['boundary_edges']==0
+                      assert top['whole_shell_watertight']
+                      assert abs(top['signed_enclosed_volume_bu3'])>.1
+                      assert m['thickness']['normal_projected_lower_bound_bu']>.025
+                  model=root/item['editable_blend']['file']
+                  assert model.stat().st_size>1000000
+                  assert sha(model)==item['editable_blend']['sha256']
+                  images.extend((item['render'],item['section']))
+                  print('QUALIFIED_INTEGRATED_JOINT',arch,label,'TOPOLOGY',top)
+              for frame in images:
+                  p=root/frame['file']
+                  assert p.stat().st_size>12000
+                  assert sha(p)==frame['sha256']
+          print('FOUR_TRUE_EDITABLE_BLENDER_MODELS_AND_TEN_REAL_CYCLES_RENDERINGS_PASS')
+          print('ARTISTIC_APPROVAL_NOT_GRANTED; GLOBAL_HALL_COLLISIONS_NOT_CERTIFIED')
+          PY
+      - name: Preserve editable shells, images and measured evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-p1d-oculus-03-${{ github.run_number }}
+          path: ${{ runner.temp }}/oculus-03/
+          if-no-files-found: warn
+          retention-days: 30
