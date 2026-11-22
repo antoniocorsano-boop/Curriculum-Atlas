@@ -56,7 +56,7 @@ python3 scripts/atlas-gateway-production/validate_parametric_selection.py fixtur
 
 - Immagine artistica: [ART-DIR-02](https://drive.google.com/file/d/1vSC_ynSxAF-pxR071TiKjEE0OtaFjXCn/view).
 - Qualificazione originaria quattro modelli: P1D-OCULUS-03, GitHub Actions `45008316673`.
-- Stato geometrico di riferimento: [PR #185](https://github.com/antoniocorsano-boop/Curriculum-Atlas/pull/185), raccordo corto, 24 rendering Cycles e quattro ricevute, commit `1676e546a0d97c1e74b0a41c59aa900e989e1a26`.
+- Stato geometrico di riferimento: PR #185 (identificativo repository GitHub 1376266693), raccordo corto, 24 rendering Cycles e quattro ricevute, commit `1676e546a0d97c1e74b0a41c59aa900e989e1a26`.
 - Nessun dato personale o scolastico, nessun caricamento automatico a servizi esterni.
 - Origine: conversazione Atlas World Composer del 22 novembre 2026, richiesta di simulatore con cursori per deformazioni, forme e posizioni. URL chat non disponibile.
 
