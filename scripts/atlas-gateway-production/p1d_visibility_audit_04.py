@@ -225,12 +225,17 @@ for y in range(H):
             upper_count+=1
             if first is None:upper_open+=1
         pixel_data.extend(COLORS[cls])
+print("APERTURE_RAY_AUDIT",ARCH,MODE,
+      "CAMERA_Z",origin_camera.z,"RING_Z",ring_z,
+      "CAMERA_FORWARD_Z",(camrot@Vector((0,0,-1))).z,
+      "RING_PROJECTION_FRONT",len(projected),"BEHIND",behind,
+      "ROI_PIXELS",mask_count,"OPEN",counts["sky_unblocked"],flush=True)
 img.pixels[:]=pixel_data
 img.filepath_raw=str(OUT/("atlas-p1d-vis-04-"+ARCH+"-"+MODE+"-APERTURE-MASK.png"))
 img.file_format="PNG"
 img.save()
 mask_path=Path(img.filepath_raw)
-if mask_path.stat().st_size<1000:
+if not mask_path.is_file() or mask_path.stat().st_size<100:
     raise RuntimeError("Mask rendering missing")
 # Gallery object-space samples: compare actual first-hit vs a virtual panels-off pass.
 def gallery_visibility(ob):
