@@ -42,7 +42,7 @@ jobs:
               model=root/('atlas-p1d-opt-'+arch+'-S1.blend')
               assert r['schema']=='atlas.artdir02.p1d-optical-shift/v1'
               assert sha(model)==expected==r['cases']['S1']['editable_model']['sha256']
-              assert r['art_reference_sha256'] if 'art_reference_sha256' in r else r['canonical_art_sha256']=='a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe'
+              assert r['canonical_art_sha256']=='a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe'
               assert not r['human_art_approved'] and r['no_merge']
               print('P1D_OCULUS_VERIFIED_ORIGINAL_SOURCE',arch,expected)
           PY
