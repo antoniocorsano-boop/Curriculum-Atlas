@@ -188,9 +188,35 @@ major_span = max(major)-min(major)
 minor_span = max(minor)-min(minor)
 if not (major_span > minor_span*1.15):
     raise RuntimeError("Pavilion opening did not become clearly elongated")
-# HERO remains untouched in the source. Only the alternative candidate camera moves.
-cam.matrix_world = camera_before @ Matrix.Rotation(math.radians(3.5), 4, "X")
-cam.data.lens = lens_before*.94
+# Restrained finishing on CANDIDATE material slots only. Native original
+# datablocks and the four original portal panels remain unmodified.
+def graphite(name, rgb, metallic=.18, roughness=.58):
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    m.diffuse_color = (*rgb, 1.)
+    shader = m.node_tree.nodes.get("Principled BSDF")
+    shader.inputs["Base Color"].default_value = (*rgb, 1.)
+    shader.inputs["Metallic"].default_value = metallic
+    shader.inputs["Roughness"].default_value = roughness
+    return m
+roof_finish = graphite("P1F • volta blu grafite", (.018, .036, .065), .12, .68)
+deck_finish = graphite("P1F • balconate blu grafite", (.024, .047, .078), .16, .56)
+roof.data.materials.clear()
+roof.data.materials.append(roof_finish)
+finish_members=[]
+for o in list(scene.objects):
+    if o.type != "MESH":
+        continue
+    if o.name in ("ARCH04 • first gallery deck", "ARCH04 • upper gallery deck",
+                  "ARCH B upper gallery slab", "ARCH04 • upper cornice"):
+        o.data = o.data.copy()
+        o.data.materials.clear()
+        o.data.materials.append(deck_finish)
+        finish_members.append(o.name)
+# HERO remains untouched in the source. A wider, upward-looking candidate camera
+# retains the base perspective while admitting more of the tall skylight.
+cam.matrix_world = camera_before @ Matrix.Rotation(math.radians(6.0), 4, "X")
+cam.data.lens = lens_before*.86
 scene.camera = cam
 view.material_override = None
 view.update()
@@ -205,7 +231,8 @@ scene.render.engine = "CYCLES"
 scene.render.resolution_x = 1024
 scene.render.resolution_y = 576
 scene.render.resolution_percentage = 100
-scene.cycles.samples = 18
+scene.cycles.samples = 44
+view.cycles.use_denoising = True
 scene.render.image_settings.file_format = "PNG"
 scene.render.film_transparent = False
 png = out/"atlas-p1f-pavilion-01-B-J4-HERO.png"
@@ -255,6 +282,11 @@ result = {
     "four_portal_centres_in_frame": centres,
     "original_first_floor_four_glasses_podium_preserved": True,
     "lights_unchanged": True,
+    "finishing": {"blue_graphite_roof": roof_finish.name,
+                  "blue_graphite_balconies": finish_members,
+                  "candidate_camera_tilt_degrees": 6.0,
+                  "candidate_camera_lens_ratio": .86,
+                  "cycles_samples": 44, "denoising": True},
     "file": {"blend": {"name": candidate.name, "sha256": digest(candidate), "bytes": candidate.stat().st_size},
              "cycles": {"name": png.name, "sha256": digest(png), "bytes": png.stat().st_size},
              "roof_glb_diagnostic": {"name": glb.name, "sha256": digest(glb), "bytes": glb.stat().st_size,
