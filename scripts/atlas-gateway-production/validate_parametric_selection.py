@@ -35,6 +35,8 @@ def validate(data):
     source = data.get("blender_baseline", {})
     if source.get("arch_and_variant") not in {"A-J3", "A-J4", "B-J3", "B-J4"}:
         raise ValueError("Modello qualificato non identificato")
+    if source.get("source_repository_id") != 1376266693 or source.get("source_repository") != "atlas":
+        raise ValueError("Identità del repository non verificata")
     if source.get("source_workflow_run") != 45008316673:
         raise ValueError("Provenienza del modello originale non riconosciuta")
     decision = data.get("decision", {})
