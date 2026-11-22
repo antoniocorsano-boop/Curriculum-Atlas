@@ -135,8 +135,13 @@ for sp in rim.data.splines:
             for k in range(32):
                 p=bezier(aa.co,aa.handle_right,bb.handle_left,bb.co,k/32.)
                 rim_world.append(rim.matrix_world@p)
+    elif sp.type in ("POLY","NURBS"):
+        # The original qualified source explicitly supports non-Bezier
+        # spline points, which must not be silently discarded.
+        for p in sp.points:
+            rim_world.append(rim.matrix_world@Vector(p.co[:3]))
 if len(rim_world)<32:
-    raise RuntimeError("Insufficient actual Bezier oculus samples")
+    raise RuntimeError("Insufficient original oculus spline samples (Bezier/POLY/NURBS)")
 ring_z=sorted(p.z for p in rim_world)[len(rim_world)//2]
 if max(abs(p.z-ring_z) for p in rim_world)>.08:
     raise RuntimeError("Oculus ring unexpectedly nonplanar")
@@ -298,8 +303,8 @@ report={
            "matrix_world":[list(row) for row in cam.matrix_world]},
  "oculus":{"projected_center_normalized":[center_u,center_v],
            "projected_rim_bounds_normalized":projected_bounds,
-           "bezier_samples_behind_camera":behind,
-           "sampling_method":"forward camera rays intersect real oculus XY footprint at median Z",
+           "original_spline_samples_behind_camera":behind,
+           "sampling_method":"forward camera rays intersect actual original spline XY footprint at median Z",
            "interior_sampling_factor":.88,
            "samples_in_image":mask_count,
            "coverage_of_image":mask_count/(W*H),
