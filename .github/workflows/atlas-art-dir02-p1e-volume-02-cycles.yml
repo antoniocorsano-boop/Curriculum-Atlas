@@ -1,0 +1,170 @@
+name: ATLAS ART-DIR-02 P1E-VOLUME-02 controlled volume Cycles
+on:
+  pull_request:
+    branches: [work/atlas-artdir02-p1e-framing-01]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [work/atlas-artdir02-p1e-volume-02]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-artdir02-volume02-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  controlled-volume:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.head_ref == 'work/atlas-artdir02-p1e-volume-02'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Blender script syntax
+        run: python3 -m py_compile scripts/atlas-gateway-production/p1e_volume_02.py
+      - name: Recover A/B J3/J4 immutable original .blend and SHA receipts
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45008316673
+          pattern: atlas-art-dir02-p1d-oculus-03-1
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/qualified
+      - name: Recover original-camera and tilt camera independent parent receipts
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45028329659
+          pattern: atlas-art-dir02-p1e-framing-01-3
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/framing01
+      - name: Recover certified read-only architectural inventories
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45056688421
+          pattern: atlas-art-dir02-p1e-volume-02-inventory-7
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/inventory
+      - name: Independently verify source, inventory, parent SHA and invariants
+        run: |
+          python3 - <<'PY'
+          import os,json,hashlib
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          for a in "AB":
+            source=json.loads((root/"qualified"/f"atlas-p1d-oculus-03-{a}-receipt.json").read_text())
+            assert source["schema"]=="atlas.artdir02.p1d-oculus-manifold/v1"
+            assert source["canonical_art_sha256"]=="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+            for m in ("J3","J4"):
+              original=source["variants"][m]["editable_blend"]
+              f=root/"qualified"/original["file"]
+              assert f.exists() and hashlib.sha256(f.read_bytes()).hexdigest()==original["sha256"]
+              p=json.loads((root/"framing01"/f"atlas-p1e-framing-01-{a}-{m}-receipt.json").read_text())
+              assert p["schema"]=="atlas.artdir02.p1e-framing/v1"
+              assert p["source_sha256"]==original["sha256"] and p["camera_restored_and_blend_not_saved"]
+              j=json.loads((root/"inventory"/f"atlas-p1e-volume-02-{a}-{m}-inventory.json").read_text())
+              assert j["schema"]=="atlas.artdir02.p1e-volume-inventory/v1"
+              assert j["source_sha256"]==original["sha256"] and not j["saved"] and j["no_merge"]
+              print("VOLUME02_PROVENANCE",a,m,original["sha256"])
+          PY
+      - name: Install native Blender Cycles renderer
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Run 24 genuine Cycles renders, reversible geometry and both cameras
+        run: |
+          mkdir -p "$RUNNER_TEMP/volume02"
+          for a in A B; do
+            for m in J3 J4; do
+              blender -b "$RUNNER_TEMP/qualified/atlas-p1d-oculus-03-$a-$m.blend" \
+                --threads 2 --python-exit-code 1 \
+                --python scripts/atlas-gateway-production/p1e_volume_02.py -- \
+                --arch "$a" --variant "$m" \
+                --oculus-receipt "$RUNNER_TEMP/qualified/atlas-p1d-oculus-03-$a-receipt.json" \
+                --framing-receipt "$RUNNER_TEMP/framing01/atlas-p1e-framing-01-$a-$m-receipt.json" \
+                --inventory "$RUNNER_TEMP/inventory/atlas-p1e-volume-02-$a-$m-inventory.json" \
+                --out "$RUNNER_TEMP/volume02"
+            done
+          done
+      - name: Independent 24 PNG, 4 receipts, geometric conditions SHA audit
+        run: |
+          python3 - <<'PY'
+          import hashlib,math,os,json
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"]);p=root/"volume02"
+          cases=("BASE","RISE_035","RISE_065")
+          cameras=("HERO_BASE","HERO_TILT_UP_3")
+          rows=["# P1E-VOLUME-02 — Rilievo in quota e confronto Cycles",
+                "","24 render reali originali A/B×J3/J4, 3 altezze×2 camere; misure in unità Blender (BU).","",
+                "| modello | variante | altezza galleria superiore max Z | quota oculo max Z | bordo oculo nel quadro BASE | bordo oculo nel quadro +3° |",
+                "|---|---|---:|---:|---:|---:|"]
+          models={};n=0
+          for a in "AB":
+            for m in ("J3","J4"):
+              fp=p/f"atlas-p1e-volume-02-{a}-{m}-receipt.json"
+              assert fp.is_file()
+              j=json.loads(fp.read_text())
+              models[a,m]=j
+              assert j["schema"]=="atlas.artdir02.p1e-volume-02/v1"
+              original=json.loads((root/"qualified"/f"atlas-p1d-oculus-03-{a}-receipt.json").read_text())
+              assert j["source_sha256"]==original["variants"][m]["editable_blend"]["sha256"]
+              assert j["canonical_art_sha256"]==original["canonical_art_sha256"]
+              assert j["parent_framing_01_run"]==45028329659 and j["inventory_parent_run"]==45056688421
+              assert j["architecture_members_deformed"]>40
+              assert all(j[k] for k in ("protected_4_glass_panels_and_first_gallery_unchanged",
+                     "source_cameras_restored","original_mesh_materials_world_lamps_unchanged",
+                     "geometry_experiments_undone","rendering_approximate_diagnostic_not_artistic_approval"))
+              assert j["original_source_saved"] is False and j["no_merge"] and j["no_deploy"] and not j["art_approved"]
+              assert set(j["variants"])==set(cases)
+              origin=j["variants"]["BASE"]["measured_bounds_world_z_bu"]
+              assert abs(origin["upper_gallery"][1]-5.49)<.05
+              for case in cases:
+                q=j["variants"][case];params=q["parameters"]
+                assert set(q["cameras"])==set(cameras)
+                geometry=q["measured_bounds_world_z_bu"]
+                rise=geometry["upper_gallery"][1]-origin["upper_gallery"][1]
+                assert abs(rise-params["gallery_rise_bu"])<.01
+                assert geometry["sky_texture_screen"][1]>geometry["structural_crown"][1]
+                assert abs(geometry["first_gallery"][1]-origin["first_gallery"][1])<1e-5
+                for cam in cameras:
+                  image=q["cameras"][cam]["render"]
+                  file=p/image["file"]
+                  assert file.exists() and file.stat().st_size>1800
+                  assert hashlib.sha256(file.read_bytes()).hexdigest()==image["sha256"]
+                  assert q["cameras"][cam]["portal_centers_all_inside"]
+                  assert len(q["cameras"][cam]["portals_projected"])==4
+                  occ=q["cameras"][cam]["oculus_rim_projection"]
+                  assert occ["front_fraction"]>.95 and 0<=occ["above_frame_fraction"]<=1
+                  assert all(math.isfinite(occ["bounds"][z]) for z in ("left","right","bottom","top"))
+                  n+=1
+                o0=q["cameras"]["HERO_BASE"]["oculus_rim_projection"]
+                o1=q["cameras"]["HERO_TILT_UP_3"]["oculus_rim_projection"]
+                rows.append(f'| {a}-{m} | {case} | {geometry["upper_gallery"][1]:.3f} | '
+                    f'{geometry["oculus_rim"][1]:.3f} | {100*o0["above_frame_fraction"]:.1f}% | '
+                    f'{100*o1["above_frame_fraction"]:.1f}% |')
+              print("VOLUME02_RECEIPT_PASS",a,m)
+          assert n==24
+          for a in "AB":
+            x=models[a,"J3"];y=models[a,"J4"]
+            for case in cases:
+              for cam in cameras:
+                o=x["variants"][case]["cameras"][cam]["oculus_rim_projection"]
+                p2=y["variants"][case]["cameras"][cam]["oculus_rim_projection"]
+                assert abs(o["bounds"]["top"]-p2["bounds"]["top"])<.005
+          rows+=["","Varianti sperimentali su copie in memoria degli oggetti architettonici; nessun file sorgente salvato.",
+              "Portali e primo solaio protetti. Nessuna alterazione di lampade, mondo, materiali o fotocamere permanenti.",
+              "Le misure di proiezione non dimostrano assenza di occlusioni. Approvazione artistica ancora sospesa.",
+              "Nessun merge, pubblicazione o spesa."]
+          report="\n".join(rows)+"\n"
+          (root/"volume02"/"ATLAS-P1E-VOLUME-02-RAPPORTO.md").write_text(report,encoding="utf8")
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as f:f.write(report)
+          print("VOLUME02_ALL_24_RENDERINGS_AND_FOUR_RECEIPTS_QUALIFIED")
+          PY
+      - name: Preserve 24 PNG, JSON receipts and method with SHA256
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-artdir02-p1e-volume-02-cycles-${{ github.run_number }}
+          path: ${{ runner.temp }}/volume02/
+          if-no-files-found: warn
+          retention-days: 30
