@@ -1,0 +1,163 @@
+name: ATLAS ART-DIR-02 P1E-FRAMING-01 camera calibration
+on:
+  pull_request:
+    branches: [work/atlas-artdir02-p1d-sky-texture-07]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-framing01-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  framing:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'work/atlas-artdir02-p1e-framing-01'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax check of the optical calibration
+        run: python3 -m py_compile scripts/atlas-gateway-production/p1e_framing_01.py
+      - name: Retrieve the immutable four J3/J4 real Blender models
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45008316673
+          pattern: atlas-art-dir02-p1d-oculus-03-1
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/qualified
+      - name: Retrieve P1D-SKY-07 authenticated predecessor receipts
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45025089124
+          pattern: atlas-art-dir02-p1d-sky-07-2
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/sky07
+      - name: Independently validate model SHA and P1D-SKY-07 continuity
+        run: |
+          python3 - <<'PY'
+          import json,hashlib,os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          for arch in "AB":
+            old=json.loads((root/"qualified"/f"atlas-p1d-oculus-03-{arch}-receipt.json").read_text())
+            assert old["schema"]=="atlas.artdir02.p1d-oculus-manifold/v1"
+            assert old["canonical_art_sha256"]=="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+            assert old["no_merge"] and old["no_deploy"] and not old["art_approved"]
+            for variant in ("J3","J4"):
+              model=old["variants"][variant]["editable_blend"]
+              file=root/"qualified"/model["file"]
+              assert file.is_file() and hashlib.sha256(file.read_bytes()).hexdigest()==model["sha256"]
+              old7=json.loads((root/"sky07"/f"atlas-p1d-sky-07-{arch}-{variant}-receipt.json").read_text())
+              assert old7["schema"]=="atlas.artdir02.p1d-sky-texture/v1"
+              assert old7["source_sha256"]==model["sha256"]
+              assert old7["camera_world_lamps_unchanged"] and old7["original_source_unmodified"]
+              assert old7["no_merge"] and old7["no_deploy"] and not old7["art_approved"]
+              print("FRAMING01_QUALIFIED_SOURCE",arch,variant,model["sha256"])
+          PY
+      - name: Install the same Blender Cycles environment
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Compare 24 Cycles frames and real 3D framing landmarks on A/B J3/J4
+        run: |
+          mkdir -p "$RUNNER_TEMP/framing01"
+          for arch in A B; do
+            for variant in J3 J4; do
+              blender -b "$RUNNER_TEMP/qualified/atlas-p1d-oculus-03-$arch-$variant.blend" \
+                --threads 2 --python-exit-code 1 \
+                --python scripts/atlas-gateway-production/p1e_framing_01.py -- \
+                --arch "$arch" --variant "$variant" \
+                --oculus-receipt "$RUNNER_TEMP/qualified/atlas-p1d-oculus-03-$arch-receipt.json" \
+                --sky07-receipt "$RUNNER_TEMP/sky07/atlas-p1d-sky-07-$arch-$variant-receipt.json" \
+                --out "$RUNNER_TEMP/framing01"
+            done
+          done
+      - name: Independent audit of six perspectives, geometry and 24 PNG SHA-256
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,math,os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          src=root/"qualified"
+          out=root/"framing01"
+          cases=("BASE","TILT_UP_3","TILT_UP_5","WIDE_8","TILT_4_WIDE_6","LOWER_035_TILT_4")
+          all_cases={}
+          count=0
+          rows=["# P1E-FRAMING-01 — Test di inquadratura su modelli originali",
+            "","Misure di proiezione del contorno oculo e dei pannelli: coordinate 0–1 della camera, non giudizio artistico.","",
+            "| ARCH | Metodo | Oculo: bordo sup. | Oculo: quota sopra schermo | 4 portali nel quadro | Ampiezza centri portali |",
+            "|---|---|---:|---:|---|---:|"]
+          for a in "AB":
+            for v in ("J3","J4"):
+              recfile=out/f"atlas-p1e-framing-01-{a}-{v}-receipt.json"
+              assert recfile.is_file(),recfile
+              rec=json.loads(recfile.read_text())
+              assert rec["schema"]=="atlas.artdir02.p1e-framing/v1"
+              assert rec["arch"]==a and rec["structural_variant"]==v
+              assert rec["source_qualifying_run"]==45008316673
+              assert rec["parent_sky07_run"]==45025089124
+              original=json.loads((src/f"atlas-p1d-oculus-03-{a}-receipt.json").read_text())
+              assert rec["source_sha256"]==original["variants"][v]["editable_blend"]["sha256"]
+              assert rec["canonical_art_sha256"]==original["canonical_art_sha256"]
+              assert rec["true_oculus_rim_points"]>=32
+              for key in ("experiment_is_camera_pose_and_lens_only",
+                         "structure_sky_and_four_glass_panels_untouched",
+                         "original_lamps_world_materials_unchanged",
+                         "camera_restored_and_blend_not_saved"):
+                assert rec[key]
+              assert rec["no_merge"] and rec["no_deploy"] and not rec["art_approved"]
+              assert set(rec["cases"])==set(cases)
+              assert rec["cases"]["BASE"]["portals_four_centers_inside_image"]
+              for case in cases:
+                item=rec["cases"][case]
+                img=out/item["render"]["file"]
+                assert img.is_file() and img.stat().st_size>1500
+                assert hashlib.sha256(img.read_bytes()).hexdigest()==item["render"]["sha256"]
+                assert math.isfinite(item["render"]["photometry"]["upper_third_sample_rgb_mean_proxy"])
+                o=item["oculus_rim_projected"]
+                assert o["front_fraction"]>.95 and 0<=o["above_frame_fraction"]<=1
+                assert o["bounds"]["top"]>o["bounds"]["bottom"]
+                assert len(item["portals"])==4 and len(item["galleries"])>=2
+                assert 0<=item["portal_center_horizontal_span_normalized"]<=2
+                assert set(item["configuration"])=={"tilt_degrees","lens_factor","lower_z_bu"}
+                rows.append(f'| {a}-{v} | {case} | {o["bounds"]["top"]:.3f} | '
+                            f'{100*o["above_frame_fraction"]:.1f}% | '
+                            f'{"sì" if item["portals_four_centers_inside_image"] else "no"} | '
+                            f'{item["portal_center_horizontal_span_normalized"]:.3f} |')
+                count+=1
+              all_cases[a,v]=rec
+              print("FRAMING01_RECEIPT_PASS",a,v,"",len(rec["cases"]))
+          assert count==24
+          # Different structural shells must not move the canonical original camera
+          # or the original oculus/panel landmarks.
+          for a in "AB":
+            j3=all_cases[a,"J3"];j4=all_cases[a,"J4"]
+            for case in cases:
+              c=j3["cases"][case];d=j4["cases"][case]
+              for label in ("oculus_rim_projected","portals"):
+                if label=="oculus_rim_projected":
+                  assert abs(c[label]["bounds"]["top"]-d[label]["bounds"]["top"])<.003
+                  assert abs(c[label]["center"][1]-d[label]["center"][1])<.003
+                else:
+                  for n in c[label]:
+                    assert abs(c[label][n]["center"][1]-d[label][n]["center"][1])<.003
+          rows+=["","Le misure dei portali e delle gallerie sono proiezioni 3D, non prove di assenza di occlusioni.",
+            "Le varianti variano soltanto la camera: le geometrie, gli shader, il cielo emissivo e le luci sono identici.",
+            "La tavola artistica canonica ART-DIR-02 deve essere confrontata visivamente prima di approvare qualsiasi proposta.",
+            "Nessuna integrazione, pubblicazione o modifica ai modelli sorgente."]
+          report="\n".join(rows)+"\n"
+          (out/"ATLAS-P1E-FRAMING-01-RAPPORTO.md").write_text(report,encoding="utf8")
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as f:f.write(report)
+          print("FRAMING01_24_REAL_CYCLES_IMAGES_AND_4_OPTICAL_RECEIPTS_QUALIFIED")
+          PY
+      - name: Preserve all 24 Cycles images and four independent receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-p1e-framing-01-${{ github.run_number }}
+          path: ${{ runner.temp }}/framing01/
+          if-no-files-found: warn
+          retention-days: 30
