@@ -1,0 +1,90 @@
+name: "ATLAS ART-DIR-02 — P1C volumetria a geometria bloccata"
+on:
+  pull_request:
+    branches: [work/atlas-artdir02-p1b-multianchor]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-p1c-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  true-p1c-blender:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'work/atlas-artdir02-p1c-volumetria'
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check P1C Python syntax
+        run: python3 -m py_compile scripts/atlas-gateway-production/p1c_volumetric_clay.py
+      - name: Recover qualified actual P1B editable Blender source
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 44976549294
+          pattern: atlas-art-dir02-p1b-*
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/p1b
+      - name: Verify immutable P1B binary and root pedigree
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"p1b"
+          master=p/"atlas-art-dir02-p1b-multianchor-clay.blend"
+          receipt=json.loads((p/"atlas-p1b-multianchor-receipt.json").read_text())
+          h=hashlib.sha256(master.read_bytes()).hexdigest()
+          assert h==receipt["model_sha256"]=="e16fa837ea85d27eff225c3a4e4fc8ff63e00a298a597d8710d32d3536351c7c"
+          assert receipt["source_p1_sha256"]=="d35c42c2f4b50dafa01dfb7ab27a113ec9c954b09b6629e2239c54b589833a3b"
+          assert receipt["perceptual_gate_pass"] and not receipt["human_art_approved"]
+          print("IMMUTABLE P1B VERIFIED")
+          PY
+      - name: Install actual Blender Cycles
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Execute structural P1C and render two independent genuine clay variants
+        run: |
+          mkdir -p "$RUNNER_TEMP/p1c"
+          blender -b "$RUNNER_TEMP/p1b/atlas-art-dir02-p1b-multianchor-clay.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/p1c_volumetric_clay.py -- \
+            --out "$RUNNER_TEMP/p1c"
+      - name: Verify actual Blender file, image hashes and held visual anchors
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"p1c"
+          r=json.loads((p/"atlas-p1c-volumetric-receipt.json").read_text())
+          sha=lambda f:hashlib.sha256(f.read_bytes()).hexdigest()
+          assert sha(p/"atlas-art-dir02-p1c-volumetric-clay.blend")==r["model_sha256"]
+          assert len(r["variants"])==2
+          assert r["selected_candidate"]=="B"
+          for v in r["variants"].values():
+            img=p/v["render"]["name"]
+            assert img.stat().st_size>12000 and sha(img)==v["render"]["sha256"]
+            assert v["geometric_invariants_pass"]
+            assert v["portal_max_drift_fraction"]<.002
+            assert v["oculus_max_drift_fraction"]<.002
+            assert v["podium_max_drift_fraction"]<.002
+            assert v["changed_control_points"]>=100
+          assert r["final_measurement"]["gallery_gain_fraction"]>0
+          assert len(r["P1B"]["portal_centres"])==4
+          assert r["original_CC0_collections"]==3 and r["original_portal_bases"]==4
+          assert r["hotspot_revalidation_required"] and not r["human_art_approved"]
+          assert r["no_merge"] and r["no_deploy"]
+          print("TRUE 3D P1C TECH PASS; HUMAN ART APPROVAL STILL OPEN")
+          print("Actual measured gallery gain:",
+                r["final_measurement"]["gallery_gain_fraction"])
+          PY
+      - name: Preserve P1C editable master, two renders and numerical receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-p1c-${{ github.run_number }}
+          path: ${{ runner.temp }}/p1c/
+          if-no-files-found: warn
+          retention-days: 30
