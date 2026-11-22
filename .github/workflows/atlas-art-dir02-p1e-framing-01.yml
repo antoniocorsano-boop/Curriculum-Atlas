@@ -3,6 +3,8 @@ on:
   pull_request:
     branches: [work/atlas-artdir02-p1d-sky-texture-07]
     types: [opened, synchronize, reopened]
+  push:
+    branches: [work/atlas-artdir02-p1e-framing-01]
   workflow_dispatch:
 permissions:
   contents: read
@@ -12,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   framing:
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'work/atlas-artdir02-p1e-framing-01'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.head_ref == 'work/atlas-artdir02-p1e-framing-01'
     runs-on: ubuntu-latest
     timeout-minutes: 75
     steps:
