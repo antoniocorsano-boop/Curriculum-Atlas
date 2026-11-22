@@ -229,7 +229,7 @@ print("APERTURE_RAY_AUDIT",ARCH,MODE,
       "CAMERA_Z",origin_camera.z,"RING_Z",ring_z,
       "CAMERA_FORWARD_Z",(camrot@Vector((0,0,-1))).z,
       "RING_PROJECTION_FRONT",len(projected),"BEHIND",behind,
-      "ROI_PIXELS",mask_count,"OPEN",counts["sky_unblocked"],flush=True)
+      "ROI_PIXELS",mask_count,"OPEN",counts["sky_unblocked"],"FIRST_HITS",dict(blockers.most_common(8)),flush=True)
 img.pixels[:]=pixel_data
 img.filepath_raw=str(OUT/("atlas-p1d-vis-04-"+ARCH+"-"+MODE+"-APERTURE-MASK.png"))
 img.file_format="PNG"
@@ -245,7 +245,8 @@ def gallery_visibility(ob):
     faces=ob.data.polygons
     stride=max(1,len(faces)//200)
     visible=0;uncovered=0;tested=0;blocking=Counter()
-    for face in faces[::stride]:
+    for face_index in range(0,len(faces),stride):
+        face=faces[face_index]
         xyz=world@face.center
         pr=world_to_camera_view(scene,cam,xyz)
         if pr.z<=0 or not (0<pr.x<1 and 0<pr.y<1):continue
