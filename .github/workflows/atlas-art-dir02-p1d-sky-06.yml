@@ -135,7 +135,7 @@ jobs:
           assert files==16
           rows+=["","Le medie sono indicatori di luminanza RGB del file PNG: NON sono lux né valutazioni estetiche.",
             "Il cielo emissivo curvo riutilizza la texture originale con una nuova mesh temporanea.",
-            "La proposta atmosferica adopera Nishita e un mondo temporaneo: modifica la luce ambiente, non le lampade.",
+            "La proposta atmosferica adopera Hosek-Wilkie e un mondo temporaneo: modifica la luce ambiente, non le lampade.",
             "Queste immagini non qualificano la corrispondenza artistica ad ART-DIR-02: servirà selezione umana e possibile aggiustamento di esposizione.",
             "Origini A/B J3/J4 verificate byte per byte; nessuna modifica permanente, PR in bozza, nessuna integrazione o pubblicazione."]
           text="\n".join(rows)+"\n"
