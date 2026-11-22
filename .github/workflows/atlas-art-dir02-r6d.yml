@@ -1,0 +1,81 @@
+name: "ATLAS ART-DIR-02 — R6D portali e basi metalliche"
+on:
+  pull_request:
+    branches: [work/atlas-gateway-01-foyer]
+    paths:
+      - "scripts/atlas-gateway-production/r6d_portals_podium.py"
+      - ".github/workflows/atlas-art-dir02-r6d.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-r6d-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  genuine-r6d-blender-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 48
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify R6D implementation
+        run: python3 -m py_compile scripts/atlas-gateway-production/r6d_portals_podium.py
+      - name: Download qualified R5 Blender artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-art-dir02-r5-gallery-section-2
+          run-id: 44927621648
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/atlas-r5-baseline
+      - name: Verify canonical R5 model before modification
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,hashlib,os
+          base=Path(os.environ["RUNNER_TEMP"])/"atlas-r5-baseline"/"r5"
+          model=base/"atlas-art-dir02-gallery-finishings-r5.blend"
+          receipt=json.loads((base/"atlas-finishings-r5-receipt.json").read_text())
+          sha=hashlib.sha256(model.read_bytes()).hexdigest()
+          assert sha==receipt["candidate_blend_sha256"]=="e97dcf65e7cd6a97f031cef99d2d81398c5d42d6493807b4e29cf35e5236b278"
+          assert receipt["no_publication"] and not receipt["human_art_approved"]
+          PY
+      - name: Install headless Blender
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender
+      - name: Apply R6D on real source, render hero and plinth details
+        run: |
+          mkdir -p "$RUNNER_TEMP/atlas-r6d"
+          blender -b "$RUNNER_TEMP/atlas-r5-baseline/r5/atlas-art-dir02-gallery-finishings-r5.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/r6d_portals_podium.py -- \
+            --out "$RUNNER_TEMP/atlas-r6d"
+      - name: Verify genuine Blender model and artistic invariants
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json,os
+          out=Path(os.environ["RUNNER_TEMP"])/"atlas-r6d"
+          report=json.loads((out/"atlas-r6d-receipt.json").read_text())
+          def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+          assert report["source_r5_sha256"]=="e97dcf65e7cd6a97f031cef99d2d81398c5d42d6493807b4e29cf35e5236b278"
+          assert sha(out/"atlas-r6d-portals-podium.blend")==report["candidate_blend_sha256"]
+          assert len(report["base_objects"])==4 and len(report["glass_objects"])==4
+          assert len(report["obsolete_slot_lips_hidden"])==8
+          assert len(report["portals_unchanged"])==4
+          assert report["hero_camera_unchanged"] and report["logo_original_untouched"]
+          assert report["no_publication"] and not report["human_approved"]
+          assert set(report["renders"])=={"hero","bases"}
+          for item in report["renders"].values():
+              file=out/item["file"]
+              assert file.stat().st_size>10000 and sha(file)==item["sha256"]
+          print("R6D TECHNICAL PASS — FOUR UNIQUE THIN METAL BASES; ART REVIEW SEPARATE")
+          PY
+      - name: Preserve model, two genuine renders and receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-r6d-${{ github.run_number }}
+          path: ${{ runner.temp }}/atlas-r6d/
+          retention-days: 30
+          if-no-files-found: warn
