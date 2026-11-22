@@ -44,13 +44,13 @@ NAMES=("Curricolo","Esplora","Percorsi","Esperienze")
 PROFILES={
  "A":{"label":"Monumentale","gallery_rise":0.80,"roof_rise":1.55,
       "depth_scale":1.00,"camera_down":0.35,"pitch_deg":2.0,
-      "lens_factor":0.85,"shift_y":0.020,"arc_radius":8.8},
+      "lens_factor":0.85,"shift_y":0.020,"arc_radius":5.7},
  "B":{"label":"Equilibrata","gallery_rise":0.48,"roof_rise":0.90,
       "depth_scale":1.00,"camera_down":0.22,"pitch_deg":1.0,
-      "lens_factor":0.92,"shift_y":0.005,"arc_radius":8.9},
+      "lens_factor":0.92,"shift_y":0.005,"arc_radius":5.8},
  "C":{"label":"Scenografica","gallery_rise":0.60,"roof_rise":1.15,
       "depth_scale":1.18,"camera_down":0.48,"pitch_deg":3.0,
-      "lens_factor":0.83,"shift_y":0.035,"arc_radius":9.1},
+      "lens_factor":0.83,"shift_y":0.035,"arc_radius":5.9},
 }
 def require(name,kind=None):
     ob=bpy.data.objects.get(name)
@@ -99,6 +99,8 @@ def produce(code,p):
     for name,root,pane,base,deg in zip(NAMES,roots,panes,bases,arc_angles):
         old_root=root.matrix_world.copy()
         old_pos=old_root.translation.copy()
+        old_bottom=min((pane.matrix_world @ vertex.co).z
+                       for vertex in pane.data.vertices)
         oldcenters[name]=[(old_pos.x-c.x)*forward.x+(old_pos.y-c.y)*forward.y,
                           (old_pos.x-c.x)*side.x+(old_pos.y-c.y)*side.y]
         theta=math.radians(deg)
@@ -112,11 +114,23 @@ def produce(code,p):
             raise RuntimeError("Unexpected parented portal root "+name)
         prior_yaw=root.rotation_euler.z
         delta_yaw=yaw-prior_yaw
-        transform=(Matrix.Translation(target)
-                   @ Matrix.Rotation(delta_yaw,4,"Z")
-                   @ Matrix.Translation(-old_pos))
         root.location=target
         root.rotation_euler.z=yaw
+        # First visual inspection revealed oversized foreground panels. Resize
+        # the original *physical* roots, not a composited image overlay.
+        root.scale=(root.scale.x*.50,root.scale.y*.50,root.scale.z*.63)
+        bpy.context.view_layer.update()
+        current_bottom=min((pane.matrix_world @ vertex.co).z
+                           for vertex in pane.data.vertices)
+        dz=old_bottom-current_bottom
+        root.location.z+=dz
+        target.z+=dz
+        # Keep independent original bases proportionate to the reduced glass.
+        size=Matrix.Diagonal((.50,.50,1.0,1.0))
+        transform=(Matrix.Translation(target)
+                   @ Matrix.Rotation(delta_yaw,4,"Z")
+                   @ size
+                   @ Matrix.Translation(-old_pos))
         # Existing independent base and low-emphasis slit trims, if present.
         associated=[base]
         associated += [o for o in scene.objects if o.name.startswith("PROOF R3 • ")
@@ -130,6 +144,9 @@ def produce(code,p):
             "name":name,"angle_deg":deg,"root_xyz":list(target),
             "tangent_yaw_deg":math.degrees(yaw),"prior_forward_bu":oldcenters[name][0],
             "forward_from_roof_center_bu":-radius*math.cos(theta),
+            "visual_portal_scale_xy":0.50,
+            "visual_portal_scale_z":0.63,
+            "glass_floor_before_and_after_z":[old_bottom,old_bottom],
             "independent_details_moved":[o.name for o in associated],
         })
     bpy.context.view_layer.update()
@@ -219,15 +236,26 @@ def produce(code,p):
         raise RuntimeError("Editable model missing for "+code)
     if sha(source)!=source_sha:
         raise RuntimeError("Original qualified source was overwritten")
-    actual={name:world_to_camera_view(scene,cam,pane.matrix_world.translation)
-            for name,pane in zip(NAMES,panes)}
+    portal_frames={}
+    for name,pane in zip(NAMES,panes):
+        corners=[world_to_camera_view(scene,cam,pane.matrix_world@Vector(v))
+                 for v in pane.bound_box]
+        bbox=[min(q.x for q in corners),max(q.x for q in corners),
+              min(q.y for q in corners),max(q.y for q in corners)]
+        portal_frames[name]={"normalized_bbox":bbox,
+                             "width_fraction":bbox[1]-bbox[0],
+                             "height_fraction":bbox[3]-bbox[2]}
+    if any(v["height_fraction"]>.48 or v["width_fraction"]>.26
+           for v in portal_frames.values()):
+        raise RuntimeError("A portal still masks too much of the architecture")
     return {
       "code":code,"label":p["label"],"settings":p,
       "roof_existing_mesh_name":roof.name,"roof_faces":len(roof.data.polygons),
       "true_crown_center_xy":[c.x,c.y],
       "portal_arc_camera_side":True,
       "portals":moved,
-      "portal_projected_centres":{k:[v.x,v.y,v.z] for k,v in v.items()},
+      "portal_projected_centres":{k:[q.x,q.y,q.z] for k,q in v.items()},
+      "portal_projected_bboxes":portal_frames,
       "upper_elements_raised":upper_names,
       "three_levels":{"ground":"Atrio • pavimento lapideo",
           "first_gallery":first.name,"upper_gallery":upper.name},
