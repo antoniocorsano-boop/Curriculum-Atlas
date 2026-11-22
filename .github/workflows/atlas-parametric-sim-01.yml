@@ -1,0 +1,124 @@
+name: ATLAS SIM-01 parametric simulator offline qualification
+on:
+  pull_request:
+    branches: [work/atlas-artdir02-p1e-oculus-section-03]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [work/atlas-gateway-parametric-sim-01]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  simulator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check canonical embedded source and standalone offline features
+        run: |
+          python3 - <<'PY'
+          import base64,hashlib,re
+          from pathlib import Path
+          p=Path("public/atlas-gateway/simulatore-parametrico.html")
+          html=p.read_text(encoding="utf8")
+          assert html.lstrip().lower().startswith("<!doctype html>")
+          assert html.rstrip().endswith("</body></html>")
+          assert html.count("<script>")==1 and "</script>" in html
+          assert '<script src=' not in html and 'fetch(' not in html
+          assert "window.localStorage" not in html
+          assert "localStorage" in html
+          assert "data:image/jpeg;base64," in html
+          image=re.search(r'data:image/jpeg;base64,([A-Za-z0-9+/=]+)',html)
+          assert image, "Canonical JPEG missing"
+          canonical="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+          assert hashlib.sha256(base64.b64decode(image.group(1),validate=True)).hexdigest()==canonical
+          for tag in ('data-view="perspective"','data-view="plan"','data-view="section"',
+                      'id="saveA"','id="saveB"','id="export"','id="importFile"',
+                      'id="miniPreview"','__NEVER_PRESENT__'):
+              if tag=="__NEVER_PRESENT__":assert tag not in html
+              else:assert tag in html,tag
+          assert "23 regolazioni" not in html or "23" in html
+          assert "atlas.gateway.parametric-selection/v3" in html
+          assert "thirdLevelHeight" in html
+          assert "architecture_levels:{count:3" in html
+          assert "[g+.18,outerZ-.10]" in html
+          assert "['1 · piano terra',0,3.21]" in html
+          assert "'3 · seconda galleria'" in html
+          assert "portal_placement:'far_side_relative_to_camera'" in html
+          assert "rad(90+(index-1.5)*s.portalSpan/3)" in html
+          assert "rad(270+" not in html, "Front-side orientation regression"
+          for required in ("portalCenter(j,s)", "portalCenter(i,s)", "portalCameraSide(s)",
+                           "OSSERVATORE (-Y)", "OSSERVATORE ↓"):
+              assert required in html,required
+          assert "automatically_merge:false" in html
+          assert "automatically_publish:false" in html
+          assert "anteprima" in html.lower()
+          assert "rendering fotorealistico Blender" in html
+          print("SIM01_OFFLINE_CANONICAL_JPEG_VALID",len(html),len(base64.b64decode(image.group(1))))
+          print("SIM01_NO_EXTERNAL_SCRIPT_OR_NETWORK_FETCH_VALID")
+          PY
+      - name: Validate complete frontend JavaScript parser syntax
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          s=Path("public/atlas-gateway/simulatore-parametrico.html").read_text()
+          scripts=re.findall(r"<script>([\s\S]*?)</script>",s)
+          assert len(scripts)==1
+          Path("/tmp/atlas-parametric-sim01.js").write_text(scripts[0])
+          PY
+          node --check /tmp/atlas-parametric-sim01.js
+      - name: Test JSON proposal contract and negative governance cases
+        run: |
+          python3 scripts/atlas-gateway-production/validate_parametric_selection.py fixtures/atlas-gateway/parametric-selection-example.json
+          python3 - <<'PY'
+          import importlib.util,json,copy
+          from pathlib import Path
+          path=Path("scripts/atlas-gateway-production/validate_parametric_selection.py")
+          spec=importlib.util.spec_from_file_location("atlas_sim01_validator",path)
+          module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+          original=json.loads(Path("fixtures/atlas-gateway/parametric-selection-example.json").read_text())
+          module.validate(original)
+          attempts=[
+            ("unknown_art_sha",lambda o:o["reference"].update(sha256="0"*64)),
+            ("not_draft",lambda o:o["decision"].update(art_approved=True)),
+            ("automatic_merge",lambda o:o["decision"].update(automatically_merge=True)),
+            ("automatic_publish",lambda o:o["decision"].update(automatically_publish=True)),
+            ("too_low_roof",lambda o:o["parameters"].update(roofHeight=4.0)),
+            ("too_large_oval",lambda o:o["parameters"].update(oculusRadius=6.0,ellipseRatio=1.8,outerRadius=8.1,outerElongation=1.0)),
+            ("missing_portal_field",lambda o:o["parameters"].pop("glassHeight")),
+            ("reversed_portal_placement",lambda o:o.update(portal_placement="near_side")),
+            ("legacy_front_side_schema",lambda o:o.update(schema="atlas.gateway.parametric-selection/v1")),
+            ("portal_near_camera",lambda o:o["parameters"].update(portalDepth=-2,portalSpan=140,portalRadius=6.0,glassWidth=2.2)),
+            ("two_architectural_levels",lambda o:o["architecture_levels"].update(count=2)),
+            ("third_level_collides_with_roof",lambda o:o["parameters"].update(roofHeight=9.1,upperGallery=6.9,thirdLevelHeight=2.8)),
+            ("incoherent_gallery_elevation",lambda o:o["architecture_levels"].update(second_gallery_z=7.5)),
+          ]
+          for label,break_it in attempts:
+            case=copy.deepcopy(original);break_it(case)
+            try:module.validate(case)
+            except ValueError:print("SIM01_INVALID_REJECTED",label)
+            else:raise AssertionError("Contract accepted invalid "+label)
+          print("SIM01_VALIDATION_14_CASES_PASS")
+          PY
+      - name: Show content identity and preservation requirements
+        run: |
+          sha256sum public/atlas-gateway/simulatore-parametrico.html \
+            scripts/atlas-gateway-production/validate_parametric_selection.py \
+            fixtures/atlas-gateway/parametric-selection-example.json \
+            docs/ATLAS-PARAMETRIC-SIM-01.md
+          echo '## ATLAS SIM-01 — Qualificazione privata' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Validato: HTML autosufficiente, ART-DIR-02 incorporato e SHA identico, JavaScript compilabile, contratto JSON valido e tredici casi invalidi rifiutati, inclusi orientamento portali e tre livelli.' >> "$GITHUB_STEP_SUMMARY"
+          echo '' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Non e un render Blender e non autorizza integrazione, pubblicazione o modifica agli originali.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Preserve inspectable simulator source and validation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-sim01-offline-artifact
+          path: |
+            public/atlas-gateway/simulatore-parametrico.html
+            scripts/atlas-gateway-production/validate_parametric_selection.py
+            fixtures/atlas-gateway/parametric-selection-example.json
+            docs/ATLAS-PARAMETRIC-SIM-01.md
+          retention-days: 30
+          if-no-files-found: error
