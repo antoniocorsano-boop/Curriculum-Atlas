@@ -1,0 +1,155 @@
+name: ATLAS ART-DIR-02 P1D-VIS-05 ablation
+on:
+  pull_request:
+    branches: [work/atlas-artdir02-p1d-visibility-04]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-vis05-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  isolation:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'work/atlas-artdir02-p1d-occlusion-isolation-05'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check diagnostic syntax
+        run: python3 -m py_compile scripts/atlas-gateway-production/p1d_occlusion_isolation_05.py
+      - name: Fetch original qualified J3/J4 Blender source assets
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45008316673
+          pattern: atlas-art-dir02-p1d-oculus-03-1
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/qualified
+      - name: Fetch parent P1D-VIS-04 qualified optical evidence
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45009992250
+          pattern: atlas-art-dir02-p1d-vis-04-5
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/prior-visibility
+      - name: Validate source SHA and parent optical provenance
+        run: |
+          python3 - <<'PY'
+          import os,hashlib,json
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          def sha(p):
+            h=hashlib.sha256()
+            with open(p,"rb") as f:
+              for block in iter(lambda:f.read(1<<20),b""):h.update(block)
+            return h.hexdigest()
+          for a in ("A","B"):
+            original=json.loads((root/"qualified"/f"atlas-p1d-oculus-03-{a}-receipt.json").read_text())
+            assert original["schema"]=="atlas.artdir02.p1d-oculus-manifold/v1"
+            assert original["arch"]==a and original["no_merge"] and original["no_deploy"]
+            assert original["canonical_art_sha256"]=="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+            for v in ("J3","J4"):
+              model=original["variants"][v]["editable_blend"]
+              assert sha(root/"qualified"/model["file"])==model["sha256"]
+              receipt=json.loads((root/"prior-visibility"/f"atlas-p1d-vis-04-{a}-{v}-receipt.json").read_text())
+              assert receipt["schema"]=="atlas.artdir02.p1d-visibility/v1"
+              assert receipt["arch"]==a and receipt["structural_variant"]==v
+              assert receipt["source_sha256"]==model["sha256"]
+              assert receipt["oculus"]["measurable"] and not receipt["art_approved"]
+              print("SOURCE_AND_PRIOR_EVIDENCE_PASS",a,v)
+          PY
+      - name: Install real Blender and Cycles
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Execute all A/B J3/J4 optical ablations and controlled Cycles images
+        run: |
+          mkdir -p "$RUNNER_TEMP/vis05"
+          for arch in A B; do
+            for variant in J3 J4; do
+              blender -b "$RUNNER_TEMP/qualified/atlas-p1d-oculus-03-$arch-$variant.blend" \
+                --threads 2 --python-exit-code 1 \
+                --python scripts/atlas-gateway-production/p1d_occlusion_isolation_05.py -- \
+                --arch "$arch" --variant "$variant" \
+                --receipt "$RUNNER_TEMP/qualified/atlas-p1d-oculus-03-$arch-receipt.json" \
+                --vis04 "$RUNNER_TEMP/prior-visibility/atlas-p1d-vis-04-$arch-$variant-receipt.json" \
+                --out "$RUNNER_TEMP/vis05"
+            done
+          done
+      - name: Independently qualify 4 optical cases x 4 scenes and Cycles assets
+        run: |
+          python3 - <<'PY'
+          import os,json,hashlib,math
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])/"vis05"
+          source=Path(os.environ["RUNNER_TEMP"])/"qualified"
+          cases=("BASE","SKY_HIDDEN","COLLAR_HIDDEN","BOTH_HIDDEN")
+          lines=["# P1D-VIS-05 — Isolamento reversibile degli elementi occludenti",
+            "","Esiti geometrici e render Cycles su quattro modelli originali. NON approvazione artistica.","",
+            "| Modello | Baseline cielo libero | Solo superficie cielo nascosta | Solo collare nascosto | Entrambi nascosti |",
+            "|---|---:|---:|---:|---:|"]
+          all_data={}
+          files=0
+          for a in ("A","B"):
+            for v in ("J3","J4"):
+              p=root/f"atlas-p1d-vis-05-{a}-{v}-receipt.json"
+              assert p.is_file()
+              d=json.loads(p.read_text())
+              assert d["schema"]=="atlas.artdir02.p1d-isolation/v1"
+              assert d["arch"]==a and d["variant"]==v
+              assert d["parent_vis04_run_id"]==45009992250
+              assert d["prior_vis04_baseline_reproduced"]
+              assert d["camera_unchanged"] and d["lights_unchanged"] and d["world_unchanged"]
+              assert d["materials_original_unchanged"] and d["original_scene_not_saved"]
+              assert d["target_objects_only_hidden_temporarily"] and d["source_files_untouched"]
+              assert d["no_merge"] and d["no_deploy"] and not d["art_approved"]
+              o=json.loads((source/f"atlas-p1d-oculus-03-{a}-receipt.json").read_text())
+              assert d["source_blend_sha256"]==o["variants"][v]["editable_blend"]["sha256"]
+              assert set(d["clay_comparison_ray_cases"])==set(cases)
+              n=d["clay_comparison_ray_cases"]["BASE"]["sample_count"]
+              counts=[d["clay_comparison_ray_cases"][c]["clear_count"] for c in cases]
+              assert n>=24 and all(0<=i<=n for i in counts)
+              assert counts[3]>=counts[0] and counts[3]>=counts[1] and counts[3]>=counts[2]
+              lines.append(f"| {a}-{v} | "+ " | ".join(f"{k}/{n} ({100*k/n:.2f}%)" for k in counts)+" |")
+              assert set(d["renderings"])==set(cases)
+              for c,styles in d["renderings"].items():
+                expected={"CLAY","ORIGINAL_MATERIALS"} if v=="J3" and c in ("BASE","BOTH_HIDDEN") else {"CLAY"}
+                assert set(styles)==expected
+                for style,item in styles.items():
+                  f=root/item["file"]
+                  assert f.is_file() and f.stat().st_size>1200
+                  assert hashlib.sha256(f.read_bytes()).hexdigest()==item["sha256"]
+                  assert item["photometry"]["sample_count"]==n
+                  lum=item["photometry"]["mean_linear_rgb_proxy"]
+                  assert math.isfinite(lum) and lum>=0
+                  files+=1
+              all_data[(a,v)]=d
+              print("ISOLATION_RECEIPT_PASS",a,v,"UNOBSTRUCTED",counts,"IMAGES",len(d["renderings"]))
+          for a in ("A","B"):
+            ja=all_data[(a,"J3")]["clay_comparison_ray_cases"]
+            jb=all_data[(a,"J4")]["clay_comparison_ray_cases"]
+            for c in cases:
+              assert ja[c]["clear_count"]==jb[c]["clear_count"]
+              assert ja[c]["hit_objects"]==jb[c]["hit_objects"]
+          assert files==20
+          lines+=["","Le superfici di cielo e il collare sono nascosti soltanto durante le prove.",
+            "Le immagini con materiali originari non sono una validazione artistica né fotometrica.",
+            "La superficie 'raised sky opening' potrebbe avere anche una funzione visiva o luminosa: nessuna rimozione definitiva autorizzata.",
+            "Tutti i modelli originali, i parametri di camera e le luci restano invariati.",
+            "Nessuna integrazione, pubblicazione, spesa o modifica di dati scolastici."]
+          report="\n".join(lines)+"\n"
+          (root/"ATLAS-P1D-VIS-05-RAPPORTO.md").write_text(report,encoding="utf-8")
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as f:f.write(report)
+          print("VIS05_FOUR_SCENES_TWENTY_REAL_CYCLES_AND_FOUR_RECEIPTS_PASS")
+          PY
+      - name: Preserve editable source provenance, 20 Cycles views and 4 receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-p1d-vis-05-${{ github.run_number }}
+          path: ${{ runner.temp }}/vis05/
+          if-no-files-found: warn
+          retention-days: 30
