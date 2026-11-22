@@ -23,6 +23,8 @@ La nuova direzione adotta una **scenografia 3D a camera privilegiata**: la quali
 | Ribassamento camera (BU) | 0,35 | 0,22 | 0,48 |
 | Rotazione ottica aggiuntiva (°) | 2 | 1 | 3 |
 | Coefficiente lunghezza focale | 0,85 | 0,92 | 0,83 |
+| Raggio arco anteriore (BU), revisione visiva 02 | 5,70 | 5,80 | 5,90 |
+| Fattore scala visiva portali XY / Z | 0,50 / 0,63 | 0,50 / 0,63 | 0,50 / 0,63 |
 
 Valori iniziali di progetto, non quote misurate sull'immagine artistica. L'eventuale ampliamento del campo è ulteriormente regolato per mantenere visibili **tutti e quattro** i centri dei pannelli.
 
@@ -32,6 +34,7 @@ Valori iniziali di progetto, non quote misurate sull'immagine artistica. L'event
 - Sono riposizionati sulla **semicirconferenza anteriore**, dalla parte della camera, non sul bordo posteriore dell'atrio.
 - Angoli di distribuzione: `−44°, −16°, +16°, +44°`, ordinati da sinistra a destra e adattati all'asse ottico corrente. Le lastre sono tangenti alla curva.
 - Le basi metalliche indipendenti sono trasferite con la stessa trasformazione; non sono aggiunti portali né decorazioni.
+- **Revisione visiva 02**: i primi rendering avevano portali enormi che occultavano l'architettura. L'intervento successivo li ridimensiona come oggetti fisici e li sposta più lontano dalla camera, conservando la quota del bordo inferiore del vetro. Il nuovo controllo misura anche il rapporto tra l'ingombro dei pannelli e quello dell'immagine: non considerare valido un render solo perché quattro centri sono inquadrati.
 - **Limite residuo esplicito**: i vecchi tagli booleani del pavimento non vengono ricostruiti in questa fase compositiva. Dopo la scelta definitiva occorre chiudere i vecchi tagli e produrre le feritoie fisiche nelle nuove posizioni. Non dichiarare questo dettaglio concluso.
 
 ## Prodotti di esecuzione
