@@ -1,0 +1,99 @@
+name: "ATLAS ART-DIR-02 — P1D-CAM altezza e inquadratura"
+on:
+  pull_request:
+    branches: [work/atlas-artdir02-p1d-constructive-vault]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-p1d-cam-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  actual-camera-trials:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'work/atlas-artdir02-p1d-cam-height-01'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate camera experiment source
+        run: python3 -m py_compile scripts/atlas-gateway-production/p1d_cam_height_01.py
+      - name: Recover actual qualified P1D v2 Blender model
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 44978886382
+          pattern: atlas-art-dir02-p1d-5
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/p1d
+      - name: Verify immutable source and receipt
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])/'p1d'
+          model=root/'atlas-art-dir02-p1d-B-constructive.blend'
+          receipt=json.loads((root/'atlas-p1d-constructive-receipt.json').read_text())
+          sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+          assert receipt['schema']=='atlas.artdir02.p1d-constructive/v2'
+          assert sha(model)==receipt['variants']['B']['blend']['sha256']=='587cf7f84141ebc652a5a9d0382e5f7904ef4cfba749a9ec0274f521fc4adcfa'
+          assert receipt['art_reference_sha256']=='a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe'
+          assert not receipt['human_art_approved'] and receipt['no_merge']
+          print('ATLAS_P1D_CAM_REAL_SOURCE_HASH_PASS')
+          PY
+      - name: Install actual Blender Cycles
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Generate four camera-only Cycles scenes
+        run: |
+          mkdir -p "$RUNNER_TEMP/p1d-cam"
+          blender -b "$RUNNER_TEMP/p1d/atlas-art-dir02-p1d-B-constructive.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/p1d_cam_height_01.py -- \
+            --out "$RUNNER_TEMP/p1d-cam"
+      - name: Verify independent tests, true images, meshes and camera parameters
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])/'p1d-cam'
+          report=json.loads((root/'atlas-p1d-cam01-receipt.json').read_text())
+          sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+          assert report['schema']=='atlas.artdir02.p1d-cam01/v1'
+          assert report['source_p1d_b_sha256']=='587cf7f84141ebc652a5a9d0382e5f7904ef4cfba749a9ec0274f521fc4adcfa'
+          assert report['reference_sha256']=='a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe'
+          assert report['camera_only_experiment'] and report['no_geometry_edits']
+          assert report['no_merge'] and report['no_deploy'] and not report['human_art_approved']
+          assert set(report['variants'])=={'BASE','CAM-A','CAM-B','CAM-C'}
+          expected={'BASE':(0.,0.,1.),'CAM-A':(-.25,0.,1.),
+                    'CAM-B':(-.45,1.8,1.),'CAM-C':(-.45,1.8,.94)}
+          for name,v in report['variants'].items():
+              dz,tilt,focal=expected[name]
+              assert abs(v['height_delta_bu']-dz)<1e-8
+              assert abs(v['tilt_up_delta_degrees']-tilt)<1e-8
+              assert abs(v['focal_multiplier']-focal)<1e-8
+              assert v['geometry_changed'] is False
+              render=root/v['render']['file']
+              assert render.stat().st_size>12000 and sha(render)==v['render']['sha256']
+              assert len(v['measurement']['portals'])==4
+              assert 'composition_gate_pass' in v['measurement']['visibility']
+              assert v['measurement']['camera']['focal_mm']>10
+              if name!='BASE':
+                  blend=root/v['editable_model']['file']
+                  assert blend.stat().st_size>1000000
+                  assert sha(blend)==v['editable_model']['sha256']
+                  assert 'measured_projection_drift' in v
+              print(name,'TRUE_CYCLES_AND_CAMERA_ONLY_CHECK_PASS',
+                    'visible:',v['measurement']['visibility']['checks'])
+          print('CAMERA_TESTS_TECHNICAL_PASS__ARTISTIC_REVIEW_NOT_YET_APPROVED')
+          PY
+      - name: Save actual scene variants and measured receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-p1d-cam-${{ github.run_number }}
+          path: ${{ runner.temp }}/p1d-cam/
+          if-no-files-found: warn
+          retention-days: 30
