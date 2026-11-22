@@ -1,0 +1,106 @@
+name: "ATLAS ART-DIR-02 — Montaggio R6ABCD, scena unica"
+on:
+  pull_request:
+    branches: [work/atlas-gateway-01-foyer]
+    paths:
+      - "scripts/atlas-gateway-production/r6abcd_assemble.py"
+      - ".github/workflows/atlas-art-dir02-r6abcd.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-r6abcd-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  assemble-four-real-candidates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 52
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile 3D integration script
+        run: python3 -m py_compile scripts/atlas-gateway-production/r6abcd_assemble.py
+      - name: Get actual qualified R6AB .blend (A + B)
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-art-dir02-r6ab-1
+          run-id: 44935005743
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/atlas-r6ab-source
+      - name: Get actual R6C .blend (licensed prefabs)
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-art-dir02-r6c-3
+          run-id: 44937611169
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/atlas-r6c-source
+      - name: Get actual qualified R6D .blend (four metal bases)
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-art-dir02-r6d-1
+          run-id: 44937201135
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/atlas-r6d-source
+      - name: Verify all source integrity hashes and common R5 lineage
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib
+          base=pathlib.Path(os.environ["RUNNER_TEMP"])
+          ab=base/"atlas-r6ab-source"/"atlas-art-dir02-r6ab-integrated.blend"
+          c=base/"atlas-r6c-source"/"atlas-r6c"/"atlas-r6c-furnishings.blend"
+          d=base/"atlas-r6d-source"/"atlas-r6d-portals-podium.blend"
+          cr=json.loads((base/"atlas-r6c-source"/"atlas-r6c"/"atlas-r6c-receipt.json").read_text())
+          dr=json.loads((base/"atlas-r6d-source"/"atlas-r6d-receipt.json").read_text())
+          def sha(f):return hashlib.sha256(f.read_bytes()).hexdigest()
+          assert sha(ab)=="3d0bd18967c37d91025d1d2bd2abea3119aaf7da6f098a61d761566e88fd2cc4"
+          assert sha(c)==cr["candidate_blend_sha256"]=="0d3fd6f6ad0c01244c9653955a485f02c73905664026182b6d516d72391c330d"
+          assert sha(d)==dr["candidate_blend_sha256"]=="02644691a95617d40e7708bb066739c20fbe8165577cedfa299d681c5f8b27b4"
+          assert cr["source_r5_sha256"]==dr["source_r5_sha256"]=="e97dcf65e7cd6a97f031cef99d2d81398c5d42d6493807b4e29cf35e5236b278"
+          assert cr["no_publication"] and dr["no_publication"]
+          print("All real R6AB C D Blender file hashes and source lineages PASS")
+          PY
+      - name: Install Blender and glTF runtime dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Assemble 4 authored subsystems, render real HERO and details
+        run: |
+          mkdir -p "$RUNNER_TEMP/atlas-r6abcd-out"
+          blender -b "$RUNNER_TEMP/atlas-r6ab-source/atlas-art-dir02-r6ab-integrated.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/r6abcd_assemble.py -- \
+            --out "$RUNNER_TEMP/atlas-r6abcd-out" \
+            --cblend "$RUNNER_TEMP/atlas-r6c-source/atlas-r6c/atlas-r6c-furnishings.blend" \
+            --creceipt "$RUNNER_TEMP/atlas-r6c-source/atlas-r6c/atlas-r6c-receipt.json" \
+            --dblend "$RUNNER_TEMP/atlas-r6d-source/atlas-r6d-portals-podium.blend" \
+            --dreceipt "$RUNNER_TEMP/atlas-r6d-source/atlas-r6d-receipt.json"
+      - name: Verify one true combined Blender and three renders
+        run: |
+          python3 - <<'PY'
+          import json,hashlib,os,pathlib
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])/"atlas-r6abcd-out"
+          receipt=json.loads((root/"atlas-r6abcd-receipt.json").read_text())
+          def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+          assert sha(root/"atlas-art-dir02-r6abcd-integrated.blend")==receipt["integrated_sha256"]
+          assert receipt["basement_count"]==4
+          assert receipt["c_objects_linked"]>=12 and receipt["d_objects_linked"]==8
+          assert receipt["c_plant_families"]["tall_tree"]==2
+          assert receipt["c_plant_families"]["ground_shrub"]==2
+          assert receipt["c_plant_families"]["bookcase"]==4
+          assert len(receipt["cc0_assets"])==3
+          assert len(receipt["original_roots"])==4
+          assert receipt["no_merge"] and receipt["no_publication"] and not receipt["human_art_approved"]
+          assert set(receipt["renders"])=={"hero","oblique","detail"}
+          for v in receipt["renders"].values():
+              p=root/v["file"]
+              assert p.stat().st_size>10000 and sha(p)==v["sha256"]
+          print("R6ABCD TECHNICAL PASS, ONE REAL SCENE; ART REVIEW IS NOT AUTO-PASSED")
+          PY
+      - name: Archive actual combined master and real Cycles evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-r6abcd-${{ github.run_number }}
+          path: ${{ runner.temp }}/atlas-r6abcd-out/
+          retention-days: 30
+          if-no-files-found: warn
