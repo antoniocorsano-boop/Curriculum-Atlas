@@ -70,6 +70,9 @@ jobs:
               img=out/v['render']['name']
               assert model.stat().st_size>1000000 and sha(model)==v['blend']['sha256']
               assert img.stat().st_size>12000 and sha(img)==v['render']['sha256']
+              side=out/v['section_render']['name']
+              assert side.stat().st_size>12000 and sha(side)==v['section_render']['sha256']
+              assert v['min_roof_parapet_clearance_bu']>.10
               assert v['vault']['mesh_verts']>3000
               assert v['vault']['faces']>3000
               assert v['gallery_level_separation_bu']>.8
@@ -80,6 +83,12 @@ jobs:
               assert v['integrity']['three_CC0_collections']==3
               assert v['rendered_from_real_blender']
               print('P1D',key,'TRUE_3D_GEOMETRY_TECH_PASS',model.stat().st_size)
+          a=report['variants']['A']
+          b=report['variants']['B']
+          assert abs(a['vault']['drop_bu']-b['vault']['drop_bu'])>.15
+          assert abs(a['vault']['outer_radius_bu']-b['vault']['outer_radius_bu'])>.5
+          assert abs(a['gallery_level_separation_bu']-b['gallery_level_separation_bu'])>.15
+          print('A_AND_B_DISTINCT_CONSTRUCTIVE_VARIANTS_PASS')
           print('ARTISTIC_APPROVAL_NOT_GRANTED; NO PUBLICATION')
           PY
       - name: Preserve editable candidates, real Cycles images and receipt
