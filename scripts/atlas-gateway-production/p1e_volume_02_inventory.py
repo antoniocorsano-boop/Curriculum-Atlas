@@ -39,7 +39,7 @@ for o in bpy.context.scene.objects:
  records.append(rec)
 names=[r["name"] for r in records]
 need=["CAM_HERO_ARCH04",f"ARCH {ARCH} raised sky opening",f"ARCH {ARCH} raised oculus rim",
-      f"ARCH {ARCH} {MODE} integrated structural crown and vault",
+      f"ATLAS {ARCH} {MODE} integrated structural crown and vault",
       f"ARCH {ARCH} upper parapet","ARCH04 • upper gallery deck",
       "ARCH04 • first gallery deck","P1D • B lower railing"]
 for n in need:
