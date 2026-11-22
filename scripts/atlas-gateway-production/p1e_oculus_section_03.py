@@ -155,6 +155,9 @@ def section(variant):
  bm=bmesh.new()
  try:
   bm.from_mesh(mesh)
+  bm.verts.ensure_lookup_table()
+  bm.edges.ensure_lookup_table()
+  bm.faces.ensure_lookup_table()
   bm.normal_update()
   free=sum(not e.is_manifold for e in bm.edges)
   connected=set()
