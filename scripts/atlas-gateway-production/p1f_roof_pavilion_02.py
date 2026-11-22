@@ -112,6 +112,9 @@ newroof=newmesh("ATLAS P1F • padiglione lungo copertura monolitica",verts,face
 bm=bmesh.new()
 try:
     bm.from_mesh(newroof.data)
+    bm.verts.ensure_lookup_table()
+    bm.edges.ensure_lookup_table()
+    bm.faces.ensure_lookup_table()
     bm.normal_update()
     nonmanifold=sum(not e.is_manifold for e in bm.edges)
     connected=set(); stack=[bm.verts[0]]
