@@ -1,0 +1,159 @@
+name: ATLAS ART-DIR-02 P1D-SKY-07 native sky texture
+on:
+  pull_request:
+    branches: [work/atlas-artdir02-p1d-sky-integration-06]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-sky07-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  sky-texture:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'work/atlas-artdir02-p1d-sky-texture-07'
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Python script is syntactically valid
+        run: python3 -m py_compile scripts/atlas-gateway-production/p1d_sky_texture_07.py
+      - name: Download immutable A/B J3/J4 Blender source files
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45008316673
+          pattern: atlas-art-dir02-p1d-oculus-03-1
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/qualified
+      - name: Download P1D-SKY-06 independent receipts and baseline
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45021582963
+          pattern: atlas-art-dir02-p1d-sky-06-7
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/sky06
+      - name: Assert both source binary and predecessor receipts
+        run: |
+          python3 - <<'PY'
+          import os,json,hashlib
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          for arch in "AB":
+              original=json.loads((root/"qualified"/f"atlas-p1d-oculus-03-{arch}-receipt.json").read_text())
+              assert original["schema"]=="atlas.artdir02.p1d-oculus-manifold/v1"
+              assert original["no_merge"] and original["no_deploy"] and not original["art_approved"]
+              assert original["canonical_art_sha256"]=="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+              for mode in ("J3","J4"):
+                  source=original["variants"][mode]["editable_blend"]
+                  model=root/"qualified"/source["file"]
+                  assert hashlib.sha256(model.read_bytes()).hexdigest()==source["sha256"]
+                  parent=json.loads((root/"sky06"/f"atlas-p1d-sky-06-{arch}-{mode}-receipt.json").read_text())
+                  assert parent["schema"]=="atlas.artdir02.p1d-sky-integration/v1"
+                  assert parent["source_sha256"]==source["sha256"] and parent["arch"]==arch
+                  assert parent["structural_variant"]==mode and not parent["art_approved"]
+                  assert set(parent["render_cases"])==set(("BASE","CURVED_CLOUD","ATMOSPHERE_RING","ATMOSPHERE_OPEN"))
+                  print("SKY07_SOURCE_AND_SKY06_PASS",arch,mode,source["sha256"])
+          PY
+      - name: Install native Blender Cycles renderer
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Execute original UV vs controlled curvature comparisons in all four scenes
+        run: |
+          mkdir -p "$RUNNER_TEMP/sky07"
+          for arch in A B; do
+            for mode in J3 J4; do
+              blender -b "$RUNNER_TEMP/qualified/atlas-p1d-oculus-03-$arch-$mode.blend" \
+                --threads 2 --python-exit-code 1 \
+                --python scripts/atlas-gateway-production/p1d_sky_texture_07.py -- \
+                --arch "$arch" --variant "$mode" \
+                --oculus-receipt "$RUNNER_TEMP/qualified/atlas-p1d-oculus-03-$arch-receipt.json" \
+                --sky06-receipt "$RUNNER_TEMP/sky06/atlas-p1d-sky-06-$arch-$mode-receipt.json" \
+                --out "$RUNNER_TEMP/sky07"
+            done
+          done
+      - name: Independent integrity, provenance and comparability audit
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,math,os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          out=root/"sky07"
+          cases=("BASE","SHALLOW_CURVE","MEDIUM_CURVE","FLAT_RECESS")
+          rows=["# P1D-SKY-07 — Recupero texture e profondità nel lucernario",
+                "","Misure da 16 PNG Cycles di quattro modelli originali. NON valutazione estetica automatica.","",
+                "| Modello | Originale | Curvatura 0,025 BU | Curvatura 0,060 BU | Recesso −0,035 BU |",
+                "|---|---:|---:|---:|---:|"]
+          receipts={}
+          png=0
+          for a in "AB":
+              for mode in ("J3","J4"):
+                  fp=out/f"atlas-p1d-sky-07-{a}-{mode}-receipt.json"
+                  assert fp.is_file()
+                  r=json.loads(fp.read_text())
+                  assert r["schema"]=="atlas.artdir02.p1d-sky-texture/v1"
+                  assert r["arch"]==a and r["structural_variant"]==mode
+                  assert r["sky06_parent_run"]==45021582963
+                  assert r["sky06_parent_receipt_schema"]=="atlas.artdir02.p1d-sky-integration/v1"
+                  assert r["camera_world_lamps_unchanged"] and r["original_cloud_texture_and_uv_preserved"]
+                  assert r["original_xy_screen_footprint_preserved"]
+                  assert r["temporary_geometry_removed"] and r["original_source_unmodified"]
+                  assert r["no_merge"] and r["no_deploy"] and not r["art_approved"]
+                  old=json.loads((root/"qualified"/f"atlas-p1d-oculus-03-{a}-receipt.json").read_text())
+                  assert r["source_sha256"]==old["variants"][mode]["editable_blend"]["sha256"]
+                  assert r["canonical_art_sha256"]==old["canonical_art_sha256"]
+                  assert set(r["renderings"])==set(cases)
+                  assert set(r["variant_geometry"])==set(cases)-{"BASE"}
+                  n=r["oculus_ray_sample_count"]
+                  assert n>=24 and r["baseline_original_geometry_rays_hit"]>.85*n
+                  row=[f"{a}-{mode}"]
+                  for case in cases:
+                      v=r["renderings"][case]
+                      image=out/v["file"]
+                      assert image.exists() and image.stat().st_size>1500
+                      assert hashlib.sha256(image.read_bytes()).hexdigest()==v["sha256"]
+                      phot=v["photometry"]
+                      assert phot["sample_count"]==n and phot["adjacent_sample_pairs"]>0
+                      assert all(math.isfinite(phot[k]) for k in
+                         ("mean_rgb_luminance_proxy","stddev_rgb_luminance_proxy","adjacent_sample_contrast"))
+                      assert 0<=phot["fraction_above_0_30"]<=1
+                      row.append(f'{phot["mean_rgb_luminance_proxy"]:.4f} / {phot["stddev_rgb_luminance_proxy"]:.4f}')
+                      png+=1
+                      if case!="BASE":
+                          c=r["variant_geometry"][case]
+                          assert c["original_emission_shader_preserved"] and c["native_xy_footprint_preserved"]
+                          assert c["original_uv_layer_count"]==c["retained_uv_layer_count"]
+                          assert c["subdivided_vertex_count"]>c["source_vertex_count"]
+                          assert c["candidate_sky_ray_hits"]>=.88*c["original_sky_ray_hits"]
+                          assert abs(c["max_abs_displacement_bu"])<=.07
+                  rows.append("| "+" | ".join(row)+" |")
+                  receipts[a,mode]=r
+                  print("SKY07_QUALIFIED",a,mode,"/",str(n)," ".join(row[1:]))
+          assert png==16
+          for a in "AB":
+              r=receipts[a,"J3"];q=receipts[a,"J4"]
+              for c in cases:
+                  d=r["renderings"][c]["photometry"]["mean_rgb_luminance_proxy"]
+                  e=q["renderings"][c]["photometry"]["mean_rgb_luminance_proxy"]
+                  assert abs(d-e)<.08
+          rows+=["","Ogni coppia di numeri è media / deviazione standard della luminanza RGB sul campione: NON lux.",
+                 "Le varianti mantengono l'esatta impronta XY, gli UV e lo shader originario. Nessun cielo artificialmente ingigantito.",
+                 "Lo spostamento massimo in Z è 0,060 BU. I rendering in nessun caso sono giudizio artistico automatico.",
+                 "Il riferimento canonico ART-DIR-02 e tutti i .blend originali non sono stati modificati.",
+                 "No merge, no deploy, no cost, no school personal data."]
+          report="\n".join(rows)+"\n"
+          (out/"ATLAS-P1D-SKY-07-RAPPORTO.md").write_text(report)
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as f:f.write(report)
+          print("SKY07_ALL_16_NATIVE_TEXTURE_CYCLES_AND_FOUR_RECEIPTS_QUALIFIED")
+          PY
+      - name: Preserve 16 PNG Cycles, four receipts and technical report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-p1d-sky-07-${{ github.run_number }}
+          path: ${{ runner.temp }}/sky07/
+          if-no-files-found: warn
+          retention-days: 30
