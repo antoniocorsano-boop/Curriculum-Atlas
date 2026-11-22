@@ -26,10 +26,12 @@ BOUNDS = {
 }
 
 def validate(data):
-    if not isinstance(data, dict) or data.get("schema") != "atlas.gateway.parametric-selection/v1":
+    if not isinstance(data, dict) or data.get("schema") != "atlas.gateway.parametric-selection/v2":
         raise ValueError("Schema non riconosciuto")
     if data.get("reference", {}).get("sha256") != CANONICAL:
         raise ValueError("Riferimento ART-DIR-02 diverso dal canone")
+    if data.get("portal_placement") != "far_side_relative_to_camera":
+        raise ValueError("I portali devono essere sul lato opposto della telecamera")
     if data.get("units") != "BU" or data.get("coordinate_system") != "Blender Z up":
         raise ValueError("Coordinate o unità non corrispondenti")
     source = data.get("blender_baseline", {})
@@ -61,6 +63,17 @@ def validate(data):
         (p["oculusRadius"] * p["ellipseRatio"] <= p["outerRadius"] * p["outerElongation"] - 1.1,
          "Asse maggiore oltre l'ingombro della copertura"),
     ]
+    # Camera in (sin yaw, -cos yaw); each portal has its panel edges beyond the centre.
+    yaw = math.radians(p["cameraYaw"])
+    camera_side_x, camera_side_y = math.sin(yaw), -math.cos(yaw)
+    for i in range(4):
+        angle = math.radians(90 + (i - 1.5) * p["portalSpan"] / 3)
+        x = p["portalOffset"] + p["portalRadius"] * math.cos(angle)
+        y = p["portalDepth"] + p["portalRadius"] * math.sin(angle)
+        tangent_x, tangent_y = -math.sin(angle), math.cos(angle)
+        for u in (-p["glassWidth"] / 2, 0, p["glassWidth"] / 2):
+            if (x + tangent_x * u) * camera_side_x + (y + tangent_y * u) * camera_side_y >= 0:
+                raise ValueError("Uno o piu portali si trovano verso la telecamera")
     for ok, message in checks:
         if not ok:
             raise ValueError(message)
