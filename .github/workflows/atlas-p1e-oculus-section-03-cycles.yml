@@ -1,0 +1,182 @@
+name: ATLAS P1E-OCULUS-SECTION-03 closed skylight well Cycles
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-p1e-oculus-section03-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  section-cycles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate native Blender section generator syntax
+        run: python3 -m py_compile scripts/atlas-gateway-production/p1e_oculus_section_03.py
+      - name: Download the unchanged P1D-OCULUS-03 J3/J4 original Blender sources
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45008316673
+          pattern: atlas-art-dir02-p1d-oculus-03-1
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/qualified
+      - name: Download the qualified P1E-VOLUME-02 receipts and control models
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45057212150
+          pattern: atlas-artdir02-p1e-volume-02-cycles-4
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/volume02
+      - name: Download certified A/B J3/J4 oculus section profiles
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45058787331
+          pattern: atlas-p1e-oculus-section-03-profiles-4
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/profiles
+      - name: Check SHA identity and section parent receipts independently
+        run: |
+          python3 - <<'PY'
+          import os,json,hashlib
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          for a in "AB":
+            source=json.loads((root/"qualified"/f"atlas-p1d-oculus-03-{a}-receipt.json").read_text())
+            assert source["schema"]=="atlas.artdir02.p1d-oculus-manifold/v1"
+            assert source["canonical_art_sha256"]=="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+            for v in ("J3","J4"):
+              b=source["variants"][v]["editable_blend"]
+              original=root/"qualified"/b["file"]
+              assert hashlib.sha256(original.read_bytes()).hexdigest()==b["sha256"]
+              prev=json.loads((root/"volume02"/f"atlas-p1e-volume-02-{a}-{v}-receipt.json").read_text())
+              profile=json.loads((root/"profiles"/f"atlas-p1e-oculus-section-03-profile-{a}-{v}.json").read_text())
+              assert prev["schema"]=="atlas.artdir02.p1e-volume-02/v1"
+              assert profile["schema"]=="atlas.artdir02.p1e-oculus-section-profile/v1"
+              assert prev["source_sha256"]==profile["source_sha256"]==b["sha256"]
+              assert not prev["art_approved"] and not profile["source_saved"]
+              assert prev["no_merge"] and prev["no_deploy"]
+              gap=profile["collar_to_rim_z_mean_gap"]
+              assert .43<gap<.50 if a=="A" else .9<gap<1.0
+              print("SECTION03_SOURCE_VERIFIED",a,v,"gap",gap,"sha256",b["sha256"])
+          PY
+      - name: Install Blender with Cycles and BMesh topology checks
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Generate 24 authentic Cycles frames, two sections, BASE and two HERO cameras
+        run: |
+          mkdir -p "$RUNNER_TEMP/section03"
+          for a in A B; do
+            for v in J3 J4; do
+              blender -b "$RUNNER_TEMP/qualified/atlas-p1d-oculus-03-$a-$v.blend" \
+                --threads 2 --python-exit-code 1 \
+                --python scripts/atlas-gateway-production/p1e_oculus_section_03.py -- \
+                --arch "$a" --variant "$v" \
+                --oculus-receipt "$RUNNER_TEMP/qualified/atlas-p1d-oculus-03-$a-receipt.json" \
+                --volume-receipt "$RUNNER_TEMP/volume02/atlas-p1e-volume-02-$a-$v-receipt.json" \
+                --profile "$RUNNER_TEMP/profiles/atlas-p1e-oculus-section-03-profile-$a-$v.json" \
+                --out "$RUNNER_TEMP/section03"
+            done
+          done
+      - name: Independent provenance, topology, light, ray and 24 PNG checksum audit
+        run: |
+          python3 - <<'PY'
+          import hashlib,math,os,json
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          out=root/"section03"
+          cases=("BASE","SECTION_DARK","SECTION_WARM")
+          cameras=("HERO_BASE","HERO_TILT_UP_3")
+          summary=["# P1E-OCULUS-SECTION-03 — Giunto anulare parametrico e controllo Cycles",
+                   "","Il nuovo alloggiamento è una singola mesh anulare chiusa, **non saldata** alle mesh originali della volta.",
+                   "","| modello | dislivello collare/bordo | camera | BASE luminanza relativa | DARK | WARM | raggi interni che toccano la nuova sezione (dark/warm) |",
+                   "|---|---:|---|---:|---:|---:|---|"]
+          total=0
+          allreports={}
+          for a in "AB":
+            for v in ("J3","J4"):
+              rp=out/f"atlas-p1e-oculus-section-03-{a}-{v}-receipt.json"
+              assert rp.exists(),rp
+              x=json.loads(rp.read_text())
+              assert x["schema"]=="atlas.artdir02.p1e-oculus-section/v1"
+              assert x["arch"]==a and x["structural_variant"]==v
+              prior=json.loads((root/"qualified"/f"atlas-p1d-oculus-03-{a}-receipt.json").read_text())
+              assert x["qualified_source_sha256"]==prior["variants"][v]["editable_blend"]["sha256"]
+              assert x["canonical_art_sha256"]==prior["canonical_art_sha256"]
+              assert x["parent_volume_qualifying_run"]==45057212150
+              assert x["parent_geometry_profile_qualifying_run"]==45058787331
+              assert x["new_housings_topologically_closed_but_not_welded_to_original_mesh"]
+              for key in ("no_new_lights","original_rim_and_sky_materials_reused",
+                          "original_structural_J3_J4_mesh_unchanged",
+                          "original_four_glass_portals_and_galleries_unchanged",
+                          "temporary_geometry_removed","source_blend_never_saved"):
+                assert x[key],key
+              assert not x["art_approved"] and x["no_merge"] and x["no_deploy"]
+              assert set(x["new_sections"])==set(cases)-{"BASE"}
+              assert set(x["renderings"])==set(cases)
+              geom=x["native_geometry"]
+              assert .4<geom["collar_to_rim_height_bu"]<1.05
+              assert geom["collar_inner_radius_bu"]<geom["rim_radius_bu"]<geom["collar_outer_radius_bu"]
+              for sect in x["new_sections"].values():
+                t=sect["mesh_topology"]
+                assert t["boundary_or_nonmanifold_edges"]==0
+                assert t["one_connected_closed_orientable_housing"]
+                assert t["Euler_characteristic"]==0
+                assert t["connected_vertex_count"]==t["vertices"]
+                assert t["vertices"]>1000 and t["faces"]>1000
+                assert sect["not_topologically_welded_to_original_J3_J4_roof"]
+              for c in cameras:
+                cells=[]
+                for label in cases:
+                  report=x["renderings"][label][c]
+                  filename=out/report["render"]["file"]
+                  assert filename.is_file() and filename.stat().st_size>2000
+                  assert hashlib.sha256(filename.read_bytes()).hexdigest()==report["render"]["sha256"]
+                  oc=report["geometry"]
+                  assert oc["source_rays_crossing_inner_88pct_rim"]>150
+                  assert oc["test_section_ray_intersections"]>=0
+                  phot=report["image_luminance_relative"]
+                  assert phot["rgb_luminance_proxy_samples"]>20
+                  assert math.isfinite(phot["rgb_luminance_proxy_mean"])
+                  cells.append(f'{phot["rgb_luminance_proxy_mean"]:.4f}')
+                  total+=1
+                x0=x["renderings"]["SECTION_DARK"][c]["geometry"]
+                x1=x["renderings"]["SECTION_WARM"][c]["geometry"]
+                assert x0["source_rays_crossing_inner_88pct_rim"]==x1["source_rays_crossing_inner_88pct_rim"]
+                summary.append(f'| {a}-{v} | {geom["collar_to_rim_height_bu"]:.3f} BU | {c} | '
+                               f'{cells[0]} | {cells[1]} | {cells[2]} | '
+                               f'{x0["test_section_ray_intersections"]}/{x0["source_rays_crossing_inner_88pct_rim"]} '
+                               f' / {x1["test_section_ray_intersections"]}/{x1["source_rays_crossing_inner_88pct_rim"]} |')
+              allreports[a,v]=x
+              print("SECTION03_QUALIFIED",a,v,geom["collar_to_rim_height_bu"],flush=True)
+          assert total==24
+          for a in "AB":
+            j3=allreports[a,"J3"];j4=allreports[a,"J4"]
+            for c in cameras:
+              for label in cases:
+                v3=j3["renderings"][label][c]
+                v4=j4["renderings"][label][c]
+                assert abs(v3["optics"]["oculus_rim_projected_top"]-
+                           v4["optics"]["oculus_rim_projected_top"])<.005
+          summary+=["","Tutti i 24 PNG hanno checksum SHA-256 indipendente. I valori sono luminanza RGB relativa, non lux.",
+                     "La prova misura anche eventuali raggi intercettati dal nuovo raccordo, ma non assume che un oculo completamente aperto sia sempre artisticamente corretto.",
+                     "Nessuna integrazione automatica, nessun materiale/camera/lampada originale alterato, nessun salvataggio .blend.",
+                     "**Approvazione artistica sospesa fino al confronto visivo con ART-DIR-02.**"]
+          body="\n".join(summary)+"\n"
+          (out/"ATLAS-P1E-OCULUS-SECTION-03-RAPPORTO.md").write_text(body,encoding="utf8")
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as f:f.write(body)
+          print("SECTION03_ALL_24_REAL_CYCLES_AND_FOUR_MANIFOLD_RECEIPTS_QUALIFIED")
+          PY
+      - name: Preserve 24 Cycles PNGs, four receipts and section report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-p1e-oculus-section-03-cycles-${{ github.run_number }}
+          path: ${{ runner.temp }}/section03/
+          if-no-files-found: warn
+          retention-days: 30

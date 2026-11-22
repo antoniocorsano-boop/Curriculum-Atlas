@@ -1,0 +1,72 @@
+name: ATLAS P1E-OCULUS-SECTION-03 native radial section audit
+on:
+  pull_request:
+    branches: [work/atlas-artdir02-p1e-volume-02]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [work/atlas-artdir02-p1e-oculus-section-03]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check radial section profile syntax
+        run: python3 -m py_compile scripts/atlas-gateway-production/p1e_oculus_section_03_profile.py
+      - name: Retrieve four SHA-certified original Blender scenes
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45008316673
+          pattern: atlas-art-dir02-p1d-oculus-03-1
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/qualified
+      - name: Install Blender
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender
+      - name: Extract actual native radial profiles for all A/B × J3/J4 scenes
+        run: |
+          mkdir -p "$RUNNER_TEMP/section03"
+          for a in A B; do
+            for m in J3 J4; do
+              blender -b "$RUNNER_TEMP/qualified/atlas-p1d-oculus-03-$a-$m.blend" \
+                --threads 2 --python-exit-code 1 \
+                --python scripts/atlas-gateway-production/p1e_oculus_section_03_profile.py -- \
+                --arch "$a" --variant "$m" \
+                --receipt "$RUNNER_TEMP/qualified/atlas-p1d-oculus-03-$a-receipt.json" \
+                --out "$RUNNER_TEMP/section03"
+            done
+          done
+      - name: Cross-check physical collar-to-rim geometry independently
+        run: |
+          python3 - <<'PY'
+          import os,json,math
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])/"section03"
+          for a in "AB":
+            for m in ("J3","J4"):
+              f=root/f"atlas-p1e-oculus-section-03-profile-{a}-{m}.json"
+              p=json.loads(f.read_text())
+              assert p["schema"]=="atlas.artdir02.p1e-oculus-section-profile/v1"
+              assert p["arch"]==a and p["structural_variant"]==m
+              assert p["canonical_art_sha256"]=="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+              assert not p["source_saved"] and p["no_merge"] and p["no_deploy"]
+              o=p["objects"]
+              assert len(o)==4
+              assert len(next(q for q in o.values() if "dark skylight collar" in q["name"])["radial_clusters"])>=2
+              assert math.isfinite(p["collar_to_rim_z_mean_gap"]) and p["collar_to_rim_z_mean_gap"]>.3
+              print("SECTION03_PROFILE_QUALIFIED",a,m,p["collar_to_rim_z_mean_gap"])
+          PY
+      - name: Preserve native geometry profiles
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-p1e-oculus-section-03-profiles-${{ github.run_number }}
+          path: ${{ runner.temp }}/section03/
+          if-no-files-found: warn
+          retention-days: 30
