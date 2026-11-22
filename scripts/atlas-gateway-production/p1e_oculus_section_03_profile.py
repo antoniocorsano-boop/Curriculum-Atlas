@@ -57,9 +57,8 @@ report={
  "arch":ARCH,"structural_variant":MODE,"source_sha256":original,
  "canonical_art_sha256":source_receipt["canonical_art_sha256"],
  "center_xy":[cx,cy],"objects":section,
- "collar_to_rim_z_mean_gap":statistics.mean([q.z for q in
-    [rim.matrix_world@p.co for s in rim.data.splines if s.type=="BEZIER" for p in s.bezier_points]])
-    -statistics.mean(p.z for p in (collar.matrix_world@v.co for v in collar.data.vertices)),
+ "collar_to_rim_z_mean_gap":statistics.mean([section[rim.name]["zmin"],section[rim.name]["zmax"]])
+    -statistics.mean([section[collar.name]["zmin"],section[collar.name]["zmax"]]),
  "source_saved":False,"no_merge":True,"no_deploy":True}
 filename=OUT/f"atlas-p1e-oculus-section-03-profile-{ARCH}-{MODE}.json"
 filename.write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf8")
