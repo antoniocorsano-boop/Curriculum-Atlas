@@ -204,10 +204,20 @@ nodes=atmos.node_tree.nodes
 nodes.clear()
 s=nodes.new("ShaderNodeTexSky")
 s.sky_type="HOSEK_WILKIE"
-s.sun_elevation=math.radians(28)
-s.sun_rotation=math.radians(155)
-s.turbidity=2.4
-s.ground_albedo=0.25
+sun_elevation=math.radians(28)
+sun_rotation=math.radians(155)
+if hasattr(s,"sun_direction"):
+    s.sun_direction=(math.cos(sun_elevation)*math.cos(sun_rotation),
+                     math.cos(sun_elevation)*math.sin(sun_rotation),
+                     math.sin(sun_elevation))
+if hasattr(s,"sun_elevation"):
+    s.sun_elevation=sun_elevation
+if hasattr(s,"sun_rotation"):
+    s.sun_rotation=sun_rotation
+if hasattr(s,"turbidity"):
+    s.turbidity=2.4
+if hasattr(s,"ground_albedo"):
+    s.ground_albedo=0.25
 background=nodes.new("ShaderNodeBackground")
 background.inputs["Strength"].default_value=0.8
 output=nodes.new("ShaderNodeOutputWorld")
