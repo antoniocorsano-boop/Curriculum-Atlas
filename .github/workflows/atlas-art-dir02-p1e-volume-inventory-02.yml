@@ -1,5 +1,8 @@
 name: ATLAS ART-DIR-02 P1E-VOLUME-02 architectural inventory
 on:
+  pull_request:
+    branches: [work/atlas-artdir02-p1e-framing-01]
+    types: [opened, synchronize, reopened]
   push:
     branches: [work/atlas-artdir02-p1e-volume-02]
   workflow_dispatch:
