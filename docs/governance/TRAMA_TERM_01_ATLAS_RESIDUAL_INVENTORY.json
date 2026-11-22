@@ -303,6 +303,277 @@
       "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
       "category": "infrastructure-legacy",
       "reason": "Exact existing GitHub repository address is a stable technical link; ART-DIR-02 prose uses the canonical curricolo vocabulary."
+    },
+    {
+      "path": "docs/atlas-gateway/ARCH-04-ARCHITECTURAL-GEOMETRY-PROJECT-01.json",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ARCH-04-ARCHITECTURAL-GEOMETRY-PROJECT-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ARCH-04B-CONSTRUCTION-RESULT-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ARENA-IG0-HISTORIC-01.json",
+      "contains": "arena_curriculum",
+      "category": "contract-v1",
+      "reason": "Historical ARENA integration identifier frozen in the archived IG0 payload; changing this record would falsify previously captured evidence."
+    },
+    {
+      "path": "docs/atlas-gateway/ART-REFERENCE-MANIFEST.md",
+      "contains": "Curriculum Atlas",
+      "category": "historical-evidence",
+      "reason": "Historical name of the stored Drive folder/archive; retaining its original title is necessary for traceable archival evidence."
+    },
+    {
+      "path": "docs/atlas-gateway/ASSET-KIT-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ARCH-VIS-REFERENCE-ANALYSIS-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-ARCH-02.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-ARCH-03.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-CAMERA-AB-REVIEW-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-FINISHINGS-R4-RESULT-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-MASTER-PERCETTIVO-PARAMETRICO-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-MULTIWORK-R6-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-P1-PRIMO-MODELLO-ESITO-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-PORTAL-READING-R2-RESULT-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-R5-GALLERIES-PORTAL-SECTION-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-R6-SOLO-EXECUTION-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-R6AB-PARALLEL-RESULT-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-R6ABCD-PRODUCTION-RESULT-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-R6C-R6D-EXECUTION-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-R7-ART-RESULT-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-R8-INTEGRATED-RESULT-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-VISUAL-READING-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-PROOF-01-DECISION.json",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-PROOF-01-PROTOCOL.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-PROOF-01B-ARTISTIC-REVIEW.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ATRIUM-3D-SEED-02.md",
+      "contains": "Curriculum Atlas",
+      "category": "historical-evidence",
+      "reason": "Historical name of the stored Drive folder/archive; retaining its original title is necessary for traceable archival evidence."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ATRIUM-3D-SEED-03.md",
+      "contains": "Curriculum Atlas",
+      "category": "historical-evidence",
+      "reason": "Historical name of the stored Drive folder/archive; retaining its original title is necessary for traceable archival evidence."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ATRIUM-BLENDER-RUN-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ATRIUM-COMPOSER-KIT-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-ENTRY-WEB-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-HYBRID-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-HYBRID-HOVER-01.md",
+      "contains": "Curriculum Atlas",
+      "category": "historical-evidence",
+      "reason": "Historical name of the stored Drive folder/archive; retaining its original title is necessary for traceable archival evidence."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-LOCKED-DELIVERY-SEQUENCE-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-MOBILE-02.md",
+      "contains": "Curriculum Atlas",
+      "category": "historical-evidence",
+      "reason": "Historical name of the stored Drive folder/archive; retaining its original title is necessary for traceable archival evidence."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-MOBILE-03-TOUCH-AND-PODIUM.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-MOBILE-ART-PROVENANCE-01.md",
+      "contains": "Curriculum Atlas",
+      "category": "historical-evidence",
+      "reason": "Historical name of the stored Drive folder/archive; retaining its original title is necessary for traceable archival evidence."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-PORTALS-LIGHT-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository name in preserved execution, governance and archive links; changing this slug would break provenance and the address is not an editorial domain term."
+    },
+    {
+      "path": "docs/atlas-gateway/GENERATION-PROVENANCE-01.md",
+      "contains": "Curriculum",
+      "category": "historical-evidence",
+      "reason": "Historical quotation of a source design containing a panel explicitly labelled 'Curriculum'; it is evidence about an earlier image, not current product terminology."
+    },
+    {
+      "path": "docs/atlas-gateway/ARENA-IG0-HISTORIC-01.json",
+      "contains": "\"label\": \"Curriculum\"",
+      "category": "historical-evidence",
+      "reason": "Original visible label in an archived ARENA IG0 test fixture; preserve the historic state exactly."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-P1B-RESULT-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Actual URL of this repository in P1B qualifying evidence; preserves working link to the historical PR. The document is present in the parent PR merge snapshot but absent in some derived branch checkouts; optional only when file is absent.",
+      "optionalIfAbsent": true
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ATRIUM-BLENDER-RUN-01.md",
+      "contains": "Drive Curriculum Atlas",
+      "category": "historical-evidence",
+      "reason": "Historical exact Google Drive archive name, not user-facing curricular language."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-ENTRY-WEB-01.md",
+      "contains": "Drive Curriculum Atlas",
+      "category": "historical-evidence",
+      "reason": "Historical exact Google Drive archive name, not user-facing curricular language."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-HYBRID-HOVER-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "GitHub repository slug in a technical issue link, which cannot be canonicalized without breaking its address."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-MOBILE-02.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Actual existing GitHub Actions execution URLs; this is an infrastructure identifier, not editable product copy."
     }
   ]
 }

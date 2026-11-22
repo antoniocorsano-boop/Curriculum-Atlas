@@ -1,0 +1,84 @@
+name: "ATLAS ART-DIR-02 — P1B prospettiva vincoli multipli"
+on:
+  pull_request:
+    branches: [work/atlas-gateway-01-foyer]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-p1b-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  true-p1b-blender:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'work/atlas-artdir02-p1b-multianchor'
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static check P1B source script
+        run: python3 -m py_compile scripts/atlas-gateway-production/p1b_multianchor_clay.py
+      - name: Download actual qualified editable P1 master
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-art-dir02-p1-clay-2
+          run-id: 44946997116
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/p1-baseline
+      - name: Verify source and original scene pedigree
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json,os
+          p=Path(os.environ["RUNNER_TEMP"])/"p1-baseline"
+          blend=p/"atlas-art-dir02-p1-perceptual-clay.blend"
+          report=json.loads((p/"atlas-p1-clay-receipt.json").read_text())
+          assert hashlib.sha256(blend.read_bytes()).hexdigest()==report["model_sha256"]=="d35c42c2f4b50dafa01dfb7ab27a113ec9c954b09b6629e2239c54b589833a3b"
+          assert report["source_r8_sha256"]=="2d39c43e0690334ce40627266d083e78d4d4238d25a28d0aaec6be33ef6550f8"
+          assert not report["human_art_approved"] and report["no_publication"]
+          PY
+      - name: Install genuine Blender Cycles
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Solve P1B multiple spatial anchors and render neutral geometry
+        run: |
+          mkdir -p "$RUNNER_TEMP/p1b"
+          blender -b "$RUNNER_TEMP/p1-baseline/atlas-art-dir02-p1-perceptual-clay.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/p1b_multianchor_clay.py -- \
+            --out "$RUNNER_TEMP/p1b"
+      - name: Verify real model, skylight gate, portals and independent images
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os,hashlib,json
+          out=Path(os.environ["RUNNER_TEMP"])/"p1b"
+          r=json.loads((out/"atlas-p1b-multianchor-receipt.json").read_text())
+          def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+          assert r["source_p1_sha256"]=="d35c42c2f4b50dafa01dfb7ab27a113ec9c954b09b6629e2239c54b589833a3b"
+          assert sha(out/"atlas-art-dir02-p1b-multianchor-clay.blend")==r["model_sha256"]
+          assert r["geometry_warped_objects"]>=100
+          assert len(r["final_portals"])==4
+          assert not r["fspy_used"] and r["synthetic_perspective_warning"]
+          assert r["hotspot_revalidation_required_before_web"]
+          assert not r["human_art_approved"] and r["no_merge"] and r["no_deploy"]
+          assert set(r["renders"])=={"P1","P1B"}
+          for item in r["renders"].values():
+              path=out/item["file"]
+              assert path.stat().st_size>12000 and sha(path)==item["sha256"]
+          # Separate the truth of a Blender model PASS from a perceptual
+          # gate: record whether each requirement is met, do not fake it.
+          print("P1B ACTUAL BLENDER AND RENDER PASS; ART GATES:",r["perceptual_gate_details"])
+          if not r["perceptual_gate_pass"]:
+              print("P1B PERSPECTUAL QUALIFICATION NEEDS CORRECTIVE REVIEW, NOT ART APPROVED")
+          PY
+      - name: Preserve true editable 3D, twice rendered Cycles and all anchors
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-p1b-${{ github.run_number }}
+          path: ${{ runner.temp }}/p1b/
+          if-no-files-found: warn
+          retention-days: 30
