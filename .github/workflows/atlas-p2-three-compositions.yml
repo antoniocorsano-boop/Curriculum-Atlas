@@ -1,0 +1,106 @@
+name: ATLAS P2 — Tre composizioni architettoniche reali
+on:
+  push:
+    branches: [work/atlas-artdir02-p2-composizioni-01]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-p2-compositions-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  p2-three-cycles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify script syntax
+        run: python3 -m py_compile scripts/atlas-gateway-production/p2_three_compositions_01.py
+      - name: Recover REAL P1F/ROOF-02 qualified editable .blend
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45062409931
+          pattern: atlas-p1f-pavilion-roof02-*
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/parent
+      - name: Verify exact original, topology and unpublished state
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"parent"
+          r=json.loads((p/"atlas-p1f-pavilion-roof02-receipt.json").read_text())
+          f=p/"atlas-p1f-pavilion-roof02-editable.blend"
+          assert r["schema"]=="atlas.artdir02.p1f-roof-pavilion-02/v1"
+          assert r["canonical_art_sha256"]=="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+          assert hashlib.sha256(f.read_bytes()).hexdigest()==r["files"]["blend"]["sha256"]
+          assert r["single_roof_mesh_closed"]["connected"]
+          assert r["single_roof_mesh_closed"]["nonmanifold_edges"]==0
+          assert r["four_glass_portals_geometry_preserved"]
+          assert not r["art_approved"] and not r["web_approved"]
+          assert r["no_merge"] and r["no_deploy"]
+          print("P2_PARENT_SHA_AND_PROVENANCE_VERIFIED",f.stat().st_size)
+          PY
+      - name: Install actual Blender and Cycles
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Generate A/B/C from original P1F, render 3 images and save 3 editable blends
+        run: |
+          mkdir -p "$RUNNER_TEMP/p2"
+          blender -b "$RUNNER_TEMP/parent/atlas-p1f-pavilion-roof02-editable.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/p2_three_compositions_01.py -- \
+            --parent-receipt "$RUNNER_TEMP/parent/atlas-p1f-pavilion-roof02-receipt.json" \
+            --out "$RUNNER_TEMP/p2"
+      - name: Audit outputs, exact SHA, four portals and no-publication constraints
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"p2"
+          r=json.loads((p/"atlas-p2-three-compositions-receipt.json").read_text())
+          assert r["schema"]=="atlas.artdir02.p2-compositions-01/v1"
+          assert r["original_art_reference_sha256"]=="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+          assert r["source_binary_unchanged"] and r["source_existing_model"]
+          assert r["three_distinct_approaches"] and set(r["profiles"])=={"A","B","C"}
+          assert r["no_merge"] and r["no_deploy"] and r["no_student_data"]
+          assert not r["art_approved"] and not r["web_approved"]
+          for key,v in r["profiles"].items():
+              assert v["portal_arc_camera_side"],key
+              assert len(v["portals"])==4 and len(v["portal_projected_centres"])==4,key
+              assert len(v["upper_elements_raised"])>=1,key
+              assert v["three_levels"]["first_gallery"]!=v["three_levels"]["upper_gallery"]
+              assert not v["legacy_floor_cuts_verified_at_new_positions"]
+              for name,f in v["files"].items():
+                  q=p/f["name"]
+                  assert q.exists(),(key,name)
+                  assert q.stat().st_size==f["bytes"],(key,name)
+                  assert hashlib.sha256(q.read_bytes()).hexdigest()==f["sha256"],(key,name)
+          report=("# ATLAS P2 — Composizioni A/B/C\n\n"
+                  "Tre rendering Cycles e tre file Blender modificabili, derivati dal "
+                  "file P1F/ROOF-02 autenticato.\n\n"
+                  "| Variante | Profilo | Posizione portali | Stato |\n"
+                  "|---|---|---|---|\n"
+                  "| A | Monumentale | Semicerchio anteriore | Da valutare |\n"
+                  "| B | Equilibrata | Semicerchio anteriore | Da valutare |\n"
+                  "| C | Scenografica | Semicerchio anteriore | Da valutare |\n\n"
+                  "**Restano aperti**: confronto artistico, ripristino delle feritoie "
+                  "fisiche nelle nuove posizioni, verifica mobile e approvazione umana.\n\n"
+                  "**Nessun merge o deploy.**\n")
+          (p/"ATLAS-P2-REPORT.md").write_text(report,encoding="utf-8")
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as f:f.write(report)
+          print("ATLAS_P2_THREE_AUTHENTIC_SCENES_PASS")
+          PY
+      - name: Preserve outputs and full receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-p2-three-compositions-${{ github.run_number }}
+          path: ${{ runner.temp }}/p2/
+          if-no-files-found: warn
+          retention-days: 30
