@@ -173,14 +173,15 @@ def ring_segment(target, name, radius, radial_thickness, bottom, height, aspect=
                   (n,2*k+n,3*k+n,k+n)])
     return mesh_obj(name, verts, faces, target)
 
-def gallery(target, code, label, source_radius, at_z, beam_depth):
-    radial = max(ring_r*1.16, min(ring_r*1.85, source_radius))
+def gallery(target, code, label, source_radius, at_z, beam_depth, parapet_height, radius_scale, outer_radius):
+    radial = min(outer_radius*.925, source_radius*radius_scale)
     beam = ring_segment(target, "P1D • " + code + " " + label + " curved slab",
                         radial, beam_depth, at_z-.21, .21)
     glass = ring_segment(target, "P1D • " + code + " " + label + " railing",
-                         radial-beam_depth*.42, .08, at_z, .65)
+                         radial-beam_depth*.42, .08, at_z, parapet_height)
     return {"radius_bu": radial, "surface_z_bu":at_z,
-            "depth_bu":beam_depth, "beam_vertices":len(beam.data.vertices),
+            "depth_bu":beam_depth, "parapet_height_bu":parapet_height,
+            "beam_vertices":len(beam.data.vertices),
             "railing_vertices":len(glass.data.vertices)}
 
 def projections(obj):
@@ -196,7 +197,7 @@ scene.render.engine = "CYCLES"
 scene.render.resolution_percentage = 100
 scene.render.image_settings.file_format = "PNG"
 bpy.context.view_layer.cycles.use_denoising = True
-scene.cycles.samples = 12
+scene.cycles.samples = 18
 
 def render(name, camera, width, height):
     scene.camera = camera
@@ -209,6 +210,28 @@ def render(name, camera, width, height):
         raise RuntimeError("Invalid actual Cycles rendering " + name)
     return {"name":out.name, "sha256":digest(out),
             "bytes":out.stat().st_size, "size":[width,height]}
+
+def render_section(code, target, outer_radius):
+    cam_data = bpy.data.cameras.new("P1D section " + code + " data")
+    cam_data.type = "ORTHO"
+    cam_data.ortho_scale = outer_radius*2.35
+    cam = bpy.data.objects.new("P1D section " + code + " camera", cam_data)
+    scene.collection.objects.link(cam)
+    focus = Vector((cx, cy, (ring_z+lower_z)/2))
+    cam.location = (cx+outer_radius*2.7, cy, focus.z)
+    cam.rotation_euler = (focus-Vector(cam.location)).to_track_quat("-Z","Y").to_euler()
+    new_ids = {o.as_pointer() for o in target.objects}
+    old = [(ob,ob.hide_render) for ob in scene.objects
+           if ob.type in ("MESH","CURVE","FONT") and ob.as_pointer() not in new_ids]
+    for ob,_ in old:
+        ob.hide_render = True
+    try:
+        result = render("atlas-p1d-"+code+"-SECTION",cam,960,540)
+    finally:
+        for ob,prior in old:
+            ob.hide_render = prior
+        scene.camera = hero
+    return result
 
 def verify():
     bpy.context.view_layer.update()
@@ -234,28 +257,40 @@ def verify():
             "three_CC0_collections":len(sources),
             "camera_unchanged":True,"source_meshes_preserved":True}
 
-# Create two independent editable candidates, without declaring either approved.
-outer = max(ring_r*1.48, min(ring_r*2.0, max(upper_r,lower_r)*1.13))
+# A and B must remain optically and physically distinct, not collapse at caps.
+# Since ring_z is locked, use a lower gallery level for roof clearance rather
+# than moving the upper parapet into the ceiling.
 clearance = ring_z-upper_z
 variants = {}
-for code, roof_ratio, gallery_lift, slab_depth in (
-        ("A", .54, .26, .78), ("B", .72, .46, 1.08)):
+for code, roof_ratio, upper_shift, lower_shift, slab_depth, outer_scale, radius_scale, parapet in (
+        ("A", .52, .00, .00, .74, 1.08, .97, .40),
+        ("B", .76, -.12, -.36, 1.02, 1.16, 1.02, .30)):
     target = collection("P1D • " + code + " constructive geometry")
-    drop = min(clearance*.75, max(1.15, (outer-ring_r)*roof_ratio))
+    outer = max(ring_r*2.05, max(upper_r,lower_r)*outer_scale)
+    drop = clearance*roof_ratio
     vault, vault_info = add_vault(target,drop,outer)
-    new_upper_z = min(ring_z-.85, upper_z+gallery_lift)
-    new_lower_z = lower_z
+    new_upper_z = upper_z+upper_shift
+    new_lower_z = lower_z+lower_shift
+    upper_gallery_radius = min(outer*.925, upper_r*radius_scale)
+    inner = ring_r*1.035
+    t = max(0.,min(1.,(upper_gallery_radius-inner)/(outer-inner)))
+    roof_at_upper = ring_z - drop*(math.sin(.5*math.pi*t)**1.55) - .055*drop*t*t
+    roof_clearance = roof_at_upper - (new_upper_z+parapet)
+    if roof_clearance < .11:
+        raise RuntimeError("P1D upper parapet intersects curved vault")
     levels = {
-        "upper":gallery(target,code,"upper",upper_r,new_upper_z,slab_depth),
-        "lower":gallery(target,code,"lower",lower_r,new_lower_z,slab_depth*.95)}
+        "upper":gallery(target,code,"upper",upper_r,new_upper_z,slab_depth,parapet,radius_scale,outer),
+        "lower":gallery(target,code,"lower",lower_r,new_lower_z,slab_depth*.95,.65,radius_scale,outer)}
     if new_upper_z <= new_lower_z + .8 or drop <= 0.:
         raise RuntimeError("P1D gallery hierarchy or vault drop invalid")
     q = verify()
     cycled = render("atlas-p1d-"+code+"-HERO",hero,1152,648)
+    section = render_section(code, target, outer)
     control["P1D_last_variant"] = code
     control["P1D_vault_drop_bu"] = drop
     control["P1D_outer_radius_bu"] = outer
-    control["P1D_upper_gallery_lift_bu"] = new_upper_z-upper_z
+    control["P1D_upper_gallery_shift_bu"] = new_upper_z-upper_z
+    control["P1D_lower_gallery_shift_bu"] = new_lower_z-lower_z
     control["P1D_gallery_slab_depth_bu"] = slab_depth
     control["P1D_state"] = "GEOMETRY_CANDIDATE__ART_APPROVAL_REQUIRED"
     control["P1D_source_p1b_sha256"] = P1B_SHA
@@ -267,7 +302,8 @@ for code, roof_ratio, gallery_lift, slab_depth in (
     variants[code] = {
         "vault":vault_info,"galleries":levels,
         "gallery_level_separation_bu":new_upper_z-new_lower_z,
-        "integrity":q,"render":cycled,
+        "min_roof_parapet_clearance_bu":roof_clearance,
+        "integrity":q,"render":cycled,"section_render":section,
         "blend":{"name":model.name,"sha256":digest(model),"bytes":model.stat().st_size},
         "rendered_from_real_blender":True}
     for ob in list(target.objects):
@@ -277,11 +313,17 @@ for code, roof_ratio, gallery_lift, slab_depth in (
             bpy.data.meshes.remove(mesh)
     bpy.data.collections.remove(target)
 
+if abs(variants["A"]["vault"]["drop_bu"] - variants["B"]["vault"]["drop_bu"]) < .15:
+    raise RuntimeError("P1D A/B vault curvature degenerated to identical parameters")
+if abs(variants["A"]["gallery_level_separation_bu"] - variants["B"]["gallery_level_separation_bu"]) < .15:
+    raise RuntimeError("P1D A/B gallery separation degenerated to identical parameters")
+if abs(variants["A"]["vault"]["outer_radius_bu"] - variants["B"]["vault"]["outer_radius_bu"]) < .50:
+    raise RuntimeError("P1D A/B vault span degenerated to identical parameters")
 for obj in hide_candidates:
     obj.hide_render = hidden_before[obj.name]
 scene.camera = hero
 receipt = {
-    "schema":"atlas.artdir02.p1d-constructive/v1",
+    "schema":"atlas.artdir02.p1d-constructive/v2",
     "state":"REAL_EDITABLE_CANDIDATES__ART_REVIEW_REQUIRED",
     "source_p1b_sha256":digest(SOURCE),
     "art_reference_sha256":ART_SHA,
