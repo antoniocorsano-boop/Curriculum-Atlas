@@ -1,6 +1,6 @@
 {
-  "schema": "atlas.gateway.parametric-selection/v1",
-  "simulator_version": "1.0.0",
+  "schema": "atlas.gateway.parametric-selection/v2",
+  "simulator_version": "1.1.0",
   "title": "Atlas Gateway — proposta di geometria parametrica",
   "created_at": "2026-11-22T19:52:52.346Z",
   "reference": {
@@ -102,5 +102,6 @@
     "automatically_merge": false,
     "automatically_publish": false
   },
-  "limits_note": "Controllo di coerenza geometrica di base; l’anteprima procedurale non coincide con il modello Blender qualificato e non certifica giunzioni, ombre o prestazioni."
+  "limits_note": "Controllo di coerenza geometrica di base; l’anteprima procedurale non coincide con il modello Blender qualificato e non certifica giunzioni, ombre o prestazioni.",
+  "portal_placement": "far_side_relative_to_camera"
 }
