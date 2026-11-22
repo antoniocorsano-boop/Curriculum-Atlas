@@ -24,6 +24,7 @@ jobs:
         with:
           run-id: 45008316673
           pattern: atlas-art-dir02-p1d-oculus-03-1
+          merge-multiple: true
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/qualified
       - name: Fetch authenticated P1D-VIS-05 original-material controls
@@ -31,6 +32,7 @@ jobs:
         with:
           run-id: 45013050852
           pattern: atlas-art-dir02-p1d-vis-05-1
+          merge-multiple: true
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/vis05
       - name: Qualify SHA-256, original material provenance and parent evidence
