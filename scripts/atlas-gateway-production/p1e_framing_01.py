@@ -144,7 +144,9 @@ view.update()
 results={}
 for name,p in CASES.items():
     matrix=original_camera_matrix @ Matrix.Rotation(math.radians(p["tilt_degrees"]),4,"X")
-    matrix.translation.z-=p["lower_z_bu"]
+    position=matrix.translation.copy()
+    position.z-=p["lower_z_bu"]
+    matrix.translation=position
     camera.matrix_world=matrix
     camera.data.lens=original_lens*p["lens_factor"]
     view.update()
@@ -223,7 +225,8 @@ scene.world=original_world
 view.update()
 if sha(SRC)!=source_digest:
     raise RuntimeError("Qualified .blend bytes have changed")
-if (camera.matrix_world-original_camera_matrix).length>1.e-6:
+if max(abs(camera.matrix_world[i][j]-original_camera_matrix[i][j])
+       for i in range(4) for j in range(4))>1.e-6:
     raise RuntimeError("Camera pose was not restored")
 if camera.data.lens!=original_lens or (camera.data.shift_x,camera.data.shift_y)!=original_shift:
     raise RuntimeError("Lens or shift were not restored")
