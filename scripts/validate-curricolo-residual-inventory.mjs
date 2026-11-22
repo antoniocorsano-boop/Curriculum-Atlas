@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -44,6 +44,9 @@ export function validateResidualInventoryRegistry(registry) {
     assertNonEmptyString(residual.contains, `entry ${index} contains`);
     assertNonEmptyString(residual.category, `entry ${index} category`);
     assertNonEmptyString(residual.reason, `entry ${index} reason`);
+    if (residual.optionalIfAbsent !== undefined && typeof residual.optionalIfAbsent !== "boolean") {
+      throw new Error(`Residual inventory entry ${index} optionalIfAbsent must be boolean.`);
+    }
     if (!categories.has(residual.category)) {
       throw new Error(`Residual inventory entry ${index} category is not declared: ${residual.category}.`);
     }
@@ -109,7 +112,12 @@ export function scanRepositoryResiduals(registryInput) {
     classified.push({ ...occurrence, classification });
   }
 
-  const unusedRules = registry.residuals.filter((rule) => !usedRules.has(rule));
+  // A branch may not yet contain a historical file supplied by its PR base.
+  // Optional rules are skipped ONLY while that exact path is absent;
+  // an existing file must still match the classified literal or fail.
+  const unusedRules = registry.residuals.filter((rule) =>
+    !usedRules.has(rule) && !(rule.optionalIfAbsent === true && !existsSync(rule.path))
+  );
   const countsByCategory = Object.fromEntries(registry.categories.map((category) => [category, 0]));
   for (const item of classified) countsByCategory[item.classification.category] += 1;
 
