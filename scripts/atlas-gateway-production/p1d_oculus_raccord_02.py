@@ -316,7 +316,7 @@ def section(label,col):
     datablock.type="ORTHO"
     datablock.ortho_scale=14.
     ob=bpy.data.objects.new("ATLAS "+ARCH+" "+label+" section camera",datablock)
-    scene.collection.children.link(ob)
+    scene.collection.objects.link(ob)
     ob.location=(cx+15,cy,ring_z-.08)
     aim=Vector((cx,cy,ring_z-.2))
     ob.rotation_euler=(aim-Vector(ob.location)).to_track_quat("-Z","Y").to_euler()
