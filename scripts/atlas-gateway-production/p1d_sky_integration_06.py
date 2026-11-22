@@ -170,8 +170,8 @@ for _,_,start,direction in rays:
     if direction.z<=1e-8:
         raise RuntimeError("A sample ray aimed at the oculus points away from sky")
     travel=(zenith_z-start.z)/direction.z
-    p=start+direction*travel
-    projected_radii.append(math.hypot(p.x-cx,p.y-cy))
+    projected_point=start+direction*travel
+    projected_radii.append(math.hypot(projected_point.x-cx,projected_point.y-cy))
 # Guarantee the recessed cloud surface covers the actual camera-space
 # aperture silhouette at zenith height, rather than guessing a screen radius.
 R=max(sky_extent*1.55,1.12*max(projected_radii))
