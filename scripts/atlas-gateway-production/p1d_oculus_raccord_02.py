@@ -314,11 +314,16 @@ def section(label,col):
     # without changing any model geometry or original camera.
     datablock=bpy.data.cameras.new("ATLAS "+ARCH+" "+label+" section lens")
     datablock.type="ORTHO"
-    datablock.ortho_scale=14.
+    # Local tangential view of the real flange join, not a full hall section.
+    # At a positive-X rim station, look tangentially along +Y; the frame
+    # resolves radial X horizontally and world Z vertically.
+    datablock.ortho_scale=2.35
     ob=bpy.data.objects.new("ATLAS "+ARCH+" "+label+" section camera",datablock)
     scene.collection.objects.link(ob)
-    ob.location=(cx+15,cy,ring_z-.08)
-    aim=Vector((cx,cy,ring_z-.2))
+    positive_x_radius=rim_for_angle(0.)[0]
+    target=Vector((cx+positive_x_radius,cy,ring_z-.16))
+    ob.location=(target.x,cy-12.,target.z+.07)
+    aim=target
     ob.rotation_euler=(aim-Vector(ob.location)).to_track_quat("-Z","Y").to_euler()
     prior={o.name:o.hide_render for o in scene.objects}
     visible={o.as_pointer() for o in col.objects}
