@@ -46,7 +46,7 @@ root_before={p.name:tuple(p.matrix_world) for p in roots}
 def sample(ob,limit=500):
     if ob.type=="MESH":
         step=max(1,len(ob.data.vertices)//limit)
-        return [ob.matrix_world @ p.co for p in ob.data.vertices[::step]]
+        return [ob.matrix_world @ p.co for p in list(ob.data.vertices)[::step]]
     if ob.type=="CURVE":
         p=[]
         for spl in ob.data.splines:
