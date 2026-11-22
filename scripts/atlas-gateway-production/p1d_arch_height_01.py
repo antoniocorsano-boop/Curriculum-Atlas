@@ -255,12 +255,12 @@ def section_render(code,target,ring_copy,upper_copy):
     focus=Vector((cx,cy,(ring_z+lower_z)/2))
     cam.location=(cx+outer*2.75,cy,focus.z)
     cam.rotation_euler=(focus-Vector(cam.location)).to_track_quat("-Z","Y").to_euler()
-    show={id(o) for o in target.objects}
-    show.update([id(lower_beam),id(lower_rail)])
+    show={o.as_pointer() for o in target.objects}
+    show.update([lower_beam.as_pointer(),lower_rail.as_pointer()])
     prev={o.name:o.hide_render for o in scene.objects
           if o.type in ("MESH","CURVE","FONT")}
     for ob in scene.objects:
-        if ob.type in ("MESH","CURVE","FONT") and id(ob) not in show:
+        if ob.type in ("MESH","CURVE","FONT") and ob.as_pointer() not in show:
             ob.hide_render=True
     try:
         return render(code,"SECTION",cam)
