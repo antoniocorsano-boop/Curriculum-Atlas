@@ -121,33 +121,58 @@ def trace(origin,direction,excluded=frozenset()):
 def bezier(a,b,c,d,t):
     q=1.0-t
     return q*q*q*a+3*q*q*t*b+3*q*t*t*c+t*t*t*d
-outline=[]
+# Camera can lie inside the projected rim footprint: portions of a ring
+# may be BEHIND the camera. A 2-D projection polygon is then invalid.
+# Instead intersect each camera ray with the actual horizontal oculus plane,
+# then test its world-space point against the real sampled Bezier footprint.
+rim_world=[]
 for sp in rim.data.splines:
     if sp.type=="BEZIER":
         pts=list(sp.bezier_points)
         n=len(pts) if sp.use_cyclic_u else len(pts)-1
         for i in range(n):
-            a=pts[i];b=pts[(i+1)%len(pts)]
+            aa=pts[i];bb=pts[(i+1)%len(pts)]
             for k in range(32):
-                p=bezier(a.co,a.handle_right,b.handle_left,b.co,k/32.0)
-                xyz=rim.matrix_world@p
-                c=world_to_camera_view(scene,cam,xyz)
-                outline.append((float(c.x),float(c.y),float(c.z)))
-if len(outline)<32 or any(p[2]<=0 for p in outline):
-    raise RuntimeError("Oculus contour is not in front of camera; separate camera study required")
-# Projected real Bezier centerline, with conservative inner zone to avoid rim-border ambiguity.
-center_u=sum(p[0] for p in outline)/len(outline)
-center_v=sum(p[1] for p in outline)/len(outline)
-poly=[(center_u+(u-center_u)*.88,center_v+(v-center_v)*.88) for u,v,_ in outline]
-def in_polygon(u,v,vertices):
+                p=bezier(aa.co,aa.handle_right,bb.handle_left,bb.co,k/32.)
+                rim_world.append(rim.matrix_world@p)
+if len(rim_world)<32:
+    raise RuntimeError("Insufficient actual Bezier oculus samples")
+ring_z=sorted(p.z for p in rim_world)[len(rim_world)//2]
+if max(abs(p.z-ring_z) for p in rim_world)>.08:
+    raise RuntimeError("Oculus ring unexpectedly nonplanar")
+cx=sum(p.x for p in rim_world)/len(rim_world)
+cy=sum(p.y for p in rim_world)/len(rim_world)
+inner_ring=[(cx+(p.x-cx)*.88,cy+(p.y-cy)*.88) for p in rim_world]
+projected=[]
+behind=0
+for xyz in rim_world:
+    pr=world_to_camera_view(scene,cam,xyz)
+    if pr.z>1e-6:projected.append((float(pr.x),float(pr.y)))
+    else:behind+=1
+projected_bounds=({
+    "left":min(p[0] for p in projected),"right":max(p[0] for p in projected),
+    "bottom":min(p[1] for p in projected),"top":max(p[1] for p in projected)
+} if projected else None)
+center_u=(sum(p[0] for p in projected)/len(projected) if projected else None)
+center_v=(sum(p[1] for p in projected)/len(projected) if projected else None)
+def in_polygon(x,y,polygon):
     inside=False
-    j=len(vertices)-1
-    for i in range(len(vertices)):
-        x1,y1=vertices[i];x2,y2=vertices[j]
-        if ((y1>v)!=(y2>v)) and u<(x2-x1)*(v-y1)/(y2-y1)+x1:
+    j=len(polygon)-1
+    for i in range(len(polygon)):
+        x1,y1=polygon[i];x2,y2=polygon[j]
+        if ((y1>y)!=(y2>y)) and x<(x2-x1)*(y-y1)/(y2-y1)+x1:
             inside=not inside
         j=i
     return inside
+def in_opening(u,v):
+    o,d=camera_ray(u,v)
+    if abs(d.z)<1e-8:
+        return False
+    travel=(ring_z-o.z)/d.z
+    if travel<=1e-5:
+        return False
+    pos=o+d*travel
+    return in_polygon(pos.x,pos.y,inner_ring)
 def category(name):
     if name is None:return "sky_unblocked"
     if name==roof.name:return "integrated_roof"
@@ -180,7 +205,7 @@ for y in range(H):
     v=(y+.5)/H
     for x in range(W):
         u=(x+.5)/W
-        if not in_polygon(u,v,poly):
+        if not in_opening(u,v):
             pixel_data.extend(COLORS["outside"])
             continue
         mask_count+=1
@@ -248,7 +273,7 @@ if hero_file.exists():
         for y in range(H):
             for x in range(W):
                 u=(x+.5)/W;v=(y+.5)/H
-                if not in_polygon(u,v,poly):continue
+                if not in_opening(u,v):continue
                 o,d=camera_ray(u,v)
                 name=trace(o,d)
                 cls=("clear_rays" if name is None else "blocked_rays")
@@ -266,15 +291,15 @@ report={
  "schema":"atlas.artdir02.p1d-visibility/v1",
  "arch":ARCH,"structural_variant":MODE,
  "source_sha256":sha(SOURCE),
- "source_qualifying_run":"https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/45008316673",
+ "source_qualifying_run_id":45008316673,
  "canonical_art_sha256":previous["canonical_art_sha256"],
  "camera":{"name":cam.name,"lens":cam.data.lens,
            "shift_x":cam.data.shift_x,"shift_y":cam.data.shift_y,
            "matrix_world":[list(row) for row in cam.matrix_world]},
  "oculus":{"projected_center_normalized":[center_u,center_v],
-           "projected_rim_bounds_normalized":{
-             "left":min(p[0] for p in outline),"right":max(p[0] for p in outline),
-             "bottom":min(p[1] for p in outline),"top":max(p[1] for p in outline)},
+           "projected_rim_bounds_normalized":projected_bounds,
+           "bezier_samples_behind_camera":behind,
+           "sampling_method":"forward camera rays intersect real oculus XY footprint at median Z",
            "interior_sampling_factor":.88,
            "samples_in_image":mask_count,
            "coverage_of_image":mask_count/(W*H),
