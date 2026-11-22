@@ -1,0 +1,92 @@
+name: "ATLAS ART-DIR-02 — P1D volta costruttiva e gallerie"
+on:
+  pull_request:
+    branches: [work/atlas-artdir02-p1b-multianchor]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-p1d-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  real-p1d-geometry:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'work/atlas-artdir02-p1d-constructive-vault'
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check actual Python source
+        run: python3 -m py_compile scripts/atlas-gateway-production/p1d_constructive_clay.py
+      - name: Download original P1B generated on the verified source run
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 44976549294
+          pattern: atlas-art-dir02-p1b-*
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/p1b
+      - name: Verify immutable source and provenance
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])/'p1b'
+          p=root/'atlas-art-dir02-p1b-multianchor-clay.blend'
+          receipt=json.loads((root/'atlas-p1b-multianchor-receipt.json').read_text())
+          sha=lambda f:hashlib.sha256(f.read_bytes()).hexdigest()
+          assert sha(p)==receipt['model_sha256']=='e16fa837ea85d27eff225c3a4e4fc8ff63e00a298a597d8710d32d3536351c7c'
+          assert receipt['source_p1_sha256']=='d35c42c2f4b50dafa01dfb7ab27a113ec9c954b09b6629e2239c54b589833a3b'
+          assert receipt['perceptual_gate_pass'] and not receipt['human_art_approved']
+          print('P1D_IMMUTABLE_P1B_SOURCE_VERIFIED')
+          PY
+      - name: Install Blender Cycles
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Execute constructive 3D on actual archived Blender scene
+        run: |
+          mkdir -p "$RUNNER_TEMP/p1d"
+          blender -b "$RUNNER_TEMP/p1b/atlas-art-dir02-p1b-multianchor-clay.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/p1d_constructive_clay.py -- \
+            --out "$RUNNER_TEMP/p1d"
+      - name: Independently verify binary models, renders, geometry and locked anchors
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,json,os
+          out=Path(os.environ['RUNNER_TEMP'])/'p1d'
+          report=json.loads((out/'atlas-p1d-constructive-receipt.json').read_text())
+          sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+          assert report['source_p1b_sha256']=='e16fa837ea85d27eff225c3a4e4fc8ff63e00a298a597d8710d32d3536351c7c'
+          assert set(report['variants'])=={'A','B'}
+          assert report['ring']['radius_bu']>0.1
+          assert report['human_art_approved'] is False
+          assert report['no_merge'] and report['no_deploy'] and report['hotspot_revalidation_required']
+          for key,v in report['variants'].items():
+              model=out/v['blend']['name']
+              img=out/v['render']['name']
+              assert model.stat().st_size>1000000 and sha(model)==v['blend']['sha256']
+              assert img.stat().st_size>12000 and sha(img)==v['render']['sha256']
+              assert v['vault']['mesh_verts']>3000
+              assert v['vault']['faces']>3000
+              assert v['gallery_level_separation_bu']>.8
+              assert all(v['integrity'][n]==0 for n in
+                   ('portal_max_drift','oculus_max_drift','podium_max_drift'))
+              assert v['integrity']['source_meshes_preserved']
+              assert v['integrity']['four_bases']==4
+              assert v['integrity']['three_CC0_collections']==3
+              assert v['rendered_from_real_blender']
+              print('P1D',key,'TRUE_3D_GEOMETRY_TECH_PASS',model.stat().st_size)
+          print('ARTISTIC_APPROVAL_NOT_GRANTED; NO PUBLICATION')
+          PY
+      - name: Preserve editable candidates, real Cycles images and receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-p1d-${{ github.run_number }}
+          path: ${{ runner.temp }}/p1d/
+          if-no-files-found: warn
+          retention-days: 30
