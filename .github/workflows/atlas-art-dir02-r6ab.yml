@@ -1,0 +1,95 @@
+name: "ATLAS ART-DIR-02 — Montaggio reale R6A + R6B"
+on:
+  pull_request:
+    branches: [work/atlas-gateway-01-foyer]
+    paths:
+      - "scripts/atlas-gateway-production/r6ab_assemble.py"
+      - ".github/workflows/atlas-art-dir02-r6ab.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-r6ab-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  integrate-real-r6a-r6b-artifacts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 48
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Python integration source
+        run: python3 -m py_compile scripts/atlas-gateway-production/r6ab_assemble.py
+      - name: Download real independent R6A Blender output
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-art-dir02-r6a-1
+          run-id: 44934521917
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/atlas-r6a-qualified
+      - name: Download real independent R6B Blender output
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-art-dir02-r6b-1
+          run-id: 44934525743
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/atlas-r6b-qualified
+      - name: Validate common R5 lineage and actual Blender source hashes
+        run: |
+          python3 - <<'PY'
+          import pathlib,hashlib,json,os
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])
+          a=root/"atlas-r6a-qualified"
+          b=root/"atlas-r6b-qualified"
+          ra=json.loads((a/"atlas-r6a-receipt.json").read_text())
+          rb=json.loads((b/"atlas-r6b-receipt.json").read_text())
+          def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+          assert ra["base_r5_sha256"]==rb["source_r5_sha256"]=="e97dcf65e7cd6a97f031cef99d2d81398c5d42d6493807b4e29cf35e5236b278"
+          assert sha(a/"atlas-r6a-sky-vault.blend")==ra["blend_sha256"]
+          assert sha(b/"atlas-r6b-gallery-materials.blend")==rb["blend_sha256"]
+          assert ra["human_approved"] is False and rb["human_approved"] is False
+          print("A/B genuine independent SHA and common R5 lineage verified")
+          PY
+      - name: Install Blender render engine
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender
+      - name: Compose R6A vault and R6B materials in one existing scene
+        run: |
+          mkdir -p "$RUNNER_TEMP/atlas-r6ab-out"
+          blender -b "$RUNNER_TEMP/atlas-r6a-qualified/atlas-r6a-sky-vault.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/r6ab_assemble.py -- \
+            --out "$RUNNER_TEMP/atlas-r6ab-out" \
+            --bblend "$RUNNER_TEMP/atlas-r6b-qualified/atlas-r6b-gallery-materials.blend" \
+            --areceipt "$RUNNER_TEMP/atlas-r6a-qualified/atlas-r6a-receipt.json" \
+            --breceipt "$RUNNER_TEMP/atlas-r6b-qualified/atlas-r6b-receipt.json"
+      - name: Verify combined model, actual render and unchanged scope
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])/"atlas-r6ab-out"
+          receipt=json.loads((root/"atlas-r6ab-receipt.json").read_text())
+          def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+          assert receipt["sky_from"]=="R6A" and receipt["gallery_from"]=="R6B"
+          assert receipt["no_publication"] and receipt["no_merge"]
+          assert receipt["human_art_approved"] is False
+          assert receipt["sky_radius_after_bu"]<5.8
+          assert len(receipt["floor_seam_names"])==4
+          assert receipt["material_assignments"]["glass_railings"]>=28
+          assert receipt["material_assignments"]["dark_columns"]>=20
+          assert sha(root/"atlas-art-dir02-r6ab-integrated.blend")==receipt["integrated_blend_sha256"]
+          assert set(receipt["renders"])=={"hero","oblique"}
+          for val in receipt["renders"].values():
+              p=root/val["file"]
+              assert p.stat().st_size>10000 and sha(p)==val["sha256"]
+          print("R6AB TECHNICAL COMPOSITION PASS — ARTISTIC APPROVAL SEPARATE")
+          PY
+      - name: Preserve genuine joint master and proof images even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-r6ab-${{ github.run_number }}
+          path: ${{ runner.temp }}/atlas-r6ab-out/
+          if-no-files-found: warn
+          retention-days: 30
