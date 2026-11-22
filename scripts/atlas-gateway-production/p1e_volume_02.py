@@ -155,7 +155,7 @@ def apply(dg,dc):
     if attr=="co" and hasattr(point,"co") and len(point.co)==4:
      point.co=(xyz.x,xyz.y,xyz.z,point.co.w)
     else:setattr(point,attr,xyz)
-  o.data.update()
+  if o.type=="MESH":o.data.update()
  view.update()
 # Snapshot of all protected world coordinates for cross-case invariance.
 protected={o.name:(tuple(world_z(o)),tuple(tuple(round(float(z),7) for z in pt) for pt in world_corners(o)))
