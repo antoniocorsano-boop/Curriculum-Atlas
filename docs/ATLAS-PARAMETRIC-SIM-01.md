@@ -2,6 +2,17 @@
 
 **Stato:** sperimentazione privata, non pubblicata; configurazioni di progetto, non modelli Blender approvati.
 
+## Correzione tre livelli — SIM-01.2 (22 novembre 2026)
+
+La rilettura diretta del JPEG canonico ART-DIR-02 (1536 × 864, SHA-256 invariato) distingue **tre livelli architettonici**: piano terra, prima galleria e seconda galleria. L'oculo e la copertura sono sovrastanti e non sono un quarto livello. Il precedente disegno procedurale mostrava le prime due fasce, ma riduceva la terza a una cornice di 0,77 BU: si tratta di un errore di interpretazione.
+
+**Geometria di simulazione aggiornata:** la seconda galleria inizia a quota `upperGallery`; la terza fascia sovrastante ha altezza regolabile `thirdLevelHeight` (1,50–2,80 BU), con imposta della copertura `upperGallery + thirdLevelHeight`. La volta si sviluppa sopra tale quota fino al bordo del lucernario (`roofHeight`). La prima galleria resta a quota 3,21 BU. Sono visibili tre fasce vetrate con pilastri e parapetti, non tre cornicioni sovrapposti. La vista in sezione indica i tre livelli; pianta, prospettiva e anteprima mobile condividono gli stessi valori.
+
+**Limite di sicurezza:** `roofHeight > upperGallery + thirdLevelHeight + 1 BU`, con controllo nel navigatore e nel validatore indipendente. Le altezze di partenza sono state riviste per consentire tre piani leggibili e mantenere il lucernario ampio; 24 cursori complessivi. Il contratto della proposta è aggiornato a `atlas.gateway.parametric-selection/v3`, versione simulatore 1.2.0. Le proposte v2 e varianti memorizzate restano nella loro versione storica e non sono convertite implicitamente.
+
+**Nessun intervento nei modelli Blender qualificati.** Il passo seguente richiede un intervento geometrico reversibile nel ramo P1F, con vero rendering Cycles e giudizio sul riferimento ART-DIR-02, senza propagazione automatica su `main` o pubblicazione.
+
+
 ## Correzione orientamento portali — SIM-01.1 (22 novembre 2026)
 
 Rilievo dell'ideatore: i pannelli risultavano erroneamente sul lato vicino all'osservatore. La camera HERO procedurale guarda da **Y negativa** verso il centro; l'arco dei quattro pannelli era centrato su **270° (−Y)**. Ora l'arco è centrato su **90° (+Y)**, sul **lato opposto all'osservatore**, in modo uniforme nelle tre viste e nell'anteprima mobile. La sezione è ora longitudinale lungo l'asse di profondità Y; pianta e sezione indicano il lato dell'osservatore.
@@ -20,8 +31,8 @@ Quando il file sarà eventualmente esposto in una distribuzione autorizzata di N
 
 ## Funzioni
 
-- **23 cursori di precisione**, con campo numerico sincronizzato e vincoli geometrici.
-- Volumi e gallerie: raggio atrio, quota seconda galleria, quota oculo, curvatura volta, allungamento planimetrico.
+- **24 cursori di precisione**, con campo numerico sincronizzato e vincoli geometrici.
+- Volumi e gallerie: raggio atrio, quota seconda galleria, altezza del terzo livello, quota oculo, curvatura volta, allungamento planimetrico.
 - Oculo: raggio, rapporto ellittico, transizione verso lati più rettilinei (superellisse), orientamento, bordatura e raccordo corto.
 - Portali: arco di disposizione, raggio dal centro, spostamenti laterali e in profondità, altezza e larghezza delle quattro lastre, luminosità figurativa.
 - Camera: altezza, distanza, inclinazione relativa alla HERO, rotazione laterale, focale.
@@ -33,11 +44,12 @@ Quando il file sarà eventualmente esposto in una distribuzione autorizzata di N
 
 ## Contratto JSON e validazione
 
-Schema logico `atlas.gateway.parametric-selection/v2`, unita `BU`, asse `Z` verticale. Il file contiene `parameters`, modello di origine `A/B × J3/J4`, checksum del canone, snapshot A/B e:
+Schema logico `atlas.gateway.parametric-selection/v3`, unita `BU`, asse `Z` verticale. Il file contiene `parameters`, modello di origine `A/B × J3/J4`, checksum del canone, snapshot A/B e:
 
 ```json
 {
   "portal_placement": "far_side_relative_to_camera",
+  "architecture_levels": {"count": 3, "ground_floor_z": 0, "first_gallery_z": 3.21, "second_gallery_z": 5.95, "roof_spring_z": 8.15},
   "decision": {
     "status": "proposta_da_qualificare",
     "art_approved": false,
