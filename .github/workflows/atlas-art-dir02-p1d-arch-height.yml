@@ -1,0 +1,103 @@
+name: "ATLAS ART-DIR-02 — P1D-ARCH recupero verticale"
+on:
+  pull_request:
+    branches: [work/atlas-artdir02-p1d-cam-height-01]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-p1d-arch-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  actual-blender-height:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'work/atlas-artdir02-p1d-arch-height-01'
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax check constructive height experiment
+        run: python3 -m py_compile scripts/atlas-gateway-production/p1d_arch_height_01.py
+      - name: Retrieve qualified original P1D/B v2 source and its receipt
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 44978886382
+          pattern: atlas-art-dir02-p1d-5
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/p1d-source
+      - name: Verify original Blender binary and receipt before any geometry
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          folder=Path(os.environ['RUNNER_TEMP'])/'p1d-source'
+          p=folder/'atlas-art-dir02-p1d-B-constructive.blend'
+          r=json.loads((folder/'atlas-p1d-constructive-receipt.json').read_text())
+          sha=lambda x:hashlib.sha256(x.read_bytes()).hexdigest()
+          actual=sha(p)
+          expected='587cf7f84141ebc652a5a9d0382e5f7904ef4cfba749a9ec0274f521fc4adcfa'
+          assert actual==expected==r['variants']['B']['blend']['sha256']
+          assert r['schema']=='atlas.artdir02.p1d-constructive/v2'
+          assert r['art_reference_sha256']=='a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe'
+          assert r['human_art_approved'] is False
+          print('P1D_ARCH_IMMUTABLE_SOURCE_PASS')
+          PY
+      - name: Install Blender with Cycles rendering
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Render original and two distinct lofted height variants
+        run: |
+          mkdir -p "$RUNNER_TEMP/p1d-arch-height"
+          blender -b "$RUNNER_TEMP/p1d-source/atlas-art-dir02-p1d-B-constructive.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/p1d_arch_height_01.py -- \
+            --out "$RUNNER_TEMP/p1d-arch-height"
+      - name: Independent integrity and geometric vertical recovery qualification
+        run: |
+          python3 - <<'PY'
+          import os,json,hashlib
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])/'p1d-arch-height'
+          r=json.loads((root/'atlas-p1d-arch-height-01-receipt.json').read_text())
+          sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+          assert r['schema']=='atlas.artdir02.p1d-arch-height/v1'
+          assert r['base_source_sha256']=='587cf7f84141ebc652a5a9d0382e5f7904ef4cfba749a9ec0274f521fc4adcfa'
+          assert r['canonical_image_sha256']=='a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe'
+          assert r['source_originals_preserved'] and r['portals_podium_source_geometry_locked']
+          assert r['camera']['unchanged'] and not r['art_approved']
+          assert r['no_merge'] and r['no_deploy']
+          a=r['variants']['A']; b=r['variants']['B']
+          assert set(r['variants'])=={'A','B'}
+          assert a['oculus_rise_bu']==.52 and b['oculus_rise_bu']==1.00
+          assert a['upper_gallery_rise_bu']==.18 and b['upper_gallery_rise_bu']==.35
+          assert a['estimated_clearance_bu']>.10 and b['estimated_clearance_bu']>.10
+          assert a['headroom_gain_fraction']>.01 and b['headroom_gain_fraction']>.01
+          assert b['headroom_gain_fraction']-a['headroom_gain_fraction']>.008
+          assert a['gallery_separation_gain_fraction']>.004
+          assert b['gallery_separation_gain_fraction']>.004
+          items=[r['baseline']['hero']]+[i[k] for i in (a,b) for k in ('hero','section')]
+          for meta in items:
+              p=root/meta['file']
+              assert p.stat().st_size>12000 and sha(p)==meta['sha256']
+          for v in (a,b):
+              x=v['editable_blend'];p=root/x['file']
+              assert p.stat().st_size>1000000 and sha(p)==x['sha256']
+              assert len(v['projection']['portals'])==4
+              assert all(q>=.9 for q in v['projection']['portal_visibility'].values())
+              assert v['projection']['podium_visible_fraction']>=.9
+              print('HEIGHT',v['oculus_rise_bu'],'headroom_gain',v['headroom_gain_fraction'],
+                  'oculus_visible',v['projection']['oculus_visible_fraction'],
+                  'cropped_warning',v['oculus_crop_warning'])
+          print('ARCH_HEIGHT_TECH_PASS__ART_APPROVAL_REQUIRED')
+          PY
+      - name: Preserve editable geometry, real image renders and SHA manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-p1d-arch-height-${{ github.run_number }}
+          path: ${{ runner.temp }}/p1d-arch-height/
+          if-no-files-found: warn
+          retention-days: 30
