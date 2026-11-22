@@ -58,7 +58,7 @@
 </aside>
 <main class="stage">
  <div class="stage-head">
-  <div><h2>Composizione architettonica</h2><p>Anteprima geometrica procedurale, non rendering fotorealistico Blender.</p></div>
+  <div><h2>Composizione architettonica</h2><p>Tre livelli: piano terra, prima e seconda galleria. Anteprima geometrica, non rendering Blender.</p></div>
   <div class="tabs" role="group" aria-label="Vista del simulatore">
     <button type="button" data-view="perspective" class="active" aria-pressed="true">Prospettiva</button>
     <button type="button" data-view="plan" aria-pressed="false">Pianta</button>
@@ -70,7 +70,7 @@
     <canvas id="scene" role="img" aria-label="Anteprima parametrica dell'atrio Atlas con oculo, gallerie e quattro portali"></canvas>
     <div class="overlay-left"><div class="caption" id="viewLabel">Prospettiva architettonica</div><strong id="shapeLabel">Atrio circolare</strong></div>
     <div class="overlay-right">ART-DIR-02<br/><span id="sourceLabel">Studio su B · J4</span><br/>Scala parametrica · BU</div>
-    <div class="view-footer"><span id="viewHint">Trascina orizzontalmente per variare la visuale.</span><span>Anteprima indicativa · quote esportabili</span></div>
+    <div class="view-footer"><span id="viewHint">Trascina orizzontalmente per variare la visuale.</span><span>Tre livelli distinti · quote esportabili</span></div>
   </div>
   <div class="stat-grid" aria-label="Indicatori geometrici">
     <div class="stat"><label>Quota del lucernario</label><strong id="statRoof">7,71</strong> <small>BU</small></div>
@@ -94,13 +94,14 @@
 </div>
 <script>
 (function(){'use strict';
-const VERSION='1.1.0';
+const VERSION='1.2.0';
 const CANONICAL='a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe';
 const GROUPS=[
  {id:'volume',name:'Volumi e gallerie',hint:'Altezza e profondità',fields:[
    ['outerRadius','Raggio dell’atrio',8.1,13.0,.1,'BU','Dimensione planimetrica esterna'],
    ['upperGallery','Quota seconda galleria',4.95,6.9,.01,'BU','Prima galleria preservata a quota 3,21 BU'],
-   ['roofHeight','Quota bordo lucernario',6.85,10.3,.01,'BU','Quota al coronamento superiore dell’atrio'],
+   ['thirdLevelHeight','Altezza del terzo livello',1.5,2.8,.01,'BU','Terzo piano: galleria superiore fra seconda quota e imposta della copertura'],
+   ['roofHeight','Quota bordo lucernario',8.5,12.4,.01,'BU','Quota del lucernario sopra tre livelli distinti'],
    ['vaultCurve','Curvatura della volta',.15,.95,.01,'','Transizione fra parete e bordo del lucernario'],
    ['outerElongation','Allungamento del padiglione',1,1.65,.01,'×','Profilo esterno; 1,00 = circolare']
  ]},
@@ -130,15 +131,15 @@ const GROUPS=[
  ]}
 ];
 const limits={};GROUPS.forEach(g=>g.fields.forEach(f=>limits[f[0]]=f));
-const BASE={outerRadius:9.6,upperGallery:5.49,roofHeight:7.71,vaultCurve:.55,outerElongation:1,oculusRadius:5.13,ellipseRatio:1,straightness:0,oculusAngle:0,rimThickness:.16,shortReveal:.14,portalRadius:6.0,portalSpan:82,portalOffset:0,portalDepth:0,glassHeight:4.85,glassWidth:1.46,portalGlow:.78,cameraHeight:2.65,cameraDistance:19.8,cameraPitch:3,cameraYaw:0,lens:39};
-const PRESETS={reference:BASE,elliptical:{...BASE,ellipseRatio:1.36,outerElongation:1.18,roofHeight:8.25,straightness:.10},pavilion:{...BASE,ellipseRatio:1.58,outerElongation:1.40,straightness:.70,roofHeight:8.85,upperGallery:5.95,cameraDistance:22.5,lens:34},tall:{...BASE,roofHeight:9.1,upperGallery:6.05,cameraPitch:5.5,cameraDistance:22.5,glassHeight:5.25}};
+const BASE={outerRadius:9.6,upperGallery:5.49,thirdLevelHeight:1.98,roofHeight:9.5,vaultCurve:.55,outerElongation:1,oculusRadius:5.13,ellipseRatio:1,straightness:0,oculusAngle:0,rimThickness:.16,shortReveal:.14,portalRadius:6.0,portalSpan:82,portalOffset:0,portalDepth:0,glassHeight:4.85,glassWidth:1.46,portalGlow:.78,cameraHeight:2.65,cameraDistance:19.8,cameraPitch:3,cameraYaw:0,lens:39};
+const PRESETS={reference:BASE,elliptical:{...BASE,ellipseRatio:1.36,outerElongation:1.18,roofHeight:10.1,straightness:.10},pavilion:{...BASE,ellipseRatio:1.58,outerElongation:1.40,straightness:.70,roofHeight:11.15,upperGallery:5.95,thirdLevelHeight:2.20,cameraDistance:22.5,lens:34},tall:{...BASE,roofHeight:11.8,upperGallery:6.05,thirdLevelHeight:2.55,cameraPitch:5.5,cameraDistance:22.5,glassHeight:5.25}};
 let state={...BASE};let snapshots={A:{...BASE},B:null};let currentView='perspective';let compareOpen=false;
 const $=id=>document.getElementById(id);const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));const pi=Math.PI;const rad=d=>d*pi/180;const nf=(v,n=2)=>Number(v).toFixed(n).replace('.',',');
 function checkedConfig(value){if(!value||typeof value!=='object')throw Error('Configurazione mancante');let next={};for(let [name,spec] of Object.entries(limits)){const v=Number(value[name]);if(!Number.isFinite(v)||v<spec[2]-1e-6||v>spec[3]+1e-6)throw Error('Parametro non valido: '+name);next[name]=Number(v.toFixed(4))}return next}
 function portalCenter(index,s){const angle=rad(90+(index-1.5)*s.portalSpan/3);return{angle,x:s.portalOffset+s.portalRadius*Math.cos(angle),y:s.portalDepth+s.portalRadius*Math.sin(angle)}}
 function portalCameraSide(s){const yaw=rad(s.cameraYaw),dx=Math.sin(yaw),dy=-Math.cos(yaw);for(let i=0;i<4;i++){const {angle,x,y}=portalCenter(i,s),tx=-Math.sin(angle),ty=Math.cos(angle);for(const u of [-s.glassWidth/2,0,s.glassWidth/2])if((x+tx*u)*dx+(y+ty*u)*dy>=0)return true}return false}
 function warnings(s){let e=[];
- if(s.roofHeight<=s.upperGallery+.75)e.push('La sommità della volta deve superare la seconda galleria di almeno 0,75 BU.');
+ if(s.roofHeight<=s.upperGallery+s.thirdLevelHeight+1)e.push('Occorre distinguere tre livelli e lasciare almeno 1 BU fra l’imposta della copertura e il bordo del lucernario.');
  if(s.upperGallery<=s.glassHeight+.20)e.push('L’altezza dei portali deve lasciare almeno 0,20 BU alla seconda galleria.');
  if(s.portalRadius>s.outerRadius-.55)e.push('L’arco dei portali deve restare all’interno della parete esterna.');
  if(s.portalRadius<s.oculusRadius+.10)e.push('I portali sono troppo vicini all’apertura superiore.');
@@ -159,7 +160,7 @@ function signedPow(x,e){return Math.sign(x)*Math.pow(Math.abs(x),e)}
 function shapePoint(th,r,ratio,sq,angle=0){const pow=2/(2+4*sq);let x=r*signedPow(Math.cos(th),pow), y=r*ratio*signedPow(Math.sin(th),pow);const a=rad(angle);return{x:x*Math.cos(a)-y*Math.sin(a),y:x*Math.sin(a)+y*Math.cos(a)}}
 function p3(x,y,z){return{x,y,z}}
 function oval(th,r,s,z,outer=false){const q=shapePoint(th,r,outer?s.outerElongation:s.ellipseRatio,outer?s.straightness*.55:s.straightness,s.oculusAngle);return p3(q.x,q.y,z)}
-function camera(s){const yaw=rad(s.cameraYaw),eye=p3(Math.sin(yaw)*s.cameraDistance,-Math.cos(yaw)*s.cameraDistance,s.cameraHeight);const target=p3(0,0,4.65+Math.tan(rad(s.cameraPitch-3))*s.cameraDistance*.67);const sub=(a,b)=>p3(a.x-b.x,a.y-b.y,a.z-b.z);const cross=(a,b)=>p3(a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x);const dot=(a,b)=>a.x*b.x+a.y*b.y+a.z*b.z;const norm=x=>{const q=Math.hypot(x.x,x.y,x.z)||1;return p3(x.x/q,x.y/q,x.z/q)};const forward=norm(sub(target,eye)),right=norm(cross(forward,p3(0,0,1))),up=norm(cross(right,forward));return{eye,forward,right,up,dot}}
+function camera(s){const yaw=rad(s.cameraYaw),eye=p3(Math.sin(yaw)*s.cameraDistance,-Math.cos(yaw)*s.cameraDistance,s.cameraHeight);const target=p3(0,0,Math.max(4.65,s.roofHeight*.50)+Math.tan(rad(s.cameraPitch-3))*s.cameraDistance*.67);const sub=(a,b)=>p3(a.x-b.x,a.y-b.y,a.z-b.z);const cross=(a,b)=>p3(a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x);const dot=(a,b)=>a.x*b.x+a.y*b.y+a.z*b.z;const norm=x=>{const q=Math.hypot(x.x,x.y,x.z)||1;return p3(x.x/q,x.y/q,x.z/q)};const forward=norm(sub(target,eye)),right=norm(cross(forward,p3(0,0,1))),up=norm(cross(right,forward));return{eye,forward,right,up,dot}}
 function projector(s,w,h){const c=camera(s),focal=w*s.lens/36;return(point)=>{const v=p3(point.x-c.eye.x,point.y-c.eye.y,point.z-c.eye.z),depth=c.dot(v,c.forward);if(depth<.04)return null;const q=focal/depth;return{x:w*.5+c.dot(v,c.right)*q,y:h*.55-c.dot(v,c.up)*q,d:depth}}}
 function line(ctx,pts,color,width=1,alpha=1){if(pts.length<2)return;ctx.beginPath();let f=true;for(const p of pts){if(!p)continue;if(f){ctx.moveTo(p.x,p.y);f=false}else ctx.lineTo(p.x,p.y)}ctx.globalAlpha=alpha;ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();ctx.globalAlpha=1}
 function polygon(ctx,pts,fill,stroke=null,width=1){if(pts.some(p=>!p))return;ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);ctx.closePath();if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke()}}
@@ -167,14 +168,14 @@ function ringLine(ctx,P,s,r,z,outer=false,color='#e0d7b5',width=1,from=0,to=2*pi
 function scenePerspective(ctx,s,w,h,subtle=false){const P=projector(s,w,h);ctx.clearRect(0,0,w,h);const bg=ctx.createLinearGradient(0,0,0,h);bg.addColorStop(0,'#314a57');bg.addColorStop(.52,'#1d3748');bg.addColorStop(1,'#0b1928');ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
  // Distant atmospheric glow, a viewport effect and not physical Cycles light.
  const gl=ctx.createRadialGradient(w*.5,h*.27,6,w*.5,h*.3,w*.72);gl.addColorStop(0,'#b9d1cc33');gl.addColorStop(1,'#09172500');ctx.fillStyle=gl;ctx.fillRect(0,0,w,h);
- const R=s.outerRadius,g=s.upperGallery,zTop=s.roofHeight,baseFloor=0,ns=subtle?48:96;
+ const R=s.outerRadius,g=s.upperGallery,zTop=s.roofHeight,outerZ=g+s.thirdLevelHeight,baseFloor=0,ns=subtle?48:96;
  // Floor stone slab, including its spatial plan grid.
  const floor=[];for(let i=0;i<=ns;i++)floor.push(P(oval(i/ns*2*pi,R,s,0,true)));polygon(ctx,floor,'#1b2d36','#6a737150',1);
  for(let rr=1.5;rr<R;rr+=1.7){ringLine(ctx,P,s,rr,.015,true,'#7b857c17',.75,0,2*pi,ns)}
  for(let i=0;i<22;i++){const t=i/22*2*pi;line(ctx,[P(p3(0,0,.02)),P(oval(t,R,s,.02,true))],'#abb9b01b',.7)}
- // Rear architectural wall, split into two levels with many ribs and niches.
- for(const [za,zb] of [[.15,3.21],[3.25,g],[g+.14,g+.84]]){
-  for(let j=0;j<30;j++){const a=j/30*pi,b=(j+1)/30*pi;const A=oval(a,R,s,za,true),B=oval(b,R,s,za,true),C=oval(b,R,s,zb,true),D=oval(a,R,s,zb,true);polygon(ctx,[P(A),P(B),P(C),P(D)],j%3?'#44505b52':'#65707940','#ffffff08',.4)}
+ // Three habitable levels: ground, first elevated gallery and second elevated gallery; roof remains separate.
+ for(const [tier,[za,zb]] of [[.15,3.21],[3.25,g],[g+.18,outerZ-.10]].entries()){
+  for(let j=0;j<30;j++){const a=j/30*pi,b=(j+1)/30*pi;const A=oval(a,R,s,za,true),B=oval(b,R,s,za,true),C=oval(b,R,s,zb,true),D=oval(a,R,s,zb,true);polygon(ctx,[P(A),P(B),P(C),P(D)],tier===2?(j%3?'#46627a57':'#91b6c246'):(j%3?'#44505b52':'#65707940'),'#ffffff08',.4)}
  }
  // Arcades: back semicircle columns, gallery floors, lintels, light coves.
  for(const gz of [3.21,g]){
@@ -182,12 +183,13 @@ function scenePerspective(ctx,s,w,h,subtle=false){const P=projector(s,w,h);ctx.c
   ringLine(ctx,P,s,R-.26,gz+.12,true,'#e8d9b4',subtle?1:2,0,pi,ns);
   ringLine(ctx,P,s,R-.43,gz+.29,true,'#8d9b9c',1,0,pi,ns);
  }
- for(let j=0;j<=18;j++){const t=j/18*pi;for(const [za,zb] of [[.08,3.21],[3.38,g]]){
+ for(let j=0;j<=18;j++){const t=j/18*pi;for(const [za,zb] of [[.08,3.21],[3.38,g],[g+.20,outerZ-.10]]){
   const a=oval(t,R-.32,s,za,true),b=oval(t,R-.32,s,zb,true);line(ctx,[P(a),P(b)],'#acaba0',subtle?1:2.4,.83);
   if(j<18){const t2=(j+1)/18*pi,mid=(t+t2)/2;const arch=[P(oval(t,R-.28,s,zb-.58,true)),P(oval(t+.18*(t2-t),R-.28,s,zb-.17,true)),P(oval(mid,R-.28,s,zb-.05,true)),P(oval(t2-.18*(t2-t),R-.28,s,zb-.17,true)),P(oval(t2,R-.28,s,zb-.58,true))];line(ctx,arch,'#b7b4a4',subtle?1:1.5,.76)}
  }}
  // Back half of ribbed upper vault: no front occluding wall in this cutaway.
- const outerZ=g+.77;const seg=subtle?28:56,radialN=8;
+ ringLine(ctx,P,s,R-.28,outerZ-.02,true,'#d6ccb1',subtle?1:1.6,0,pi,ns);
+  const seg=subtle?28:56,radialN=8;
  function roofZ(t){return outerZ+(zTop-outerZ)*Math.pow(Math.sin(t*pi/2),.65+s.vaultCurve*1.25)}
  for(let i=0;i<seg;i++){
   const th=i*pi/seg,nt=(i+1)*pi/seg;
@@ -254,37 +256,40 @@ function sceneSection(ctx,s,w,h){
   line(ctx,[map(-outerDepth,z+.25),map(outerDepth,z+.25)],'#81969c',1);
   ctx.font='12px ui-sans-serif,sans-serif';ctx.fillStyle='#d7e1e3';ctx.fillText(nf(z)+' BU',mx+outerDepth*scale+8,my-z*scale+4);
  }
- const outerZ=s.upperGallery+.77;
+ const outerZ=s.upperGallery+s.thirdLevelHeight;
  for(const side of [-1,1]){
   const pts=[];for(let k=0;k<=36;k++){const t=k/36,r=outerDepth*(1-t)+innerDepth*t,z=outerZ+(s.roofHeight-outerZ)*Math.pow(Math.sin(t*pi/2),.65+s.vaultCurve*1.25);pts.push(map(side*r,z))}
   line(ctx,pts,'#decda8',3);line(ctx,[map(side*outerDepth,0),map(side*outerDepth,outerZ)],'#94a7ab',2);
  }
  line(ctx,[map(-innerDepth,s.roofHeight),map(innerDepth,s.roofHeight)],'#b9e6ed',4);
  for(const side of [-1,1]){const y=side*innerDepth;line(ctx,[map(y,s.roofHeight-s.shortReveal),map(y,s.roofHeight)],'#e1c995',3)}
+ line(ctx,[map(-outerDepth,outerZ),map(outerDepth,outerZ)],'#d6ccb1',1.5,.7);
  for(let i=0;i<4;i++){const {y}=portalCenter(i,s);line(ctx,[map(y,.1),map(y,s.glassHeight)],'#6cdef2',5,.8)}
+ ctx.fillStyle='#d2dce0';ctx.font='11px sans-serif';const guideX=mx-outerDepth*scale*.80;
+ for(const [name,za,zb] of [['1 · piano terra',0,3.21],['2 · prima galleria',3.21,s.upperGallery],['3 · seconda galleria',s.upperGallery,outerZ]])ctx.fillText(name,guideX,my-(za+zb)*.5*scale);
  ctx.fillStyle='#b4d8e3';ctx.font='11px sans-serif';ctx.fillText('OSSERVATORE (-Y)',Math.max(10,mx-outerDepth*scale-12),h-40);
  ctx.font='12px ui-sans-serif,sans-serif';ctx.fillStyle='#decda8';ctx.fillText('SEZIONE LONGITUDINALE · BU',20,h-18);
 }
 function resizeCanvas(canvas,dpr=window.devicePixelRatio||1){const rect=canvas.getBoundingClientRect();const w=Math.max(160,Math.floor(rect.width)),h=Math.max(140,Math.floor(rect.height));if(canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)){canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr)}const ctx=canvas.getContext('2d',{alpha:false});ctx.setTransform(dpr,0,0,dpr,0,0);return{ctx,w,h}}
 function drawMini(){if(window.innerWidth>860)return;const canvas=$('miniPreview'),{ctx,w,h}=resizeCanvas(canvas);scenePerspective(ctx,state,w,h,true)}
 function draw(){const canvas=$('scene'),{ctx,w,h}=resizeCanvas(canvas);if(currentView==='perspective')scenePerspective(ctx,state,w,h);else if(currentView==='plan')scenePlan(ctx,state,w,h);else sceneSection(ctx,state,w,h);$('viewLabel').textContent={perspective:'Prospettiva architettonica',plan:'Pianta parametrica',section:'Sezione architettonica'}[currentView];$('viewHint').textContent=currentView==='perspective'?'Trascina orizzontalmente sul disegno per cambiare l’angolo.':'Le viste sono calcolate con gli stessi parametri della prospettiva.';drawMini()}
-function summary(s){return `Oculo ${nf(s.oculusRadius)} BU · allungamento ×${nf(s.ellipseRatio)} · volta ${nf(s.roofHeight)} BU · portali ${s.portalSpan}°`}
+function summary(s){return `3 livelli (terra + 2 gallerie) · quota lucernario ${nf(s.roofHeight)} BU · altezza terzo livello ${nf(s.thirdLevelHeight)} BU · portali ${s.portalSpan}°`}
 function drawComparisons(){for(const n of ['A','B']){const can=$('preview'+n),{ctx,w,h}=resizeCanvas(can);if(snapshots[n]){scenePerspective(ctx,snapshots[n],w,h,true);$('summary'+n).textContent=summary(snapshots[n])}else{ctx.fillStyle='#1c3340';ctx.fillRect(0,0,w,h);ctx.fillStyle='#91aebd';ctx.font='13px sans-serif';ctx.fillText('Variante non salvata',12,h/2);$('summary'+n).textContent='Nessuna variante salvata'}}}
 function status(msg){$('status').textContent=msg}
-function configDocument(){const problems=warnings(state);if(problems.length)throw Error(problems.join(' '));return{schema:'atlas.gateway.parametric-selection/v2',simulator_version:VERSION,title:'Atlas Gateway — proposta di geometria parametrica',created_at:new Date().toISOString(),reference:{name:'ART-DIR-02',sha256:CANONICAL,archived_at:'https://drive.google.com/file/d/1vSC_ynSxAF-pxR071TiKjEE0OtaFjXCn/view'},blender_baseline:{source_repository:'atlas',source_repository_id:1376266693,qualified_pr:185,source_workflow_run:45008316673,arch_and_variant:$('modelSelect').value},units:'BU',coordinate_system:'Blender Z up',portal_placement:'far_side_relative_to_camera',parameters:{...state},saved_comparisons:{A:snapshots.A?{...snapshots.A}:null,B:snapshots.B?{...snapshots.B}:null},decision:{status:'proposta_da_qualificare',art_approved:false,user_selection_recorded:true,ready_for_blender_review:true,automatically_merge:false,automatically_publish:false},limits_note:'Controllo di coerenza geometrica di base; l’anteprima procedurale non coincide con il modello Blender qualificato e non certifica giunzioni, ombre o prestazioni.'}}
+function configDocument(){const problems=warnings(state);if(problems.length)throw Error(problems.join(' '));return{schema:'atlas.gateway.parametric-selection/v3',simulator_version:VERSION,title:'Atlas Gateway — proposta di geometria parametrica',created_at:new Date().toISOString(),reference:{name:'ART-DIR-02',sha256:CANONICAL,archived_at:'https://drive.google.com/file/d/1vSC_ynSxAF-pxR071TiKjEE0OtaFjXCn/view'},blender_baseline:{source_repository:'atlas',source_repository_id:1376266693,qualified_pr:185,source_workflow_run:45008316673,arch_and_variant:$('modelSelect').value},units:'BU',coordinate_system:'Blender Z up',portal_placement:'far_side_relative_to_camera',architecture_levels:{count:3,ground_floor_z:0,first_gallery_z:3.21,second_gallery_z:state.upperGallery,roof_spring_z:Number((state.upperGallery+state.thirdLevelHeight).toFixed(4))},parameters:{...state},saved_comparisons:{A:snapshots.A?{...snapshots.A}:null,B:snapshots.B?{...snapshots.B}:null},decision:{status:'proposta_da_qualificare',art_approved:false,user_selection_recorded:true,ready_for_blender_review:true,automatically_merge:false,automatically_publish:false},limits_note:'Controllo di coerenza geometrica di base; l’anteprima procedurale non coincide con il modello Blender qualificato e non certifica giunzioni, ombre o prestazioni.'}}
 function exportJSON(){try{const doc=configDocument(),data=JSON.stringify(doc,null,2)+'\n',blob=new Blob([data],{type:'application/json'}),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='ATLAS-SCELTA-PARAMETRICA-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),400);status('Proposta JSON salvata. Per consolidarla nel modello Blender, conserva e condividi questo file.')}catch(e){status(e.message)}}
 function copyJSON(){try{const data=JSON.stringify(configDocument(),null,2);if(navigator.clipboard?.writeText){navigator.clipboard.writeText(data).then(()=>status('Parametri copiati negli appunti.'),()=>manualCopy(data))}else manualCopy(data)}catch(e){status(e.message)}}
 function manualCopy(data){const ta=document.createElement('textarea');ta.value=data;ta.style.cssText='position:fixed;top:-5000px';document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();status(ok?'Parametri copiati negli appunti.':'Utilizza Salva proposta JSON per conservare i parametri.')}
-function saveSnapshot(letter){snapshots[letter]={...state};try{localStorage.setItem('atlas-parametric-v2-'+letter,JSON.stringify(snapshots[letter]))}catch{}status('Variante '+letter+' salvata nel simulatore. Esporta il JSON per conservarla in modo permanente.');if(compareOpen)drawComparisons()}
+function saveSnapshot(letter){snapshots[letter]={...state};try{localStorage.setItem('atlas-parametric-v3-'+letter,JSON.stringify(snapshots[letter]))}catch{}status('Variante '+letter+' salvata nel simulatore. Esporta il JSON per conservarla in modo permanente.');if(compareOpen)drawComparisons()}
 function loadSnapshot(letter){if(!snapshots[letter]){status('Non è stata ancora salvata la variante '+letter+'.');return}setState(snapshots[letter]);status('Variante '+letter+' ripristinata.')}
 $('saveA').onclick=()=>saveSnapshot('A');$('saveB').onclick=()=>saveSnapshot('B');$('loadA').onclick=()=>loadSnapshot('A');$('loadB').onclick=()=>loadSnapshot('B');$('restoreA').onclick=()=>loadSnapshot('A');$('restoreB').onclick=()=>loadSnapshot('B');$('compareButton').onclick=()=>{compareOpen=!compareOpen;$('comparison').classList.toggle('open',compareOpen);$('compareButton').textContent=compareOpen?'Chiudi confronto':'Confronta A / B';if(compareOpen)drawComparisons()};$('reset').onclick=()=>{setState(BASE);status('Parametri iniziali ripristinati. Le varianti A/B salvate rimangono disponibili.')};$('export').onclick=exportJSON;$('copy').onclick=copyJSON;$('modelSelect').onchange=()=>changed();
 for(const btn of document.querySelectorAll('[data-preset]'))btn.onclick=()=>{setState(PRESETS[btn.dataset.preset]);for(const b of document.querySelectorAll('[data-preset]'))b.classList.toggle('selected',b===btn);status('Configurazione '+btn.textContent.trim()+' caricata. Puoi modificare i parametri.')};
 for(const btn of document.querySelectorAll('[data-view]'))btn.onclick=()=>{currentView=btn.dataset.view;for(const b of document.querySelectorAll('[data-view]')){b.classList.toggle('active',b===btn);b.setAttribute('aria-pressed',b===btn?'true':'false')}draw()};
-$('importFile').addEventListener('change',async ev=>{const file=ev.target.files?.[0];if(!file)return;try{if(file.size>100000)throw Error('Il file supera la dimensione consentita (100 KB).');const json=JSON.parse(await file.text());if(json.schema!=='atlas.gateway.parametric-selection/v2')throw Error('File precedente o non riconosciuto: il nuovo formato posiziona i portali sul lato lontano.');if(json.portal_placement!=='far_side_relative_to_camera')throw Error('Orientamento dei portali non verificato.');if(json.reference?.sha256!==CANONICAL)throw Error('Il riferimento ART-DIR-02 non corrisponde.');const params=checkedConfig(json.parameters);setState(params);if(json.saved_comparisons){for(const letter of ['A','B'])if(json.saved_comparisons[letter])snapshots[letter]=checkedConfig(json.saved_comparisons[letter])}if(/^[AB]-J[34]$/.test(json.blender_baseline?.arch_and_variant))$('modelSelect').value=json.blender_baseline.arch_and_variant;changed();status('Configurazione importata. Controlla le quote prima di esportare nuovamente.')}catch(e){status('Importazione non eseguita: '+e.message)}finally{ev.target.value=''}});
+$('importFile').addEventListener('change',async ev=>{const file=ev.target.files?.[0];if(!file)return;try{if(file.size>100000)throw Error('Il file supera la dimensione consentita (100 KB).');const json=JSON.parse(await file.text());if(json.schema!=='atlas.gateway.parametric-selection/v3')throw Error('Formato precedente o non riconosciuto: questa versione prevede tre livelli distinti e portali sul lato lontano.');if(json.portal_placement!=='far_side_relative_to_camera')throw Error('Orientamento dei portali non verificato.');if(json.architecture_levels?.count!==3)throw Error('La proposta non dichiara i tre livelli architettonici.');if(json.reference?.sha256!==CANONICAL)throw Error('Il riferimento ART-DIR-02 non corrisponde.');const params=checkedConfig(json.parameters);setState(params);if(json.saved_comparisons){for(const letter of ['A','B'])if(json.saved_comparisons[letter])snapshots[letter]=checkedConfig(json.saved_comparisons[letter])}if(/^[AB]-J[34]$/.test(json.blender_baseline?.arch_and_variant))$('modelSelect').value=json.blender_baseline.arch_and_variant;changed();status('Configurazione importata. Controlla le quote prima di esportare nuovamente.')}catch(e){status('Importazione non eseguita: '+e.message)}finally{ev.target.value=''}});
 $('referenceImage').addEventListener('error',()=>{$('referenceImage').style.display='none';$('refFallback').style.display='inline'});$('referenceImage').addEventListener('load',()=>{$('referenceImage').style.display='block';$('refFallback').style.display='none'});
 $('referenceFile').addEventListener('change',ev=>{const f=ev.target.files?.[0];if(!f)return;if(!f.type.startsWith('image/')||f.size>12000000){status('Carica un’immagine fino a 12 MB.');return}const r=new FileReader();r.onload=()=>{$('referenceImage').src=r.result;status('Riferimento locale caricato, non inviato a servizi esterni.')};r.readAsDataURL(f)});
 let dragging=false,startX=0,startYaw=0;const canv=$('scene');canv.addEventListener('pointerdown',e=>{if(currentView!=='perspective')return;dragging=true;startX=e.clientX;startYaw=state.cameraYaw;canv.setPointerCapture(e.pointerId)});canv.addEventListener('pointermove',e=>{if(!dragging)return;state.cameraYaw=clamp(Math.round(startYaw+(e.clientX-startX)*.12),limits.cameraYaw[2],limits.cameraYaw[3]);changed()});canv.addEventListener('pointerup',()=>dragging=false);canv.addEventListener('pointercancel',()=>dragging=false);
-try{for(const letter of ['A','B']){const saved=localStorage.getItem('atlas-parametric-v2-'+letter);if(saved)snapshots[letter]=checkedConfig(JSON.parse(saved))}}catch{}
+try{for(const letter of ['A','B']){const saved=localStorage.getItem('atlas-parametric-v3-'+letter);if(saved)snapshots[letter]=checkedConfig(JSON.parse(saved))}}catch{}
 groupUI();changed();window.addEventListener('resize',()=>{draw();if(compareOpen)drawComparisons()});
 })();
 </script>
