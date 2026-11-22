@@ -2,6 +2,16 @@
 
 **Stato:** sperimentazione privata, non pubblicata; configurazioni di progetto, non modelli Blender approvati.
 
+## Correzione orientamento portali — SIM-01.1 (22 novembre 2026)
+
+Rilievo dell'ideatore: i pannelli risultavano erroneamente sul lato vicino all'osservatore. La camera HERO procedurale guarda da **Y negativa** verso il centro; l'arco dei quattro pannelli era centrato su **270° (−Y)**. Ora l'arco è centrato su **90° (+Y)**, sul **lato opposto all'osservatore**, in modo uniforme nelle tre viste e nell'anteprima mobile. La sezione è ora longitudinale lungo l'asse di profondità Y; pianta e sezione indicano il lato dell'osservatore.
+
+La correzione non inverte la telecamera, non altera la natura vetrata dei pannelli e non sposta il podio. Il controllo dei parametri impedisce di esportare proposte nelle quali un pannello, compresi gli estremi della sua larghezza, attraversi verso il semispazio dell'osservatore anche quando si modifica l'angolo di camera.
+
+**Compatibilità:** contratto esportazione `atlas.gateway.parametric-selection/v2`, campo obbligatorio `portal_placement: "far_side_relative_to_camera"`, versione simulatore 1.1.0. Le precedenti proposte v1 e le vecchie varianti locali non vengono reinterpretate in silenzio; restano consultabili nella versione originaria del simulatore. Non si tratta ancora di una modifica dei modelli Blender qualificati.
+
+
+
 ## Dove si apre
 
 `public/atlas-gateway/simulatore-parametrico.html` è un singolo file HTML autosufficiente, utilizzabile nel navigatore anche senza accesso a Internet. Contiene direttamente il JPEG canonico ART-DIR-02 (SHA-256 `a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe`), senza richieste di rete né servizi a pagamento.
@@ -23,10 +33,11 @@ Quando il file sarà eventualmente esposto in una distribuzione autorizzata di N
 
 ## Contratto JSON e validazione
 
-Schema logico `atlas.gateway.parametric-selection/v1`, unita `BU`, asse `Z` verticale. Il file contiene `parameters`, modello di origine `A/B × J3/J4`, checksum del canone, snapshot A/B e:
+Schema logico `atlas.gateway.parametric-selection/v2`, unita `BU`, asse `Z` verticale. Il file contiene `parameters`, modello di origine `A/B × J3/J4`, checksum del canone, snapshot A/B e:
 
 ```json
 {
+  "portal_placement": "far_side_relative_to_camera",
   "decision": {
     "status": "proposta_da_qualificare",
     "art_approved": false,
