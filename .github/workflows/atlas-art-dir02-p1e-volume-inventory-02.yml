@@ -1,0 +1,86 @@
+name: ATLAS ART-DIR-02 P1E-VOLUME-02 architectural inventory
+on:
+  pull_request:
+    branches: [work/atlas-artdir02-p1e-framing-01]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [work/atlas-artdir02-p1e-volume-02]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify inventory syntax
+        run: python3 -m py_compile scripts/atlas-gateway-production/p1e_volume_inventory_02.py
+      - name: Retrieve original qualified Blender assets
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45008316673
+          pattern: atlas-art-dir02-p1d-oculus-03-1
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/qualified
+      - name: Verify source identity
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])/"qualified"
+          for a in "AB":
+            receipt=json.loads((root/f"atlas-p1d-oculus-03-{a}-receipt.json").read_text())
+            assert receipt["schema"]=="atlas.artdir02.p1d-oculus-manifold/v1"
+            assert receipt["canonical_art_sha256"]=="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+            for mode in ("J3","J4"):
+              f=root/f"atlas-p1d-oculus-03-{a}-{mode}.blend"
+              assert hashlib.sha256(f.read_bytes()).hexdigest()==receipt["variants"][mode]["editable_blend"]["sha256"]
+          print("ARCHITECTURAL_SOURCE_SHA256_OK")
+          PY
+      - name: Install Blender
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender
+      - name: Inspect real geometry and architectural bands without modifying models
+        run: |
+          mkdir -p "$RUNNER_TEMP/volume-inventory"
+          for arch in A B; do
+            for mode in J3 J4; do
+              blender -b "$RUNNER_TEMP/qualified/atlas-p1d-oculus-03-$arch-$mode.blend" \
+              --threads 2 --python-exit-code 1 \
+              --python scripts/atlas-gateway-production/p1e_volume_inventory_02.py -- \
+              --arch "$arch" --variant "$mode" \
+              --receipt "$RUNNER_TEMP/qualified/atlas-p1d-oculus-03-$arch-receipt.json" \
+              --out "$RUNNER_TEMP/volume-inventory"
+            done
+          done
+      - name: Check inventory integrity
+        run: |
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])/"volume-inventory"
+          for a in "AB":
+            for mode in ("J3","J4"):
+              r=json.loads((root/f"atlas-p1e-volume-02-{a}-{mode}-inventory.json").read_text())
+              assert r["schema"]=="atlas.artdir02.p1e-volume-inventory/v1"
+              assert r["source_binary_unchanged"] and not r["saved"]
+              assert r["arch"]==a and r["structural_variant"]==mode
+              assert r["scene_object_count"]>=50
+              names={o["name"] for o in r["objects"]}
+              assert f"ARCH {a} raised oculus rim" in names
+              assert f"ARCH {a} upper parapet" in names
+              assert "CAM_HERO_ARCH04" in names
+              assert "ATLAS R7 • one dark skylight collar" in names
+              print("VOLUME02_INVENTORY_QUALIFIED",a,mode,len(names))
+          PY
+      - name: Preserve authentic architectural inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-p1e-volume-02-inventory-${{ github.run_number }}
+          path: ${{ runner.temp }}/volume-inventory/
+          retention-days: 30
+          if-no-files-found: error
