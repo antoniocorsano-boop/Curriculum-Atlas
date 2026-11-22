@@ -1,0 +1,118 @@
+name: "ATLAS ART-DIR-02 — P1D-OCULUS diagnosi contorni"
+on:
+  pull_request:
+    branches: [work/atlas-artdir02-p1d-optical-shift-01]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-p1d-oculus-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  oculus-source-isolation:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'work/atlas-artdir02-p1d-oculus-diagnostics-01'
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile real Blender diagnostic source
+        run: python3 -m py_compile scripts/atlas-gateway-production/p1d_oculus_diagnostics_01.py
+      - name: Retrieve immutable optical A-S1 and B-S1 sources
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 44981771278
+          pattern: atlas-art-dir02-p1d-opt-1
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/opt
+      - name: Qualify exact optical Blender sources and receipts
+        run: |
+          python3 - <<'PY'
+          import json,hashlib,os
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])/'opt'
+          sources={
+              'A':'aaa26dadd12db864ed29e2417c565e4b8888b86f0953378c63918b5aef7fcbb9',
+              'B':'a6fa0e3ad34e55305eea3524a9cae652bb59df173da57e6680c79bc81583363f'}
+          sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+          for arch,expected in sources.items():
+              r=json.loads((root/('atlas-p1d-opt-'+arch+'-receipt.json')).read_text())
+              model=root/('atlas-p1d-opt-'+arch+'-S1.blend')
+              assert r['schema']=='atlas.artdir02.p1d-optical-shift/v1'
+              assert sha(model)==expected==r['cases']['S1']['editable_model']['sha256']
+              assert r['canonical_art_sha256']=='a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe'
+              assert not r['human_art_approved'] and r['no_merge']
+              print('P1D_OCULUS_VERIFIED_ORIGINAL_SOURCE',arch,expected)
+          PY
+      - name: Install Blender Cycles and geometry dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Isolate original radial mullions on ARCH-A-S1 in genuine Blender
+        run: |
+          mkdir -p "$RUNNER_TEMP/oculus"
+          blender -b "$RUNNER_TEMP/opt/atlas-p1d-opt-A-S1.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/p1d_oculus_diagnostics_01.py -- \
+            --out "$RUNNER_TEMP/oculus" --arch A
+      - name: Isolate original radial mullions on ARCH-B-S1 in genuine Blender
+        run: |
+          blender -b "$RUNNER_TEMP/opt/atlas-p1d-opt-B-S1.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/p1d_oculus_diagnostics_01.py -- \
+            --out "$RUNNER_TEMP/oculus" --arch B
+      - name: Validate scenario coverage, immutable geometry and image receipts
+        run: |
+          python3 - <<'PY'
+          import json,hashlib,os
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])/'oculus'
+          source_shas={
+              'A':'aaa26dadd12db864ed29e2417c565e4b8888b86f0953378c63918b5aef7fcbb9',
+              'B':'a6fa0e3ad34e55305eea3524a9cae652bb59df173da57e6680c79bc81583363f'}
+          scenarios={'BASE','LEGACY_OFF','LEGACY_RAISED','RIM_OFF','VAULT_OFF'}
+          sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+          for arch,source_sha in source_shas.items():
+              r=json.loads((root/('atlas-p1d-oculus-'+arch+'-receipt.json')).read_text())
+              assert r['schema']=='atlas.artdir02.p1d-oculus-diagnostic/v1'
+              assert r['source_opt_s1_sha256']==source_sha and r['architecture']==arch
+              assert r['art_reference_sha256']=='a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe'
+              assert r['geometry_original_preserved'] and r['camera_preserved']
+              assert r['source_original_hide_render_restored']
+              assert r['total_legacy_radial_objects']==12
+              assert len(r['visible_legacy_radials'])==4
+              assert r['no_automatic_artistic_winner'] and not r['human_art_approved']
+              assert r['no_merge'] and r['no_deploy']
+              assert set(r['cases'])==scenarios
+              assert len(r['inventoried_architectural_objects'])>=15
+              assert abs(r['applied_raised_copy_delta_z_bu']-(.52 if arch=='A' else 1.))<1e-4
+              for name,c in r['cases'].items():
+                  p=root/c['render']['file']
+                  assert p.stat().st_size>12000 and sha(p)==c['render']['sha256']
+                  assert c['original_source_unchanged'] and not c['art_approved']
+                  if name in ('LEGACY_OFF','LEGACY_RAISED'):
+                      assert len(c['hidden_original_names'])==4
+                      m=root/c['editable_model']['file']
+                      assert m.stat().st_size>1000000 and sha(m)==c['editable_model']['sha256']
+                  if name=='LEGACY_RAISED':
+                      assert c['created_copy_count']==4
+                  else:
+                      assert c['created_copy_count']==0
+                  if name in ('RIM_OFF','VAULT_OFF'):
+                      assert len(c['hidden_original_names'])==1
+                  if name=='BASE':
+                      assert not c['hidden_original_names']
+                  print('OCULUS',arch,name,'TRUE_RENDER_CHECK_PASS',p.stat().st_size)
+          print('10_REAL_CYCLES_IMAGES_AND_4_EDITABLE_BLENDS_TECH_PASS')
+          print('ARTISTIC_APPROVAL_STILL_REQUIRED; NO_PUBLICATION')
+          PY
+      - name: Archive render diagnostics and original-source fingerprints
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-p1d-oculus-${{ github.run_number }}
+          path: ${{ runner.temp }}/oculus/
+          if-no-files-found: warn
+          retention-days: 30
