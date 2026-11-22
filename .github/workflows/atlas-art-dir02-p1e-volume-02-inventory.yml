@@ -1,0 +1,86 @@
+name: ATLAS ART-DIR-02 P1E-VOLUME-02 architectural inventory
+on:
+  pull_request:
+    branches: [work/atlas-artdir02-p1e-framing-01]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [work/atlas-artdir02-p1e-volume-02]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-p1e-volume02-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  inventory:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.head_ref == 'work/atlas-artdir02-p1e-volume-02'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python program syntax audit
+        run: python3 -m py_compile scripts/atlas-gateway-production/p1e_volume_02_inventory.py
+      - name: Recover qualified A/B J3/J4 originals
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45008316673
+          pattern: atlas-art-dir02-p1d-oculus-03-1
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/qualified
+      - name: Install native Blender
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender
+      - name: Inventory original structural objects without modifying .blend
+        run: |
+          mkdir -p "$RUNNER_TEMP/volume02"
+          for arch in A B; do
+            for mode in J3 J4; do
+              blender -b "$RUNNER_TEMP/qualified/atlas-p1d-oculus-03-$arch-$mode.blend" \
+                --threads 2 --python-exit-code 1 \
+                --python scripts/atlas-gateway-production/p1e_volume_02_inventory.py -- \
+                --arch "$arch" --variant "$mode" \
+                --receipt "$RUNNER_TEMP/qualified/atlas-p1d-oculus-03-$arch-receipt.json" \
+                --out "$RUNNER_TEMP/volume02"
+            done
+          done
+      - name: Independently verify inventory provenance and bounds
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os,json,math
+          base=Path(os.environ["RUNNER_TEMP"])/"volume02"
+          inventory={}
+          for a in "AB":
+            for m in ("J3","J4"):
+              p=base/f"atlas-p1e-volume-02-inventory-{a}-{m}.json"
+              r=json.loads(p.read_text())
+              assert r["schema"]=="atlas.artdir02.p1e-volume-inventory/v1"
+              assert r["canonical_art_sha256"]=="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+              assert r["no_merge"] and r["no_deploy"] and not r["art_approved"]
+              assert r["original_source_saved"] is False and r["original_scene_modified"] is False
+              assert len(r["all_objects"])==r["total_object_count"]
+              for n,v in r["landmarks"].items():
+                assert len(v["bounds"]["min"])==3
+                assert all(v["bounds"]["max"][i]>=v["bounds"]["min"][i] for i in range(3))
+                assert all(math.isfinite(x) for z in (v["bounds"]["min"],v["bounds"]["max"]) for x in z)
+              inventory[a,m]=r
+              print("P1E_VOLUME_INVENTORY_PASS",a,m,len(r["all_objects"]))
+          for a in "AB":
+            x,y=inventory[a,"J3"],inventory[a,"J4"]
+            assert x["source_sha256"]!=y["source_sha256"]
+            for n in ("ARCH04 • upper gallery deck","ARCH04 • first gallery deck",f"ARCH {a} raised oculus rim"):
+              assert abs(x["landmarks"][n]["bounds"]["center"][2]-
+                         y["landmarks"][n]["bounds"]["center"][2])<.01
+          print("P1E_VOLUME_02_FOUR_STRUCTURAL_INVENTORIES_QUALIFIED")
+          PY
+      - name: Preserve original scene inventory reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-artdir02-p1e-volume-02-inventory-${{ github.run_number }}
+          path: ${{ runner.temp }}/volume02/
+          retention-days: 30
+          if-no-files-found: warn
