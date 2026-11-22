@@ -1,0 +1,151 @@
+name: ATLAS ART-DIR-02 P1D-SKY-06 atmosphere comparison
+on:
+  pull_request:
+    branches: [work/atlas-artdir02-p1d-occlusion-isolation-05]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-sky06-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  sky-comparison:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'work/atlas-artdir02-p1d-sky-integration-06'
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Blender test script syntax
+        run: python3 -m py_compile scripts/atlas-gateway-production/p1d_sky_integration_06.py
+      - name: Fetch qualified real geometric A/B J3/J4 source models
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45008316673
+          pattern: atlas-art-dir02-p1d-oculus-03-1
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/qualified
+      - name: Fetch authenticated P1D-VIS-05 original-material controls
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45013050852
+          pattern: atlas-art-dir02-p1d-vis-05-1
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/vis05
+      - name: Qualify SHA-256, original material provenance and parent evidence
+        run: |
+          python3 - <<'PY'
+          import os,hashlib,json
+          from pathlib import Path
+          t=Path(os.environ["RUNNER_TEMP"])
+          for arch in "AB":
+            p=json.loads((t/"qualified"/f"atlas-p1d-oculus-03-{arch}-receipt.json").read_text())
+            assert p["schema"]=="atlas.artdir02.p1d-oculus-manifold/v1"
+            assert p["canonical_art_sha256"]=="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+            assert p["no_merge"] and p["no_deploy"] and not p["art_approved"]
+            for mode in ("J3","J4"):
+              meta=p["variants"][mode]["editable_blend"]
+              actual=t/"qualified"/meta["file"]
+              assert actual.exists() and hashlib.sha256(actual.read_bytes()).hexdigest()==meta["sha256"]
+              v=json.loads((t/"vis05"/f"atlas-p1d-vis-05-{arch}-{mode}-receipt.json").read_text())
+              assert v["schema"]=="atlas.artdir02.p1d-isolation/v1"
+              assert v["source_blend_sha256"]==meta["sha256"]
+              assert v["prior_vis04_baseline_reproduced"]
+              assert v["art_approved"] is False
+              print("SKY06_PARENT_EVIDENCE_PASS",arch,mode,meta["sha256"])
+          PY
+      - name: Install Blender Cycles
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Render four original-camera sky solutions x A/B x J3/J4
+        run: |
+          mkdir -p "$RUNNER_TEMP/sky06"
+          for arch in A B; do
+            for mode in J3 J4; do
+              blender -b "$RUNNER_TEMP/qualified/atlas-p1d-oculus-03-$arch-$mode.blend" \
+                --threads 2 --python-exit-code 1 \
+                --python scripts/atlas-gateway-production/p1d_sky_integration_06.py -- \
+                --arch "$arch" --variant "$mode" \
+                --oculus-receipt "$RUNNER_TEMP/qualified/atlas-p1d-oculus-03-$arch-receipt.json" \
+                --vis05-receipt "$RUNNER_TEMP/vis05/atlas-p1d-vis-05-$arch-$mode-receipt.json" \
+                --out "$RUNNER_TEMP/sky06"
+            done
+          done
+      - name: Independently verify 16 genuine Cycles images and all 4 reports
+        run: |
+          python3 - <<'PY'
+          import os,hashlib,json,math
+          from pathlib import Path
+          t=Path(os.environ["RUNNER_TEMP"])
+          root=t/"sky06"
+          cases=("BASE","CURVED_CLOUD","ATMOSPHERE_RING","ATMOSPHERE_OPEN")
+          rows=["# P1D-SKY-06 — Comparazione cieli originali, curvi e atmosferici",
+              "","Analisi sperimentale: stessa camera HERO, campioni Cycles, color management e lampade. Nei due casi atmosferici cambia intenzionalmente il mondo.","",
+              "| Architettura | Variante | Base | Cielo emissivo curvo | Atmosfera con collare | Atmosfera senza collare |",
+              "|---|---|---:|---:|---:|---:|"]
+          receipts={}
+          files=0
+          for a in "AB":
+            for m in ("J3","J4"):
+              f=root/f"atlas-p1d-sky-06-{a}-{m}-receipt.json"
+              assert f.exists()
+              rec=json.loads(f.read_text())
+              assert rec["schema"]=="atlas.artdir02.p1d-sky-integration/v1"
+              assert rec["arch"]==a and rec["structural_variant"]==m
+              assert rec["parent_vis05_run"]==45013050852
+              assert rec["parent_vis05_receipt_schema"]=="atlas.artdir02.p1d-isolation/v1"
+              assert rec["camera_and_exposure_original_unchanged"] and rec["fixed_original_lamps"]
+              assert rec["world_altered_only_in_atmosphere_cases"] and rec["test_mesh_created_and_removed"]
+              assert rec["original_sky_emission_shader_untouched"] and rec["original_collar_untouched"]
+              assert rec["J3_J4_original_roof_untouched"] and not rec["original_source_saved"]
+              assert rec["no_merge"] and rec["no_deploy"] and not rec["art_approved"]
+              assert set(rec["render_cases"])==set(cases)
+              assert rec["curved_sky"]["sample_rays_hitting_curved_sky_geometry"] >= .9 * rec["curved_sky"]["total_sample_rays"]
+              p=json.loads((t/"qualified"/f"atlas-p1d-oculus-03-{a}-receipt.json").read_text())
+              assert rec["source_sha256"]==p["variants"][m]["editable_blend"]["sha256"]
+              row=[a,m]
+              for case in cases:
+                item=rec["render_cases"][case]
+                img=root/item["image"]
+                assert img.is_file() and img.stat().st_size>1200
+                assert hashlib.sha256(img.read_bytes()).hexdigest()==item["sha256"]
+                c=item["configuration"]
+                assert c["atmosphere"]==(case in ("ATMOSPHERE_RING","ATMOSPHERE_OPEN"))
+                assert c["collar"]==(case!="ATMOSPHERE_OPEN")
+                phot=item["oculus_photometry"]
+                assert phot["samples"]==rec["curved_sky"]["total_sample_rays"]
+                assert math.isfinite(phot["mean_linear_rgb_proxy"])
+                assert phot["stddev_linear_rgb_proxy"]>=0
+                assert 0<=phot["fraction_above_0_3"]<=1
+                files+=1
+                row.append(f'{phot["mean_linear_rgb_proxy"]:.4f}')
+              rows.append("| "+" | ".join(row)+" |")
+              receipts[a,m]=rec
+              print("SKY06_CASE_QUALIFIED",a,m,row[2:])
+          for a in "AB":
+            q=receipts[a,"J3"];r=receipts[a,"J4"]
+            for c in cases:
+              p=q["render_cases"][c]["oculus_photometry"]["mean_linear_rgb_proxy"]
+              k=r["render_cases"][c]["oculus_photometry"]["mean_linear_rgb_proxy"]
+              assert abs(p-k)<.11, f"J3/J4 sky photometry differs unexpectedly {a} {c} {p} vs {k}"
+          assert files==16
+          rows+=["","Le medie sono indicatori di luminanza RGB del file PNG: NON sono lux né valutazioni estetiche.",
+            "Il cielo emissivo curvo riutilizza la texture originale con una nuova mesh temporanea.",
+            "La proposta atmosferica adopera Nishita e un mondo temporaneo: modifica la luce ambiente, non le lampade.",
+            "Queste immagini non qualificano la corrispondenza artistica ad ART-DIR-02: servirà selezione umana e possibile aggiustamento di esposizione.",
+            "Origini A/B J3/J4 verificate byte per byte; nessuna modifica permanente, PR in bozza, nessuna integrazione o pubblicazione."]
+          text="\n".join(rows)+"\n"
+          (root/"ATLAS-P1D-SKY-06-RAPPORTO.md").write_text(text)
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as f:f.write(text)
+          print("SKY06_ALL_16_CYCLES_IMAGES_AND_4_RECEIPTS_QUALIFIED")
+          PY
+      - name: Store all four receipts and 16 views without modifying originals
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-p1d-sky-06-${{ github.run_number }}
+          path: ${{ runner.temp }}/sky06/
+          if-no-files-found: warn
+          retention-days: 30
