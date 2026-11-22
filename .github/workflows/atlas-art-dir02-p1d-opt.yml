@@ -1,0 +1,118 @@
+name: "ATLAS ART-DIR-02 — P1D-OPT ricomposizione ottica"
+on:
+  pull_request:
+    branches: [work/atlas-artdir02-p1d-arch-height-01]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-p1d-opt-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  optical-lens-shift:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'work/atlas-artdir02-p1d-optical-shift-01'
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check real Blender experiment Python
+        run: python3 -m py_compile scripts/atlas-gateway-production/p1d_optical_shift_01.py
+      - name: Download verified ARCH height A and B Blender models
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 44980839245
+          pattern: atlas-art-dir02-p1d-arch-height-1
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/arch-source
+      - name: Verify both immutable sources, receipt and canonical image
+        run: |
+          python3 - <<'PY'
+          import json,hashlib,os
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])/'arch-source'
+          receipt=json.loads((root/'atlas-p1d-arch-height-01-receipt.json').read_text())
+          sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+          assert receipt['schema']=='atlas.artdir02.p1d-arch-height/v1'
+          assert receipt['canonical_image_sha256']=='a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe'
+          expected={
+              'A':'5caa24317093be2dfe5d56c5984bc3d1c4d40ce0f638bea773dfc592b58197fc',
+              'B':'653979b0a2c7f784552d03f3271e9d24a56e53dbdaacf0e73bbb8271e3ff9fcc'}
+          for key in ('A','B'):
+              model=root/('atlas-p1d-arch-height-'+key+'.blend')
+              assert sha(model)==expected[key]==receipt['variants'][key]['editable_blend']['sha256']
+          assert not receipt['art_approved'] and receipt['no_merge'] and receipt['no_deploy']
+          print('ARCH_A_AND_B_REAL_SOURCE_SHA256_VERIFIED')
+          PY
+      - name: Install Blender Cycles
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Calibrate camera shift and render ARCH A from true scene
+        run: |
+          mkdir -p "$RUNNER_TEMP/atlas-opt"
+          blender -b "$RUNNER_TEMP/arch-source/atlas-p1d-arch-height-A.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/p1d_optical_shift_01.py -- \
+            --out "$RUNNER_TEMP/atlas-opt" --arch A
+      - name: Calibrate camera shift and render ARCH B from true scene
+        run: |
+          blender -b "$RUNNER_TEMP/arch-source/atlas-p1d-arch-height-B.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/p1d_optical_shift_01.py -- \
+            --out "$RUNNER_TEMP/atlas-opt" --arch B
+      - name: Qualify all optical variants, integrity and measured visibility
+        run: |
+          python3 - <<'PY'
+          import json,hashlib,os
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])/'atlas-opt'
+          sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+          expected={
+              'A':'5caa24317093be2dfe5d56c5984bc3d1c4d40ce0f638bea773dfc592b58197fc',
+              'B':'653979b0a2c7f784552d03f3271e9d24a56e53dbdaacf0e73bbb8271e3ff9fcc'}
+          for arch in ('A','B'):
+              report=json.loads((root/('atlas-p1d-opt-'+arch+'-receipt.json')).read_text())
+              assert report['schema']=='atlas.artdir02.p1d-optical-shift/v1'
+              assert report['architecture']==arch and report['source_arch_sha256']==expected[arch]
+              assert report['optical_shift_only'] and report['source_architecture_intact']
+              assert not report['human_art_approved'] and report['no_merge'] and report['no_deploy']
+              assert set(report['cases'])=={'S1','S2'}
+              base=report['base']['composition']
+              assert base['oculus_visible_fraction']>.2
+              meta=[report['base']['render']]
+              for name,v in report['cases'].items():
+                  current=v['composition']
+                  assert v['camera_translation_unchanged'] and v['camera_rotation_unchanged']
+                  assert v['lens_unchanged'] and v['physical_architecture_unchanged']
+                  assert abs(v['headroom_delta_fraction'])<=1e-5
+                  assert abs(v['gallery_separation_delta_fraction'])<=1e-5
+                  assert abs(current['rim']['top']-v['target_rim_top_fraction'])<.018
+                  assert current['podium_visible_fraction']>.98
+                  assert all(q>.98 for q in current['portal_visibility'].values())
+                  assert current['oculus_visible_fraction']>base['oculus_visible_fraction']
+                  model=root/v['editable_model']['file']
+                  assert model.stat().st_size>1000000
+                  assert sha(model)==v['editable_model']['sha256']
+                  meta.append(v['render'])
+                  print(arch,name,'SHIFT_Y=',v['shift_y'],
+                        'OCULUS_VISIBLE=',current['oculus_visible_fraction'],
+                        'HEADROOM_UNCHANGED=',v['headroom_delta_fraction'])
+              assert abs(report['cases']['S1']['shift_y']-report['cases']['S2']['shift_y'])>=.01
+              for m in meta:
+                  png=root/m['file']
+                  assert png.stat().st_size>12000
+                  assert sha(png)==m['sha256']
+          print('SIX_REAL_CYCLES_IMAGES_FOUR_EDITABLE_CAMERA_MODELS_TECH_PASS')
+          print('ARTISTIC_APPROVAL_NOT_GRANTED; NO_PUBLISH')
+          PY
+      - name: Preserve images, editable Blender files, and receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-p1d-opt-${{ github.run_number }}
+          path: ${{ runner.temp }}/atlas-opt/
+          if-no-files-found: warn
+          retention-days: 30
