@@ -158,8 +158,17 @@ def hits(ob):
     deps.update()
     eo=ob.evaluated_get(deps)
     bvh=BVHTree.FromObject(eo,deps)
-    return sum(bvh.ray_cast(o,d)[0] is not None for u,v,o,d,x,y in samples)
+    world_to_local=eo.matrix_world.inverted()
+    local_rotation=world_to_local.to_3x3()
+    total=0
+    for u,v,o,d,x,y in samples:
+        local_origin=world_to_local@o
+        local_dir=(local_rotation@d).normalized()
+        if bvh.ray_cast(local_origin,local_dir)[0] is not None:
+            total+=1
+    return total
 baseline_hits=hits(sky)
+print("SKY07_BASELINE_WORLDSPACE_RAYS",ARCH,MODE,baseline_hits,"/",len(samples),flush=True)
 if baseline_hits<.85*len(samples):
     raise RuntimeError("Original sky screen lacks expected visible footprint")
 # Duplicate ORIGINAL mesh and UV: do not reconstruct a giant texture plane.
