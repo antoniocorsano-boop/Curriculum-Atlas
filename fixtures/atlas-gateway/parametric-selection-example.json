@@ -1,6 +1,6 @@
 {
-  "schema": "atlas.gateway.parametric-selection/v2",
-  "simulator_version": "1.1.0",
+  "schema": "atlas.gateway.parametric-selection/v3",
+  "simulator_version": "1.2.0",
   "title": "Atlas Gateway — proposta di geometria parametrica",
   "created_at": "2026-11-22T19:52:52.346Z",
   "reference": {
@@ -20,7 +20,7 @@
   "parameters": {
     "outerRadius": 9.6,
     "upperGallery": 5.95,
-    "roofHeight": 8.85,
+    "roofHeight": 11.15,
     "vaultCurve": 0.55,
     "outerElongation": 1.4,
     "oculusRadius": 5.13,
@@ -40,13 +40,14 @@
     "cameraDistance": 22.5,
     "cameraPitch": 3,
     "cameraYaw": 0,
-    "lens": 34
+    "lens": 34,
+    "thirdLevelHeight": 2.2
   },
   "saved_comparisons": {
     "A": {
       "outerRadius": 9.6,
       "upperGallery": 5.95,
-      "roofHeight": 8.85,
+      "roofHeight": 11.15,
       "vaultCurve": 0.55,
       "outerElongation": 1.4,
       "oculusRadius": 5.13,
@@ -66,12 +67,13 @@
       "cameraDistance": 22.5,
       "cameraPitch": 3,
       "cameraYaw": 0,
-      "lens": 34
+      "lens": 34,
+      "thirdLevelHeight": 2.2
     },
     "B": {
       "outerRadius": 9.6,
       "upperGallery": 5.49,
-      "roofHeight": 8.25,
+      "roofHeight": 10.1,
       "vaultCurve": 0.55,
       "outerElongation": 1.18,
       "oculusRadius": 5.13,
@@ -91,7 +93,8 @@
       "cameraDistance": 19.8,
       "cameraPitch": 3,
       "cameraYaw": 0,
-      "lens": 39
+      "lens": 39,
+      "thirdLevelHeight": 1.98
     }
   },
   "decision": {
@@ -102,6 +105,13 @@
     "automatically_merge": false,
     "automatically_publish": false
   },
-  "limits_note": "Controllo di coerenza geometrica di base; l’anteprima procedurale non coincide con il modello Blender qualificato e non certifica giunzioni, ombre o prestazioni.",
-  "portal_placement": "far_side_relative_to_camera"
+  "limits_note": "Tre livelli distinti nell'anteprima procedurale; non equivale a qualificazione di maglie Blender, render Cycles o compatibilità mobile finale.",
+  "portal_placement": "far_side_relative_to_camera",
+  "architecture_levels": {
+    "count": 3,
+    "ground_floor_z": 0,
+    "first_gallery_z": 3.21,
+    "second_gallery_z": 5.95,
+    "roof_spring_z": 8.15
+  }
 }
