@@ -1,0 +1,118 @@
+name: "ATLAS ART-DIR-02 — P1D-OCULUS-02 raccordo vero"
+on:
+  pull_request:
+    branches: [work/atlas-artdir02-p1d-oculus-diagnostics-01]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-oculus-02-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  real-oculus-junction:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'work/atlas-artdir02-p1d-oculus-raccord-02'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Python constructible script syntax
+        run: python3 -m py_compile scripts/atlas-gateway-production/p1d_oculus_raccord_02.py
+      - name: Download exact original optical A-S1/B-S1 Blender models
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 44981771278
+          pattern: atlas-art-dir02-p1d-opt-1
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/opt
+      - name: Independently verify both immutable source models and receipts
+        run: |
+          python3 - <<'PY'
+          import os,json,hashlib
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])/'opt'
+          expected={
+            'A':'aaa26dadd12db864ed29e2417c565e4b8888b86f0953378c63918b5aef7fcbb9',
+            'B':'a6fa0e3ad34e55305eea3524a9cae652bb59df173da57e6680c79bc81583363f'}
+          sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+          for arch,digest in expected.items():
+              p=root/('atlas-p1d-opt-'+arch+'-S1.blend')
+              receipt=json.loads((root/('atlas-p1d-opt-'+arch+'-receipt.json')).read_text())
+              assert sha(p)==receipt['cases']['S1']['editable_model']['sha256']==digest
+              assert receipt['schema']=='atlas.artdir02.p1d-optical-shift/v1'
+              assert receipt['canonical_art_sha256']=='a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe'
+              assert not receipt['human_art_approved'] and receipt['no_merge']
+              print('VERIFIED_SOURCE',arch,digest)
+          PY
+      - name: Install Blender and Cycles using free runner
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Build measured oculus joint candidates on A-S1 original
+        run: |
+          mkdir -p "$RUNNER_TEMP/raccord"
+          blender -b "$RUNNER_TEMP/opt/atlas-p1d-opt-A-S1.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/p1d_oculus_raccord_02.py -- \
+            --arch A --out "$RUNNER_TEMP/raccord"
+      - name: Build measured oculus joint candidates on B-S1 original
+        run: |
+          blender -b "$RUNNER_TEMP/opt/atlas-p1d-opt-B-S1.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/p1d_oculus_raccord_02.py -- \
+            --arch B --out "$RUNNER_TEMP/raccord"
+      - name: Independently check four real models, ten renders and C0 metrics
+        run: |
+          python3 - <<'PY'
+          import json,hashlib,os
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])/'raccord'
+          expected={
+            'A':'aaa26dadd12db864ed29e2417c565e4b8888b86f0953378c63918b5aef7fcbb9',
+            'B':'a6fa0e3ad34e55305eea3524a9cae652bb59df173da57e6680c79bc81583363f'}
+          sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+          for arch,digest in expected.items():
+              report=json.loads((root/('atlas-p1d-oculus-raccord-'+arch+'-receipt.json')).read_text())
+              assert report['schema']=='atlas.artdir02.p1d-oculus-raccord/v1'
+              assert report['arch']==arch and report['source_opt_s1_sha256']==digest
+              assert report['canonical_art_sha256']=='a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe'
+              assert report['camera_and_all_original_meshes_unchanged']
+              assert report['source_cc0_collections']==3
+              assert report['real_join_geometry'] and report['C0_position_measurements_only']
+              assert report['watertight_and_C1_not_certified']
+              assert not report['art_approved'] and report['no_merge'] and report['no_deploy']
+              assert set(report['variants'])=={'J1','J2'}
+              assert len(report['base']['signed_radial_gap_world_bu'])==4
+              assert report['base']['source_bezier_evaluated_samples']>=60
+              j1=report['variants']['J1']
+              j2=report['variants']['J2']
+              assert j1['metrics']['bridge_vertex_count']>=600
+              assert j1['metrics']['bridge_face_count']>=500
+              assert j1['metrics']['seam_end_rms_world_bu']<=1e-4
+              assert j2['metrics']['seam_end_max_world_bu']<=1e-4
+              assert j2['metrics']['minimum_radial_step_world_bu']>.015
+              files=[report['base']['render']]
+              for name,c in report['variants'].items():
+                  assert c['originals_preserved'] and not c['art_approved']
+                  model=root/c['editable_blend']['file']
+                  assert model.stat().st_size>1000000
+                  assert sha(model)==c['editable_blend']['sha256']
+                  files.extend((c['render'],c['section']))
+              for m in files:
+                  p=root/m['file']
+                  assert p.stat().st_size>12000 and sha(p)==m['sha256']
+              print('REAL_ARCH',arch,'SIGNED_GAP',report['base']['signed_radial_gap_world_bu'],
+                    'C0_J2_MAX',j2['metrics']['seam_end_max_world_bu'])
+          print('FOUR_EDITABLE_CANDIDATE_BLENDS_AND_TEN_REAL_RENDER_IMAGES_PASS')
+          print('NO_C1_OR_MANIFOLD_CLAIM__ARTISTIC_APPROVAL_NOT_GRANTED')
+          PY
+      - name: Preserve actual Blender models, measured receipts and Cycles images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-p1d-oculus-raccord-${{ github.run_number }}
+          path: ${{ runner.temp }}/raccord/
+          if-no-files-found: warn
+          retention-days: 30
