@@ -1,0 +1,105 @@
+name: ATLAS P1F — Padiglione alto e lucernario allungato
+on:
+  push:
+    branches: [work/atlas-artdir02-p1f-pavilion-01]
+  pull_request:
+    branches: [work/atlas-artdir02-p1e-volume-02]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-p1f-pavilion-01-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  real-blender-pavilion:
+    if: github.event_name != 'pull_request' || github.head_ref == 'work/atlas-artdir02-p1f-pavilion-01'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static syntax verification
+        run: python3 -m py_compile scripts/atlas-gateway-production/p1f_pavilion_01.py
+      - name: Recover the same qualified B/J4 editable source used by P1D and P1E
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45008316673
+          pattern: atlas-art-dir02-p1d-oculus-03-1
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/qualified
+      - name: Verify source SHA256 and ART-DIR-02 pedigree before Blender
+        run: |
+          python3 - <<'PY'
+          import os,hashlib,json
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"qualified"
+          r=json.loads((p/"atlas-p1d-oculus-03-B-receipt.json").read_text())
+          s=p/"atlas-p1d-oculus-03-B-J4.blend"
+          assert r["schema"]=="atlas.artdir02.p1d-oculus-manifold/v1"
+          assert r["arch"]=="B"
+          assert r["canonical_art_sha256"]=="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+          assert hashlib.sha256(s.read_bytes()).hexdigest()==r["variants"]["J4"]["editable_blend"]["sha256"]
+          print("P1F_IMMUTABLE_SOURCE_VERIFIED",s.stat().st_size)
+          PY
+      - name: Install genuine Blender Cycles and glTF exporter
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Construct tall elongated pavilion on the existing roof, render and export structural GLB
+        run: |
+          mkdir -p "$RUNNER_TEMP/p1f"
+          blender -b "$RUNNER_TEMP/qualified/atlas-p1d-oculus-03-B-J4.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/p1f_pavilion_01.py -- \
+            --oculus-receipt "$RUNNER_TEMP/qualified/atlas-p1d-oculus-03-B-receipt.json" \
+            --out "$RUNNER_TEMP/p1f"
+      - name: Independent validation of rendered model and non-published web budget
+        run: |
+          python3 - <<'PY'
+          import os,hashlib,json,math
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])
+          src=json.loads((p/"qualified"/"atlas-p1d-oculus-03-B-receipt.json").read_text())
+          j=json.loads((p/"p1f"/"atlas-p1f-pavilion-01-receipt.json").read_text())
+          assert j["schema"]=="atlas.artdir02.p1f-pavilion-01/v1"
+          assert j["canonical_art_sha256"]==src["canonical_art_sha256"]
+          assert j["source"]["sha256"]==src["variants"]["J4"]["editable_blend"]["sha256"]
+          assert j["source_unmodified"] and j["modeled_on_existing_roof_not_new_empty_scene"]
+          assert j["original_first_floor_four_glasses_podium_preserved"]
+          assert j["lights_unchanged"]
+          assert j["shaping"]["opening_aspect_ratio"]>1.15
+          assert j["heights"]["upper_gallery_top_after_bu"]>j["heights"]["upper_gallery_top_before_bu"]+.50
+          assert j["heights"]["roof_top_after_bu"]>j["heights"]["roof_top_before_bu"]+1.25
+          assert all(0<x<1 and 0<y<1 for x,y in j["four_portal_centres_in_frame"].values())
+          assert not j["art_approved"] and not j["web_scene_approved"]
+          assert j["no_merge"] and j["no_deploy"] and j["no_student_data"]
+          for meta in j["file"].values():
+            f=p/"p1f"/meta["name"]
+            assert f.is_file() and f.stat().st_size==meta["bytes"]
+            assert hashlib.sha256(f.read_bytes()).hexdigest()==meta["sha256"]
+          budget=j["file"]["roof_glb_diagnostic"]
+          summary=(
+            "# P1F — Padiglione allungato su modello autentico\n\n"
+            "| Indicatore | Misura |\n|---|---:|\n"
+            f"| Rapporto lunghezza/larghezza foro | {j['shaping']['opening_aspect_ratio']:.3f} |\n"
+            f"| Quota galleria alta, prima/dopo | {j['heights']['upper_gallery_top_before_bu']:.3f} / {j['heights']['upper_gallery_top_after_bu']:.3f} BU |\n"
+            f"| Quota volta, prima/dopo | {j['heights']['roof_top_before_bu']:.3f} / {j['heights']['roof_top_after_bu']:.3f} BU |\n"
+            f"| GLB sola volta | {budget['bytes']:,} byte |\n"
+            f"| Sotto obiettivo 5 MiB per elemento | {budget['under_5mb_target']} |\n"
+            "\nQuattro vetri nel fotogramma: sì. Originale SHA invariato: sì.\n"
+            "**Immagine artistica e scena web finale: non ancora approvate. Nessun merge/deploy.**\n"
+          )
+          (p/"p1f"/"ATLAS-P1F-QUALIFICA.md").write_text(summary)
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as f:f.write(summary)
+          print("P1F_REAL_BLENDER_CYCLES_BLEND_GLB_INDEPENDENT_PASS")
+          PY
+      - name: Save editable Blender, original Cycles image, GLB geometry sample, receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-p1f-pavilion-01-${{ github.run_number }}
+          path: ${{ runner.temp }}/p1f/
+          if-no-files-found: warn
+          retention-days: 30

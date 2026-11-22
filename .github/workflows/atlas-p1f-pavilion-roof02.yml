@@ -1,0 +1,92 @@
+name: ATLAS P1F — Copertura unica a padiglione
+on:
+  push:
+    branches: [work/atlas-artdir02-p1f-pavilion-01]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-p1f-roof02-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  full-pavilion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check script syntax
+        run: python3 -m py_compile scripts/atlas-gateway-production/p1f_roof_pavilion_02.py
+      - name: Recover the genuine P1F candidate and its provenance
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45061889245
+          pattern: atlas-p1f-pavilion-01-3
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/parent
+      - name: Independently verify source archive and parent SHA256
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"parent"
+          r=json.loads((p/"atlas-p1f-pavilion-01-receipt.json").read_text())
+          s=p/"atlas-p1f-pavilion-01-B-J4.blend"
+          assert r["schema"]=="atlas.artdir02.p1f-pavilion-01/v1"
+          assert r["canonical_art_sha256"]=="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+          assert hashlib.sha256(s.read_bytes()).hexdigest()==r["file"]["blend"]["sha256"]
+          assert r["source_unmodified"] and not r["art_approved"]
+          print("P1F02_TRUE_PARENT_VERIFIED")
+          PY
+      - name: Install native Blender/Cycles
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Replace rendered historical circular roof with a single pavilion, Cycles + GLB
+        run: |
+          mkdir -p "$RUNNER_TEMP/roof02"
+          blender -b "$RUNNER_TEMP/parent/atlas-p1f-pavilion-01-B-J4.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/p1f_roof_pavilion_02.py -- \
+            --parent-receipt "$RUNNER_TEMP/parent/atlas-p1f-pavilion-01-receipt.json" \
+            --out "$RUNNER_TEMP/roof02"
+      - name: Verify fresh files, roof topology, custody and no-publication state
+        run: |
+          python3 - <<'PY'
+          import os,json,hashlib
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"roof02"
+          r=json.loads((p/"atlas-p1f-pavilion-roof02-receipt.json").read_text())
+          assert r["schema"]=="atlas.artdir02.p1f-roof-pavilion-02/v1"
+          assert r["single_roof_mesh_closed"]["connected"]
+          assert r["single_roof_mesh_closed"]["nonmanifold_edges"]==0
+          assert abs(r["single_roof_mesh_closed"]["signed_volume"])>.5
+          assert r["single_sky_disc"]=="ATLAS P1F • cielo unico del padiglione"
+          assert r["four_glass_portals_geometry_preserved"] and r["lights_unchanged"]
+          assert r["source_binary_unchanged"]
+          assert not r["art_approved"] and not r["web_approved"]
+          assert r["no_merge"] and r["no_deploy"] and r["no_student_data"]
+          for f in r["files"].values():
+            q=p/f["name"]
+            assert q.exists() and q.stat().st_size==f["bytes"]
+            assert hashlib.sha256(q.read_bytes()).hexdigest()==f["sha256"]
+          note=("# P1F/ROOF-02: copertura unica a padiglione\n\n"
+                f"- Copertura a mesh chiusa: {r['single_roof_mesh_closed']['faces']} facce\n"
+                f"- Oculo: semiasse lungo {r['new_crown']['major_halfspan_bu']} BU, "
+                f"semiasse trasversale {r['new_crown']['minor_halfspan_bu']} BU\n"
+                f"- GLB diagnostico, geometria sola copertura: {r['files']['roof_glb']['bytes']:,} byte\n"
+                "- Conservati i quattro vetri e l'originale qualificato.\n"
+                "**Collaudo tecnico superato, approvazione visiva e web ancora sospese.**\n")
+          (p/"ATLAS-P1F-ROOF02-REPORT.md").write_text(note)
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as f:f.write(note)
+          print("P1F_ROOF02_CYCLES_GLTF_AND_GEOMETRY_PASS")
+          PY
+      - name: Preserve editable pavilion, original Cycles image, light GLB and receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-p1f-pavilion-roof02-${{ github.run_number }}
+          path: ${{ runner.temp }}/roof02/
+          if-no-files-found: warn
+          retention-days: 30
