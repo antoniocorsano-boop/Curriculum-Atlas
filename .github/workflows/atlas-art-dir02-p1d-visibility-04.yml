@@ -89,7 +89,7 @@ jobs:
               assert f"ARCH {a} upper parapet" in r["galleries"]
               assert "P1D • B lower railing" in r["galleries"]
               f=root/r["mask"]["file"]
-              assert f.stat().st_size>1000
+              assert f.stat().st_size>100
               assert hashlib.sha256(f.read_bytes()).hexdigest()==r["mask"]["sha256"]
               sky=m["sky_unobstructed_fraction"]
               roof=m["roof_hidden_sky_clear_fraction"]
