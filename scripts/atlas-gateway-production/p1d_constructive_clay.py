@@ -59,7 +59,7 @@ scene.camera = hero
 
 def sample(obj, limit=1200):
     if obj.type == "MESH":
-        vertices = obj.data.vertices
+        vertices = list(obj.data.vertices)
         step = max(1, len(vertices) // limit)
         return [obj.matrix_world @ v.co for v in vertices[::step]]
     if obj.type == "CURVE":
