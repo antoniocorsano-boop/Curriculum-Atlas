@@ -38,7 +38,13 @@ jobs:
               if tag=="__NEVER_PRESENT__":assert tag not in html
               else:assert tag in html,tag
           assert "23 regolazioni" not in html or "23" in html
-          assert "atlas.gateway.parametric-selection/v1" in html
+          assert "atlas.gateway.parametric-selection/v2" in html
+          assert "portal_placement:'far_side_relative_to_camera'" in html
+          assert "rad(90+(index-1.5)*s.portalSpan/3)" in html
+          assert "rad(270+" not in html, "Front-side orientation regression"
+          for required in ("portalCenter(j,s)", "portalCenter(i,s)", "portalCameraSide(s)",
+                           "OSSERVATORE (-Y)", "OSSERVATORE ↓"):
+              assert required in html,required
           assert "automatically_merge:false" in html
           assert "automatically_publish:false" in html
           assert "anteprima" in html.lower()
@@ -76,13 +82,16 @@ jobs:
             ("too_low_roof",lambda o:o["parameters"].update(roofHeight=4.0)),
             ("too_large_oval",lambda o:o["parameters"].update(oculusRadius=6.0,ellipseRatio=1.8,outerRadius=8.1,outerElongation=1.0)),
             ("missing_portal_field",lambda o:o["parameters"].pop("glassHeight")),
+            ("reversed_portal_placement",lambda o:o.update(portal_placement="near_side")),
+            ("legacy_front_side_schema",lambda o:o.update(schema="atlas.gateway.parametric-selection/v1")),
+            ("portal_near_camera",lambda o:o["parameters"].update(portalDepth=-2,portalSpan=140,portalRadius=4.5)),
           ]
           for label,break_it in attempts:
             case=copy.deepcopy(original);break_it(case)
             try:module.validate(case)
             except ValueError:print("SIM01_INVALID_REJECTED",label)
             else:raise AssertionError("Contract accepted invalid "+label)
-          print("SIM01_VALIDATION_8_CASES_PASS")
+          print("SIM01_VALIDATION_11_CASES_PASS")
           PY
       - name: Show content identity and preservation requirements
         run: |
@@ -91,7 +100,7 @@ jobs:
             fixtures/atlas-gateway/parametric-selection-example.json \
             docs/ATLAS-PARAMETRIC-SIM-01.md
           echo '## ATLAS SIM-01 — Qualificazione privata' >> "$GITHUB_STEP_SUMMARY"
-          echo 'Validato: HTML autosufficiente, ART-DIR-02 incorporato e SHA identico, JavaScript compilabile, contratto JSON valido e sette casi invalidi rifiutati.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Validato: HTML autosufficiente, ART-DIR-02 incorporato e SHA identico, JavaScript compilabile, contratto JSON valido e dieci casi invalidi rifiutati, inclusa inversione dei portali.' >> "$GITHUB_STEP_SUMMARY"
           echo '' >> "$GITHUB_STEP_SUMMARY"
           echo 'Non e un render Blender e non autorizza integrazione, pubblicazione o modifica agli originali.' >> "$GITHUB_STEP_SUMMARY"
       - name: Preserve inspectable simulator source and validation evidence
