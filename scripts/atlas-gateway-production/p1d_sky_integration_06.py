@@ -162,9 +162,21 @@ skycenter=Vector((statistics.mean(x.x for x in worldpoints),
 sky_extent=max(sky.dimensions.x,sky.dimensions.y)/2
 if abs(skycenter.x-cx)>1.0 or abs(skycenter.y-cy)>1.0:
     raise RuntimeError("Sky screen not co-registered with original oculus")
-R=sky_extent*1.55
-base_z=max(skycenter.z,rimz)+1.3
-lift=1.65
+base_z=max(skycenter.z,rimz)+0.8
+lift=1.0
+zenith_z=base_z+lift
+projected_radii=[]
+for _,_,start,direction in rays:
+    if direction.z<=1e-8:
+        raise RuntimeError("A sample ray aimed at the oculus points away from sky")
+    travel=(zenith_z-start.z)/direction.z
+    p=start+direction*travel
+    projected_radii.append(math.hypot(p.x-cx,p.y-cy))
+# Guarantee the recessed cloud surface covers the actual camera-space
+# aperture silhouette at zenith height, rather than guessing a screen radius.
+R=max(sky_extent*1.55,1.12*max(projected_radii))
+print("SKY06_DOME_FOOTPRINT",ARCH,MODE,"R",R,"Z",base_z,"LIFT",lift,
+      "MAX_CAMERA_RAY_RADIUS",max(projected_radii),flush=True)
 S=80;N=14
 verts=[(cx,cy,base_z+lift)]
 faces=[]
