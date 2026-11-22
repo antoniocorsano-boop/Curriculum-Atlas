@@ -203,13 +203,11 @@ atmos.use_nodes=True
 nodes=atmos.node_tree.nodes
 nodes.clear()
 s=nodes.new("ShaderNodeTexSky")
-s.sky_type="NISHITA"
+s.sky_type="HOSEK_WILKIE"
 s.sun_elevation=math.radians(28)
 s.sun_rotation=math.radians(155)
-s.altitude=0
-s.air_density=1.0
-s.dust_density=0.9
-s.ozone_density=1.0
+s.turbidity=2.4
+s.ground_albedo=0.25
 background=nodes.new("ShaderNodeBackground")
 background.inputs["Strength"].default_value=0.8
 output=nodes.new("ShaderNodeOutputWorld")
@@ -327,7 +325,7 @@ report={
  "curved_sky":{"radius_bu":R,"base_z_bu":base_z,"zenith_z_bu":base_z+lift,
    "center_xy":[cx,cy],"sample_rays_hitting_curved_sky_geometry":dome_hits,
    "total_sample_rays":len(rays)},
- "atmosphere":{"engine":"Nishita sky texture", "sky_type":"NISHITA",
+ "atmosphere":{"engine":"Hosek-Wilkie procedural sky", "sky_type":"HOSEK_WILKIE",
     "sun_elevation_degrees":28,"sun_rotation_degrees":155,
     "world_background_strength":0.8,
     "same_original_lamps":True},
