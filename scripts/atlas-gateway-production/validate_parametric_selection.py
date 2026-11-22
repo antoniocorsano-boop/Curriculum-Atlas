@@ -12,7 +12,7 @@ from pathlib import Path
 CANONICAL = "a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
 BOUNDS = {
     "outerRadius": (8.1, 13), "upperGallery": (4.95, 6.9),
-    "roofHeight": (6.85, 10.3), "vaultCurve": (.15, .95),
+    "thirdLevelHeight": (1.5, 2.8), "roofHeight": (8.5, 12.4), "vaultCurve": (.15, .95),
     "outerElongation": (1, 1.65), "oculusRadius": (3.7, 6),
     "ellipseRatio": (1, 1.8), "straightness": (0, 1),
     "oculusAngle": (-90, 90), "rimThickness": (.08, .48),
@@ -26,7 +26,7 @@ BOUNDS = {
 }
 
 def validate(data):
-    if not isinstance(data, dict) or data.get("schema") != "atlas.gateway.parametric-selection/v2":
+    if not isinstance(data, dict) or data.get("schema") != "atlas.gateway.parametric-selection/v3":
         raise ValueError("Schema non riconosciuto")
     if data.get("reference", {}).get("sha256") != CANONICAL:
         raise ValueError("Riferimento ART-DIR-02 diverso dal canone")
@@ -47,6 +47,10 @@ def validate(data):
         or decision.get("automatically_publish") is not False
         or decision.get("status") != "proposta_da_qualificare"):
         raise ValueError("La selezione non deve autorizzare approvazione o pubblicazione")
+    levels = data.get("architecture_levels", {})
+    if (levels.get("count") != 3 or levels.get("ground_floor_z") != 0
+        or levels.get("first_gallery_z") != 3.21):
+        raise ValueError("Tre livelli architettonici obbligatori: terra e due gallerie")
     p = data.get("parameters", {})
     if set(p) != set(BOUNDS):
         raise ValueError("Parametri incompleti, mancanti o aggiunti: " + str(sorted(set(p) ^ set(BOUNDS))))
@@ -54,8 +58,12 @@ def validate(data):
         value = p[name]
         if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(value) or not lo <= value <= hi:
             raise ValueError(f"Parametro fuori intervallo: {name}={value}")
+    if not math.isclose(levels.get("second_gallery_z", -1), p["upperGallery"], abs_tol=1e-4):
+        raise ValueError("Quota seconda galleria incoerente")
+    if not math.isclose(levels.get("roof_spring_z", -1), p["upperGallery"] + p["thirdLevelHeight"], abs_tol=1e-4):
+        raise ValueError("Imposta copertura incoerente con terzo livello")
     checks = [
-        (p["roofHeight"] > p["upperGallery"] + .75, "La volta non supera sufficientemente la seconda galleria"),
+        (p["roofHeight"] > p["upperGallery"] + p["thirdLevelHeight"] + 1.0, "La copertura non lascia tre livelli abitabili distinguibili"),
         (p["upperGallery"] > p["glassHeight"] + .20, "Portali troppo alti per la seconda galleria"),
         (p["portalRadius"] <= p["outerRadius"] - .55, "Portali oltre il perimetro"),
         (p["portalRadius"] >= p["oculusRadius"] + .10, "Portali troppo vicini all'oculo"),
@@ -88,7 +96,7 @@ def main():
     print("ATLAS SIM-01 — proposta valida, non approvata")
     print("Inquadratura e configurazione:")
     for key in ("outerRadius", "upperGallery", "roofHeight", "oculusRadius", "ellipseRatio",
-                "straightness", "portalRadius", "portalSpan", "glassHeight", "cameraPitch"):
+                "straightness", "thirdLevelHeight", "portalRadius", "portalSpan", "glassHeight", "cameraPitch"):
         print(f"  {key}: {p[key]}")
     print("Passo successivo: prova Blender su una copia qualificata, controllo topologia e Cycles.")
 
