@@ -548,7 +548,8 @@
       "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-P1B-RESULT-01.md",
       "contains": "Curriculum-Atlas",
       "category": "infrastructure-legacy",
-      "reason": "Actual URL of this repository in P1B qualifying evidence; preserves working link to the historical PR."
+      "reason": "Actual URL of this repository in P1B qualifying evidence; preserves working link to the historical PR. The document is present in the parent PR merge snapshot but absent in some derived branch checkouts; optional only when file is absent.",
+      "optionalIfAbsent": true
     },
     {
       "path": "docs/atlas-gateway/ATLAS-ATRIUM-BLENDER-RUN-01.md",
