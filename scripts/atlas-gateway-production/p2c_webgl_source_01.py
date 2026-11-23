@@ -36,10 +36,24 @@ scene=bpy.context.scene
 font_names=[ob.name for ob in scene.objects if ob.type=="FONT" and not ob.hide_render and not ob.hide_get()]
 for name in font_names:
     ob=bpy.data.objects[name]
+    # glTF has no Blender FONT primitive. Keep the glyph silhouettes but
+    # remove Cycles-only bevel, extrusion and excessive curve tessellation.
+    # This in-memory edit never saves or overwrites the approved P2B binary.
+    ob.data=ob.data.copy()
+    ob.data.resolution_u=3
+    ob.data.bevel_depth=0.0
+    ob.data.bevel_resolution=0
+    ob.data.extrude=0.0
     bpy.ops.object.select_all(action="DESELECT")
     ob.select_set(True)
     bpy.context.view_layer.objects.active=ob
     bpy.ops.object.convert(target="MESH")
+    converted=bpy.data.objects[name]
+    if len(converted.data.polygons)>3000:
+        modifier=converted.modifiers.new("ATLAS P2C • riduci lettere", "DECIMATE")
+        modifier.ratio=min(0.95,3000.0/len(converted.data.polygons))
+        bpy.context.view_layer.objects.active=converted
+        bpy.ops.object.modifier_apply(modifier=modifier.name)
 for ob in scene.objects:ob.select_set(False)
 routes={"Curricolo":"/curricolo/","Esplora":"/esplora/",
         "Percorsi":"/percorsi/","Esperienze":"/esperienze/"}
