@@ -9,6 +9,15 @@ on:
       - "scripts/atlas-gateway-production/p3b_next_integration_probe.mjs"
       - "next.config.ts"
       - ".github/workflows/atlas-p3b-next-private-integration.yml"
+  pull_request:
+    branches: [work/atlas-artdir02-p1f-pavilion-01]
+    paths:
+      - "src/app/gateway/p3b/**"
+      - "src/features/atlas-gateway/p3b-private-*"
+      - "scripts/atlas-gateway-production/p3b-private-viewer.html"
+      - "scripts/atlas-gateway-production/p3b_next_integration_probe.mjs"
+      - "next.config.ts"
+      - ".github/workflows/atlas-p3b-next-private-integration.yml"
   workflow_dispatch:
 permissions:
   contents: read
