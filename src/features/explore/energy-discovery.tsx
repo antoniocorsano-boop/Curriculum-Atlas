@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import { ArrowDown, ArrowRight, Check, Compass, Lightbulb, RotateCcw } from "lucide-react";
 import { publishedLessons } from "@/features/materials/fixtures";
@@ -23,7 +24,7 @@ export function EnergyDiscovery({ onExploreConnections }: { onExploreConnections
       <div className={styles.intro}>
         <span className={styles.eyebrow}><Compass size={16} aria-hidden="true" /> Una scoperta da cui cominciare</span>
         <h2 id="atlas-domanda-energia">Perché una lampada si scalda se deve fare luce?</h2>
-        <p>Hai mai notato che un oggetto può produrre più effetti di quelli che cerchiamo? Segui questa piccola scoperta: non c'è una risposta da indovinare.</p>
+        <p>Hai mai notato che un oggetto può produrre più effetti di quelli che cerchiamo? Segui questa piccola scoperta: non c&apos;è una risposta da indovinare.</p>
       </div>
       <nav className={styles.progress} aria-label="Tappe della scoperta">
         {(["La domanda", "Osserva", "Collega"] as const).map((title, index) => (
@@ -57,7 +58,7 @@ export function EnergyDiscovery({ onExploreConnections }: { onExploreConnections
           <div className={styles.observationScene} data-testid="scoperta-tappa-osserva">
             <div>
               <span className={styles.sceneLabel}>La trasformazione</span>
-              <h3>L'energia non produce soltanto l'effetto che cerchiamo.</h3>
+              <h3>L&apos;energia non produce soltanto l&apos;effetto che cerchiamo.</h3>
               <p>La lampada riceve energia elettrica. La trasforma in <strong>luce</strong>, che ci serve per illuminare, e anche in <strong>calore</strong>. La parte dispersa come calore non contribuisce a illuminare.</p>
             </div>
             <div className={styles.flow} aria-label="Energia elettrica in entrata, trasformazione nella lampada, luce utile e calore disperso">
@@ -86,7 +87,7 @@ export function EnergyDiscovery({ onExploreConnections }: { onExploreConnections
             <div className={styles.discoveryCopy}>
               <span className={styles.sceneLabel}>Una domanda apre altre strade</span>
               <h3>E se fosse un asciugacapelli o un motore?</h3>
-              <p>In altri oggetti l'effetto utile cambia: aria calda, movimento o luce. Prova a riconoscere che cosa entra nel sistema, come si trasforma e quali effetti produce.</p>
+              <p>In altri oggetti l&apos;effetto utile cambia: aria calda, movimento o luce. Prova a riconoscere che cosa entra nel sistema, come si trasforma e quali effetti produce.</p>
               <p className={styles.insight}>Hai scoperto un modo per leggere i sistemi tecnologici: <strong>ingresso → trasformazione → effetti.</strong></p>
               <div className={styles.actions}>
                 <a href="#atlas-mappa-conoscenze" onClick={onExploreConnections} className={styles.primaryAction} data-testid="scoperta-apri-relazioni">
@@ -99,7 +100,7 @@ export function EnergyDiscovery({ onExploreConnections }: { onExploreConnections
             </div>
             {illustration ? (
               <figure className={styles.resource} data-testid="scoperta-risorsa-esistente">
-                <img src={illustration.href} alt="Schema già presente in Atlas: energia in entrata, trasformazione, effetto utile e dispersioni; esempi di lampada, automobile e asciugacapelli." loading="lazy" />
+                <Image src={illustration.href} width={1600} height={900} unoptimized alt="Schema già presente in Atlas: energia in entrata, trasformazione, effetto utile e dispersioni; esempi di lampada, automobile e asciugacapelli." loading="lazy" />
                 <figcaption>
                   <strong>{illustration.title}</strong>
                   <span>{illustration.lesson} · Materiale già collegato a una lezione pubblica.</span>
