@@ -73,7 +73,7 @@ try {
 
         const primaryHrefs = await page.locator(".atlas-mobile-nav > a").evaluateAll((nodes) =>
           nodes.map(node => node.getAttribute("href")).filter(Boolean)
-            .map(href => href.length > 1 ? href.replace(/\\/$/, "") : href)
+            .map(href => href.length > 1 && href.endsWith("/") ? href.slice(0, -1) : href)
         );
         const requiredPrimary = ["/", "/esplora", "/esperienze", "/percorsi", "/curricolo"];
         if (requiredPrimary.some(href => !primaryHrefs.includes(href))) {
