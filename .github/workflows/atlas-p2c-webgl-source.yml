@@ -1,0 +1,92 @@
+name: ATLAS P2C — Sorgente WebGL autentica a quattro portali
+on:
+  push:
+    branches: [work/atlas-artdir02-p2-composizioni-01]
+    paths:
+      - "scripts/atlas-gateway-production/p2c_webgl_source_01.py"
+      - ".github/workflows/atlas-p2c-webgl-source.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-p2c-glb-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  p2c-genuine-glb:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify source script
+        run: python3 -m py_compile scripts/atlas-gateway-production/p2c_webgl_source_01.py
+      - name: Recover exact qualified P2B/R2 editable and provenance
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45135551152
+          pattern: atlas-p2b-material-finish-24
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/p2b
+      - name: Verify exact input SHA and four existing destinations
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"p2b"
+          r=json.loads((p/"atlas-p2b-materials-receipt.json").read_text())
+          f=p/"atlas-p2b-materiali-luce-editable.blend"
+          assert r["schema"]=="atlas.artdir02.p2b-material-finish-01/v1"
+          assert r["reference_sha256"]=="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+          assert r["source_p2a_blend_sha256"]=="3e425897ccf6092110d27955b3c25dfe28c6a52046aa0576acaf33b67959e56f"
+          assert r["files"]["blend"]["sha256"]=="3527837e0be056002c1dddea9082336001e787da9a6d225eff7704c554a84cec"
+          assert hashlib.sha256(f.read_bytes()).hexdigest()==r["files"]["blend"]["sha256"]
+          assert r["art_direction_approved"] and not r["art_final_approved"] and not r["web_approved"]
+          for route in ("curricolo","esplora","percorsi","esperienze"):
+              assert Path("src/app",route,"page.tsx").is_file(),route
+          print("P2C_EXACT_P2B_SOURCE_AND_FOUR_REAL_APP_ROUTES_PASS")
+          PY
+      - name: Install actual Blender glTF exporter
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Export original architectural meshes, camera and four semantic portal targets
+        run: |
+          mkdir -p "$RUNNER_TEMP/p2c"
+          blender -b "$RUNNER_TEMP/p2b/atlas-p2b-materiali-luce-editable.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/p2c_webgl_source_01.py -- \
+            --parent-receipt "$RUNNER_TEMP/p2b/atlas-p2b-materials-receipt.json" \
+            --out "$RUNNER_TEMP/p2c"
+      - name: Independently validate true GLB and publication boundary
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os,struct
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"p2c"
+          r=json.loads((p/"atlas-p2c-webgl-receipt.json").read_text())
+          assert r["schema"]=="atlas.artdir02.p2c-webgl-source-01/v1"
+          assert r["approved_architecture_sha256"]=="3e425897ccf6092110d27955b3c25dfe28c6a52046aa0576acaf33b67959e56f"
+          assert r["input_p2b_r2_sha256"]=="3527837e0be056002c1dddea9082336001e787da9a6d225eff7704c554a84cec"
+          assert r["input_binary_unchanged"] and r["glb_cameras"]>=1 and r["glb_triangles"]>1500
+          assert list(r["portals"])==["curricolo","esplora","percorsi","esperienze"]
+          assert [p["path"] for p in r["portals"].values()]==["/curricolo/","/esplora/","/percorsi/","/esperienze/"]
+          assert not r["art_final_approved"] and not r["web_product_approved"] and not r["student_publication_approved"]
+          assert r["no_merge"] and r["no_deploy"]
+          m=r["file"]
+          f=p/m["name"]
+          assert f.stat().st_size==m["bytes"] and hashlib.sha256(f.read_bytes()).hexdigest()==m["sha256"]
+          assert struct.unpack("<I",f.read_bytes()[:4])[0]==0x46546c67
+          print("P2C_GENUINE_GLTF_PROVENANCE_AND_FOUR_PORTAL_SEMANTICS_PASS")
+          PY
+      - name: Preserve private GLB source, stats and receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-p2c-genuine-four-portal-glb-${{ github.run_number }}
+          path: ${{ runner.temp }}/p2c/
+          if-no-files-found: warn
+          retention-days: 30
+# Only source qualification. No deployment, root-page change, or student publication.
