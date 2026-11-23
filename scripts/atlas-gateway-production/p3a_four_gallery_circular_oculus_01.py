@@ -97,7 +97,13 @@ def mesh(name,vertices,polygons,material,smooth=True):
 third=gallery2.copy();third.data=gallery2.data.copy()
 third.name="ATLAS P3A • third gallery deck"
 scene.collection.objects.link(third)
-third.location.z+=g["vertical_offset_bu"]
+# Set the absolute displacement in WORLD coordinates. Merely editing local
+# .location is incorrect if the source has a parent or stale depsgraph matrix.
+world=gallery2.matrix_world.copy()
+third.parent=None
+world.translation.z+=g["vertical_offset_bu"]
+third.matrix_world=world
+bpy.context.view_layer.update()
 third.hide_render=False
 third["atlas_arch_level"]=3
 third["atlas_source_gallery"]=gallery2.name
