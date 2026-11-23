@@ -1,0 +1,56 @@
+name: ATLAS — Ingresso web 2D funzionante
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/app/page.tsx"
+      - "src/app/ingresso.module.css"
+      - "tests/ingresso-web.spec.ts"
+      - ".github/workflows/atlas-ingresso-web-qualification.yml"
+  push:
+    branches: [work/atlas-ingresso-web-01]
+    paths:
+      - "src/app/page.tsx"
+      - "src/app/ingresso.module.css"
+      - "tests/ingresso-web.spec.ts"
+      - ".github/workflows/atlas-ingresso-web-qualification.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: atlas-ingresso-web-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  functional-gateway:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    env:
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Verify TypeScript and app compilation
+        run: |
+          pnpm typecheck
+          pnpm build
+      - name: Install headless Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Qualify real responsive navigation, all links and no 3D dependency
+        run: pnpm exec playwright test tests/ingresso-web.spec.ts --project=chromium --reporter=line
+      - name: Preserve only failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-ingresso-web-failure-${{ github.run_number }}
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+# No deployment, no external image generation, no integration without review.
