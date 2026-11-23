@@ -3,14 +3,15 @@
 import { useState } from "react";
 import { EnergyDiscovery } from "@/features/explore/energy-discovery";
 import { RelationExplorer } from "@/components/atlas/relation-explorer";
+import styles from "./energy-discovery.module.css";
 
 export function ExploreHub() {
   const [focusRequest, setFocusRequest] = useState(0);
 
   return (
-    <div className="atlas-explore-hub" data-testid="atlas-esplora-percorso-domanda">
+    <div className={styles.hub} data-testid="atlas-esplora-percorso-domanda">
       <EnergyDiscovery onExploreConnections={() => setFocusRequest(value => value + 1)} />
-      <section id="atlas-mappa-conoscenze" aria-labelledby="atlas-mappa-title" className="atlas-explore-hub-map">
+      <section id="atlas-mappa-conoscenze" aria-labelledby="atlas-mappa-title" className={styles.mapSection}>
         <header className="atlas-page-heading">
           <div>
             <span className="atlas-eyebrow">Dalla scoperta alla rete delle conoscenze</span>
