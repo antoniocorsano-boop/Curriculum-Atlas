@@ -77,6 +77,22 @@ La quarta porta **Esperienze** è stata realizzata nella [PR #189](https://githu
 
 **Gate successivo:** verifica di compilazione, navigazione reale e accessibilità sul commit della PR, quindi anteprima isolata con revisione umana. L'esito tecnico non integra `main` e non autorizza contenuti learner.
 
+## P2 — Primo viaggio Esplora: dalla domanda alla scoperta (23 novembre 2026)
+
+**Caso concreto:** «Perché una lampada si scalda se deve fare luce?». È una scena interattiva in **tre tappe**, non un questionario e non una generazione di immagini: domanda iniziale, trasformazione energia elettrica → luce utile e calore disperso, confronto con altri dispositivi e passaggio alla rete dei saperi.
+
+**Riuso verificato nei sorgenti della PR #189:**
+- `src/features/explore/energy-discovery.tsx` è la scena a tre tappe; `energy-discovery.module.css` realizza le forme visive senza servizi o immagini nuove;
+- `src/features/explore/explore-hub.tsx` collega la scena alla **mappa Esplora effettiva**, non a un catalogo fittizio;
+- `src/components/atlas/relation-explorer.tsx` seleziona nella vista a elenco il nucleo «analizzare sistemi energetici/produttivi» di Tecnologia, **derivandolo dal grafo prodotto a partire da Arena**, senza creare un finto obiettivo;
+- `src/features/materials/fixtures.ts` attesta l'associazione del materiale `3e-20260923-infografica` alla lezione pubblica `3e-tec-02`, e il file preesistente `public/materials/2026-09-23/3e/dove-va-l-energia.svg` fornisce lo **schema reale**. Il collegamento viene letto dalla fonte di dati già in uso, non riprodotto in un secondo archivio.
+
+**Governance dei contenuti:** la risorsa è già collegata a una lezione pubblica di Atlas e viene presentata come **schema esistente**, non come nuovo prodotto approvato. Il curricolo Arena su cui si basa la mappa risulta `PROVISIONAL_COMPLETE` / **non vigente**; lo stato resta esplicitamente visibile. Nessun percorso o esperienza in laboratorio viene attivato. Nessun dato personale è memorizzato: le tre tappe sono puro stato locale temporaneo del navigatore.
+
+**Qualificazione P2:** test del navigatore per tutte e tre le tappe, lettura della risorsa SVG esistente, selezione dell'obiettivo effettivo e collegamento al dettaglio, ritorno all'inizio, accesso da tastiera, responsive 320/360/390/768/1280 px e assenza di richieste a fornitori esterni. La riuscita deve essere verificata sul commit esatto e non dedotta dalla presenza del codice.
+
+**Gate:** questa capacità è `IMPLEMENTED_P2_IN_PR_NOT_CANONICAL`: resta nel ramo PR #189, non nel sito principale, fino a collaudo automatico e revisione diretta dell'esperienza. Sviluppi successivi possono aggiungere altre domande solo se esistono riferimenti verificabili e diritti/qualità adeguati.
+
 ## Regola permanente di manutenzione
 
 **Ogni modifica a un portale o a una capability richiede nello stesso intervento:**
