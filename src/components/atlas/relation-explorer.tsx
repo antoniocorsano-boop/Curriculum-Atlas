@@ -131,13 +131,27 @@ function buildEdges(ids: Set<string>): Edge[] {
     }));
 }
 
-export function RelationExplorer() {
+export function RelationExplorer({ focusRequest = 0 }: { focusRequest?: number }) {
   const [view, setView] = useState<"map" | "list">("map");
   const [depth, setDepth] = useState<"overview" | "detail">("overview");
   const [compact, setCompact] = useState(false);
   const [stage, setStage] = useState<(typeof stages)[number]>("Tutti");
   const [disciplineId, setDisciplineId] = useState("tutte");
   const [selectedId, setSelectedId] = useState("institute");
+
+  useEffect(() => {
+    if (focusRequest <= 0) return;
+    const objective = exploreGraph.nodes.find(node =>
+      node.kind === "objective"
+        && node.disciplineId === "tecnologia"
+        && node.label.toLocaleLowerCase("it").includes("sistemi energetici")
+    );
+    setDepth("detail");
+    setStage("Secondaria di primo grado");
+    setDisciplineId("tecnologia");
+    setView("list");
+    setSelectedId(objective?.id ?? "discipline:tecnologia");
+  }, [focusRequest]);
 
   useEffect(() => {
     const query = window.matchMedia("(max-width: 720px), (hover: none) and (pointer: coarse)");
@@ -291,7 +305,7 @@ export function RelationExplorer() {
                 </Link>
               ) : null}
               <div className="atlas-context-note">
-                Dati dimostrativi F2 derivati dalle fixture governate. Arena resta la fonte curricolare prevista.
+                Curricolo Arena ancora in validazione (PROVISIONAL_COMPLETE), non vigente. La mappa aiuta a orientarsi senza sostituire la fonte curricolare.
               </div>
             </>
           ) : null}
