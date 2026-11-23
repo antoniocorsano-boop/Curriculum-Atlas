@@ -46,15 +46,20 @@
       "promise": "Voglio entrare in un mondo",
       "plannedRoute": "/esperienze/",
       "routeOnMain": false,
-      "productState": "PORTAL_PROPOSED_RUNTIME_PRIVATE_ONLY",
+      "productState": "IMPLEMENTED_IN_PR_189_EMPTY_PUBLIC_PORTAL_NOT_STUDENT_CONTENT",
       "capabilityIds": [
+        "experience-portal",
         "experience-runtime",
         "studio-atlas-authoring",
         "edutwin-preview",
         "missione-118",
         "museo-zero"
       ],
-      "sourcePaths": []
+      "sourcePaths": [
+        "src/app/esperienze/page.tsx",
+        "src/app/esperienze/esperienze.module.css"
+      ],
+      "routeOnCandidate": true
     },
     {
       "id": "percorsi",
@@ -94,6 +99,21 @@
     }
   ],
   "capabilities": [
+    {
+      "id": "experience-portal",
+      "label": "Portale pubblico Esperienze: Storie, Laboratori, Scoperte",
+      "kind": "PUBLIC_SURFACE",
+      "portals": [
+        "esperienze"
+      ],
+      "maturity": "IMPLEMENTED_IN_PR_189_EMPTY_CATALOG",
+      "learnerRuntimeAuthorization": "NOT_APPLICABLE",
+      "sourcePaths": [
+        "src/app/esperienze/page.tsx",
+        "src/app/esperienze/esperienze.module.css"
+      ],
+      "next": "Catalogo attualmente vuoto: collegare in seguito solo esperienze con approvazione e autorizzazione esplicite, senza esporre laboratori o anteprime private"
+    },
     {
       "id": "explore-relations",
       "label": "Mappa delle relazioni",
@@ -350,7 +370,9 @@
       "P3_ONE_AUTHORIZED_EXPERIENCE",
       "P4_PATHWAY_CURRICOLO_LINKS",
       "P5_HUMAN_DEVICE_RELEASE_REVIEW"
-    ]
+    ],
+    "currentMilestone": "P1_FOUR_REAL_PORTAL_ROUTES_IMPLEMENTED_IN_PR_NOT_PUBLISHED",
+    "candidateExperiencePortalNoAuthorizedContent": true
   },
   "evidence": [
     {
