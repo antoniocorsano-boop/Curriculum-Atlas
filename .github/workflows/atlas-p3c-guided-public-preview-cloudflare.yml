@@ -23,14 +23,20 @@ jobs:
       SOURCE_GLB_SHA: 04b22de9d6c8f4e98a4eb88bf2f0e87141f9bdc685b742589845f977249e7adb
     steps:
       - uses: actions/checkout@v4
-      - name: Recover qualified P3C/R1 GLB with four true interactive portals
-        uses: actions/download-artifact@v4
-        with:
-          run-id: 45163398316
-          pattern: atlas-p3b-four-levels-circular-oculus-2
-          merge-multiple: true
-          github-token: ${{ github.token }}
-          path: ${{ runner.temp }}/qualified
+      - name: Recover previously qualified immutable model from existing Atlas Cloudflare preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/qualified"
+          SOURCE="https://p3b-public-demo.atlas-pr-preview.pages.dev/atlas-p3b"
+          curl --fail --show-error --location --retry 6 --retry-delay 3 \
+            "$SOURCE/atlas-p3b-atrio-4-livelli-oculo-circolare.glb" \
+            -o "$RUNNER_TEMP/qualified/atlas-p3b-atrio-4-livelli-oculo-circolare.glb"
+          curl --fail --show-error --location --retry 6 --retry-delay 3 \
+            "$SOURCE/atlas-p3b-webgl-receipt.json" \
+            -o "$RUNNER_TEMP/qualified/atlas-p3b-webgl-receipt.json"
+          test "$(sha256sum "$RUNNER_TEMP/qualified/atlas-p3b-atrio-4-livelli-oculo-circolare.glb" | cut -d' ' -f1)" = "$SOURCE_GLB_SHA"
+          echo "P3C_ORIGINAL_P3B_R2_MODEL_SHA_AUTHENTICATED"
       - name: Verify immutable parent source, no personal data, release boundary
         shell: bash
         run: |
