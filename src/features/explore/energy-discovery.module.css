@@ -232,3 +232,9 @@
 @media(prefers-reduced-motion:reduce) {
   .journey *, .journey *::before, .journey *::after { transition: none !important; animation: none !important; }
 }
+
+/* Shared spacing for the narrative-to-map transition. */
+.hub { display: grid; gap: clamp(24px, 4vw, 48px); }
+.mapSection { scroll-margin-top: 88px; }
+.mapSection h2 { font: 400 clamp(25px, 3.2vw, 37px)/1.16 Georgia, "Times New Roman", serif; letter-spacing: -.03em; margin: 5px 0 0; }
+@media(max-width:720px) { .mapSection { scroll-margin-top: 115px; } }
