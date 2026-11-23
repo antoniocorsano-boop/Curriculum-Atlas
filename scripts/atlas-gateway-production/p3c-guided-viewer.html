@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src 'self' blob:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; object-src 'none';">
+<title>Atlas — Entra nella sala della conoscenza · Esperienza guidata</title>
+<style>
+:root{color-scheme:dark;--gold:#e8c78d;--ink:#07121d;--paper:#f6f3e9;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}
+html,body{height:100%;width:100%;margin:0;overflow:hidden;background:#07121d;color:var(--paper)}
+button{font:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid #ffe5aa;outline-offset:3px}
+#stage{position:fixed;inset:0;background:radial-gradient(ellipse at center,#21344b 0%,#07111c 100%);touch-action:none}
+#stage canvas{display:block;width:100%;height:100%;touch-action:none}
+#veil{position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(1,10,20,.45),transparent 25%,transparent 62%,rgba(2,10,20,.70))}
+#brand{position:fixed;top:0;left:0;right:0;padding:calc(15px + env(safe-area-inset-top)) clamp(16px,3vw,42px) 12px;pointer-events:none;z-index:3}
+#brand strong{display:block;font-size:clamp(18px,2.1vw,26px);letter-spacing:.20em;font-weight:650}
+#brand small{display:block;margin-top:3px;color:#ebd6b4;font-size:clamp(11px,1.1vw,13px);letter-spacing:.035em}
+#status{position:fixed;top:calc(81px + env(safe-area-inset-top));left:clamp(16px,3vw,42px);font-size:12px;color:#d9e0e5;max-width:70vw;z-index:3;pointer-events:none}
+#welcome{position:fixed;bottom:max(7svh,32px);left:clamp(16px,6vw,85px);max-width:min(510px,calc(100vw - 32px));padding:clamp(20px,3vw,32px);border:1px solid rgba(232,199,141,.44);border-radius:22px;background:linear-gradient(135deg,rgba(8,20,33,.88),rgba(8,21,36,.71));box-shadow:0 24px 74px rgba(0,0,0,.35);backdrop-filter:blur(12px);z-index:4;transition:opacity .35s,transform .35s}
+#welcome h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(28px,3.8vw,46px);font-weight:500;line-height:1.07;letter-spacing:-.025em;margin:5px 0 14px}
+#welcome p{font-size:clamp(14px,1.3vw,17px);line-height:1.55;color:#e0e1df;margin:0 0 20px}
+.eyebrow{margin:0!important;font-size:11px!important;letter-spacing:.19em;color:var(--gold)!important;font-weight:700}
+#enter{min-height:52px;padding:0 24px;border:none;background:linear-gradient(120deg,#efdab1,#bd9660);color:#10202f;font-weight:700;border-radius:13px;box-shadow:0 7px 23px rgba(0,0,0,.3)}
+#enter:disabled{opacity:.65;cursor:wait}
+#enter span{margin-left:12px;font-size:19px}
+#controls{position:fixed;bottom:max(16px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(860px,calc(100vw - 26px));z-index:4;display:none;flex-direction:column;gap:10px;align-items:stretch}
+#controls[data-visible=true]{display:flex}
+#guidance{text-align:center;max-width:100%;font-size:12px;color:#f2e6cc;text-shadow:0 2px 7px #000}
+#destinations{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+#destinations button{min-height:54px;padding:8px 9px;border-radius:13px;color:#f4eee0;border:1px solid rgba(222,196,150,.55);background:rgba(8,21,36,.83);backdrop-filter:blur(8px);font-weight:650;font-size:14px;transition:background .2s,border-color .2s}
+#destinations button:hover{background:#233c51}
+#destinations button[data-selected=true]{background:rgba(189,147,83,.30);border-color:var(--gold)}
+#tools{position:fixed;top:calc(16px + env(safe-area-inset-top));right:clamp(14px,2vw,28px);z-index:4;display:none;gap:7px}
+#tools[data-visible=true]{display:flex}
+#tools button{min-height:44px;border:1px solid rgba(238,215,175,.6);border-radius:12px;background:rgba(7,22,36,.78);color:#f6eaca;padding:0 12px}
+#card{position:fixed;left:clamp(16px,5vw,64px);bottom:clamp(90px,15svh,134px);width:min(415px,calc(100vw - 32px));padding:21px 24px;border-radius:19px;border:1px solid rgba(229,197,145,.55);background:rgba(6,19,32,.89);backdrop-filter:blur(14px);box-shadow:0 12px 35px rgba(0,0,0,.4);display:none;z-index:5}
+#card[data-visible=true]{display:block}
+#card h2{font:500 clamp(27px,3vw,40px) Georgia,serif;margin:5px 0 9px}
+#card p:not(.eyebrow){font-size:14px;line-height:1.5;color:#e3e4e6;margin:0 0 17px}
+#back{min-height:46px;padding:0 18px;background:#e9d4ad;border:0;border-radius:11px;color:#132235;font-weight:700}
+#fallback{display:none;position:fixed;bottom:15%;left:6%;right:6%;z-index:5;padding:18px;background:rgba(8,20,34,.96);border:1px solid #d9bd8c;border-radius:12px}
+#fallback[data-visible=true]{display:block}
+#fallback button{min-height:46px;margin:5px;padding:0 12px;border:1px solid #dbc296;border-radius:9px;background:#173047;color:#fff}
+html[data-phase=exploring] #welcome,html[data-phase=entering] #welcome,html[data-phase=focusing] #welcome,html[data-phase=focused] #welcome{opacity:0;pointer-events:none;transform:translateY(30px)}
+@media(max-width:680px){
+ #brand{padding-left:16px}#brand small{font-size:11px}
+ #welcome{bottom:max(9svh,65px);padding:19px 20px;max-width:calc(100vw - 32px)}
+ #welcome h1{font-size:clamp(28px,8vw,39px)}
+ #welcome p{font-size:14px}
+ #controls{bottom:max(13px,env(safe-area-inset-bottom));gap:5px}
+ #guidance{font-size:11px}
+ #destinations{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ #destinations button{min-height:47px;font-size:13px;padding:6px}
+ #tools{top:calc(12px + env(safe-area-inset-top));right:10px}
+ #tools button{padding:0 9px;font-size:12px}
+ #card{bottom:max(122px,env(safe-area-inset-bottom) + 108px);padding:18px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+html[data-embedded=true] #brand,html[data-embedded=true] #status{display:none}
+</style>
+</head>
+<body>
+<div id="stage" role="application" aria-label="Esplora l'atrio di Atlas trascinando e scegliendo un portale"></div>
+<div id="veil" aria-hidden="true"></div>
+<header id="brand"><strong>ATLAS</strong><small>La biblioteca dei mondi da scoprire</small></header>
+<div id="status" aria-live="polite">Preparazione della sala tridimensionale…</div>
+<section id="welcome" aria-labelledby="welcome-title">
+ <p class="eyebrow">UNA SOGLIA, QUATTRO MONDI</p>
+ <h1 id="welcome-title">La conoscenza comincia da una porta.</h1>
+ <p>Entra nella sala. Guarda intorno a te. Scegli ciò che ti incuriosisce.</p>
+ <button id="enter" type="button" disabled>Sto preparando la sala…</button>
+</section>
+<div id="tools">
+ <button id="reset" type="button" aria-label="Torna alla vista centrale">Vista iniziale</button>
+</div>
+<div id="controls">
+ <div id="guidance">Trascina per guardarti intorno · Tocca un portale per avvicinarti</div>
+ <nav id="destinations" aria-label="Scegli uno dei quattro mondi">
+  <button data-portal="curricolo" type="button">Curricolo</button>
+  <button data-portal="esplora" type="button">Esplora</button>
+  <button data-portal="percorsi" type="button">Percorsi</button>
+  <button data-portal="esperienze" type="button">Esperienze</button>
+ </nav>
+</div>
+<section id="card" role="dialog" aria-modal="false" aria-labelledby="card-title">
+ <p class="eyebrow">LA TUA PROSSIMA SCOPERTA</p>
+ <h2 id="card-title"></h2>
+ <p id="card-description"></p>
+ <button id="back" type="button">Torna alla sala</button>
+</section>
+<div id="fallback" aria-live="polite">
+ <p>La visita tridimensionale non è disponibile su questo dispositivo. Puoi comunque conoscere le quattro possibilità di Atlas.</p>
+</div>
+<script src="./three.min.js"></script>
+<script src="./GLTFLoader.js"></script>
+<script>
+'use strict';
+(()=>{
+const PATHS=Object.freeze({curricolo:'/curricolo/',esplora:'/esplora/',percorsi:'/percorsi/',esperienze:'/esperienze/'});
+const WORDS=Object.freeze({
+ curricolo:{title:'Curricolo',detail:'Le grandi domande, le discipline e le idee che ci aiutano a comprendere il mondo.'},
+ esplora:{title:'Esplora',detail:'Segui una curiosità, osserva i legami e scopri ciò che ancora non conosci.'},
+ percorsi:{title:'Percorsi',detail:'Scegli un itinerario e costruisci, passo dopo passo, la tua conoscenza.'},
+ esperienze:{title:'Esperienze',detail:'Entra nelle storie e nei laboratori, sperimenta e cerca nuove risposte.'}
+});
+const embedded=window.parent!==window,channel=new URLSearchParams(location.search).get('channel');
+if(embedded)document.documentElement.dataset.embedded='true';
+const stage=document.getElementById('stage'),status=document.getElementById('status');
+const controls=document.getElementById('controls'),tools=document.getElementById('tools'),welcome=document.getElementById('welcome');
+const card=document.getElementById('card'),cardTitle=document.getElementById('card-title'),cardText=document.getElementById('card-description');
+const enter=document.getElementById('enter'),back=document.getElementById('back'),reset=document.getElementById('reset'),fallback=document.getElementById('fallback');
+const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
+const state={ready:false,error:null,phase:'loading',selected:null,portalCount:0,scene:null,camera:null,renderer:null,
+  art:{profile:'p3c-guided-experience-v1',skyApplied:0,roofApplied:0,floorApplied:0,materialFamilies:0,
+       sourceGeometryPreserved:true,sourceGlbPreserved:true,externalAssetsAdded:false},
+  motion:{enterTransitions:0,focusTransitions:0,resetTransitions:0,dragUpdates:0,ambientFrames:0,poseChanges:0,everEntered:false,finalLookDown:true},
+  lightRig:'cinematic-balanced-v1',glassRefined:0,
+  intro:{durationMs:2400,started:false,completed:false,skipped:false}};
+const setPhase=phase=>{state.phase=phase;document.documentElement.dataset.phase=phase;};
+setPhase('loading');
+// Reproducible self-contained finishing. Canvas textures are created only
+// after the verified GLB loads; no network, library or model dependency is added.
+function seeded(seed){
+  let a=seed>>>0;
+  return ()=>{a=(a+0x6d2b79f5)|0;let t=Math.imul(a^(a>>>15),1|a);
+    t^=t+Math.imul(t^(t>>>7),61|t);
+    return ((t^(t>>>14))>>>0)/4294967296;};
+}
+function makeStoneTexture(floor){
+  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
+  const ctx=canvas.getContext('2d',{willReadFrequently:false});
+  if(!ctx)throw Error('Canvas per texture architettoniche non disponibile');
+  const img=ctx.createImageData(256,256),px=img.data;
+  const rand=seeded(floor?0x31f0c2:0x81c0a7);
+  for(let y=0;y<256;y++)for(let x=0;x<256;x++){
+    const k=(y*256+x)*4,grain=(rand()-.5)*13;
+    const stria=6*Math.sin((x*.054+y*.031)+2*Math.sin(y*.021));
+    const cloud=5*Math.sin(x*.018+y*.025)*Math.sin(y*.037-x*.014);
+    const v=Math.max(0,Math.min(255,Math.round((floor?225:239)+grain+stria+cloud)));
+    px[k]=v;px[k+1]=v-(floor?2:3);px[k+2]=v-(floor?0:6);px[k+3]=255;
+  }
+  ctx.putImageData(img,0,0);
+  const t=new THREE.CanvasTexture(canvas);t.flipY=false;t.encoding=THREE.sRGBEncoding;
+  t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=2;
+  return t;
+}
+function makeSkyTexture(){
+  // Soft multi-octave daylight clouds, generated only once, with no downloads.
+  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=512;
+  const ctx=canvas.getContext('2d');if(!ctx)throw Error('Cielo procedurale non disponibile');
+  const image=ctx.createImageData(512,512),p=image.data;
+  const hash=(x,y)=>{let n=Math.imul(x,374761393)+Math.imul(y,668265263)+1274126177;
+    n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967295;};
+  const noise=(x,y)=>{const ix=Math.floor(x),iy=Math.floor(y),u=x-ix,v=y-iy;
+    const sx=u*u*(3-2*u),sy=v*v*(3-2*v);
+    const aa=hash(ix,iy),ab=hash(ix+1,iy),ba=hash(ix,iy+1),bb=hash(ix+1,iy+1);
+    return (aa+(ab-aa)*sx)*(1-sy)+(ba+(bb-ba)*sx)*sy;};
+  const clamp=v=>Math.max(0,Math.min(1,v));
+  for(let y=0;y<512;y++)for(let x=0;x<512;x++){
+    const u=x/511,v=y/511;
+    const n=.56*noise(u*3.1,v*3.5)+.28*noise(u*8.5,v*8.1)+.16*noise(u*19.5,v*20.1);
+    const cloud=Math.pow(clamp((n-.43)/.36),1.6)*.62;
+    const haze=.06+.09*v;
+    const a=clamp(cloud+haze),r=70+70*v,g=132+51*v,bl=192+30*v,k=(y*512+x)*4;
+    p[k]=Math.round(r*(1-a)+245*a);
+    p[k+1]=Math.round(g*(1-a)+249*a);
+    p[k+2]=Math.round(bl*(1-a)+252*a);
+    p[k+3]=255;
+  }
+  ctx.putImageData(image,0,0);
+  const t=new THREE.CanvasTexture(canvas);t.flipY=false;t.encoding=THREE.sRGBEncoding;
+  t.wrapS=t.wrapT=THREE.ClampToEdgeWrapping;t.anisotropy=2;
+  return t;
+}
+function finishArchitecture(scene){
+  const roofTexture=makeStoneTexture(false),floorTexture=makeStoneTexture(true),skyTexture=makeSkyTexture();
+  const cache=new Map();
+  scene.traverse(obj=>{
+    if(!obj.isMesh||!obj.material)return;
+    const refine=original=>{
+      if(!original||!original.name)return original;
+      const name=original.name.toLowerCase();
+      let kind=null;
+      if(name.includes('copertura pietra perla'))kind='roof';
+      else if(name.includes('cielo zenitale procedurale'))kind='sky';
+      else if(name==='atlas p3b • pavimento')kind='floor';
+      else if(name.includes('gallerie blu'))kind='gallery';
+      else if(name.includes('stone columns')||name.includes('pilastri grafite'))kind='pier';
+      else if(name.includes('nicchie blu profonde'))kind='niche';
+      else if(name.includes('ripiani bronzo satinato'))kind='shelf';
+      if(!kind)return original;
+      if(cache.has(original.uuid))return cache.get(original.uuid);
+      const m=original.clone();
+      if(kind==='roof'){
+        m.color.setRGB(.20,.225,.265);m.metalness=.035;m.roughness=.78;
+        m.map=roofTexture;state.art.roofApplied++;
+      }else if(kind==='sky'){
+        m.color.setRGB(1,1,1);m.map=skyTexture;
+        m.emissive.setRGB(.48,.48,.48);m.emissiveMap=skyTexture;
+        m.roughness=.98;state.art.skyApplied++;
+      }else if(kind==='floor'){
+        m.color.setRGB(.22,.26,.30);m.metalness=.11;m.roughness=.55;
+        m.map=floorTexture;state.art.floorApplied++;
+      }else if(kind==='gallery'){
+        m.color.setRGB(.095,.13,.18);m.roughness=.72;m.metalness=.10;
+      }else if(kind==='pier'){
+        m.color.setRGB(.052,.073,.105);m.roughness=.83;m.metalness=.035;
+      }else if(kind==='niche'){
+        m.color.setRGB(.085,.13,.19);m.roughness=.84;
+      }else if(kind==='shelf'){
+        m.color.setRGB(.35,.26,.17);m.roughness=.46;m.metalness=.31;
+      }
+      m.needsUpdate=true;
+      cache.set(original.uuid,m);state.art.materialFamilies++;
+      return m;
+    };
+    const before=obj.material;
+    const changed=Array.isArray(before)?before.map(refine):refine(before);
+    if(changed!==before)obj.material=changed;
+    if(obj.name==='ATLAS P3A • padiglione unico oculo circolare'&&obj.geometry){
+      // This adds UV mapping to an in-memory COPY only, never alters vertex
+      // coordinates, topology, the GLB, or the canonical Blender source.
+      const geometry=obj.geometry.clone(),position=geometry.getAttribute('position');
+      if(position&&position.count){
+        geometry.computeBoundingBox();
+        const bounds=geometry.boundingBox;
+        const dx=Math.max(.001,bounds.max.x-bounds.min.x),dz=Math.max(.001,bounds.max.z-bounds.min.z);
+        const uv=new Float32Array(position.count*2);
+        for(let i=0;i<position.count;i++){
+          uv[2*i]=(position.getX(i)-bounds.min.x)/dx*2.4;
+          uv[2*i+1]=(position.getZ(i)-bounds.min.z)/dz*2.4;
+        }
+        geometry.setAttribute('uv',new THREE.BufferAttribute(uv,2));obj.geometry=geometry;
+      }
+    }
+  });
+}
+
+window.__ATLAS_P3C_EXPERIENCE_TEST__=state;
+function setError(error){
+  state.error=String(error.message||error);
+  status.textContent='La sala 3D non è disponibile. Esplora le possibilità di Atlas qui sotto.';
+  enter.disabled=true;welcome.hidden=true;
+  const fallbackBtns=Object.entries(WORDS).map(([id,x])=>'<button data-fallback="'+id+'" type="button">'+x.title+'</button>').join('');
+  fallback.insertAdjacentHTML('beforeend',fallbackBtns);
+  fallback.dataset.visible='true';
+  fallback.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>displayFallback(b.dataset.fallback)));
+}
+function displayFallback(id){cardTitle.textContent=WORDS[id].title;cardText.textContent=WORDS[id].detail;card.dataset.visible='true';}
+try {
+  if(!window.THREE||!THREE.GLTFLoader)throw Error('Motore tridimensionale mancante');
+  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'low-power'});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.4));
+  renderer.setClearColor(0x081521);
+  renderer.outputEncoding=THREE.sRGBEncoding;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.18;
+  stage.appendChild(renderer.domElement);state.renderer=renderer;
+  const loader=new THREE.GLTFLoader();
+  loader.load('./atlas-p3b-atrio-4-livelli-oculo-circolare.glb',gltf=>{
+    const scene=gltf.scene;scene.updateMatrixWorld(true);
+    const original=scene.getObjectByName('ATLAS P3A • CAMERA HERO');
+    let camera=original;
+    if(!camera||!camera.isPerspectiveCamera)throw Error('Camera originale del modello assente');
+    // Keep the original camera and immutable geometry, change only this viewer pose.
+    state.scene=scene;state.camera=camera;
+    scene.add(new THREE.HemisphereLight(0xd4e7fa,0x36455a,1.08));
+    const key=new THREE.DirectionalLight(0xffead1,2.20);key.position.set(1,14,7);scene.add(key);
+    const amber=new THREE.PointLight(0xffba76,1.55,24);amber.position.set(-4,4,6);scene.add(amber);
+    const blue=new THREE.PointLight(0x86baf3,.56,26);blue.position.set(5,5,-2);scene.add(blue);
+    const central=new THREE.PointLight(0xffe2ad,1.0,16);central.position.set(0,3,5);scene.add(central);
+    finishArchitecture(scene);
+    if(state.art.skyApplied!==1||state.art.roofApplied!==1||state.art.floorApplied!==1||state.art.materialFamilies<5)
+      throw Error('Materiali architettonici incomplete');
+    const targets={};const ray=new THREE.Raycaster();
+    scene.traverse(obj=>{
+      if(!obj.isMesh||!obj.userData?.atlas_hit_target||!(obj.userData?.atlas_portal_id in WORDS))return;
+      const id=obj.userData.atlas_portal_id;targets[id]=obj;
+      if(obj.material){
+        const materials=Array.isArray(obj.material)?obj.material:[obj.material];
+        obj.material=materials.map(m=>{
+          const copy=m.clone();copy.roughness=Math.max(.16,copy.roughness||.1);
+          copy.emissive.setRGB(.030,.072,.12);copy.emissiveIntensity=.37;copy.needsUpdate=true;
+          return copy;
+        });
+        if(!Array.isArray(obj.material))obj.material=obj.material[0];
+        state.glassRefined++;
+      }
+    });
+    state.portalCount=Object.keys(targets).length;
+    if(state.portalCount!==4)throw Error('Sono necessari quattro veri portali 3D');
+    const centerOf=id=>new THREE.Box3().setFromObject(targets[id]).getCenter(new THREE.Vector3());
+    const startPos=new THREE.Vector3(0,2.65,18.1),homePos=new THREE.Vector3(0,2.55,13.5);
+    const homeAim=new THREE.Vector3(0,2.62,5.0);
+    const quatTo=(pos,aim)=>{
+      const temp=new THREE.PerspectiveCamera();temp.position.copy(pos);temp.lookAt(aim);return temp.quaternion.clone();
+    };
+    const startQ=quatTo(startPos,new THREE.Vector3(0,2.8,5));
+    const homeQ=quatTo(homePos,homeAim);
+    const fromPose={p:startPos,q:startQ},home={p:homePos,q:homeQ};
+    let pose=fromPose,transition=null,drag=null;
+    let yaw=0,pitch=0,wasMoved=false,lastMotionFrame=0;
+    const uiPose={home};
+    const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+    const render=()=>{scene.updateMatrixWorld(true);renderer.render(scene,camera);};
+    function resize(){
+      const width=stage.clientWidth||window.innerWidth,height=stage.clientHeight||window.innerHeight;
+      renderer.setSize(width,height,false);
+      camera.aspect=width/Math.max(height,1);
+      camera.fov=camera.aspect<.65?88:camera.aspect<1?73:50;
+      camera.updateProjectionMatrix();render();
+    }
+    window.addEventListener('resize',resize,{passive:true});
+    if(typeof ResizeObserver!=='undefined')new ResizeObserver(resize).observe(stage);
+    function applyPose(next){pose=next;camera.position.copy(next.p);camera.quaternion.copy(next.q);state.motion.poseChanges++;render();}
+    function animateTo(end,duration,onDone){
+      transition=null;
+      if(reduced.matches||duration===0){applyPose(end);onDone?.();return;}
+      transition={start:performance.now(),duration,from:{p:camera.position.clone(),q:camera.quaternion.clone()},to:end,onDone};
+      requestAnimationFrame(tickTransition);
+    }
+    function tickTransition(now){
+      if(!transition)return;
+      if(document.hidden){const t=transition;transition=null;applyPose(t.to);t.onDone?.();return;}
+      const t=transition,f=clamp((now-t.start)/t.duration,0,1),smooth=f*f*(3-2*f);
+      camera.position.copy(t.from.p).lerp(t.to.p,smooth);
+      camera.quaternion.copy(t.from.q).slerp(t.to.q,smooth);
+      state.motion.poseChanges++;render();
+      if(f<1)requestAnimationFrame(tickTransition);
+      else{transition=null;pose=t.to;t.onDone?.();}
+    }
+    function showControls(){
+      controls.dataset.visible='true';tools.dataset.visible='true';
+      status.textContent='Trascina per orientarti. Scegli un portale per avvicinarti.';
+      setPhase('exploring');
+    }
+    function enterScene(){
+      if(!state.ready||state.motion.everEntered)return;
+      state.motion.everEntered=true;state.intro.started=true;setPhase('entering');
+      animateTo(home,state.intro.durationMs,()=>{
+        state.intro.completed=true;state.intro.skipped=reduced.matches;
+        state.motion.enterTransitions++;showControls();
+      });
+    }
+    enter.disabled=false;enter.innerHTML='Entra nella sala <span aria-hidden="true">→</span>';
+    enter.addEventListener('click',enterScene);
+    function showPortal(id,source){
+      if(!(id in WORDS)||!state.motion.everEntered)return;
+      const point=centerOf(id);
+      const targetPos=new THREE.Vector3(point.x*.72,2.65,point.z+6.3);
+      const next={p:targetPos,q:quatTo(targetPos,new THREE.Vector3(point.x,point.y,point.z))};
+      state.selected=id;setPhase('focusing');
+      for(const b of document.querySelectorAll('#destinations button'))b.dataset.selected=String(b.dataset.portal===id);
+      cardTitle.textContent=WORDS[id].title;cardText.textContent=WORDS[id].detail;
+      card.dataset.visible='true';status.textContent='Stai esplorando '+WORDS[id].title+'.';
+      animateTo(next,1350,()=>{
+        state.motion.focusTransitions++;setPhase('focused');
+        back.focus({preventScroll:true});
+      });
+      window.dispatchEvent(new CustomEvent('atlas-p3c-focus',{detail:{id,source}}));
+      if(embedded&&/^[a-f0-9]{48}$/.test(channel||'')){
+        // Only a focus event: do NOT navigate to restricted student content.
+        window.parent.postMessage({type:'atlas-p3c-private-focus',id,channel},location.origin);
+      }
+    }
+    function goHome(){
+      if(!state.motion.everEntered)return;
+      card.dataset.visible='false';state.selected=null;
+      for(const b of document.querySelectorAll('#destinations button'))b.dataset.selected='false';
+      yaw=0;pitch=0;setPhase('returning');
+      animateTo(home,850,()=>{state.motion.resetTransitions++;showControls();});
+    }
+    reset.addEventListener('click',goHome);
+    back.addEventListener('click',goHome);
+    for(const b of document.querySelectorAll('#destinations button'))b.addEventListener('click',()=>showPortal(b.dataset.portal,'comando-accessibile'));
+    function applyLook(){
+      // A bounded seated-visitor look-around, no free-flight or disorientation.
+      const baseEuler=new THREE.Euler().setFromQuaternion(homeQ,'YXZ');
+      const q=new THREE.Quaternion().setFromEuler(new THREE.Euler(baseEuler.x+pitch,baseEuler.y+yaw,0,'YXZ'));
+      camera.position.copy(homePos);camera.quaternion.copy(q);
+      state.motion.poseChanges++;render();
+    }
+    const canvas=renderer.domElement;canvas.style.touchAction='none';
+    canvas.addEventListener('pointerdown',event=>{
+      if(!state.ready||state.phase!=='exploring')return;
+      drag={id:event.pointerId,x:event.clientX,y:event.clientY,lastX:event.clientX,lastY:event.clientY,moved:false};
+      canvas.setPointerCapture?.(event.pointerId);
+    });
+    canvas.addEventListener('pointermove',event=>{
+      if(!drag||drag.id!==event.pointerId||state.phase!=='exploring')return;
+      const dx=event.clientX-drag.lastX,dy=event.clientY-drag.lastY;
+      drag.lastX=event.clientX;drag.lastY=event.clientY;
+      if(Math.abs(event.clientX-drag.x)+Math.abs(event.clientY-drag.y)>8)drag.moved=true;
+      if(!drag.moved)return;
+      yaw=clamp(yaw-dx/Math.max(window.innerWidth,320)*1.25,-.60,.60);
+      pitch=clamp(pitch-dy/Math.max(window.innerHeight,500)*1.0,-.22,.20);
+      state.motion.dragUpdates++;applyLook();event.preventDefault();
+    },{passive:false});
+    canvas.addEventListener('pointerup',event=>{
+      if(!drag||drag.id!==event.pointerId)return;
+      const didMove=drag.moved;drag=null;
+      if(didMove||state.phase!=='exploring')return;
+      const rect=canvas.getBoundingClientRect();
+      const pointer=new THREE.Vector2((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);
+      ray.setFromCamera(pointer,camera);
+      const hit=ray.intersectObjects(Object.values(targets),true)[0];
+      if(hit){
+        let obj=hit.object;while(obj&&!obj.userData.atlas_portal_id)obj=obj.parent;
+        if(obj)showPortal(obj.userData.atlas_portal_id,'portale-tridimensionale');
+      }
+    });
+    canvas.addEventListener('pointercancel',()=>{drag=null;});
+    // Low-cost ambient shimmer at at most 20 fps; disable when hidden/reduced motion.
+    function ambient(now){
+      requestAnimationFrame(ambient);
+      if(reduced.matches||document.hidden||now-lastMotionFrame<50||transition)return;
+      lastMotionFrame=now;
+      amber.intensity=1.48+Math.sin(now/2400)*.08;
+      if(state.phase==='welcome'){
+        // The scene is visibly alive even before selecting the entry action.
+        const q=quatTo(startPos,new THREE.Vector3(Math.sin(now/3200)*.095,2.8,5));
+        camera.quaternion.copy(q);
+      }
+      state.motion.ambientFrames++;render();
+    }
+    state.ready=true;setPhase('welcome');
+    applyPose(fromPose);resize();requestAnimationFrame(ambient);
+    status.textContent='La sala è pronta. Tocca «Entra nella sala» per cominciare.';
+  },undefined,setError);
+}catch(error){setError(error)}
+})();
+</script>
+</body>
+</html>
