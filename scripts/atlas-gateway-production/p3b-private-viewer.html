@@ -109,6 +109,12 @@ try{
       r.render(scene,camera);
    }
    window.addEventListener('resize',resize,{passive:true});
+   // A Next.js layout can resize the iframe after the GLB finishes loading.
+   // Observe the actual drawing surface instead of relying only on window events.
+   if(typeof ResizeObserver!=='undefined'){
+     const watcher=new ResizeObserver(()=>resize());
+     watcher.observe(stage);
+   }
    r.domElement.addEventListener('pointerup',event=>{
       if(event.button!==0)return;
       const rect=r.domElement.getBoundingClientRect();
