@@ -110,9 +110,10 @@
     "warmSize": 4
   },
   "sky": {
-    "model": "NISHITA",
+    "model": "PHYSICAL_ATMOSPHERE",
     "sunElevationDegrees": 33,
-    "turbidity": 2.4,
+    "airDensity": 1,
+    "dustDensity": 1,
     "worldStrength": 0.34
   },
   "cameras": {
