@@ -9,6 +9,14 @@ if (existsSync("public/atlas-gateway-native") && (process.env.ATLAS_GATEWAY_PREV
   throw new Error("Remove local native Gateway staging before a non-native or static export build.");
 }
 
+// P3B has a real GLB only in a manually staged PRIVATE laboratory build.
+// Reject accidental use of these assets in the default/static/public pipeline.
+if (existsSync("public/atlas-p3b-preview")
+    && (process.env.ATLAS_P3B_PRIVATE_PREVIEW !== "true"
+      || isGitHubPages || isAtlasPreviewRootScoped)) {
+  throw new Error("P3B 3D assets may be staged only for a private, non-static laboratory build.");
+}
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   devIndicators: false, // La porta d'accesso immersiva non mostra controlli tecnici sovrapposti
