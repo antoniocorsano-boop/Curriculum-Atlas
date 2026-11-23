@@ -23,20 +23,20 @@ jobs:
         with:
           node-version: "22"
           cache: "pnpm"
-      - name: Recover exact P2C true 3D GLB from qualified Blender export
+      - name: Recover exact P3B four-storey circular-roof GLB from qualified Blender export
         uses: actions/download-artifact@v4
         with:
           run-id: 45162372012
           pattern: atlas-p3b-four-levels-circular-oculus-1
           merge-multiple: true
           github-token: ${{ github.token }}
-          path: ${{ runner.temp }}/p2c
+          path: ${{ runner.temp }}/p3b
       - name: Verify immutable real GLB and provenance
         run: |
           python3 - <<'PY'
           import hashlib,json,os,struct
           from pathlib import Path
-          root=Path(os.environ["RUNNER_TEMP"])/"p2c"
+          root=Path(os.environ["RUNNER_TEMP"])/"p3b"
           report=json.loads((root/"atlas-p3b-webgl-receipt.json").read_text())
           f=root/"atlas-p3b-atrio-4-livelli-oculo-circolare.glb"
           assert f.stat().st_size==2035780
@@ -48,7 +48,7 @@ jobs:
           assert report["circular_oculus_radius_bu"]==6.25
           assert report["third_gallery_railing_nodes"]==32
           assert not report["art_final_approved"] and not report["web_product_approved"]
-          print("P2C_REAL_ARCHITECTURE_GLB_SHA_VERIFIED")
+          print("P3B_REAL_FOUR_STORY_GLB_SHA_VERIFIED")
           PY
       - name: Install application test runtime and local, pinned Three.js
         run: |
