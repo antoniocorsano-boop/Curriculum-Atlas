@@ -60,8 +60,11 @@ try{
    for(const id of expected){
       const hit=await page.evaluate(id=>{
         const s=window.__ATLAS_P2C_PRIVATE_TEST__;
-        const mesh=s.scene.getObjectByName(id[0].toUpperCase()+id.slice(1)+' • vetro cobalto');
-        if(!mesh||!mesh.isMesh)return {error:'missing semantic pane '+id};
+        let mesh=null;
+        s.scene.traverse(o=>{
+          if(o.isMesh&&o.userData?.atlas_portal_id===id&&o.userData?.atlas_hit_target)mesh=o;
+        });
+        if(!mesh)return {error:'missing semantic pane '+id};
         const rect=s.renderer.domElement.getBoundingClientRect();
         const c=new THREE.Box3().setFromObject(mesh).getCenter().project(s.camera);
         const x=rect.left+(c.x+1)*rect.width/2,y=rect.top+(1-c.y)*rect.height/2;
