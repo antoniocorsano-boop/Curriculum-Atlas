@@ -222,20 +222,29 @@ gold=emission("ATLAS P2A • filamento ottone illuminato",(.95,.58,.25),2.2)
 trim=mesh_material("ATLAS P2A • bronzo scuro",(.12,.085,.065),.62,.28)
 frame_names=[]
 disabled_backings=[]
+portal_inventory={}
 for n,root,pane,base in zip(names,roots,panes,bases):
+    entries=[]
+    for child in root.children_recursive:
+        if child.type=="MESH":
+            entries.append({"name":child.name,
+                "dimensions_bu":[round(float(x),3) for x in child.dimensions],
+                "materials":[m.name for m in child.data.materials if m is not None],
+                "hidden_original":bool(child.hide_render)})
+    portal_inventory[n]=entries
+    print("ATLAS_P2A_PORTAL_OBJECT_INVENTORY",n,json.dumps(entries,ensure_ascii=False),flush=True)
     assign(pane,glass)
     frame_names.append(rect_rounded("ATLAS P2A • bordo luminoso "+n,pane,gold).name)
-    # The previous opaque plate sits behind the actual cobalt glass. Keeping
-    # it rendered made transparent glass look like a solid blue block.
+    # Historical rear plates AND the nontransparent thick legacy frame
+    # must disappear; a thin, genuine emissive 3D perimeter replaces them.
     for child in root.children_recursive:
-        if child.type=="MESH" and "retro" in child.name.lower():
+        if child.type=="MESH" and any(w in child.name.lower() for w in ("retro","telaio")):
             child.hide_render=True
             disabled_backings.append(child.name)
     if base.type=="MESH":
         assign(base,trim)
-if len(disabled_backings)!=4:
-    raise RuntimeError("Expected exactly four historical opaque glass backings; found "+
-                       str(disabled_backings))
+if len([x for x in disabled_backings if "retro" in x.lower()])!=4:
+    raise RuntimeError("Expected four historical opaque backings: "+str(disabled_backings))
 
 # Renderable physically recessed slots: subtract a cutter from the original
 # floor mesh; verify face topology changes, rather than placing a fake texture.
@@ -346,6 +355,7 @@ report={
  "portal_targets":portal_positions,
  "portal_frames":frame_names,
  "disabled_opaque_backings":disabled_backings,
+ "portal_original_mesh_inventory":portal_inventory,
  "rebalance_gallery_objects":galley_materials,
  "portal_glass_node_material":glass.name,
  "floor_mesh":floor.name,
