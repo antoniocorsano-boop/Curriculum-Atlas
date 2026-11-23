@@ -49,7 +49,7 @@ if not podium:raise RuntimeError("Original podium objects absent")
 for ob in (roof_old,sky_old,rim_old,gallery1,gallery2,camera_old,*portals.values()):
     if ob.hide_render:raise RuntimeError("Protected original object invisible "+ob.name)
 
-original_names=set(scene.objects)
+original_names={ob.name for ob in scene.objects}
 def spatial(ob):
     h=hashlib.sha256()
     for row in ob.matrix_world:
