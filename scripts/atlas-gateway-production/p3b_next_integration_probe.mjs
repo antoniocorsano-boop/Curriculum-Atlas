@@ -37,10 +37,16 @@ try {
     const s = el.contentWindow.__ATLAS_P3B_PRIVATE_TEST__;
     return { ready: s.ready, error: s.error, portals: s.portalCount,
       camera: s.camera?.name, scene: !!s.scene, canvas: !!el.contentDocument?.querySelector("canvas"),
-      intro: s.intro, glassRefined: s.glassRefined, lightRig: s.lightRig };
+      intro: s.intro, glassRefined: s.glassRefined, lightRig: s.lightRig, art: s.art };
   });
   if (!state.ready || state.portals !== 4 || !state.camera?.includes("P3A") || !state.canvas || !state.scene) {
     throw Error("Real model in Next iframe not verified " + JSON.stringify(state));
+  }
+  if (state.art?.profile !== "p3b-pbr-sky-v2" || state.art.skyApplied !== 1
+      || state.art.roofApplied !== 1 || state.art.floorApplied !== 1
+      || state.art.materialFamilies < 5 || state.art.externalAssetsAdded
+      || !state.art.sourceGlbPreserved || !state.art.sourceGeometryPreserved) {
+    throw Error("P3B local artistic finishing contract failed: " + JSON.stringify(state.art));
   }
   if (!state.intro?.started || !state.intro.completed || state.intro.skipped
       || state.intro.finalPositionError > 1e-8 || state.intro.finalRotationError > 1e-8
