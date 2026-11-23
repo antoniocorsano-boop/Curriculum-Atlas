@@ -155,7 +155,9 @@ for n,root,pane,base,target,original,bottom in zip(
         theta=math.radians(sign*deg)
         root.location.x=centre.x-radius*math.cos(theta)*forward.x+radius*math.sin(theta)*side.x
         root.location.y=centre.y-radius*math.cos(theta)*forward.y+radius*math.sin(theta)*side.y
-        root.rotation_euler.z=heading-math.radians(sign*deg*.20)
+        # The semantic front face (titles/icons) must point toward the viewer.
+        # P2A/R3 exposed mirrored back-facing labels, so turn the real panel.
+        root.rotation_euler.z=heading-math.radians(sign*deg*.20)+math.pi
         bpy.context.view_layer.update()
         return projected(pane,cam).x
     lo,hi=5.,79.
@@ -213,7 +215,7 @@ film.inputs["Base Color"].default_value=(.035,.13,.29,1.)
 film.inputs["Roughness"].default_value=.13
 film.inputs["Metallic"].default_value=.12
 mix=nodes.new("ShaderNodeMixShader")
-mix.inputs[0].default_value=.76
+mix.inputs[0].default_value=.64
 links=glass.node_tree.links
 links.new(film.outputs["BSDF"],mix.inputs[1])
 links.new(transparent.outputs[0],mix.inputs[2])
@@ -322,6 +324,21 @@ for idx,(x,y) in enumerate(((-5.,-3.0),(5.,-3.0))):
 
 scene.render.engine="CYCLES"
 scene.cycles.samples=56
+# Shift the whole optical composition upward to preserve a foreground floor
+# margin, while measuring the shift on the actual Cycles HERO camera.
+v0=projected(panes[1],cam).y
+original_shift=cam.data.shift_y
+cam.data.shift_y=original_shift+.02
+bpy.context.view_layer.update()
+v1=projected(panes[1],cam).y
+slope=(v1-v0)/.02
+if abs(slope)<.1:
+    raise RuntimeError("Camera vertical optical shift is underdetermined")
+cam.data.shift_y=original_shift + .11/slope
+bpy.context.view_layer.update()
+v2=projected(panes[1],cam).y
+if not (.24<=v2<=.34):
+    raise RuntimeError("Camera optical recentering outside safe portal range "+str(v2))
 scene.render.resolution_x=1280
 scene.render.resolution_y=720
 scene.render.resolution_percentage=100
@@ -353,6 +370,9 @@ report={
  "selected_candidate":"A Monumentale",
  "alternative_B_C_preserved":True,
  "portal_targets":portal_positions,
+ "camera_vertical_recenter":{"from_shift_y":original_shift,
+     "to_shift_y":cam.data.shift_y,"esplora_y_before":v0,"esplora_y_after":v2},
+ "portal_front_facing_hero":True,
  "portal_frames":frame_names,
  "disabled_opaque_backings":disabled_backings,
  "portal_original_mesh_inventory":portal_inventory,
