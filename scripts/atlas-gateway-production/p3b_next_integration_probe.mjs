@@ -36,10 +36,16 @@ try {
   const state = await iframe.evaluate(el => {
     const s = el.contentWindow.__ATLAS_P3B_PRIVATE_TEST__;
     return { ready: s.ready, error: s.error, portals: s.portalCount,
-      camera: s.camera?.name, scene: !!s.scene, canvas: !!el.contentDocument?.querySelector("canvas") };
+      camera: s.camera?.name, scene: !!s.scene, canvas: !!el.contentDocument?.querySelector("canvas"),
+      intro: s.intro, glassRefined: s.glassRefined, lightRig: s.lightRig };
   });
   if (!state.ready || state.portals !== 4 || !state.camera?.includes("P3A") || !state.canvas || !state.scene) {
     throw Error("Real model in Next iframe not verified " + JSON.stringify(state));
+  }
+  if (!state.intro?.started || !state.intro.completed || state.intro.skipped
+      || state.intro.finalPositionError > 1e-8 || state.intro.finalRotationError > 1e-8
+      || state.glassRefined !== 4 || state.lightRig !== "cinematic-balanced-v1") {
+    throw Error("Cinematic entrance did not finish on original GLB camera: " + JSON.stringify(state));
   }
   const dimensions = await iframe.evaluate(el => {
     const frame = el.getBoundingClientRect();
