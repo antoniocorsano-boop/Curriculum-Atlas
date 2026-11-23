@@ -1,0 +1,377 @@
+{
+  "schemaVersion": "atlas.portal-capability-map/v1",
+  "registerId": "ATLAS-PORTALI-02",
+  "lifecycle": "PLANNING_BASELINE_NOT_RUNTIME_AUTHORITY",
+  "reviewedOn": "2026-11-23",
+  "homeCandidate": {
+    "pullRequest": 189,
+    "exactHeadAtReview": "043d3e5bb4935f114ab2d355704338bc352a1493",
+    "preview": "https://g1-043d3e5bb493.atlas-pr-preview.pages.dev/",
+    "status": "TECHNICALLY_QUALIFIED_HUMAN_VISUAL_FEEDBACK_RECEIVED_NOT_MERGED"
+  },
+  "governance": {
+    "curriculumAuthority": "TRAMA Arena; Atlas reads without becoming source of approval",
+    "experienceAuthoring": "Studio Atlas; separate professional environment",
+    "studentAccess": "PUBLIC_NO_PERSONAL_ACCOUNT_BY_DEFAULT",
+    "studentData": "NO_STUDENT_PERSONAL_DATA_IN_PUBLIC_ATLAS",
+    "release": "NEVER_INFER_RUNTIME_AUTHORIZATION_FROM_CODE_OR_CI",
+    "note": "Inventory/planning only: this file must never be consumed as a runtime permission grant",
+    "references": [
+      "https://github.com/antoniocorsano-boop/trama-ecosistema/blob/main/docs/superpowers/specs/2026-10-10-trama-access-01-ecosystem-access-architecture-design.md",
+      "https://github.com/antoniocorsano-boop/trama-ecosistema/blob/main/docs/capabilities/atlas-percorsi/product/STUDENT-LIBRARY-PRODUCT-CONTRACT-v1.md"
+    ]
+  },
+  "portals": [
+    {
+      "id": "esplora",
+      "label": "Esplora",
+      "promise": "Ho una curiosità",
+      "plannedRoute": "/esplora/",
+      "routeOnMain": true,
+      "productState": "IMPLEMENTED_NEEDS_CURIOUS_FIRST_JOURNEY",
+      "capabilityIds": [
+        "explore-relations",
+        "explore-questions",
+        "atlas-resources"
+      ],
+      "sourcePaths": [
+        "src/app/esplora/page.tsx",
+        "src/components/atlas/relation-explorer.tsx",
+        "src/features/explore/graph.ts"
+      ]
+    },
+    {
+      "id": "esperienze",
+      "label": "Esperienze",
+      "promise": "Voglio entrare in un mondo",
+      "plannedRoute": "/esperienze/",
+      "routeOnMain": false,
+      "productState": "PORTAL_PROPOSED_RUNTIME_PRIVATE_ONLY",
+      "capabilityIds": [
+        "experience-runtime",
+        "studio-atlas-authoring",
+        "edutwin-preview",
+        "missione-118",
+        "museo-zero"
+      ],
+      "sourcePaths": []
+    },
+    {
+      "id": "percorsi",
+      "label": "Percorsi",
+      "promise": "Voglio affrontare una sfida",
+      "plannedRoute": "/percorsi/",
+      "routeOnMain": true,
+      "productState": "PUBLIC_CATALOG_EMPTY_UNTIL_EXPLICIT_AUTHORIZATION",
+      "capabilityIds": [
+        "pathway-catalog",
+        "pathway-missing-information",
+        "pathway-tradeoffs"
+      ],
+      "sourcePaths": [
+        "src/app/percorsi/page.tsx",
+        "src/features/pathways/load-public-pathways.ts",
+        "governance/percorsi-portfolio.json"
+      ]
+    },
+    {
+      "id": "curricolo",
+      "label": "Curricolo",
+      "promise": "Voglio orientarmi e approfondire",
+      "plannedRoute": "/curricolo/",
+      "routeOnMain": true,
+      "productState": "IMPLEMENTED_ARENA_SOURCE_PROVISIONAL_NOT_VIGENT",
+      "capabilityIds": [
+        "curriculum-tree",
+        "curriculum-provenance",
+        "atlas-materials"
+      ],
+      "sourcePaths": [
+        "src/app/curricolo/page.tsx",
+        "src/components/atlas/curriculum-tree.tsx",
+        "src/features/curriculum/fixtures.ts"
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "explore-relations",
+      "label": "Mappa delle relazioni",
+      "kind": "PUBLIC_SURFACE",
+      "portals": [
+        "esplora"
+      ],
+      "maturity": "IMPLEMENTED_MAIN",
+      "learnerRuntimeAuthorization": "NOT_APPLICABLE",
+      "sourcePaths": [
+        "src/components/atlas/relation-explorer.tsx",
+        "src/features/explore/graph.ts"
+      ],
+      "next": "Approfondimenti su nodi e risorse, confronto mobile/LIM reale"
+    },
+    {
+      "id": "explore-questions",
+      "label": "Ingresso da domande concrete",
+      "kind": "PROPOSED_CAPABILITY",
+      "portals": [
+        "esplora"
+      ],
+      "maturity": "PROPOSED",
+      "learnerRuntimeAuthorization": "NOT_APPLICABLE",
+      "sourcePaths": [
+        "src/app/esplora/page.tsx"
+      ],
+      "next": "Realizzare primo viaggio domanda→nodo→scoperta con contenuti realmente disponibili"
+    },
+    {
+      "id": "atlas-resources",
+      "label": "Catalogo delle risorse",
+      "kind": "SHARED_CAPABILITY",
+      "portals": [
+        "esplora",
+        "esperienze",
+        "percorsi",
+        "curricolo"
+      ],
+      "maturity": "IMPLEMENTED_MAIN",
+      "learnerRuntimeAuthorization": "NOT_APPLICABLE",
+      "sourcePaths": [
+        "src/app/risorse/page.tsx",
+        "src/components/atlas/resource-catalog.tsx"
+      ],
+      "next": "Collegare contenuti tramite riferimenti, senza duplicare asset"
+    },
+    {
+      "id": "experience-runtime",
+      "label": "Motore delle esperienze",
+      "kind": "PRIVATE_RUNTIME_INFRASTRUCTURE",
+      "portals": [
+        "esperienze",
+        "percorsi"
+      ],
+      "maturity": "IMPLEMENTED_LAB_NOT_STUDENT_AUTHORIZED",
+      "learnerRuntimeAuthorization": "NOT_AUTHORIZED",
+      "sourcePaths": [
+        "src/features/experiences/experience-runtime.tsx",
+        "src/app/experience-lab/conformance/page.tsx"
+      ],
+      "next": "Distinguere collaudo tecnico da prodotto narrativo approvato"
+    },
+    {
+      "id": "studio-atlas-authoring",
+      "label": "Studio Atlas: ideazione, storie, mondi e scene",
+      "kind": "PROFESSIONAL_TOOL",
+      "portals": [
+        "esperienze",
+        "percorsi"
+      ],
+      "maturity": "IMPLEMENTED_PROFESSIONAL_SLICE",
+      "learnerRuntimeAuthorization": "NOT_APPLICABLE",
+      "sourcePaths": [],
+      "externalRefs": [
+        "https://github.com/antoniocorsano-boop/trama-ecosistema/tree/main/products/studio-atlas"
+      ],
+      "next": "Mantenere la creazione professionale separata dal runtime pubblico"
+    },
+    {
+      "id": "edutwin-preview",
+      "label": "Anteprima illustrata EduTwin e ponte Studio→Atlas",
+      "kind": "PREVIEW_ONLY",
+      "portals": [
+        "esperienze"
+      ],
+      "maturity": "IMPLEMENTED_PRIVATE_PREVIEW",
+      "learnerRuntimeAuthorization": "NOT_AUTHORIZED",
+      "sourcePaths": [
+        "docs/EDUTWIN-ILLUSTRATED-PREVIEW-v0.1.md",
+        "docs/STUDIO-ATLAS-PREVIEW-ADAPTER-v0.1.md",
+        "src/app/percorsi/lab/studio-atlas-preview/page.tsx"
+      ],
+      "next": "Verifica contenuti, media e autorizzazioni prima di un eventuale rilascio"
+    },
+    {
+      "id": "missione-118",
+      "label": "Missione 118",
+      "kind": "CONTENT_CANDIDATE",
+      "portals": [
+        "esperienze"
+      ],
+      "maturity": "DRAFT_IN_PR",
+      "learnerRuntimeAuthorization": "NOT_AUTHORIZED",
+      "sourcePaths": [],
+      "externalRefs": [
+        "https://github.com/antoniocorsano-boop/Curriculum-Atlas/pull/84"
+      ],
+      "next": "Recuperare originali, diritti, accessibilità e revisione didattica; non pubblicare"
+    },
+    {
+      "id": "museo-zero",
+      "label": "Museo Zero — La sala che non torna",
+      "kind": "CONTENT_CANDIDATE",
+      "portals": [
+        "esperienze",
+        "percorsi"
+      ],
+      "maturity": "STUDIO_CANDIDATE",
+      "learnerRuntimeAuthorization": "NOT_AUTHORIZED",
+      "sourcePaths": [],
+      "externalRefs": [
+        "https://github.com/antoniocorsano-boop/trama-ecosistema/blob/main/docs/capabilities/atlas-percorsi/pathways/PW-STRATEGY-SELECTION-01/worlds/MUSEO-ZERO/world-brief-v1.md"
+      ],
+      "next": "Verificare sceneggiatura, qualità dell'esperienza, revisione umana e filiera di pubblicazione"
+    },
+    {
+      "id": "pathway-catalog",
+      "label": "Catalogo Percorsi",
+      "kind": "PUBLIC_SURFACE",
+      "portals": [
+        "percorsi"
+      ],
+      "maturity": "IMPLEMENTED_MAIN_FILTERED",
+      "learnerRuntimeAuthorization": "NOT_APPLICABLE",
+      "sourcePaths": [
+        "src/features/pathways/pathway-catalog.tsx",
+        "src/features/pathways/load-public-pathways.ts",
+        "governance/percorsi-portfolio.json"
+      ],
+      "next": "Mostrare solo attività con RUNTIME_AUTHORIZED; catalogo attualmente vuoto"
+    },
+    {
+      "id": "pathway-missing-information",
+      "label": "Prima di decidere, cosa manca?",
+      "kind": "CONTENT_CANDIDATE",
+      "portals": [
+        "percorsi"
+      ],
+      "maturity": "IMPLEMENTED_CANDIDATE",
+      "learnerRuntimeAuthorization": "NOT_AUTHORIZED",
+      "sourcePaths": [
+        "governance/percorsi-portfolio.json",
+        "docs/PERCORSI-G1-PW-MISSING-INFORMATION-01-IMPLEMENTATION.md"
+      ],
+      "next": "Qualificare qualità educativa, trasferimento e autorizzazione runtime"
+    },
+    {
+      "id": "pathway-tradeoffs",
+      "label": "Una soluzione, molti vincoli",
+      "kind": "CONTENT_CANDIDATE",
+      "portals": [
+        "percorsi"
+      ],
+      "maturity": "IMPLEMENTATION_CANDIDATE",
+      "learnerRuntimeAuthorization": "NOT_AUTHORIZED",
+      "sourcePaths": [
+        "governance/percorsi-portfolio.json",
+        "content/experiences/pathways/pw-constraints-tradeoffs-01.v1.json"
+      ],
+      "next": "Consolidare il prodotto, il collaudo e l'autorizzazione runtime"
+    },
+    {
+      "id": "curriculum-tree",
+      "label": "Navigazione del curricolo verticale",
+      "kind": "PUBLIC_SURFACE",
+      "portals": [
+        "curricolo"
+      ],
+      "maturity": "IMPLEMENTED_MAIN",
+      "learnerRuntimeAuthorization": "NOT_APPLICABLE",
+      "sourcePaths": [
+        "src/app/curricolo/page.tsx",
+        "src/components/atlas/curriculum-tree.tsx"
+      ],
+      "next": "Consultazione per ordine, annualità e disciplina con progressioni leggibili"
+    },
+    {
+      "id": "curriculum-provenance",
+      "label": "Provenienza e stato di approvazione Arena",
+      "kind": "GOVERNED_SHARED_CAPABILITY",
+      "portals": [
+        "curricolo",
+        "esplora"
+      ],
+      "maturity": "IMPLEMENTED_PROVISIONAL_AUTHORITY",
+      "learnerRuntimeAuthorization": "NOT_APPLICABLE",
+      "sourcePaths": [
+        "src/app/curricolo/page.tsx",
+        "src/components/atlas/provenance-panel.tsx"
+      ],
+      "next": "Conservare dicitura PROVISIONAL_COMPLETE e non vigente finché Arena non cambia stato"
+    },
+    {
+      "id": "atlas-materials",
+      "label": "Materiali per lezione e grado",
+      "kind": "SHARED_CAPABILITY",
+      "portals": [
+        "curricolo",
+        "esplora",
+        "percorsi",
+        "esperienze"
+      ],
+      "maturity": "IMPLEMENTED_MAIN",
+      "learnerRuntimeAuthorization": "NOT_APPLICABLE",
+      "sourcePaths": [
+        "src/app/materiali/page.tsx",
+        "src/components/atlas/material-browser.tsx"
+      ],
+      "next": "Una fonte e riferimenti contestuali dal portale, non quinto portale duplicato"
+    },
+    {
+      "id": "visual-factory",
+      "label": "Visual Factory, progettazione e qualità dei media",
+      "kind": "PROFESSIONAL_PRODUCTION_CAPABILITY",
+      "portals": [
+        "esperienze",
+        "percorsi"
+      ],
+      "maturity": "IMPLEMENTED_AND_RESEARCH_IN_PROGRESS",
+      "learnerRuntimeAuthorization": "NOT_APPLICABLE",
+      "sourcePaths": [],
+      "externalRefs": [
+        "https://github.com/antoniocorsano-boop/trama-ecosistema/blob/main/docs/capabilities/atlas-percorsi/production/VISUAL-FACTORY-v0.1.md"
+      ],
+      "next": "Riutilizzare la filiera e i media qualificati, senza nuove generazioni illustrative come requisito della home"
+    }
+  ],
+  "decisions": {
+    "canonicalFourPortals": [
+      "esplora",
+      "esperienze",
+      "percorsi",
+      "curricolo"
+    ],
+    "materialsRole": "CROSS_PORTAL_CAPABILITY_NOT_FIFTH_PORTAL",
+    "oldThreeDGateway": "SUSPENDED_AS_ENTRY_STRATEGY_PRESERVED_IN_PR_188",
+    "studentLibrarySixTerritories": "CANDIDATE_TAXONOMY_NOT_APPROVED",
+    "firstVerticalSlice": "ESPLORA_QUESTION_TO_DISCOVERY",
+    "nextMilestones": [
+      "P0_REGISTRY_CONSOLIDATION",
+      "P1_FOUR_REAL_PORTAL_ROUTES",
+      "P2_FIRST_QUESTION_JOURNEY",
+      "P3_ONE_AUTHORIZED_EXPERIENCE",
+      "P4_PATHWAY_CURRICULUM_LINKS",
+      "P5_HUMAN_DEVICE_RELEASE_REVIEW"
+    ]
+  },
+  "evidence": [
+    {
+      "label": "Ingresso web tecnicamente qualificato",
+      "url": "https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/45238659751"
+    },
+    {
+      "label": "Anteprima online per revisione",
+      "url": "https://g1-043d3e5bb493.atlas-pr-preview.pages.dev/"
+    },
+    {
+      "label": "PR #189, nuova home",
+      "url": "https://github.com/antoniocorsano-boop/Curriculum-Atlas/pull/189"
+    },
+    {
+      "label": "PR #188, vecchia linea 3D sospesa",
+      "url": "https://github.com/antoniocorsano-boop/Curriculum-Atlas/pull/188"
+    },
+    {
+      "label": "Piano integrale dei quattro portali",
+      "url": "https://github.com/antoniocorsano-boop/Curriculum-Atlas/pull/189#issuecomment-7111072159"
+    }
+  ]
+}
