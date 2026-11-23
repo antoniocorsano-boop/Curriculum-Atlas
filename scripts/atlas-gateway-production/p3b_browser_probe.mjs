@@ -29,10 +29,16 @@ try{
    const state=await page.evaluate(()=>{
      const s=window.__ATLAS_P3B_PRIVATE_TEST__;
      return {ready:s.ready,error:s.error,portalCount:s.portalCount,
-       camera:s.camera?.name,canvas:!!document.querySelector('canvas')};
+       camera:s.camera?.name,canvas:!!document.querySelector('canvas'),
+       intro:s.intro,glassRefined:s.glassRefined,lightRig:s.lightRig};
    });
    if(!state.ready||state.portalCount!==4||!state.camera?.includes('P3A')||!state.canvas){
      throw Error(variant.name+' failed to display genuine GLB: '+JSON.stringify({state,logs,errors}));
+   }
+   if(!state.intro?.completed||!state.intro.skipped
+      ||state.intro.finalPositionError>1e-8||state.intro.finalRotationError>1e-8
+      ||state.glassRefined!==4||state.lightRig!=='cinematic-balanced-v1'){
+     throw Error('Reduced-motion camera/material contract failed: '+JSON.stringify(state));
    }
    // Screenshot before interaction; otherwise the notice obscures the podium.
    await page.screenshot({path:resolve(out,'p3b-'+variant.name+'-chromium.png'),fullPage:true});
@@ -82,6 +88,7 @@ try{
    await page.screenshot({path:resolve(out,'p3b-'+variant.name+'-interaction.png'),fullPage:true});
    results.push({device:variant.name,viewport:variant.width+'x'+variant.height,
      loaded:true,portalCount:state.portalCount,camera:state.camera,
+     cinematicIntro:state.intro,glassRefined:state.glassRefined,lightRig:state.lightRig,
      accessibleButtons:buttons,canonicalIntents:intents,actualThreeDimensionalPanelClicks:panelHits,
      requestPaths:[...new Set(requests)],runtimeErrors:errors});
    await page.close();
