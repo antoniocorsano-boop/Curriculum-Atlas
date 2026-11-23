@@ -17,7 +17,7 @@ export function ExploreHub() {
             <span className="atlas-eyebrow">Dalla scoperta alla rete delle conoscenze</span>
             <h2 id="atlas-mappa-title">Scopri come si collegano le idee.</h2>
             <p>
-              Esplora le discipline e gli argomenti con la mappa oppure con l'elenco.
+              Esplora le discipline e gli argomenti con la mappa oppure con l&apos;elenco.
               Se hai seguito la storia della lampada, puoi trovare i sistemi energetici di Tecnologia.
               I dati del curricolo provengono da Arena e sono ancora in validazione.
             </p>
