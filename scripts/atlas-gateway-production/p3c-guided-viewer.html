@@ -263,8 +263,9 @@ try {
   loader.load('./atlas-p3b-atrio-4-livelli-oculo-circolare.glb',gltf=>{
     try{
     const scene=gltf.scene;scene.updateMatrixWorld(true);
-    const original=scene.getObjectByName('ATLAS P3A • CAMERA HERO');
-    let camera=original;
+    let camera=null;
+    // GLTFLoader normalises spaces to underscores in imported camera names.
+    scene.traverse(o=>{if(o.isPerspectiveCamera && o.name.includes('P3A') && o.name.includes('CAMERA'))camera=o;});
     if(!camera||!camera.isPerspectiveCamera)throw Error('Camera originale del modello assente');
     // Keep the original camera and immutable geometry, change only this viewer pose.
     state.scene=scene;state.camera=camera;
