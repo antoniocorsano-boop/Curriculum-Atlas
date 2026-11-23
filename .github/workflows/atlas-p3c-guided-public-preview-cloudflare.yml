@@ -38,9 +38,9 @@ jobs:
           import os,json,hashlib,struct
           from pathlib import Path
           p=Path(os.environ["RUNNER_TEMP"])/"qualified"
-          r=json.loads((p/"atlas-p3c-webgl-receipt.json").read_text())
+          r=json.loads((p/"atlas-p3b-webgl-receipt.json").read_text())
           b=(p/"atlas-p3b-atrio-4-livelli-oculo-circolare.glb").read_bytes()
-          assert r["schema"]=="atlas.gateway.p3c-four-gallery-webgl/v1"
+          assert r["schema"]=="atlas.gateway.p3b-four-gallery-webgl/v1"
           assert hashlib.sha256(b).hexdigest()==os.environ["SOURCE_GLB_SHA"]
           assert r["input_p3a_r2_sha256"]=="35371d226c289bd348a1137f63bfd14c74ee79389c4c1b53b522759ca0246d30"
           assert r["gallery_levels_including_ground"]==4
@@ -85,7 +85,7 @@ jobs:
           assert "Prova privata." not in content and "Prototipo 3D privato" not in content
           PY
           cp "$RUNNER_TEMP/qualified/atlas-p3b-atrio-4-livelli-oculo-circolare.glb" "$RUNNER_TEMP/p3c-public/atlas-p3c/"
-          cp "$RUNNER_TEMP/qualified/atlas-p3c-webgl-receipt.json" "$RUNNER_TEMP/p3c-public/atlas-p3c/"
+          cp "$RUNNER_TEMP/qualified/atlas-p3b-webgl-receipt.json" "$RUNNER_TEMP/p3c-public/atlas-p3c/"
           printf '%s\n' 'User-agent: *' 'Disallow: /' > "$RUNNER_TEMP/p3c-public/robots.txt"
           printf '%s\n' '<!doctype html><html lang="it"><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>Atlas 3D — prova pubblica</title><p><a href="./atlas-p3c/">Apri l’atrio tridimensionale di Atlas</a></p></html>' > "$RUNNER_TEMP/p3c-public/index.html"
           cat > "$RUNNER_TEMP/p3c-public/_headers" <<'HEADERS'
