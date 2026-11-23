@@ -121,6 +121,8 @@ jobs:
           assert r["floor_real_boolean"] and r["floor_faces_before"]!=r["floor_faces_after"]
           assert r["three_levels_preserved"] and r["original_skylight_mesh_preserved"]
           assert len(r["portal_targets"])==4 and len(r["portal_frames"])==4
+          assert len(r["disabled_opaque_backings"])==4
+          assert len(r["rebalance_gallery_objects"])>=4
           assert all(x["camera_side"] and abs(x["screen_target"]-x["screen_x"])<.03 for x in r["portal_targets"])
           assert not r["art_approved"] and not r["web_approved"]
           assert r["no_merge"] and r["no_deploy"]
