@@ -1,0 +1,92 @@
+.root {
+  min-height: 100svh;
+  background: #07111d;
+  color: #f2e9d9;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  padding: 1rem clamp(1rem, 4vw, 3rem);
+  border-bottom: 1px solid rgba(209, 183, 138, .20);
+}
+.header h1 {
+  margin: .2rem 0;
+  font-size: clamp(1.3rem, 2.5vw, 2rem);
+  letter-spacing: .025em;
+}
+.header p { margin: .28rem 0; color: #c5ced7; font-size: .86rem; }
+.header .kicker {
+  color: #e6c58c;
+  text-transform: uppercase;
+  font-size: .70rem;
+  letter-spacing: .11em;
+}
+.home {
+  color: #e6c58c;
+  border: 1px solid #927a5e;
+  border-radius: .55rem;
+  padding: .55rem .8rem;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.scene {
+  position: relative;
+  flex: 1;
+  min-height: 48svh;
+  max-height: 72svh;
+  overflow: hidden;
+}
+.scene iframe { display: block; width: 100%; height: 100%; border: 0; }
+.fallback {
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  height: 100%;
+  text-align: center;
+  background: radial-gradient(ellipse at center, #19314b, #08131f);
+}
+.nav {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .75rem;
+  padding: .8rem clamp(1rem, 4vw, 3rem);
+}
+.nav a {
+  display: flex;
+  min-height: 4rem;
+  flex-direction: column;
+  justify-content: center;
+  gap: .15rem;
+  padding: .7rem 1rem;
+  background: #122438;
+  border: 1px solid #74664e;
+  color: #f5ead9;
+  border-radius: .8rem;
+  text-decoration: none;
+}
+.nav a:hover, .nav a:focus-visible, .home:focus-visible {
+  outline: 2px solid #e7c482;
+  outline-offset: 2px;
+}
+.nav strong { font-size: .96rem; }
+.nav span { font-size: .72rem; color: #ced5dc; }
+.disclosure {
+  padding: 0 clamp(1rem, 4vw, 3rem) .8rem;
+  margin: 0;
+  font-size: .70rem;
+  color: #b1b9c4;
+}
+@media (max-width: 640px) {
+  .header { padding: .75rem; }
+  .header h1 { font-size: 1.1rem; }
+  .header p { font-size: .72rem; }
+  .scene { min-height: 43svh; max-height: 62svh; }
+  .nav { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: .5rem; gap: .45rem; }
+  .nav a { min-height: 3.4rem; padding: .55rem .7rem; }
+  .disclosure { padding: 0 .7rem .7rem; }
+}
