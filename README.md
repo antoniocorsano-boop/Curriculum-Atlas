@@ -29,6 +29,7 @@ La baseline corrente include l'export curricolare completo Arena e la sincronizz
 - Home
 - Curricolo
 - Esplora
+- Esperienze *(rotta candidata PR #189: nessuna esperienza studente autorizzata)*
 - Materiali
 - Risorse
 - Percorsi
