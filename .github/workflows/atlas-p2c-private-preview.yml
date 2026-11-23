@@ -26,8 +26,8 @@ jobs:
       - name: Recover exact P2C true 3D GLB from qualified Blender export
         uses: actions/download-artifact@v4
         with:
-          run-id: 45141556443
-          pattern: atlas-p2c-genuine-four-portal-glb-1
+          run-id: 45143529888
+          pattern: atlas-p2c-genuine-four-portal-glb-4
           merge-multiple: true
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/p2c
@@ -39,9 +39,9 @@ jobs:
           root=Path(os.environ["RUNNER_TEMP"])/"p2c"
           report=json.loads((root/"atlas-p2c-webgl-receipt.json").read_text())
           f=root/"atlas-p2c-atrio-4-portali.glb"
-          assert f.stat().st_size==1394260
-          assert hashlib.sha256(f.read_bytes()).hexdigest()=="9dd483ca870d8a504fe769d128cc5c08fd4d2e1fc08884b76287279edc977ee9"
-          assert struct.unpack("<III",f.read_bytes()[:12])==(0x46546c67,2,1394260)
+          assert f.stat().st_size==1495236
+          assert hashlib.sha256(f.read_bytes()).hexdigest()=="0cfaf8c65569db2c2f781199194e975c2ea265f0dc4399f7e009bf348afebce0"
+          assert struct.unpack("<III",f.read_bytes()[:12])==(0x46546c67,2,1495236)
           assert len(report["portals"])==4
           assert not report["art_final_approved"] and not report["web_product_approved"]
           print("P2C_REAL_ARCHITECTURE_GLB_SHA_VERIFIED")
