@@ -234,11 +234,12 @@ scene.view_settings.view_transform="AgX"
 scene.view_settings.exposure=.20
 scene.view_settings.gamma=1.0
 bpy.context.view_layer.update()
-geometry_after=spatial_fingerprint()
-if geometry_before!=geometry_after:
-    altered=[name for name in geometry_before if geometry_before[name]!=geometry_after.get(name)]
+all_spatial_after=spatial_fingerprint()
+geometry_after={name:all_spatial_after.get(name) for name in geometry_before}
+altered=[name for name in geometry_before if geometry_before[name]!=geometry_after[name]]
+if altered:
     raise RuntimeError("Protected architecture geometry changed: "+str(altered[:10]))
-if set(geometry_before)!=names_before:
+if set(geometry_before)!=names_before or not names_before.issubset(set(scene.objects.keys())):
     raise RuntimeError("Original scene membership corrupted")
 new_objects=set(scene.objects.keys())-names_before
 if new_objects!={light.name for light in lights_added}:
