@@ -30,10 +30,16 @@ try{
      const s=window.__ATLAS_P3B_PRIVATE_TEST__;
      return {ready:s.ready,error:s.error,portalCount:s.portalCount,
        camera:s.camera?.name,canvas:!!document.querySelector('canvas'),
-       intro:s.intro,glassRefined:s.glassRefined,lightRig:s.lightRig};
+       intro:s.intro,glassRefined:s.glassRefined,lightRig:s.lightRig,art:s.art};
    });
    if(!state.ready||state.portalCount!==4||!state.camera?.includes('P3A')||!state.canvas){
      throw Error(variant.name+' failed to display genuine GLB: '+JSON.stringify({state,logs,errors}));
+   }
+   if(state.art?.profile!=='p3b-pbr-sky-v2'||state.art.skyApplied!==1
+      ||state.art.roofApplied!==1||state.art.floorApplied!==1
+      ||state.art.materialFamilies<5||!state.art.sourceGlbPreserved
+      ||!state.art.sourceGeometryPreserved||state.art.externalAssetsAdded){
+     throw Error('P3B deterministic material/sky contract failed: '+JSON.stringify(state.art));
    }
    if(!state.intro?.completed||!state.intro.skipped
       ||state.intro.finalPositionError>1e-8||state.intro.finalRotationError>1e-8
@@ -88,7 +94,7 @@ try{
    await page.screenshot({path:resolve(out,'p3b-'+variant.name+'-interaction.png'),fullPage:true});
    results.push({device:variant.name,viewport:variant.width+'x'+variant.height,
      loaded:true,portalCount:state.portalCount,camera:state.camera,
-     cinematicIntro:state.intro,glassRefined:state.glassRefined,lightRig:state.lightRig,
+     cinematicIntro:state.intro,glassRefined:state.glassRefined,lightRig:state.lightRig,art:state.art,
      accessibleButtons:buttons,canonicalIntents:intents,actualThreeDimensionalPanelClicks:panelHits,
      requestPaths:[...new Set(requests)],runtimeErrors:errors});
    await page.close();
