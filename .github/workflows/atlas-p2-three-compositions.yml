@@ -154,6 +154,51 @@ jobs:
           assert hashlib.sha256(original.read_bytes()).hexdigest()==r["parent_p2_A_blend_sha256"]
           print("ATLAS_P2A_SINGLE_REFINED_REAL_SCENE_PASS")
           PY
+      - name: Verify P2B material finishing script syntax
+        run: python3 -m py_compile scripts/atlas-gateway-production/p2b_material_finish_01.py
+      - name: Finish material, light and reflection on already approved A geometry
+        run: |
+          mkdir -p "$RUNNER_TEMP/p2b"
+          blender -b "$RUNNER_TEMP/p2a/atlas-p2-A-monumentale-final-candidate.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/p2b_material_finish_01.py -- \
+            --parent-receipt "$RUNNER_TEMP/p2a/atlas-p2a-art-direction-receipt.json" \
+            --out "$RUNNER_TEMP/p2b"
+      - name: Independently audit unchanged geometry, finishes and receipts
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,hashlib,os
+          base=Path(os.environ["RUNNER_TEMP"])
+          p=base/"p2b"
+          r=json.loads((p/"atlas-p2b-materials-receipt.json").read_text())
+          parent=json.loads((base/"p2a"/"atlas-p2a-art-direction-receipt.json").read_text())
+          assert r["schema"]=="atlas.artdir02.p2b-material-finish-01/v1"
+          assert r["approved_architectural_source"]=="P2A/R4 A Monumentale"
+          assert r["reference_sha256"]=="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+          assert r["source_binary_unchanged"] and r["original_objects_unchanged"]
+          assert r["source_p2a_blend_sha256"]==parent["files"]["blend"]["sha256"]
+          assert r["original_objects_count"]>100 and len(r["original_spatial_fingerprint_sha256"])==64
+          assert len(r["new_objects_only_lights"])==2 and len(r["certified_portals"])==4
+          assert r["floor_cuts_preserved"] and r["three_levels"]
+          assert r["art_direction_approved"] and not r["art_final_approved"]
+          assert not r["web_approved"] and not r["student_publication_approved"]
+          assert r["no_merge"] and r["no_deploy"]
+          for meta in r["files"].values():
+              f=p/meta["name"]
+              assert f.is_file() and f.stat().st_size==meta["bytes"]
+              assert hashlib.sha256(f.read_bytes()).hexdigest()==meta["sha256"]
+          print("ATLAS_P2B_MATERIALS_LUMEN_GEOMETRY_FROZEN_PASS")
+          PY
+      - name: Preserve P2B genuine Cycles finish and editable Blender
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-p2b-material-finish-${{ github.run_number }}
+          path: ${{ runner.temp }}/p2b/
+          if-no-files-found: warn
+          retention-days: 30
       - name: Preserve P2A authentic refined A and qualification receipt
         if: always()
         uses: actions/upload-artifact@v4
