@@ -2,7 +2,7 @@
   "schema": "atlas.gateway.arch-art-p3a/v1",
   "id": "ATLAS-P3A-ARCH-ART-01",
   "date": "2026-11-23",
-  "status": "DIREZIONE_SELEZIONATA_PER_PROVA_GEOMETRICA__NON_QUALIFICATA",
+  "status": "DIREZIONE_P3A_R2_RAFFINAMENTO_DOPO_PROVA_CYCLES_R1",
   "design_name": "Atlante della conoscenza — quattro quote e oculo circolare",
   "sources": {
     "p2a_r4_blender_sha256": "3e425897ccf6092110d27955b3c25dfe28c6a52046aa0576acaf33b67959e56f",
@@ -12,37 +12,40 @@
     "art_dir_02_original_sha256": "a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe",
     "art_ref_03_drive": "https://drive.google.com/file/d/1o4aSZreiy8uknolepIfekE1WfosHvQiQ/view",
     "art_ref_04_drive": "https://drive.google.com/file/d/17oGV8CVbIvLJkA3ZJowh_MH5joRDo99J/view",
-    "art_ref_04_sha256": "f29897cfac07f0eccba18d51c1751ef0de3339451f1f3657a73e5e8ef4a98fe6"
+    "art_ref_04_sha256": "f29897cfac07f0eccba18d51c1751ef0de3339451f1f3657a73e5e8ef4a98fe6",
+    "p3a_r1_blender_sha256": "ff0f5194b00b284ed814448adb89bbe5716a2a503157e0c9efbd093e97538070",
+    "p3a_r1_cycles_drive": "https://drive.google.com/file/d/1P-ZACSaxNPXT9EOPRodmrIF-Gch06wRi/view"
   },
   "architectural_parameters": {
     "gallery_levels_total_including_ground": 4,
     "existing_levels_total_including_ground": 3,
     "current_gallery_levels_z_top_bu": [
       2.63,
-      5.38
+      6.94
     ],
     "new_gallery": {
       "donor_object": "ARCH04 • upper gallery deck",
-      "vertical_offset_bu": 2.65,
-      "target_slab_top_z_bu": 8.03,
+      "vertical_offset_bu": 2.3,
+      "target_slab_top_z_bu": 9.24,
       "glass_r_bu": 10.13,
       "glass_height_bu": 0.66,
       "handrail_z_bu": [
-        8.75,
-        8.81
+        9.96,
+        10.02
       ],
       "support_pier_axis_r_bu": 11.52,
       "support_positions": 15,
       "support_sector": "rear semicircle; confirm against live mesh and camera",
-      "generate_real_3d_geometry": true
+      "generate_real_3d_geometry": true,
+      "minimum_headroom_bu": 2.2
     },
     "roof": {
       "original_single_monolithic_roof": "ATLAS P1F • padiglione lungo copertura monolitica",
       "original_sky": "ATLAS P1F • cielo unico del padiglione",
       "original_rim": "ATLAS P1F • unico bordino lucernario",
       "outer_radius_bu": 11.5,
-      "outer_underside_z_bu": 10.55,
-      "inner_underside_z_bu": 11.1,
+      "outer_underside_z_bu": 11.55,
+      "inner_underside_z_bu": 12.1,
       "thickness_bu": 0.12,
       "roof_one_watertight_annular_mesh": true,
       "old_meshes_retained_hidden_only_in_derivative": true,
@@ -54,7 +57,8 @@
         "centre_source": "derive from physical existing sky mesh (not image pixel estimates)",
         "estimated_opening_area_increase_percent_over_prior_pavilion": 37.7,
         "note": "Physical circle will project as ellipse depending on perspective; do not fake circular pixels"
-      }
+      },
+      "visual_material": "warm off-white graphite-stone satin, contrasting blue galleries"
     },
     "camera": {
       "source": "CAM_HERO_ARCH04",
@@ -68,7 +72,8 @@
       "oculus_ring": "subtle warm emissive band; physical mesh",
       "daylight": "true overhead area + sky emission",
       "side_warm_light": "restrained, preserve graphite",
-      "webgl_equivalence": "must be independently verified, Cycles shader not directly portable"
+      "webgl_equivalence": "must be independently verified, Cycles shader not directly portable",
+      "upper_gallery": "four warm inboard area lights and physically modeled thin illuminated shelf modules"
     }
   },
   "portals": {
