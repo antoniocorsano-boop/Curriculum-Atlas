@@ -337,7 +337,7 @@ try {
     }
     function showControls(){
       controls.dataset.visible='true';tools.dataset.visible='true';
-      status.textContent='Trascina per orientarti. Scegli un portale per avvicinarti.';
+      status.textContent='';
       setPhase('exploring');
     }
     function enterScene(){
@@ -353,12 +353,12 @@ try {
     function showPortal(id,source){
       if(!(id in WORDS)||!state.motion.everEntered)return;
       const point=centerOf(id);
-      const targetPos=new THREE.Vector3(point.x*.72,2.65,point.z+6.3);
+      const targetPos=new THREE.Vector3(point.x*.72,2.65,point.z+4.55);
       const next={p:targetPos,q:quatTo(targetPos,new THREE.Vector3(point.x,point.y,point.z))};
       state.selected=id;setPhase('focusing');
       for(const b of document.querySelectorAll('#destinations button'))b.dataset.selected=String(b.dataset.portal===id);
       cardTitle.textContent=WORDS[id].title;cardText.textContent=WORDS[id].detail;
-      card.dataset.visible='true';status.textContent='Stai esplorando '+WORDS[id].title+'.';
+      card.dataset.visible='true';status.textContent='';
       animateTo(next,1350,()=>{
         state.motion.focusTransitions++;setPhase('focused');
         back.focus({preventScroll:true});
@@ -431,7 +431,7 @@ try {
     }
     state.ready=true;setPhase('welcome');
     applyPose(fromPose);resize();requestAnimationFrame(ambient);
-    status.textContent='La sala è pronta. Tocca «Entra nella sala» per cominciare.';
+    status.textContent='';
     }catch(error){setError(error)}
   },undefined,setError);
 }catch(error){setError(error)}
