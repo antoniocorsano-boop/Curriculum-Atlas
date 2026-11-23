@@ -51,6 +51,17 @@ export function validateCapabilityMap(registry, { checkFiles = true } = {}) {
     if (!portal?.id || typeof portal.label !== "string" || typeof portal.promise !== "string") fail("Invalid portal identity", errors);
     if (typeof portal.plannedRoute !== "string" || portal.plannedRoute !== "/" + portal.id + "/") fail("Portal route mismatch: " + portal?.id, errors);
     if (typeof portal.routeOnMain !== "boolean") fail("routeOnMain must be boolean: " + portal?.id, errors);
+    if (portal.id === "esperienze" && portal.routeOnCandidate === true) {
+      if (!portal.sourcePaths?.includes("src/app/esperienze/page.tsx")) {
+        fail("Candidate Experiences route requires a real Next.js page", errors);
+      }
+      if (!portal.capabilityIds?.includes("experience-portal")) {
+        fail("Candidate Experiences route requires the experience-portal capability", errors);
+      }
+      if (checkFiles && !fs.existsSync(path.join(root, "src/app/esperienze/page.tsx"))) {
+        fail("Candidate Experiences page is missing on the current branch", errors);
+      }
+    }
     if (portal.id === "esperienze" && portal.routeOnMain) {
       // If main gains this route, update the inventory and the release checks explicitly.
       if (checkFiles && !fs.existsSync(path.join(root, "src/app/esperienze/page.tsx"))) fail("Esperienze incorrectly described as implemented", errors);
@@ -108,7 +119,9 @@ if (process.argv.includes("--self-test")) {
     ["unsafe candidate", x => x.capabilities.find(c => c.id === "missione-118").learnerRuntimeAuthorization = "AUTHORIZED"],
     ["source authorization ignored", x => x.governance.release = "MAY_PUBLISH_WITH_GREEN_CI"],
     ["unapproved taxonomy promoted", x => x.decisions.studentLibrarySixTerritories = "APPROVED"],
-    ["materials fifth portal", x => x.decisions.materialsRole = "FIFTH_PORTAL"]
+    ["materials fifth portal", x => x.decisions.materialsRole = "FIFTH_PORTAL"],
+    ["unbound Experiences route", x => x.portals.find(p => p.id === "esperienze").sourcePaths = []],
+    ["missing Experiences portal capability", x => x.portals.find(p => p.id === "esperienze").capabilityIds = x.portals.find(p => p.id === "esperienze").capabilityIds.filter(id => id !== "experience-portal")]
   ];
   for (const [name, mutation] of cases) {
     const copy = clone();
