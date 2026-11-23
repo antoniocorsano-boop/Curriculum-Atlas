@@ -78,7 +78,8 @@ jobs:
           assert a['geometry']['galleryLevels']==4 and a['geometry']['circularOculusRadiusBU']==6.25
           assert a['portals']==['Curricolo','Esplora','Percorsi','Esperienze']
           assert len(a['materials'])==5 and all(x['count']>0 for x in a['materials'])
-          assert a['sky']['model']=='NISHITA' and not a['sky']['webTextureExportQualified']
+          assert a['sky']['model']=='PHYSICAL_ATMOSPHERE' and a['sky']['blenderSkyType']=='MULTIPLE_SCATTERING'
+          assert not a['sky']['webTextureExportQualified']
           assert len(a['renders'])==2
           assert not a['humanArtApproved'] and not a['webTranslationQualified']
           assert not a['mergeApproved'] and not a['publishApproved']
