@@ -592,6 +592,12 @@
       "contains": "Curriculum-Atlas",
       "category": "infrastructure-legacy",
       "reason": "URL GitHub immutabile come tracciabilità di commit/workflow e sorgenti tecniche; i titoli e le etichette rivolte agli studenti conservano Atlante/Atlas."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-P3B-WEBGL-NEXT-PRIVATE-QUALIFICATION-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Nome storico del repository presente unicamente negli indirizzi GitHub di qualificazione del modello tridimensionale P3B."
     }
   ]
 }
