@@ -64,3 +64,13 @@ La **soluzione architettonica** viene quindi scelta; la **qualità artistica fin
 - `MAIN_MERGE_APPROVED = false`.
 
 Il progetto resta **a costo zero, senza nuovi servizi, senza dati personali scolastici e senza pubblicazione**. La PR #188 rimane in bozza.
+
+## Aggiornamento P3B/R2 — qualificazione WebGL e accessi privati (23 novembre 2026)
+
+La geometria P3A/R2 selezionata è stata effettivamente trasferita in un nuovo GLB WebGL **P3B/R2** (SHA-256 `04b22de9d6c8f4e98a4eb88bf2f0e87141f9bdc685b742589845f977249e7adb`, 1.973.408 byte, 44.809 triangoli), conservando tre gallerie, oculo circolare e quattro portali.
+
+La [qualificazione tecnica dell'export P3B](https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/45163398316), la [prova Chromium della scena](https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/45163653001) e la [qualificazione dell'accesso nella vera applicazione Next](https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/45164858503) sono **superate**. Un clic sul pannello 3D Curricolo apre la pagina `/curricolo/` della vera app in modalità privata; il ripiego mobile con riduzione del movimento consente l'apertura di `/esperienze/`, senza grafica 3D. La pagina sperimentale `/gateway/p3b/` resta disabilitata per impostazione predefinita (404), con assets presenti soltanto nei processi di prova.
+
+Le prove e gli archivi sono documentati in [ATLAS-P3B-WEBGL-NEXT-PRIVATE-QUALIFICATION-01.md](./ATLAS-P3B-WEBGL-NEXT-PRIVATE-QUALIFICATION-01.md). Rimangono **non superati e da riconciliare** alcuni controlli generali preesistenti (foundation, exit, visual F4) che operano su file invariati rispetto al ramo di base. Non considerare la PR integrabile finché non sono risolti.
+
+Stati aggiornati: `P3B_GLTF_TECH_PASS=true`, `P3B_NEXT_PRIVATE_PASS=true`, `P3B_PUBLICATION_APPROVED=false`, `P3B_ART_FINAL_APPROVED=false`, `P3B_ANDROID_LIM_REAL_PASS=false`, `MAIN_MERGE_APPROVED=false`. La vecchia voce `P3A_WEBGL_QUALIFIED=false` sopra descriveva la situazione precedente e **non invalida** questa nuova qualifica tecnica P3B: non è tuttavia ancora una qualificazione dell'esperienza pubblica su dispositivi reali.
