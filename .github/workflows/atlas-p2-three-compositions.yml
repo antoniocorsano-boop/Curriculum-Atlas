@@ -96,6 +96,50 @@ jobs:
           with open(os.environ["GITHUB_STEP_SUMMARY"],"a") as f:f.write(report)
           print("ATLAS_P2_THREE_AUTHENTIC_SCENES_PASS")
           PY
+      - name: Check the selected A art-direction script
+        run: python3 -m py_compile scripts/atlas-gateway-production/p2a_art_direction_final_01.py
+      - name: Create a single A Monumentale refined editable scene and genuine Cycles render
+        run: |
+          mkdir -p "$RUNNER_TEMP/p2a"
+          blender -b "$RUNNER_TEMP/p2/atlas-p2-A-monumentale.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/p2a_art_direction_final_01.py -- \
+            --parent-receipt "$RUNNER_TEMP/p2/atlas-p2-three-compositions-receipt.json" \
+            --out "$RUNNER_TEMP/p2a"
+      - name: Independently verify P2A files, geometry, exact SHAs, and safety states
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"p2a"
+          r=json.loads((p/"atlas-p2a-art-direction-receipt.json").read_text())
+          assert r["schema"]=="atlas.artdir02.p2a-art-direction-01/v1"
+          assert r["canonical_art_sha256"]=="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+          assert r["parent_preserved"] and r["alternative_B_C_preserved"]
+          assert r["selected_candidate"]=="A Monumentale"
+          assert r["floor_real_boolean"] and r["floor_faces_before"]!=r["floor_faces_after"]
+          assert r["three_levels_preserved"] and r["original_skylight_mesh_preserved"]
+          assert len(r["portal_targets"])==4 and len(r["portal_frames"])==4
+          assert all(x["camera_side"] and abs(x["screen_target"]-x["screen_x"])<.03 for x in r["portal_targets"])
+          assert not r["art_approved"] and not r["web_approved"]
+          assert r["no_merge"] and r["no_deploy"]
+          for record in r["files"].values():
+              file=p/record["name"]
+              assert file.exists() and file.stat().st_size==record["bytes"]
+              assert hashlib.sha256(file.read_bytes()).hexdigest()==record["sha256"]
+          original=Path(os.environ["RUNNER_TEMP"])/"p2"/"atlas-p2-A-monumentale.blend"
+          assert hashlib.sha256(original.read_bytes()).hexdigest()==r["parent_p2_A_blend_sha256"]
+          print("ATLAS_P2A_SINGLE_REFINED_REAL_SCENE_PASS")
+          PY
+      - name: Preserve P2A authentic refined A and qualification receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-p2a-art-direction-${{ github.run_number }}
+          path: ${{ runner.temp }}/p2a/
+          if-no-files-found: warn
+          retention-days: 30
       - name: Preserve outputs and full receipts
         if: always()
         uses: actions/upload-artifact@v4
