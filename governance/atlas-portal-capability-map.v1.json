@@ -10,7 +10,7 @@
     "status": "TECHNICALLY_QUALIFIED_HUMAN_VISUAL_FEEDBACK_RECEIVED_NOT_MERGED"
   },
   "governance": {
-    "curriculumAuthority": "TRAMA Arena; Atlas reads without becoming source of approval",
+    "curricoloAuthority": "TRAMA Arena; Atlas reads without becoming source of approval",
     "experienceAuthoring": "Studio Atlas; separate professional environment",
     "studentAccess": "PUBLIC_NO_PERSONAL_ACCOUNT_BY_DEFAULT",
     "studentData": "NO_STUDENT_PERSONAL_DATA_IN_PUBLIC_ATLAS",
@@ -82,8 +82,8 @@
       "routeOnMain": true,
       "productState": "IMPLEMENTED_ARENA_SOURCE_PROVISIONAL_NOT_VIGENT",
       "capabilityIds": [
-        "curriculum-tree",
-        "curriculum-provenance",
+        "curricolo-tree",
+        "curricolo-provenance",
         "atlas-materials"
       ],
       "sourcePaths": [
@@ -267,7 +267,7 @@
       "next": "Consolidare il prodotto, il collaudo e l'autorizzazione runtime"
     },
     {
-      "id": "curriculum-tree",
+      "id": "curricolo-tree",
       "label": "Navigazione del curricolo verticale",
       "kind": "PUBLIC_SURFACE",
       "portals": [
@@ -282,7 +282,7 @@
       "next": "Consultazione per ordine, annualità e disciplina con progressioni leggibili"
     },
     {
-      "id": "curriculum-provenance",
+      "id": "curricolo-provenance",
       "label": "Provenienza e stato di approvazione Arena",
       "kind": "GOVERNED_SHARED_CAPABILITY",
       "portals": [
@@ -348,7 +348,7 @@
       "P1_FOUR_REAL_PORTAL_ROUTES",
       "P2_FIRST_QUESTION_JOURNEY",
       "P3_ONE_AUTHORIZED_EXPERIENCE",
-      "P4_PATHWAY_CURRICULUM_LINKS",
+      "P4_PATHWAY_CURRICOLO_LINKS",
       "P5_HUMAN_DEVICE_RELEASE_REVIEW"
     ]
   },
