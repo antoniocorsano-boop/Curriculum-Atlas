@@ -48,14 +48,33 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
-      - name: Generate A/B/C from original P1F, render 3 images and save 3 editable blends
+      - name: Reuse the exact previously qualified P2 A/B/C source artifact
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45072225793
+          pattern: atlas-p2-three-compositions-4
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/p2
+      - name: Pin P2 provenance, original renderer files and no-change constraint
         run: |
-          mkdir -p "$RUNNER_TEMP/p2"
-          blender -b "$RUNNER_TEMP/parent/atlas-p1f-pavilion-roof02-editable.blend" \
-            --threads 2 --python-exit-code 1 \
-            --python scripts/atlas-gateway-production/p2_three_compositions_01.py -- \
-            --parent-receipt "$RUNNER_TEMP/parent/atlas-p1f-pavilion-roof02-receipt.json" \
-            --out "$RUNNER_TEMP/p2"
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"p2"
+          r=json.loads((p/"atlas-p2-three-compositions-receipt.json").read_text())
+          assert r["schema"]=="atlas.artdir02.p2-compositions-01/v1"
+          assert set(r["profiles"])=={"A","B","C"}
+          assert r["original_art_reference_sha256"]=="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+          assert r["source_binary_unchanged"] and r["three_distinct_approaches"]
+          assert not r["art_approved"] and not r["web_approved"]
+          for profile in r["profiles"].values():
+              for meta in profile["files"].values():
+                  file=p/meta["name"]
+                  assert file.stat().st_size==meta["bytes"]
+                  assert hashlib.sha256(file.read_bytes()).hexdigest()==meta["sha256"]
+          print("P2_IMMUTABLE_SOURCE_ABC_REUSED_AND_VERIFIED")
+          PY
       - name: Audit outputs, exact SHA, four portals and no-publication constraints
         shell: bash
         run: |
