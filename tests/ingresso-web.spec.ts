@@ -49,17 +49,17 @@ test.describe("Atlas ingresso web — accesso reale senza immagini o WebGL", () 
     }
     await expect(page.getByTestId("atlas-portale-esperienze").locator('a[href*="/lab/"]')).toHaveCount(0);
     await expect(page.getByTestId("atlas-portale-esperienze").locator('a[href*="/percorsi/pw-"]')).toHaveCount(0);
-    await expect(page.getByTestId("esperienze-vai-esplora")).toHaveAttribute("href", /^\\/esplora\\/?$/);
-    await expect(page.getByTestId("esperienze-vai-materiali")).toHaveAttribute("href", /^\\/materiali\\/?$/);
+    await expect(page.getByTestId("esperienze-vai-esplora")).toHaveAttribute("href", new RegExp("^/esplora/?$"));
+    await expect(page.getByTestId("esperienze-vai-materiali")).toHaveAttribute("href", new RegExp("^/materiali/?$"));
   });
 
   test("le due azioni di Esperienze aprono contenuti realmente disponibili", async ({ page }) => {
     await page.goto("/esperienze/");
     await page.getByTestId("esperienze-vai-esplora").click();
-    await expect(page).toHaveURL(/\\/esplora\\/?$/);
+    await expect(page).toHaveURL(new RegExp("/esplora/?$"));
     await page.goto("/esperienze/");
     await page.getByTestId("esperienze-vai-materiali").click();
-    await expect(page).toHaveURL(/\\/materiali\\/?$/);
+    await expect(page).toHaveURL(new RegExp("/materiali/?$"));
   });
 
   for (const width of [320, 360, 390, 768, 1280]) {
@@ -80,7 +80,7 @@ test.describe("Atlas ingresso web — accesso reale senza immagini o WebGL", () 
     const experiences = nav.getByRole("link", { name: "Esperienze" });
     await expect(experiences).toBeVisible();
     await experiences.click();
-    await expect(page).toHaveURL(/\\/esperienze\\/?$/);
+    await expect(page).toHaveURL(new RegExp("/esperienze/?$"));
   });
 
   test("azione principale operativa e navigazione da tastiera", async ({ page }) => {
@@ -89,7 +89,7 @@ test.describe("Atlas ingresso web — accesso reale senza immagini o WebGL", () 
     await action.focus();
     await expect(action).toBeFocused();
     await action.press("Enter");
-    await expect(page).toHaveURL(/\/esplora\/?$/);
+    await expect(page).toHaveURL(new RegExp("/esplora/?$"));
   });
 
   test("nessuna immagine remota o modello 3D necessario", async ({ page }) => {
