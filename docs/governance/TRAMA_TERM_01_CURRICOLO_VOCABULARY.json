@@ -122,6 +122,11 @@
       "path": "docs/atlas-gateway/ATLAS-GATEWAY-CLOSED-LOOP-02.md",
       "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
       "reason": "Canonical immutable GitHub repository URL is a technical locator, not curricolo-domain vocabulary; the product prose keeps the canonical term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-P2-COMPOSIZIONI-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "reason": "Collegamento tecnico esatto al repository GitHub nelle citazioni immutabili della genealogia P2; nessuna eccezione alla terminologia educativa o ai contenuti dell'applicazione."
     }
   ]
 }
