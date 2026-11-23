@@ -118,6 +118,7 @@ jobs:
       - name: Check the selected A art-direction script
         run: python3 -m py_compile scripts/atlas-gateway-production/p2a_art_direction_final_01.py
       - name: Create a single A Monumentale refined editable scene and genuine Cycles render
+        if: github.event_name == 'workflow_dispatch'
         run: |
           mkdir -p "$RUNNER_TEMP/p2a"
           blender -b "$RUNNER_TEMP/p2/atlas-p2-A-monumentale.blend" \
@@ -126,6 +127,7 @@ jobs:
             --parent-receipt "$RUNNER_TEMP/p2/atlas-p2-three-compositions-receipt.json" \
             --out "$RUNNER_TEMP/p2a"
       - name: Independently verify P2A files, geometry, exact SHAs, and safety states
+        if: github.event_name == 'workflow_dispatch'
         shell: bash
         run: |
           python3 - <<'PY'
@@ -225,7 +227,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
       - name: Preserve P2A authentic refined A and qualification receipt
-        if: always()
+        if: ${{ always() && github.event_name == 'workflow_dispatch' }}
         uses: actions/upload-artifact@v4
         with:
           name: atlas-p2a-art-direction-${{ github.run_number }}
