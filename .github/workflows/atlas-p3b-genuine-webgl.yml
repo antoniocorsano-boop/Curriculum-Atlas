@@ -1,0 +1,100 @@
+name: ATLAS P3B — GLB autentico da master P3A/R2
+on:
+  push:
+    branches: [work/atlas-artdir02-p2-composizioni-01]
+    paths:
+      - "scripts/atlas-gateway-production/p3b_webgl_from_p3a_01.py"
+      - ".github/workflows/atlas-p3b-genuine-webgl.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-p3b-four-levels-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  p3b-real-glb-qualification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify exporter syntax
+        run: python3 -m py_compile scripts/atlas-gateway-production/p3b_webgl_from_p3a_01.py
+      - name: Retrieve exact P3A/R2 Blender artifact
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45158391228
+          pattern: atlas-p3a-four-gallery-circular-oculus-5
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/p3a
+      - name: Verify parent signature, third gallery and four existing routes
+        run: |
+          python3 - <<'PY'
+          import os,json,hashlib
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"p3a"
+          r=json.loads((p/"atlas-p3a-qualification-receipt.json").read_text())
+          b=p/"atlas-p3a-four-level-circular-oculus-editable.blend"
+          assert r["schema"]=="atlas.gateway.arch-art-p3a-cycles-result/v1"
+          assert r["gallery_levels_ground_included"]==4
+          assert r["roof"]["radius_spread_bu"]<.001 and r["roof"]["radius_bu"]==6.25
+          assert r["roof"]["single_watertight_mesh"]
+          assert r["gallery3"]["glass_segments"]==32 and r["gallery3"]["reading_bays"]==12
+          assert r["files"]["blend"]["sha256"]=="35371d226c289bd348a1137f63bfd14c74ee79389c4c1b53b522759ca0246d30"
+          assert hashlib.sha256(b.read_bytes()).hexdigest()==r["files"]["blend"]["sha256"]
+          assert not r["art_final_approved"] and not r["web_product_approved"] and r["no_merge"] and r["no_deploy"]
+          for route in ("curricolo","esplora","percorsi","esperienze"):
+              assert Path("src/app",route,"page.tsx").is_file(),route
+          print("P3B_P3A_R2_SOURCE_SHA_PASS")
+          PY
+      - name: Install Blender and glTF exporter
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -qq -y --no-install-recommends blender python3-numpy
+      - name: Export true 3D atrium, circular skylight and four portals
+        run: |
+          mkdir -p "$RUNNER_TEMP/p3b"
+          blender -b "$RUNNER_TEMP/p3a/atlas-p3a-four-level-circular-oculus-editable.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/p3b_webgl_from_p3a_01.py -- \
+            --parent-receipt "$RUNNER_TEMP/p3a/atlas-p3a-qualification-receipt.json" \
+            --out "$RUNNER_TEMP/p3b"
+      - name: Independently verify GLB, geometry, sky texture and safety boundary
+        run: |
+          python3 - <<'PY'
+          import os,json,hashlib,struct
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"p3b"
+          r=json.loads((p/"atlas-p3b-webgl-receipt.json").read_text())
+          assert r["schema"]=="atlas.gateway.p3b-four-gallery-webgl/v1"
+          assert r["input_p3a_r2_sha256"]=="35371d226c289bd348a1137f63bfd14c74ee79389c4c1b53b522759ca0246d30"
+          assert r["input_binary_unchanged"] and r["gallery_levels_including_ground"]==4
+          assert r["circular_oculus_radius_bu"]==6.25 and r["third_gallery_railing_nodes"]>=28
+          assert 1500<=r["glb_triangles"]<=120000
+          assert r["glb_meshes"]>100 and r["glb_cameras"]>=1 and r["glb_textures"]>=1
+          assert list(r["portals"])==["curricolo","esplora","percorsi","esperienze"]
+          assert [x["path"] for x in r["portals"].values()]==["/curricolo/","/esplora/","/percorsi/","/esperienze/"]
+          assert not r["art_final_approved"] and not r["web_product_approved"] and not r["student_publication_approved"]
+          assert r["no_merge"] and r["no_deploy"]
+          for meta in (r["file"],r["sky_texture"]):
+              f=p/meta["name"]
+              assert f.is_file() and f.stat().st_size==meta["bytes"]
+              assert hashlib.sha256(f.read_bytes()).hexdigest()==meta["sha256"]
+          glb=(p/r["file"]["name"]).read_bytes()
+          assert struct.unpack_from("<III",glb)==(0x46546c67,2,len(glb))
+          length,kind=struct.unpack_from("<II",glb,12)
+          assert kind==0x4E4F534A
+          scene=json.loads(glb[20:20+length].decode().strip(" \x00"))
+          assert len(scene.get("textures",[]))>=1 and len(scene.get("images",[]))>=1
+          print("P3B_GENUINE_FOUR_LEVELS_CIRCULAR_GLTF_CLOUD_SKY_PORTALS_PASS")
+          PY
+      - name: Preserve GLB and sky locally (no deployment)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-p3b-four-levels-circular-oculus-${{ github.run_number }}
+          path: ${{ runner.temp }}/p3b/
+          if-no-files-found: warn
+          retention-days: 30
+# Private laboratory only, no merge or public hosting.
