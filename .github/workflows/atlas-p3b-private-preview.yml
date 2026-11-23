@@ -26,8 +26,8 @@ jobs:
       - name: Recover exact P3B four-storey circular-roof GLB from qualified Blender export
         uses: actions/download-artifact@v4
         with:
-          run-id: 45162372012
-          pattern: atlas-p3b-four-levels-circular-oculus-1
+          run-id: 45163398316
+          pattern: atlas-p3b-four-levels-circular-oculus-2
           merge-multiple: true
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/p3b
@@ -39,14 +39,15 @@ jobs:
           root=Path(os.environ["RUNNER_TEMP"])/"p3b"
           report=json.loads((root/"atlas-p3b-webgl-receipt.json").read_text())
           f=root/"atlas-p3b-atrio-4-livelli-oculo-circolare.glb"
-          assert f.stat().st_size==2035780
-          assert hashlib.sha256(f.read_bytes()).hexdigest()=="593ba8c4d7b5e79d6779bec472a8da6a88c0ac98d3c5dbffc424408af102e281"
-          assert struct.unpack("<III",f.read_bytes()[:12])==(0x46546c67,2,2035780)
+          assert f.stat().st_size==1973408
+          assert hashlib.sha256(f.read_bytes()).hexdigest()=="04b22de9d6c8f4e98a4eb88bf2f0e87141f9bdc685b742589845f977249e7adb"
+          assert struct.unpack("<III",f.read_bytes()[:12])==(0x46546c67,2,1973408)
           assert len(report["portals"])==4
           assert report["schema"]=="atlas.gateway.p3b-four-gallery-webgl/v1"
           assert report["gallery_levels_including_ground"]==4
           assert report["circular_oculus_radius_bu"]==6.25
           assert report["third_gallery_railing_nodes"]==32
+          assert len(report["suppressed_misplaced_decorations"])==2
           assert not report["art_final_approved"] and not report["web_product_approved"]
           print("P3B_REAL_FOUR_STORY_GLB_SHA_VERIFIED")
           PY
