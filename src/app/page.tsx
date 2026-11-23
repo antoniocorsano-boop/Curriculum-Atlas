@@ -1,40 +1,40 @@
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, BookOpen, Compass, Library, Waypoints } from "lucide-react";
+import { ArrowRight, ArrowUpRight, BookOpen, Compass, Sparkles, Waypoints } from "lucide-react";
 import { AppShell } from "@/components/atlas/app-shell";
 import styles from "./ingresso.module.css";
 
 const destinations = [
   {
-    id: "curricolo",
-    href: "/curricolo",
-    number: "01",
-    title: "Curricolo",
-    description: "Scopri la struttura del sapere, dalle discipline agli obiettivi.",
-    icon: BookOpen,
-  },
-  {
     id: "esplora",
     href: "/esplora",
-    number: "02",
+    number: "01",
     title: "Esplora",
-    description: "Segui collegamenti, idee e relazioni tra le conoscenze.",
+    description: "Una domanda, un'idea, qualcosa che ti incuriosisce: scopri dove ti porta.",
     icon: Compass,
+  },
+  {
+    id: "esperienze",
+    href: "/esperienze",
+    number: "02",
+    title: "Esperienze",
+    description: "Un luogo per storie, laboratori e scoperte da vivere. Le attività arriveranno dopo la verifica.",
+    icon: Sparkles,
   },
   {
     id: "percorsi",
     href: "/percorsi",
     number: "03",
     title: "Percorsi",
-    description: "Scegli itinerari di apprendimento e nuove prospettive.",
+    description: "Segui un itinerario, affronta una sfida, trova nuove possibilità.",
     icon: Waypoints,
   },
   {
-    id: "materiali",
-    href: "/materiali",
+    id: "curricolo",
+    href: "/curricolo",
     number: "04",
-    title: "Materiali",
-    description: "Ritrova risorse e lezioni effettivamente disponibili.",
-    icon: Library,
+    title: "Curricolo",
+    description: "Trova discipline, argomenti e collegamenti per approfondire.",
+    icon: BookOpen,
   },
 ] as const;
 
@@ -45,8 +45,8 @@ export default function HomePage() {
         <header className={styles.pageHeading}>
           <div>
             <span className={styles.kicker}>ATLAS · TRAMA</span>
-            <h1>Il curricolo, connesso.</h1>
-            <p>Un ingresso semplice verso le conoscenze, i percorsi e le risorse.</p>
+            <h1>Che cosa vuoi scoprire oggi?</h1>
+            <p>Parti da una curiosità. Il resto del viaggio si costruisce passo dopo passo.</p>
           </div>
           <span className={styles.publicNote}>Accesso libero <span aria-hidden="true">·</span> Nessun account</span>
         </header>
@@ -55,23 +55,23 @@ export default function HomePage() {
           <div className={styles.heroContent}>
             <span className={styles.heroOverline}>
               <span className={styles.smallStar} aria-hidden="true">✧</span>
-              La conoscenza è un luogo da attraversare
+              Quattro porte, infinite domande
             </span>
             <h2 id="atlas-ingresso-title">
-              Entra.<br />
-              <em>Lasciati guidare</em><br />
-              dalla curiosità.
+              Ogni scoperta<br />
+              <em>comincia da una</em><br />
+              domanda.
             </h2>
             <p>
-              Ogni disciplina apre una porta. Ogni collegamento suggerisce
-              una scoperta. Inizia da ciò che vuoi conoscere.
+              Esplora quello che ti incuriosisce, scegli un percorso oppure
+              trova un argomento da approfondire. Senza dover sapere già da dove iniziare.
             </p>
             <div className={styles.heroActions}>
               <Link href="/esplora" className={styles.primaryLink} data-testid="atlas-ingresso-entra">
                 Inizia a esplorare <ArrowUpRight size={19} aria-hidden="true" />
               </Link>
               <Link href="/curricolo" className={styles.secondaryLink}>
-                Guarda il curricolo <ArrowRight size={17} aria-hidden="true" />
+                Consulta il curricolo <ArrowRight size={17} aria-hidden="true" />
               </Link>
             </div>
           </div>
@@ -101,7 +101,7 @@ export default function HomePage() {
               <span className={styles.kicker}>QUATTRO MODI PER COMINCIARE</span>
               <h2 id="atlas-destinazioni">Scegli la tua porta.</h2>
             </div>
-            <p>Questi accessi conducono a sezioni effettivamente presenti in Atlas.</p>
+            <p>Ogni porta conduce a una sezione vera; le attività ancora in preparazione sono dichiarate.</p>
           </div>
           <nav aria-label="Quattro accessi principali di Atlas" className={styles.cards}>
             {destinations.map(({ id, href, number, title, description, icon: Icon }) => (
@@ -126,7 +126,7 @@ export default function HomePage() {
 
         <footer className={styles.gatewayFooter}>
           <span>ATLAS <span aria-hidden="true">·</span> Esplora, collega, approfondisci.</span>
-          <p>Il curricolo è governato da Arena. Atlas rende navigabili le conoscenze e le risorse disponibili.</p>
+          <p>Per cercare una lezione o una risorsa, visita anche <Link href="/materiali">Materiali</Link> e <Link href="/risorse">Risorse</Link>.</p>
         </footer>
       </div>
     </AppShell>
