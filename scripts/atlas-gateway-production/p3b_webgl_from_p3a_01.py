@@ -66,8 +66,14 @@ for ob in scene.objects:ob.select_set(False)
 routes={"Curricolo":"/curricolo/","Esplora":"/esplora/",
         "Percorsi":"/percorsi/","Esperienze":"/esperienze/"}
 eligible=[]
+# R6C historic 'A' glyphs float in the visual scene and are not navigation.
+# Remove only these two decorative meshes from the GLB derivative, NOT Blender.
+omitted_decorations=[]
 for ob in scene.objects:
     if ob.hide_render or ob.hide_get():continue
+    if ob.name.startswith("ATLAS R6C • satin A on banner"):
+        omitted_decorations.append(ob.name)
+        continue
     if ob.type in ("MESH","CAMERA") or (ob.type=="EMPTY" and ob.name.startswith("Portale •")) or (ob.type=="CURVE" and (ob.name.startswith("ATLAS P2A • bordo luminoso") or ob.name.startswith("ATLAS P3A • profilo parapetto") or ob.name.startswith("ATLAS P3A • linea luce"))):
         ob.select_set(True)
         eligible.append(ob)
@@ -129,11 +135,11 @@ for y in range(SIZE):
           +.25*math.sin(yy*24.7-xx*8.3)
           +.18*math.sin((xx+yy)*39.8+xx*4.0)
           +.11*math.sin(xx*75.1-yy*41.7))
-        cloud=smooth(.06,.58,v)
-        haze=.10+.12*max(0.,1.-2.*yy)
-        white=min(.88,cloud*.83+haze)
-        blue=(.11+.34*yy,.33+.29*yy,.64+.25*yy)
-        color=[blue[i]*(1-white)+(.95,.97,1.)[i]*white for i in range(3)]
+        cloud=smooth(.24,.74,v)**1.65
+        haze=.07+.055*max(0.,1.-2.*yy)
+        white=min(.66,cloud*.56+haze)
+        blue=(.17+.18*yy,.39+.19*yy,.67+.15*yy)
+        color=[blue[i]*(1-white)+(.92,.95,.98)[i]*white for i in range(3)]
         offset=(y*SIZE+x)*4
         pixels[offset:offset+4]=color+[1.]
 im.pixels.foreach_set(pixels)
@@ -210,6 +216,7 @@ for mesh in payload.get("meshes",[]):
             triangles+=payload["accessors"][prim["attributes"]["POSITION"]]["count"]//3
 if triangles<1500:raise RuntimeError("Atrium unexpectedly empty")
 if triangles>120000:raise RuntimeError("Mobile candidate exceeds 120k triangle budget: "+str(triangles))
+if len(omitted_decorations)!=2:raise RuntimeError("Historical floating decorations not identified exactly")
 required=("third_gallery_deck","padiglione_unico_oculo_circolare",
           "cielo_fisico_circolare")
 for name in required:
@@ -225,6 +232,7 @@ report={"schema":"atlas.gateway.p3b-four-gallery-webgl/v1",
     "gallery_levels_including_ground":4,
     "circular_oculus_radius_bu":6.25,
     "third_gallery_railing_nodes":actual_railing,
+    "suppressed_misplaced_decorations":omitted_decorations,
     "selected_original_objects":len(eligible),"original_font_meshes":len(font_names),"glb_nodes":len(nodes),
     "glb_meshes":len(payload.get("meshes",[])),"glb_triangles":triangles,
     "glb_cameras":len(payload.get("cameras",[])),
