@@ -111,6 +111,36 @@ def validate_spec(path: Path) -> dict:
     if a != {"fourPortals": 4, "galleryLevels": 4,
              "oculusRadiusBU": 6.25, "humanArtApproval": False}:
         raise ValueError("ARTSPEC_HUMAN_GATE")
+    output_stem = data.get("outputStem", "atlas-p3b-r3")
+    if output_stem not in ("atlas-p3b-r3", "atlas-p3b-r4"):
+        raise ValueError("ARTSPEC_OUTPUT_STEM")
+    if output_stem == "atlas-p3b-r4":
+        if render["samples"] < 48 or cams["desktop"]["width"] < 1280:
+            raise ValueError("ARTSPEC_R4_RENDER_QUALITY")
+        for group in groups:
+            detail = group.get("proceduralDetail")
+            if not isinstance(detail, dict) or set(detail) != {
+                "macroScale", "microScale", "colorVariance",
+                "roughnessVariance", "bumpStrength", "bumpDistance"
+            }:
+                raise ValueError("ARTSPEC_R4_MATERIAL_DETAIL")
+            for key, lower, upper in (
+                ("macroScale", 0.2, 30), ("microScale", 3, 260),
+                ("colorVariance", 0, 0.25), ("roughnessVariance", 0, 0.25),
+                ("bumpStrength", 0, 0.35), ("bumpDistance", 0, 0.03)
+            ):
+                val = detail[key]
+                if (not isinstance(val, (int, float)) or isinstance(val, bool)
+                        or not math.isfinite(val) or not lower <= val <= upper):
+                    raise ValueError("ARTSPEC_R4_DETAIL_RANGE_" + key)
+        for key, lower, upper in (("portalAccentPower", 1, 240),
+                                  ("portalAccentSize", 0.5, 5)):
+            val = lighting.get(key)
+            if (not isinstance(val, (int, float)) or isinstance(val, bool)
+                    or not math.isfinite(val) or not lower <= val <= upper):
+                raise ValueError("ARTSPEC_R4_PORTAL_LIGHT_" + key)
+        if not isinstance(render.get("exposure"), (int, float)) or not -2 <= render["exposure"] <= 2:
+            raise ValueError("ARTSPEC_R4_EXPOSURE")
     return data
 
 
@@ -141,8 +171,9 @@ def apply_spec(spec: dict, receipt_path: Path, out_dir: Path, spec_path: Path):
     if out_dir == src.parent or src in out_dir.parents:
         raise RuntimeError("ARTSPEC_UNSAFE_OUTPUT_DIRECTORY")
     out_dir.mkdir(parents=True, exist_ok=True)
-    for output in ("atlas-p3b-r3-art-direction.blend",
-                   "atlas-p3b-r3-desktop-cycles.png", "atlas-p3b-r3-phone-cycles.png"):
+    output_stem = spec.get("outputStem", "atlas-p3b-r3")
+    for output in (output_stem + "-art-direction.blend",
+                   output_stem + "-desktop-cycles.png", output_stem + "-phone-cycles.png"):
         if (out_dir / output).exists():
             raise RuntimeError("ARTSPEC_OUTPUT_EXISTS_NO_OVERWRITE: " + output)
 
@@ -199,6 +230,49 @@ def apply_spec(spec: dict, receipt_path: Path, out_dir: Path, spec_path: Path):
                 mat.surface_render_method = "BLENDED"
             elif hasattr(mat, "blend_method"):
                 mat.blend_method = "BLEND"
+        # R4 physical surface detail. Object-space procedural maps avoid external
+        # textures and keep the master untouched. This is a Cycles finish:
+        # glTF must receive a separately baked, reviewed PBR translation.
+        detail = group.get("proceduralDetail")
+        if detail is not None:
+            nodes, links = mat.node_tree.nodes, mat.node_tree.links
+            coord = nodes.new("ShaderNodeTexCoord")
+            macro = nodes.new("ShaderNodeTexNoise")
+            macro.inputs["Scale"].default_value = detail["macroScale"]
+            macro.inputs["Detail"].default_value = 3.0
+            macro.inputs["Roughness"].default_value = 0.67
+            links.new(coord.outputs["Generated"], macro.inputs["Vector"])
+            ramp = nodes.new("ShaderNodeValToRGB")
+            ramp.color_ramp.elements[0].position = 0.17
+            ramp.color_ramp.elements[1].position = 0.83
+            base = group["baseColor"]
+            variance = detail["colorVariance"]
+            ramp.color_ramp.elements[0].color = (
+                *(max(0.0, channel * (1.0 - variance)) for channel in base), 1.0)
+            ramp.color_ramp.elements[1].color = (
+                *(min(1.0, channel * (1.0 + variance)) for channel in base), 1.0)
+            links.new(macro.outputs["Fac"], ramp.inputs["Fac"])
+            links.new(ramp.outputs["Color"], bs.inputs["Base Color"])
+            micro = nodes.new("ShaderNodeTexNoise")
+            micro.inputs["Scale"].default_value = detail["microScale"]
+            micro.inputs["Detail"].default_value = 2.0
+            micro.inputs["Roughness"].default_value = 0.65
+            links.new(coord.outputs["Generated"], micro.inputs["Vector"])
+            roughness = nodes.new("ShaderNodeMapRange")
+            roughness.inputs["From Min"].default_value = 0.0
+            roughness.inputs["From Max"].default_value = 1.0
+            roughness.inputs["To Min"].default_value = max(
+                0.0, group["roughness"] - detail["roughnessVariance"])
+            roughness.inputs["To Max"].default_value = min(
+                1.0, group["roughness"] + detail["roughnessVariance"])
+            links.new(micro.outputs["Fac"], roughness.inputs["Value"])
+            links.new(roughness.outputs["Result"], bs.inputs["Roughness"])
+            if detail["bumpDistance"] and detail["bumpStrength"]:
+                bump = nodes.new("ShaderNodeBump")
+                bump.inputs["Strength"].default_value = detail["bumpStrength"]
+                bump.inputs["Distance"].default_value = detail["bumpDistance"]
+                links.new(micro.outputs["Fac"], bump.inputs["Height"])
+                links.new(bump.outputs["Normal"], bs.inputs["Normal"])
         names = []
         for obj in scene.objects:
             if obj.type != "MESH" or obj.hide_render:
@@ -277,6 +351,32 @@ def apply_spec(spec: dict, receipt_path: Path, out_dir: Path, spec_path: Path):
         light_receipt.append({"id": label, "energy": energy, "size": size,
                               "position": [round(v, 5) for v in obj.location]})
 
+    # Four small local luminous accents, placed using the ACTUAL portal-glass
+    # bounding boxes rather than guessed screen coordinates. This affects
+    # illumination only; geometry, links and source assets remain unchanged.
+    portal_accents = []
+    if spec["lighting"].get("portalAccentPower"):
+        for index, name in enumerate(PORTALS):
+            glass = bpy.data.objects[name + " • vetro cobalto"]
+            center = Vector((0.0, 0.0, 0.0))
+            for corner in glass.bound_box:
+                center += glass.matrix_world @ Vector(corner)
+            center /= 8.0
+            towards_camera = anchor - center
+            if towards_camera.length < 0.1:
+                raise RuntimeError("ARTSPEC_R4_PORTAL_CAMERA_GEOMETRY")
+            lamp_data = bpy.data.lights.new("ATLAS R4 • portal " + name, "AREA")
+            lamp_data.energy = spec["lighting"]["portalAccentPower"]
+            lamp_data.shape = "DISK"
+            lamp_data.size = spec["lighting"]["portalAccentSize"]
+            lamp_data.color = (1.0, 0.84, 0.67)
+            lamp_obj = bpy.data.objects.new(lamp_data.name, lamp_data)
+            scene.collection.objects.link(lamp_obj)
+            lamp_obj.location = center + towards_camera.normalized() * 1.2 + Vector((0, 0, 0.4))
+            lamp_obj.rotation_euler = (center - lamp_obj.location).to_track_quat("-Z", "Y").to_euler()
+            portal_accents.append({"portal": name, "energy": lamp_data.energy,
+                                   "position": [round(v, 4) for v in lamp_obj.location]})
+
     phone_cam = camera.copy()
     phone_cam.data = camera.data.copy()
     phone_cam.name = "ATLAS ARTSPEC R3 • CAMERA PHONE"
@@ -292,6 +392,19 @@ def apply_spec(spec: dict, receipt_path: Path, out_dir: Path, spec_path: Path):
 
     scene.render.engine = "CYCLES"
     scene.cycles.samples = spec["render"]["samples"]
+    if output_stem == "atlas-p3b-r4":
+        # Filmic is the stable fallback on earlier Blender distributions;
+        # AgX is preferred whenever the installed Blender supports it.
+        try:
+            scene.view_settings.view_transform = "AgX"
+        except (TypeError, ValueError):
+            scene.view_settings.view_transform = "Filmic"
+        try:
+            scene.view_settings.look = "Medium High Contrast"
+        except (TypeError, ValueError):
+            pass
+        scene.view_settings.exposure = spec["render"]["exposure"]
+        scene.view_settings.gamma = 1.0
     if hasattr(scene.view_layers[0], "cycles") and hasattr(scene.view_layers[0].cycles, "use_denoising"):
         scene.view_layers[0].cycles.use_denoising = spec["render"]["denoise"]
     scene.render.image_settings.file_format = "PNG"
@@ -302,7 +415,7 @@ def apply_spec(spec: dict, receipt_path: Path, out_dir: Path, spec_path: Path):
         scene.camera = active_camera
         scene.render.resolution_x = frame["width"]
         scene.render.resolution_y = frame["height"]
-        scene.render.filepath = str(out_dir / ("atlas-p3b-r3-" + label + "-cycles.png"))
+        scene.render.filepath = str(out_dir / (output_stem + "-" + label + "-cycles.png"))
         bpy.ops.render.render(write_still=True)
         result_path = Path(scene.render.filepath)
         if not result_path.is_file() or result_path.stat().st_size < 3000:
@@ -312,7 +425,7 @@ def apply_spec(spec: dict, receipt_path: Path, out_dir: Path, spec_path: Path):
                        "sha256": sha256(result_path), "bytes": result_path.stat().st_size})
 
     scene.camera = camera
-    derivative = out_dir / "atlas-p3b-r3-art-direction.blend"
+    derivative = out_dir / (output_stem + "-art-direction.blend")
     bpy.ops.wm.save_as_mainfile(filepath=str(derivative), compress=True)
     if not derivative.is_file() or sha256(src) != original_src_digest:
         raise RuntimeError("ARTSPEC_SOURCE_PROVENANCE_LOST")
@@ -330,6 +443,11 @@ def apply_spec(spec: dict, receipt_path: Path, out_dir: Path, spec_path: Path):
         "portals": list(PORTALS),
         "materials": [{"id": k, "matchedNames": v, "count": len(v)} for k, v in matched.items()],
         "lighting": light_receipt,
+        "portalAccents": portal_accents,
+        "surfaceDetailEnabled": output_stem == "atlas-p3b-r4",
+        "colorManagement": {"viewTransform": scene.view_settings.view_transform,
+                            "look": scene.view_settings.look,
+                            "exposure": scene.view_settings.exposure},
         "sky": {"model": "PHYSICAL_ATMOSPHERE", "blenderSkyType": sky_model,
                 "sourcePhysicalDiscPresent": True,
                 "sourceDiscHiddenInDerivativeRenderOnly": True,
@@ -342,7 +460,7 @@ def apply_spec(spec: dict, receipt_path: Path, out_dir: Path, spec_path: Path):
         "publishApproved": False,
         "nextGate": "HUMAN_VISUAL_REVIEW_ON_EXACT_DERIVATIVE",
     }
-    (out_dir / "atlas-p3b-r3-art-direction-receipt.json").write_text(
+    (out_dir / (output_stem + "-art-direction-receipt.json")).write_text(
         json.dumps(out_receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print("ATLAS_ART_DIRECTION_DERIVATIVE_APPLIED_UNAPPROVED", json.dumps({
         "spec": spec["specId"], "geometryUnchanged": True,

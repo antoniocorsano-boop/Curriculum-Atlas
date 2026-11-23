@@ -88,5 +88,40 @@ class ArtDirectionContractTests(unittest.TestCase):
                 module.validate_parent_receipt(path, self.valid)
 
 
+    def test_valid_professional_finish_r4(self):
+        path = ROOT / "docs/atlas-gateway/ATLAS-P3B-R4-FINITURA-PROFESSIONALE-01.json"
+        value = module.validate_spec(path)
+        self.assertEqual(value["outputStem"], "atlas-p3b-r4")
+        self.assertGreaterEqual(value["render"]["samples"], 48)
+        self.assertEqual(len(value["materials"]), 5)
+        self.assertFalse(value["safety"]["publishAuthorized"])
+
+    def test_r4_requires_microdetail(self):
+        path = ROOT / "docs/atlas-gateway/ATLAS-P3B-R4-FINITURA-PROFESSIONALE-01.json"
+        value = json.loads(path.read_text(encoding="utf-8"))
+        value["materials"][0].pop("proceduralDetail")
+        with tempfile.TemporaryDirectory() as tmp:
+            bad = Path(tmp) / "bad.json"
+            bad.write_text(json.dumps(value), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                module.validate_spec(bad)
+
+    def test_r4_blocks_weak_render_and_false_authorization(self):
+        path = ROOT / "docs/atlas-gateway/ATLAS-P3B-R4-FINITURA-PROFESSIONALE-01.json"
+        valid = json.loads(path.read_text(encoding="utf-8"))
+        for variant in ("samples", "publish", "detail"):
+            data = copy.deepcopy(valid)
+            if variant == "samples":
+                data["render"]["samples"] = 16
+            elif variant == "publish":
+                data["safety"]["publishAuthorized"] = True
+            else:
+                data["materials"][1]["proceduralDetail"]["bumpDistance"] = 3.0
+            with tempfile.TemporaryDirectory() as tmp:
+                bad = Path(tmp) / "bad.json"
+                bad.write_text(json.dumps(data), encoding="utf-8")
+                with self.assertRaises(ValueError):
+                    module.validate_spec(bad)
+
 if __name__ == "__main__":
     unittest.main()
