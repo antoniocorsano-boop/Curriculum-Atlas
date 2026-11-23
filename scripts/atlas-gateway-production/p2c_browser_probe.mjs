@@ -34,6 +34,8 @@ try{
    if(!state.ready||state.portalCount!==4||state.camera!=='CAM_HERO_ARCH04'||!state.canvas){
      throw Error(variant.name+' failed to display genuine GLB: '+JSON.stringify({state,logs,errors}));
    }
+   // Screenshot before interaction; otherwise the notice obscures the podium.
+   await page.screenshot({path:resolve(out,'p2c-'+variant.name+'-chromium.png'),fullPage:true});
    const expected=['curricolo','esplora','percorsi','esperienze'];
    const intents=[];
    await page.evaluate(()=>{
@@ -52,10 +54,32 @@ try{
    const canvas=await page.locator('canvas').boundingBox();
    if(buttons!==4||!canvas||canvas.width<350||canvas.height<650)
      throw Error('Viewport inaccessible '+JSON.stringify({buttons,canvas}));
-   await page.screenshot({path:resolve(out,'p2c-'+variant.name+'-chromium.png'),fullPage:true});
+   // Real 3D raycast, not merely the accessible text button contract.
+   // The point is computed from the mesh's actual 3D bounding box.
+   const panelHits=[];
+   for(const id of expected){
+      const hit=await page.evaluate(id=>{
+        const s=window.__ATLAS_P2C_PRIVATE_TEST__;
+        const mesh=s.scene.getObjectByName(id[0].toUpperCase()+id.slice(1)+' • vetro cobalto');
+        if(!mesh||!mesh.isMesh)return {error:'missing semantic pane '+id};
+        const rect=s.renderer.domElement.getBoundingClientRect();
+        const c=new THREE.Box3().setFromObject(mesh).getCenter().project(s.camera);
+        const x=rect.left+(c.x+1)*rect.width/2,y=rect.top+(1-c.y)*rect.height/2;
+        if(!Number.isFinite(x)||!Number.isFinite(y))return {error:'invalid projected geometry '+id};
+        const count=window.__ATLAS_P2C_INTENTS__.length;
+        s.renderer.domElement.dispatchEvent(new PointerEvent('pointerup',
+            {bubbles:true,pointerType:'mouse',button:0,clientX:x,clientY:y}));
+        const e=window.__ATLAS_P2C_INTENTS__[count];
+        return {id,expectedRoute:'/'+id+'/',x,y,actual:e||null};
+      },id);
+      panelHits.push(hit);
+   }
+   if(panelHits.some(x=>x.error||x.actual?.id!==x.id||x.actual?.origin!=='pannello-3d'))
+      throw Error('3D portal raycast not qualified: '+JSON.stringify(panelHits));
+   await page.screenshot({path:resolve(out,'p2c-'+variant.name+'-interaction.png'),fullPage:true});
    results.push({device:variant.name,viewport:variant.width+'x'+variant.height,
      loaded:true,portalCount:state.portalCount,camera:state.camera,
-     accessibleButtons:buttons,canonicalIntents:intents,
+     accessibleButtons:buttons,canonicalIntents:intents,actualThreeDimensionalPanelClicks:panelHits,
      requestPaths:[...new Set(requests)],runtimeErrors:errors});
    await page.close();
  }
