@@ -261,6 +261,7 @@ try {
   stage.appendChild(renderer.domElement);state.renderer=renderer;
   const loader=new THREE.GLTFLoader();
   loader.load('./atlas-p3b-atrio-4-livelli-oculo-circolare.glb',gltf=>{
+    try{
     const scene=gltf.scene;scene.updateMatrixWorld(true);
     const original=scene.getObjectByName('ATLAS P3A • CAMERA HERO');
     let camera=original;
@@ -280,13 +281,14 @@ try {
       if(!obj.isMesh||!obj.userData?.atlas_hit_target||!(obj.userData?.atlas_portal_id in WORDS))return;
       const id=obj.userData.atlas_portal_id;targets[id]=obj;
       if(obj.material){
-        const materials=Array.isArray(obj.material)?obj.material:[obj.material];
-        obj.material=materials.map(m=>{
+        const multi=Array.isArray(obj.material);
+        const materials=multi?obj.material:[obj.material];
+        const refinedMaterials=materials.map(m=>{
           const copy=m.clone();copy.roughness=Math.max(.16,copy.roughness||.1);
           copy.emissive.setRGB(.030,.072,.12);copy.emissiveIntensity=.37;copy.needsUpdate=true;
           return copy;
         });
-        if(!Array.isArray(obj.material))obj.material=obj.material[0];
+        obj.material=multi?refinedMaterials:refinedMaterials[0];
         state.glassRefined++;
       }
     });
@@ -429,6 +431,7 @@ try {
     state.ready=true;setPhase('welcome');
     applyPose(fromPose);resize();requestAnimationFrame(ambient);
     status.textContent='La sala è pronta. Tocca «Entra nella sala» per cominciare.';
+    }catch(error){setError(error)}
   },undefined,setError);
 }catch(error){setError(error)}
 })();
