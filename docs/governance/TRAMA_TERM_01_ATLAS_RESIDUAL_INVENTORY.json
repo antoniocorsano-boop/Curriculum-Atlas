@@ -586,6 +586,12 @@
       "contains": "Curriculum-Atlas",
       "category": "infrastructure-legacy",
       "reason": "Identificativo GitHub storico nel collegamento di provenienza artistica, non testo curricolare rivolto a studenti."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-P3A-SOLUZIONE-ARCHITETTONICA-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "URL GitHub immutabile come tracciabilità di commit/workflow e sorgenti tecniche; i titoli e le etichette rivolte agli studenti conservano Atlante/Atlas."
     }
   ]
 }
