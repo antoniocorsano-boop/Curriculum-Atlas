@@ -176,8 +176,16 @@ for n,root,pane,base,target,original,bottom in zip(
     bpy.context.view_layer.update()
     newpos=root.matrix_world.translation.copy()
     change=(root.matrix_world @ original.inverted())
-    if base.parent is not None:raise RuntimeError("Unexpected base hierarchy "+n)
-    base.matrix_world=change@base.matrix_world
+    # A parented base already follows a moving portal; do not transform twice.
+    ancestor=base.parent
+    attached=False
+    while ancestor is not None:
+        if ancestor==root:
+            attached=True
+            break
+        ancestor=ancestor.parent
+    if not attached:
+        base.matrix_world=change@base.matrix_world
     q=projected(pane,cam)
     portal_positions.append({"name":n,"angle_abs_deg":(lo+hi)/2.,
            "screen_target":target,"screen_x":q.x,"screen_y":q.y,
