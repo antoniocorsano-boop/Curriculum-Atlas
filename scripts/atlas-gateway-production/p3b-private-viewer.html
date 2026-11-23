@@ -22,6 +22,7 @@ footer .note{text-align:center;margin:12px 0 0;color:#b9bbbf;font-size:11px}
 #selection{position:fixed;bottom:120px;left:50%;transform:translateX(-50%);text-align:center;width:min(95vw,560px);padding:9px 12px;background:rgba(4,13,22,.88);border:1px solid #7c684b;border-radius:9px;font-size:13px;display:none}
 #selection[data-visible=true]{display:block}
 @media(max-width:620px){header strong{font-size:15px}footer{padding:10px 8px max(10px,env(safe-area-inset-bottom))}footer nav{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}footer button{min-height:46px}footer .note{font-size:10px}#selection{bottom:150px}header p{font-size:11px}}
+html[data-embedded="true"] header,html[data-embedded="true"] footer,html[data-embedded="true"] #progress,html[data-embedded="true"] #selection{display:none!important}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -43,6 +44,9 @@ footer .note{text-align:center;margin:12px 0 0;color:#b9bbbf;font-size:11px}
 'use strict';
 (()=>{
 const PATHS=Object.freeze({curricolo:'/curricolo/',esplora:'/esplora/',percorsi:'/percorsi/',esperienze:'/esperienze/'});
+const embedded=window.parent!==window;
+const channel=new URLSearchParams(location.search).get('channel');
+if(embedded)document.documentElement.dataset.embedded='true';
 const stage=document.getElementById('stage'),progress=document.getElementById('progress'),selection=document.getElementById('selection');
 const state={ready:false,error:null,glbBytes:null,triangles:0,selected:null,portalCount:0,renderer:null,camera:null,scene:null};
 window.__ATLAS_P3B_PRIVATE_TEST__=state;
@@ -53,6 +57,9 @@ function show(id,origin){
   selection.dataset.visible='true';
   selection.textContent='Accesso '+id.charAt(0).toUpperCase()+id.slice(1)+' → '+path+' (destinazione locale verificata, non pubblicata da questa anteprima)';
   window.dispatchEvent(new CustomEvent('atlas-p3b-intent',{detail:{id,href:path,origin}}));
+  if(embedded && /^[a-f0-9]{48}$/.test(channel||'')){
+    window.parent.postMessage({type:'atlas-p3b-private-open',id,channel},location.origin);
+  }
 }
 for(const b of document.querySelectorAll('button[data-portal]'))b.addEventListener('click',()=>show(b.dataset.portal,'tastiera-o-pulsante'));
 try{
