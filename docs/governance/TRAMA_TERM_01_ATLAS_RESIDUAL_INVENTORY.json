@@ -580,6 +580,12 @@
       "contains": "Curriculum-Atlas",
       "category": "infrastructure-legacy",
       "reason": "Identificatore GitHub immutabile nel collegamento alle fonti reali P1F/P2; non è lessico editoriale né un'eccezione per nuove etichette di prodotto."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-P2B-ART-REVIEW-P2C-HANDOFF-2026-11-23.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Identificativo GitHub storico nel collegamento di provenienza artistica, non testo curricolare rivolto a studenti."
     }
   ]
 }
