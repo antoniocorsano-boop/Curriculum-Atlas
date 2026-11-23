@@ -221,11 +221,21 @@ links.new(mix.outputs[0],output.inputs["Surface"])
 gold=emission("ATLAS P2A • filamento ottone illuminato",(.95,.58,.25),2.2)
 trim=mesh_material("ATLAS P2A • bronzo scuro",(.12,.085,.065),.62,.28)
 frame_names=[]
-for n,pane,base in zip(names,panes,bases):
+disabled_backings=[]
+for n,root,pane,base in zip(names,roots,panes,bases):
     assign(pane,glass)
     frame_names.append(rect_rounded("ATLAS P2A • bordo luminoso "+n,pane,gold).name)
+    # The previous opaque plate sits behind the actual cobalt glass. Keeping
+    # it rendered made transparent glass look like a solid blue block.
+    for child in root.children_recursive:
+        if child.type=="MESH" and "retro" in child.name.lower():
+            child.hide_render=True
+            disabled_backings.append(child.name)
     if base.type=="MESH":
         assign(base,trim)
+if len(disabled_backings)!=4:
+    raise RuntimeError("Expected exactly four historical opaque glass backings; found "+
+                       str(disabled_backings))
 
 # Renderable physically recessed slots: subtract a cutter from the original
 # floor mesh; verify face topology changes, rather than placing a fake texture.
@@ -272,17 +282,29 @@ for n,pane in zip(names,panes):
 
 # Gallery horizontal masses become subdued graphite, retaining 3 real levels.
 graphite=mesh_material("ATLAS P2A • gallerie grafite satinata",(.078,.12,.18),.32,.32)
-for o in [first,upper]:
-    assign(o,graphite)
-for n in ("ARCH04 • upper cornice","ARCH04 • second gallery handrail"):
-    o=bpy.data.objects.get(n)
-    if o and o.type=="MESH":assign(o,trim)
+galley_materials=[]
+portal_members={id(p) for root in roots for p in root.children_recursive}
+for o in list(scene.objects):
+    if o.type!="MESH" or o in (roof,sky,rim,floor) or id(o) in portal_members:
+        continue
+    key=o.name.lower()
+    if not any(w in key for w in ("gallery","curved slab","railing","handrail","cornice")):
+        continue
+    if any(w in key for w in ("glass","vetro","plant","lamp","pot","recess")):
+        continue
+    material=trim if any(w in key for w in ("railing","handrail","cornice")) else graphite
+    assign(o,material)
+    galley_materials.append(o.name)
+if first.name not in galley_materials or upper.name not in galley_materials:
+    raise RuntimeError("Gallery levels were not rebalanced")
 # Skylight rim and light beams are three-dimensional, not an image overlay.
 assign(rim,gold)
 top=max((roof.matrix_world@Vector(v)).z for v in roof.bound_box)
 light_names=[]
 light_names.append(area("ATLAS P2A • luce zenitale principale",
   (centre.x,centre.y,top-.25),(0.,-.6,0.),1900.,7.5,(.66,.84,1.)).name)
+light_names.append(area("ATLAS P2A • diffuse interior from skylight",
+  (centre.x,centre.y-.6,8.5),(centre.x,centre.y-2.,.7),2300.,9.0,(.72,.88,1.)).name)
 light_names.append(area("ATLAS P2A • riempimento caldo podio",
   (centre.x,centre.y-5.,5.8),(0.,0.,.7),720.,5.8,(1.,.72,.49)).name)
 for idx,(x,y) in enumerate(((-5.,-3.0),(5.,-3.0))):
@@ -290,7 +312,7 @@ for idx,(x,y) in enumerate(((-5.,-3.0),(5.,-3.0))):
       (x,y,5.6),(x*.65,0.,1.4),380.,3.0,(.45,.73,1.)).name)
 
 scene.render.engine="CYCLES"
-scene.cycles.samples=40
+scene.cycles.samples=56
 scene.render.resolution_x=1280
 scene.render.resolution_y=720
 scene.render.resolution_percentage=100
@@ -323,6 +345,8 @@ report={
  "alternative_B_C_preserved":True,
  "portal_targets":portal_positions,
  "portal_frames":frame_names,
+ "disabled_opaque_backings":disabled_backings,
+ "rebalance_gallery_objects":galley_materials,
  "portal_glass_node_material":glass.name,
  "floor_mesh":floor.name,
  "floor_faces_before":original_face_count,
