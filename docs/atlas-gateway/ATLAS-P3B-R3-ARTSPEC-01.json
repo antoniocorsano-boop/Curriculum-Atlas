@@ -1,0 +1,144 @@
+{
+  "schemaVersion": "visual.art-direction.spec/v1",
+  "capabilityId": "visual.art-direction.propose",
+  "specId": "ATLAS-P3B-R3-ARTSPEC-01",
+  "product": "ATLAS",
+  "source": {
+    "artifactName": "atlas-p3a-four-level-circular-oculus-editable.blend",
+    "sha256": "35371d226c289bd348a1137f63bfd14c74ee79389c4c1b53b522759ca0246d30",
+    "architecture": "P3A/R2 — ground plus three galleries, circular oculus 6.25 BU, four original portals",
+    "immutable": true
+  },
+  "safety": {
+    "derivativeOnly": true,
+    "studentData": false,
+    "publishAuthorized": false,
+    "mergeAuthorized": false,
+    "paidServices": false
+  },
+  "materials": [
+    {
+      "id": "roof-warm-limestone",
+      "selectors": [
+        "padiglione unico oculo circolare"
+      ],
+      "baseColor": [
+        0.54,
+        0.49,
+        0.415
+      ],
+      "metallic": 0.015,
+      "roughness": 0.78,
+      "alpha": 1,
+      "transmission": 0,
+      "purpose": "Warm pearl limestone: restrained architectural crown without artificial shine"
+    },
+    {
+      "id": "floor-blue-basalt",
+      "selectors": [
+        "pavimento lapideo"
+      ],
+      "baseColor": [
+        0.067,
+        0.085,
+        0.103
+      ],
+      "metallic": 0.025,
+      "roughness": 0.51,
+      "alpha": 1,
+      "transmission": 0,
+      "purpose": "Denser cool basalt: readable grounded foreground without mirror reflection"
+    },
+    {
+      "id": "gallery-deep-mineral",
+      "selectors": [
+        "gallery",
+        "galleria"
+      ],
+      "baseColor": [
+        0.102,
+        0.13,
+        0.168
+      ],
+      "metallic": 0.05,
+      "roughness": 0.72,
+      "alpha": 1,
+      "transmission": 0,
+      "purpose": "Dark recesses and gallery decks establish legible layered spatial depth"
+    },
+    {
+      "id": "portal-clear-blue-glass",
+      "selectors": [
+        "vetro cobalto"
+      ],
+      "baseColor": [
+        0.125,
+        0.29,
+        0.385
+      ],
+      "metallic": 0,
+      "roughness": 0.115,
+      "alpha": 0.31,
+      "transmission": 0.12,
+      "purpose": "Translucent structural blue glass remains visible and semantically clickable"
+    },
+    {
+      "id": "pier-graphite-stone",
+      "selectors": [
+        "pilastro esterno",
+        "pilastro terzo livello"
+      ],
+      "baseColor": [
+        0.095,
+        0.104,
+        0.117
+      ],
+      "metallic": 0.015,
+      "roughness": 0.81,
+      "alpha": 1,
+      "transmission": 0,
+      "purpose": "Matte graphite piers create foreground contrast without excessive visual weight"
+    }
+  ],
+  "lighting": {
+    "mode": "blender_area_three_point",
+    "keyPower": 420,
+    "keySize": 6,
+    "fillPower": 190,
+    "fillSize": 8,
+    "warmPower": 125,
+    "warmSize": 4
+  },
+  "sky": {
+    "model": "NISHITA",
+    "sunElevationDegrees": 33,
+    "turbidity": 2.4,
+    "worldStrength": 0.34
+  },
+  "cameras": {
+    "masterName": "ATLAS P3A • CAMERA HERO",
+    "desktop": {
+      "width": 960,
+      "height": 540,
+      "lensMultiplier": 1,
+      "shiftY": 0
+    },
+    "phone": {
+      "width": 390,
+      "height": 844,
+      "lensMultiplier": 0.83,
+      "shiftY": -0.08
+    }
+  },
+  "render": {
+    "engine": "CYCLES",
+    "samples": 16,
+    "denoise": true
+  },
+  "acceptance": {
+    "fourPortals": 4,
+    "galleryLevels": 4,
+    "oculusRadiusBU": 6.25,
+    "humanArtApproval": false
+  }
+}
