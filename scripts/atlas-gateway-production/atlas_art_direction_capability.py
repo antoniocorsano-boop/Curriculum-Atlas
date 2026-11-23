@@ -83,10 +83,15 @@ def validate_spec(path: Path) -> dict:
         if not isinstance(v, (int, float)) or not math.isfinite(v) or not 0.1 <= v <= 40:
             raise ValueError("ARTSPEC_LIGHT_SIZE_" + k)
     sky = data["sky"]
-    if sky.get("model") != "NISHITA" or not -2 <= sky.get("sunElevationDegrees", -99) <= 90:
+    if sky.get("model") != "PHYSICAL_ATMOSPHERE":
         raise ValueError("ARTSPEC_SKY")
-    if not 1 <= sky.get("turbidity", -1) <= 10 or not 0 <= sky.get("worldStrength", -1) <= 3:
-        raise ValueError("ARTSPEC_ATMOSPHERE_RANGE")
+    for key, lower, upper in (("sunElevationDegrees", -2, 90),
+                               ("airDensity", 0, 10), ("dustDensity", 0, 10),
+                               ("worldStrength", 0, 3)):
+        v = sky.get(key)
+        if (not isinstance(v, (int, float)) or isinstance(v, bool)
+                or not math.isfinite(v) or not lower <= v <= upper):
+            raise ValueError("ARTSPEC_ATMOSPHERE_RANGE_" + key)
     cams = data["cameras"]
     if cams.get("masterName") != "ATLAS P3A • CAMERA HERO":
         raise ValueError("ARTSPEC_CANONICAL_CAMERA")
@@ -223,9 +228,19 @@ def apply_spec(spec: dict, receipt_path: Path, out_dir: Path, spec_path: Path):
     world.node_tree.nodes.clear()
     nodes, links = world.node_tree.nodes, world.node_tree.links
     sky_node = nodes.new("ShaderNodeTexSky")
-    sky_node.sky_type = "NISHITA"
+    # Blender 5.0 renamed Nishita / single scattering and introduced multiple
+    # scattering. The canonical spec describes a physical atmosphere, not a
+    # version-specific enum; select the explicitly qualified implementation.
+    sky_model = "MULTIPLE_SCATTERING" if bpy.app.version >= (5, 0, 0) else "NISHITA"
+    allowed = {e.identifier for e in sky_node.bl_rna.properties["sky_type"].enum_items}
+    if sky_model not in allowed:
+        raise RuntimeError("ARTSPEC_SKY_BACKEND_NOT_SUPPORTED_" + sky_model)
+    sky_node.sky_type = sky_model
+    for property_name, spec_key in (("air_density", "airDensity"), ("dust_density", "dustDensity")):
+        if not hasattr(sky_node, property_name):
+            raise RuntimeError("ARTSPEC_SKY_PROPERTY_UNAVAILABLE_" + property_name)
+        setattr(sky_node, property_name, spec["sky"][spec_key])
     sky_node.sun_elevation = math.radians(spec["sky"]["sunElevationDegrees"])
-    sky_node.turbidity = spec["sky"]["turbidity"]
     bg = nodes.new("ShaderNodeBackground")
     bg.inputs["Strength"].default_value = spec["sky"]["worldStrength"]
     output = nodes.new("ShaderNodeOutputWorld")
@@ -311,7 +326,8 @@ def apply_spec(spec: dict, receipt_path: Path, out_dir: Path, spec_path: Path):
         "portals": list(PORTALS),
         "materials": [{"id": k, "matchedNames": v, "count": len(v)} for k, v in matched.items()],
         "lighting": light_receipt,
-        "sky": {"model": "NISHITA", "sourcePhysicalDiscPresent": True,
+        "sky": {"model": "PHYSICAL_ATMOSPHERE", "blenderSkyType": sky_model,
+                "sourcePhysicalDiscPresent": True,
                 "sourceDiscHiddenInDerivativeRenderOnly": True,
                 "webTextureExportQualified": False},
         "renders": images,
