@@ -210,11 +210,10 @@ for mesh in payload.get("meshes",[]):
             triangles+=payload["accessors"][prim["attributes"]["POSITION"]]["count"]//3
 if triangles<1500:raise RuntimeError("Atrium unexpectedly empty")
 if triangles>120000:raise RuntimeError("Mobile candidate exceeds 120k triangle budget: "+str(triangles))
-required=("ATLAS P3A • third gallery deck",
-          "ATLAS P3A • padiglione unico oculo circolare",
-          "ATLAS P3A • cielo fisico circolare")
+required=("third_gallery_deck","padiglione_unico_oculo_circolare",
+          "cielo_fisico_circolare")
 for name in required:
-    if not any(name.replace(" ","_") in n.get("name","").replace(" ","_") for n in nodes):
+    if not any(name in n.get("name","").lower().replace(" ","_") for n in nodes):
         raise RuntimeError("Real P3A geometry missing from exported GLB: "+name)
 actual_railing=sum("ATLAS_P3A" in n.get("name","").replace(" ","_") and "parapetto_vetro" in n.get("name","").replace(" ","_").lower() for n in nodes)
 if actual_railing<28:raise RuntimeError("Third-floor glass balustrade lost in GLB: "+str(actual_railing))
@@ -229,7 +228,8 @@ report={"schema":"atlas.gateway.p3b-four-gallery-webgl/v1",
     "selected_original_objects":len(eligible),"original_font_meshes":len(font_names),"glb_nodes":len(nodes),
     "glb_meshes":len(payload.get("meshes",[])),"glb_triangles":triangles,
     "glb_cameras":len(payload.get("cameras",[])),
-    "glb_materials":len(payload.get("materials",[])),"portals":portals,
+    "glb_materials":len(payload.get("materials",[])),
+    "glb_textures":len(payload.get("textures",[])),"portals":portals,
     "file":{"name":glb.name,"bytes":len(raw),"sha256":sha(glb)},
     "sky_texture":{"name":sky_image_path.name,"bytes":sky_image_path.stat().st_size,"sha256":sha(sky_image_path)},
     "art_final_approved":False,"web_product_approved":False,
