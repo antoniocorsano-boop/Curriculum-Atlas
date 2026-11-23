@@ -41,3 +41,17 @@ La scena mantiene una sola pagina 3D; i quattro mondi sono presentati come **sce
 
 ## 5. Seguito
 Confrontare sullo stesso smartphone P3B (prova tecnica precedente) e P3C (esperienza guidata nuova), raccogliendo un giudizio su proporzioni, luce, leggibilità e fluidità effettiva. Se il movimento è giudicato utile ma l'immagine resta grezza, intervenire sulle finiture del GLB/materiali e sulla regia delle luci, senza ricominciare con la geometria.
+
+## 6. Esito remoto della calibrazione mobile (23 novembre 2026)
+
+**Pagina pubblica di prova verificata:** https://p3c-guided-experience.atlas-pr-preview.pages.dev/atlas-p3c/
+
+**Versione di produzione della sola anteprima:** commit `7aaaa6d0e6a771ee2afe6d46af0d76d08ba294ce`; [GitHub Actions #45238259317](https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/45238259317) **SUCCESS**. Sono stati superati sia i controlli locali sia quelli sull'URL Cloudflare reale: ingresso guidato, vera modifica della posizione della camera di 4,6 BU, trascinamento con effettiva rotazione della vista, avvicinamento a Esplora (camera da z13,5 a z11,2317), ritorno alla vista, comando accessibile, modalità con movimento ridotto, 0 errori JavaScript e 0 richieste non autorizzate a servizi esterni. Chromium ha simulato i formati 1280×720 e 390×844; **non è stato utilizzato un dispositivo Android fisico** per questi controlli.
+
+**Rilievo visivo e correzione:** una prima prova P3C, tecnicamente superata, mostrava ancora un cielo e un oculo troppo ampi su smartphone. La camera P3C è stata ricalibrata senza alterare il modello tridimensionale: alla prima apertura l'oculo resta inquadrato, mentre la vista dopo l'ingresso viene orientata più verso il podio e i portali; in formato verticale il campo visivo è stato portato a 82°. La nuova immagine conserva solo la parte superiore del cerchio e dà più spazio ai pannelli. Non è una certificazione della qualità artistica, ancora da accertare con l'ideatore.
+
+**Pacchetto di prove archiviate in un unico file ZIP nel Drive privato Atlas:** https://drive.google.com/file/d/1VvK12JD8nsdN1KTeNo1Y8J2mwYH80gRA/view ; 3.085.352 byte, SHA-256 `07291d48f5b759ebccf9f769842aba25e62039c65aa6ff45d1aaa25fcb1c6d0a`. Comprende sette file di prova remota: schermate autentiche su smartphone simulato (inizio, ingresso, trascinamento, focus), screenshot desktop e rapporto JSON, oltre al manifesto con URL, commit e impronte digitali. Il file GLB originale P3B/R2 resta archiviato nel Drive esistente; non duplicarlo.
+
+**Stati confermati:** `P3C_PUBLIC_WEBGL_DEMO_PASS=true`; `P3C_GUIDED_ENTRY_PASS=true`; `P3C_POINTER_DRAG_SIMULATED_PASS=true`; `P3C_PORTAL_FOCUS_RETURN_PASS=true`; `P3C_REDUCED_MOTION_PASS=true`; `P3C_ART_FINAL_APPROVED=false`; `ANDROID_PHYSICAL_QUALIFIED=false`; `STUDENT_CONTENT_PUBLISH_APPROVED=false`; `MAIN_MERGE_APPROVED=false`.
+
+La pagina precedente P3B rimane raggiungibile separatamente per confronto e non è stata promossa. È vietato dichiarare «esperienza immersiva definitivamente approvata» prima di una prova e valutazione sul telefono reale dell'ideatore; la qualità visiva rimane un tema aperto, diverso dalla presenza del movimento.
