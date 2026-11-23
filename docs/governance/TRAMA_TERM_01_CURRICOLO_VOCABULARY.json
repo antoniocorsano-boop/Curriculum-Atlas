@@ -127,6 +127,11 @@
       "path": "docs/atlas-gateway/ATLAS-P2-COMPOSIZIONI-01.md",
       "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
       "reason": "Collegamento tecnico esatto al repository GitHub nelle citazioni immutabili della genealogia P2; nessuna eccezione alla terminologia educativa o ai contenuti dell'applicazione."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-P2B-ART-REVIEW-P2C-HANDOFF-2026-11-23.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "reason": "URL tecnico immutabile della PR #188 per la tracciabilità P2B-P2C; non compare in etichette dell'esperienza studente."
     }
   ]
 }
