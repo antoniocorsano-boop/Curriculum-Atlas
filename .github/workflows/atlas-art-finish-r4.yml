@@ -1,0 +1,105 @@
+name: ATLAS ART-FINISH R4 — materiali procedurali e Cycles privati
+on:
+  pull_request:
+    branches: [work/atlas-artdir02-p1f-pavilion-01]
+    paths:
+      - "docs/atlas-gateway/ATLAS-P3B-R4-FINITURA-PROFESSIONALE-01.json"
+      - "scripts/atlas-gateway-production/atlas_art_direction_capability.py"
+      - "tests/test_atlas_art_direction_capability.py"
+      - ".github/workflows/atlas-art-finish-r4.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-art-direction-private-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  draft-to-blender-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate locked specification and 15 negative governance cases
+        run: |
+          python3 -m py_compile scripts/atlas-gateway-production/atlas_art_direction_capability.py
+          python3 scripts/atlas-gateway-production/atlas_art_direction_capability.py \
+            --spec docs/atlas-gateway/ATLAS-P3B-R4-FINITURA-PROFESSIONALE-01.json --validate-only
+          python3 -m unittest discover -s tests -p 'test_atlas_art_direction_capability.py' -v
+      - name: Download exactly qualified original P3A/R2 master
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45158391228
+          pattern: atlas-p3a-four-gallery-circular-oculus-5
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/source
+      - name: Verify master receipt and source bytes
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])/'source'
+          src=root/'atlas-p3a-four-level-circular-oculus-editable.blend'
+          receipt=json.loads((root/'atlas-p3a-qualification-receipt.json').read_text())
+          assert hashlib.sha256(src.read_bytes()).hexdigest()=='35371d226c289bd348a1137f63bfd14c74ee79389c4c1b53b522759ca0246d30'
+          assert receipt['gallery_levels_ground_included']==4
+          assert receipt['roof']['radius_bu']==6.25
+          assert receipt['roof']['nonmanifold_edges']==0
+          assert receipt['four_orig_portals_verified']==4
+          assert receipt['files']['blend']['sha256']==hashlib.sha256(src.read_bytes()).hexdigest()
+          print('ARTSPEC_MASTER_IMMUTABLE_AND_QUALIFIED_PASS')
+          PY
+      - name: Install existing open-source Blender renderer
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -qq -y --no-install-recommends blender python3-numpy
+          blender --version | head -2
+      - name: Apply artistic specification to PRIVATE DERIVATIVE ONLY and render two frames
+        run: |
+          mkdir -p "$RUNNER_TEMP/atlas-art-finish-r4"
+          blender -b "$RUNNER_TEMP/source/atlas-p3a-four-level-circular-oculus-editable.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/atlas_art_direction_capability.py -- \
+            --spec docs/atlas-gateway/ATLAS-P3B-R4-FINITURA-PROFESSIONALE-01.json \
+            --source-receipt "$RUNNER_TEMP/source/atlas-p3a-qualification-receipt.json" \
+            --out "$RUNNER_TEMP/atlas-art-finish-r4"
+      - name: Verify derivative fingerprint, nonapproval and real PNG dimensions
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os,struct
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])/'atlas-art-finish-r4'
+          a=json.loads((root/'atlas-p3b-r4-art-direction-receipt.json').read_text())
+          assert a['schema']=='atlas.art-direction.application-receipt/v1'
+          assert a['source']['unchanged'] and a['geometry']['unchanged']
+          assert a['geometry']['sha256Before']==a['geometry']['sha256After']
+          assert a['source']['sha256']=='35371d226c289bd348a1137f63bfd14c74ee79389c4c1b53b522759ca0246d30'
+          assert a['geometry']['galleryLevels']==4 and a['geometry']['circularOculusRadiusBU']==6.25
+          assert a['portals']==['Curricolo','Esplora','Percorsi','Esperienze']
+          assert len(a['materials'])==5 and all(x['count']>0 for x in a['materials']) and a['surfaceDetailEnabled'] and len(a['portalAccents'])==4
+          assert a['sky']['model']=='PHYSICAL_ATMOSPHERE' and a['sky']['blenderSkyType']=='MULTIPLE_SCATTERING'
+          assert not a['sky']['webTextureExportQualified']
+          assert len(a['renders'])==2
+          assert not a['humanArtApproved'] and not a['webTranslationQualified']
+          assert not a['mergeApproved'] and not a['publishApproved']
+          for view,w,h in [('desktop',1280,720),('phone',390,844)]:
+            p=root/('atlas-p3b-r4-'+view+'-cycles.png')
+            binary=p.read_bytes()
+            assert binary[:8]==b'\x89PNG\r\n\x1a\n'
+            assert struct.unpack_from('>II',binary,16)==(w,h)
+            assert next(x['sha256'] for x in a['renders'] if x['view']==view)==hashlib.sha256(binary).hexdigest()
+          d=root/a['derivative']['name']
+          assert hashlib.sha256(d.read_bytes()).hexdigest()==a['derivative']['sha256']
+          print('ARTSPEC_DERIVATIVE_GEOMETRY_MATERIALS_TWO_REAL_RENDERS_PASS')
+          PY
+      - name: Preserve review evidence only; no publication and no original duplication
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-finish-r4-private-${{ github.run_number }}
+          path: |
+            ${{ runner.temp }}/atlas-art-finish-r4/
+          if-no-files-found: warn
+          retention-days: 30
+# No deployment, no merge, no automatic GLB replacement, no student data.

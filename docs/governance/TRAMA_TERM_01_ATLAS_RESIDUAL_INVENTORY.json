@@ -574,6 +574,30 @@
       "contains": "Curriculum-Atlas",
       "category": "infrastructure-legacy",
       "reason": "Actual existing GitHub Actions execution URLs; this is an infrastructure identifier, not editable product copy."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-P2-COMPOSIZIONI-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Identificatore GitHub immutabile nel collegamento alle fonti reali P1F/P2; non è lessico editoriale né un'eccezione per nuove etichette di prodotto."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-P2B-ART-REVIEW-P2C-HANDOFF-2026-11-23.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Identificativo GitHub storico nel collegamento di provenienza artistica, non testo curricolare rivolto a studenti."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-P3A-SOLUZIONE-ARCHITETTONICA-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "URL GitHub immutabile come tracciabilità di commit/workflow e sorgenti tecniche; i titoli e le etichette rivolte agli studenti conservano Atlante/Atlas."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-P3B-WEBGL-NEXT-PRIVATE-QUALIFICATION-01.md",
+      "contains": "Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Nome storico del repository presente unicamente negli indirizzi GitHub di qualificazione del modello tridimensionale P3B."
     }
   ]
 }

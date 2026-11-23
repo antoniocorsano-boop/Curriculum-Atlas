@@ -122,6 +122,26 @@
       "path": "docs/atlas-gateway/ATLAS-GATEWAY-CLOSED-LOOP-02.md",
       "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
       "reason": "Canonical immutable GitHub repository URL is a technical locator, not curricolo-domain vocabulary; the product prose keeps the canonical term."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-P2-COMPOSIZIONI-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "reason": "Collegamento tecnico esatto al repository GitHub nelle citazioni immutabili della genealogia P2; nessuna eccezione alla terminologia educativa o ai contenuti dell'applicazione."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-P2B-ART-REVIEW-P2C-HANDOFF-2026-11-23.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "reason": "URL tecnico immutabile della PR #188 per la tracciabilità P2B-P2C; non compare in etichette dell'esperienza studente."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-P3A-SOLUZIONE-ARCHITETTONICA-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "reason": "Riferimento tecnico canonico al repository e alle esecuzioni Blender P3A; non è terminologia editoriale destinata agli studenti."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-P3B-WEBGL-NEXT-PRIVATE-QUALIFICATION-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "reason": "Collegamento immutabile al repository e ai controlli GitHub P3B, usato soltanto per tracciabilità tecnica; non è un'etichetta rivolta agli studenti."
     }
   ]
 }

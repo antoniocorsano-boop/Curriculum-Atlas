@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src 'self' blob:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; object-src 'none';">
+<title>Atlas P3B · Atrio a quattro livelli · Anteprima privata</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;min-height:100%;font-family:system-ui,-apple-system,sans-serif;background:#07111d;color:#f7f1e7}
+body{min-height:100svh;overflow:hidden}#stage{position:fixed;inset:0}canvas{display:block;width:100%;height:100%;touch-action:manipulation}
+#veil{pointer-events:none;position:fixed;inset:0;background:linear-gradient(180deg,rgba(5,10,19,.37),transparent 28%,transparent 65%,rgba(5,10,19,.67))}
+header{position:fixed;top:0;left:0;right:0;padding:clamp(12px,2vw,28px);pointer-events:none}
+header strong{display:block;font-size:clamp(16px,2vw,21px);letter-spacing:.15em;font-weight:550}
+header p{margin:.5em 0 0;color:#d9cfbf;font-size:12px}
+#progress{position:fixed;top:70px;left:clamp(12px,2vw,28px);font-size:13px;max-width:34em;color:#f0dfc4}
+footer{position:fixed;bottom:0;width:100%;padding:16px 20px max(18px,env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(5,10,19,.93) 24%)}
+footer nav{max-width:960px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:auto}
+footer button{cursor:pointer;min-height:48px;border-radius:12px;border:1px solid rgba(225,189,129,.45);background:rgba(10,22,37,.76);color:#fff3db;font:500 14px system-ui,sans-serif;letter-spacing:.02em}
+footer button:hover,footer button:focus-visible{outline:2px solid #ffe4a5;outline-offset:2px;background:#253b50}
+footer .note{text-align:center;margin:12px 0 0;color:#b9bbbf;font-size:11px}
+#selection{position:fixed;bottom:120px;left:50%;transform:translateX(-50%);text-align:center;width:min(95vw,560px);padding:9px 12px;background:rgba(4,13,22,.88);border:1px solid #7c684b;border-radius:9px;font-size:13px;display:none}
+#selection[data-visible=true]{display:block}
+@media(max-width:620px){header strong{font-size:15px}footer{padding:10px 8px max(10px,env(safe-area-inset-bottom))}footer nav{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}footer button{min-height:46px}footer .note{font-size:10px}#selection{bottom:150px}header p{font-size:11px}}
+html[data-embedded="true"] header,html[data-embedded="true"] footer,html[data-embedded="true"] #progress,html[data-embedded="true"] #selection{display:none!important}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="stage" role="img" aria-label="Scena tridimensionale reale dell’atrio Atlas, con quattro portali selezionabili"></div>
+<div id="veil" aria-hidden="true"></div>
+<header><strong>ATLAS <span style="color:#e5c185;font-size:.75em">· Sala della conoscenza</span></strong><p>Prototipo 3D privato · Geometria P3A/R2 selezionata · Oculo circolare</p></header>
+<p id="progress" role="status" aria-live="polite">Apertura dell'atrio tridimensionale…</p>
+<div id="selection" role="status" aria-live="polite"></div>
+<footer><nav aria-label="Quattro accessi di Atlas">
+<button type="button" data-portal="curricolo">Curricolo</button>
+<button type="button" data-portal="esplora">Esplora</button>
+<button type="button" data-portal="percorsi">Percorsi</button>
+<button type="button" data-portal="esperienze">Esperienze</button>
+</nav><p class="note">Prova privata. Le destinazioni sono riconosciute, ma questa pagina isolata non le pubblica.</p></footer>
+<script src="./three.min.js"></script>
+<script src="./GLTFLoader.js"></script>
+<script>
+'use strict';
+(()=>{
+const PATHS=Object.freeze({curricolo:'/curricolo/',esplora:'/esplora/',percorsi:'/percorsi/',esperienze:'/esperienze/'});
+const embedded=window.parent!==window;
+const channel=new URLSearchParams(location.search).get('channel');
+if(embedded)document.documentElement.dataset.embedded='true';
+const stage=document.getElementById('stage'),progress=document.getElementById('progress'),selection=document.getElementById('selection');
+const state={ready:false,error:null,glbBytes:null,triangles:0,selected:null,portalCount:0,renderer:null,camera:null,scene:null,
+  intro:{durationMs:1300,started:false,completed:false,skipped:false,finalPositionError:null,finalRotationError:null},
+  lightRig:'cinematic-balanced-v1',glassRefined:0,
+  art:{profile:'p3b-pbr-sky-v2',skyApplied:0,roofApplied:0,floorApplied:0,materialFamilies:0,
+       sourceGeometryPreserved:true,sourceGlbPreserved:true,externalAssetsAdded:false}};
+
+// Reproducible self-contained finishing. Canvas textures are created only
+// after the verified GLB loads; no network, library or model dependency is added.
+function seeded(seed){
+  let a=seed>>>0;
+  return ()=>{a=(a+0x6d2b79f5)|0;let t=Math.imul(a^(a>>>15),1|a);
+    t^=t+Math.imul(t^(t>>>7),61|t);
+    return ((t^(t>>>14))>>>0)/4294967296;};
+}
+function makeStoneTexture(floor){
+  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
+  const ctx=canvas.getContext('2d',{willReadFrequently:false});
+  if(!ctx)throw Error('Canvas per texture architettoniche non disponibile');
+  const img=ctx.createImageData(256,256),px=img.data;
+  const rand=seeded(floor?0x31f0c2:0x81c0a7);
+  for(let y=0;y<256;y++)for(let x=0;x<256;x++){
+    const k=(y*256+x)*4,grain=(rand()-.5)*13;
+    const stria=6*Math.sin((x*.054+y*.031)+2*Math.sin(y*.021));
+    const cloud=5*Math.sin(x*.018+y*.025)*Math.sin(y*.037-x*.014);
+    const v=Math.max(0,Math.min(255,Math.round((floor?225:239)+grain+stria+cloud)));
+    px[k]=v;px[k+1]=v-(floor?2:3);px[k+2]=v-(floor?0:6);px[k+3]=255;
+  }
+  ctx.putImageData(img,0,0);
+  const t=new THREE.CanvasTexture(canvas);t.flipY=false;t.encoding=THREE.sRGBEncoding;
+  t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=2;
+  return t;
+}
+function makeSkyTexture(){
+  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=512;
+  const ctx=canvas.getContext('2d');if(!ctx)throw Error('Canvas cielo non disponibile');
+  const background=ctx.createLinearGradient(0,0,0,512);
+  background.addColorStop(0,'#548bbd');
+  background.addColorStop(.48,'#7bafd5');
+  background.addColorStop(1,'#b5d2e3');
+  ctx.fillStyle=background;ctx.fillRect(0,0,512,512);
+  const rand=seeded(0xa71a5),clouds=14;
+  for(let i=0;i<clouds;i++){
+    const cx=-20+rand()*560,cy=28+rand()*455;
+    const width=52+rand()*75,height=10+rand()*22,part=5+Math.floor(rand()*5);
+    // Cool atmospheric shadow gives the cloud masses volume without hard edges.
+    for(let layer=0;layer<2;layer++){
+      for(let j=0;j<part;j++){
+        const dx=(j/(part-1)-.5)*width+(rand()-.5)*16;
+        const dy=(rand()-.5)*height+(layer?0:9),r=height*(.8+rand()*.65);
+        ctx.save();ctx.translate(cx+dx,cy+dy);ctx.scale(1.55,.72);
+        const g=ctx.createRadialGradient(0,0,2,0,0,r*1.9);
+        if(layer){g.addColorStop(0,'rgba(250,250,245,.80)');g.addColorStop(.42,'rgba(240,247,248,.58)');
+          g.addColorStop(1,'rgba(240,247,248,0)');}
+        else{g.addColorStop(0,'rgba(74,116,155,.23)');g.addColorStop(1,'rgba(74,116,155,0)');}
+        ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,r*1.9,0,Math.PI*2);ctx.fill();ctx.restore();
+      }
+    }
+  }
+  const t=new THREE.CanvasTexture(canvas);t.flipY=false;t.encoding=THREE.sRGBEncoding;
+  t.anisotropy=2;t.wrapS=t.wrapT=THREE.ClampToEdgeWrapping;
+  return t;
+}
+function finishArchitecture(scene){
+  const roofTexture=makeStoneTexture(false),floorTexture=makeStoneTexture(true),skyTexture=makeSkyTexture();
+  const cache=new Map();
+  scene.traverse(obj=>{
+    if(!obj.isMesh||!obj.material)return;
+    const refine=original=>{
+      if(!original||!original.name)return original;
+      const name=original.name.toLowerCase();
+      let kind=null;
+      if(name.includes('copertura pietra perla'))kind='roof';
+      else if(name.includes('cielo zenitale procedurale'))kind='sky';
+      else if(name==='atlas p3b • pavimento')kind='floor';
+      else if(name.includes('gallerie blu'))kind='gallery';
+      else if(name.includes('stone columns')||name.includes('pilastri grafite'))kind='pier';
+      else if(name.includes('nicchie blu profonde'))kind='niche';
+      else if(name.includes('ripiani bronzo satinato'))kind='shelf';
+      if(!kind)return original;
+      if(cache.has(original.uuid))return cache.get(original.uuid);
+      const m=original.clone();
+      if(kind==='roof'){
+        m.color.setRGB(.46,.43,.39);m.metalness=.025;m.roughness=.84;
+        m.map=roofTexture;state.art.roofApplied++;
+      }else if(kind==='sky'){
+        m.color.setRGB(1,1,1);m.map=skyTexture;
+        m.emissive.setRGB(.48,.48,.48);m.emissiveMap=skyTexture;
+        m.roughness=.98;state.art.skyApplied++;
+      }else if(kind==='floor'){
+        m.color.setRGB(.15,.21,.28);m.metalness=.065;m.roughness=.69;
+        m.map=floorTexture;state.art.floorApplied++;
+      }else if(kind==='gallery'){
+        m.color.setRGB(.095,.13,.18);m.roughness=.72;m.metalness=.10;
+      }else if(kind==='pier'){
+        m.color.setRGB(.052,.073,.105);m.roughness=.83;m.metalness=.035;
+      }else if(kind==='niche'){
+        m.color.setRGB(.085,.13,.19);m.roughness=.84;
+      }else if(kind==='shelf'){
+        m.color.setRGB(.35,.26,.17);m.roughness=.46;m.metalness=.31;
+      }
+      m.needsUpdate=true;
+      cache.set(original.uuid,m);state.art.materialFamilies++;
+      return m;
+    };
+    const before=obj.material;
+    const changed=Array.isArray(before)?before.map(refine):refine(before);
+    if(changed!==before)obj.material=changed;
+    if(obj.name==='ATLAS P3A • padiglione unico oculo circolare'&&obj.geometry){
+      // This adds UV mapping to an in-memory COPY only, never alters vertex
+      // coordinates, topology, the GLB, or the canonical Blender source.
+      const geometry=obj.geometry.clone(),position=geometry.getAttribute('position');
+      if(position&&position.count){
+        geometry.computeBoundingBox();
+        const bounds=geometry.boundingBox;
+        const dx=Math.max(.001,bounds.max.x-bounds.min.x),dz=Math.max(.001,bounds.max.z-bounds.min.z);
+        const uv=new Float32Array(position.count*2);
+        for(let i=0;i<position.count;i++){
+          uv[2*i]=(position.getX(i)-bounds.min.x)/dx*2.4;
+          uv[2*i+1]=(position.getZ(i)-bounds.min.z)/dz*2.4;
+        }
+        geometry.setAttribute('uv',new THREE.BufferAttribute(uv,2));obj.geometry=geometry;
+      }
+    }
+  });
+}
+window.__ATLAS_P3B_PRIVATE_TEST__=state;
+function show(id,origin){
+  if(!(id in PATHS))return;
+  state.selected=id;
+  const path=PATHS[id];
+  selection.dataset.visible='true';
+  selection.textContent='Accesso '+id.charAt(0).toUpperCase()+id.slice(1)+' → '+path+' (destinazione locale verificata, non pubblicata da questa anteprima)';
+  window.dispatchEvent(new CustomEvent('atlas-p3b-intent',{detail:{id,href:path,origin}}));
+  if(embedded && /^[a-f0-9]{48}$/.test(channel||'')){
+    window.parent.postMessage({type:'atlas-p3b-private-open',id,channel},location.origin);
+  }
+}
+for(const b of document.querySelectorAll('button[data-portal]'))b.addEventListener('click',()=>show(b.dataset.portal,'tastiera-o-pulsante'));
+try{
+ if(!window.THREE||!THREE.GLTFLoader)throw Error('Motore 3D locale mancante');
+ const r=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'low-power'});
+ r.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
+ r.setClearColor(0x07111d,1);
+ r.outputEncoding=THREE.sRGBEncoding;
+ r.toneMapping=THREE.ACESFilmicToneMapping;
+ r.toneMappingExposure=1.12;
+ stage.appendChild(r.domElement);state.renderer=r;
+ const loader=new THREE.GLTFLoader();
+ loader.load('./atlas-p3b-atrio-4-livelli-oculo-circolare.glb',gltf=>{
+   const scene=gltf.scene;
+   scene.updateMatrixWorld(true);
+   let camera=null;
+   scene.traverse(o=>{if(o.isCamera && o.name.includes('P3A') && o.name.toUpperCase().includes('CAMERA'))camera=o;});
+   if(!camera||!camera.isCamera)throw Error('Fotocamera autentica non trovata');
+   state.scene=scene;state.camera=camera;
+   // Balanced local lighting: one daylight key, an architectural warm accent and
+   // a low-energy cool fill. No additional assets, shadows or external requests.
+   scene.add(new THREE.HemisphereLight(0xd8e9ff,0x223044,0.86));
+   const sun=new THREE.DirectionalLight(0xffedda,1.77);
+   sun.position.set(4,13,7);
+   scene.add(sun);
+   const warm=new THREE.PointLight(0xffbc78,0.84,20);
+   warm.position.set(-2.2,3.1,4);
+   scene.add(warm);
+   const fill=new THREE.PointLight(0x90b9e8,0.42,22);
+   fill.position.set(4.5,4.6,-2);
+   scene.add(fill);
+   const podium=new THREE.PointLight(0xffd8a5,0.64,14);
+   podium.position.set(0,2.3,3);scene.add(podium);
+   // Original mesh and portal metadata remain intact; only runtime materials
+   // and texture coordinates on a copied roof geometry are changed.
+   finishArchitecture(scene);
+   if(state.art.skyApplied!==1||state.art.roofApplied!==1||state.art.floorApplied!==1
+      ||state.art.materialFamilies<5)throw Error('Finitura artistica P3B incompleta');
+   // Refine only the four semantic glass surfaces. Do not alter the geometry,
+   // opacity, portal ids or the original Blender material asset.
+   const refined=new Map();
+   scene.traverse(obj=>{
+     if(!obj.isMesh||!obj.userData?.atlas_hit_target||!obj.material)return;
+     const refine=original=>{
+       if(refined.has(original.uuid))return refined.get(original.uuid);
+       const material=original.clone();
+       if('roughness' in material)material.roughness=Math.max(material.roughness,0.16);
+       if(material.emissive&&material.emissive.isColor){
+         material.emissive.setRGB(0.015,0.027,0.045);
+         material.emissiveIntensity=0.24;
+       }
+       material.needsUpdate=true;
+       refined.set(original.uuid,material);
+       return material;
+     };
+     obj.material=Array.isArray(obj.material)?obj.material.map(refine):refine(obj.material);
+     state.glassRefined++;
+   });
+   const targets=[];
+   scene.traverse(obj=>{
+      const id=obj.userData&&obj.userData.atlas_portal_id;
+      if(obj.isMesh&&obj.userData.atlas_hit_target&&id in PATHS)targets.push(obj);
+   });
+   state.portalCount=targets.length;
+   if(state.portalCount!==4)throw Error('La scena non contiene quattro pannelli selezionabili');
+   const ray=new THREE.Raycaster();
+   const pointer=new THREE.Vector2();
+   function resize(){
+      const w=window.innerWidth,h=window.innerHeight;
+      r.setSize(w,h,false);
+      if(camera.isPerspectiveCamera){
+        const initial=camera.userData.atlasOriginalFov||(camera.userData.atlasOriginalFov=camera.fov);
+        const originalAspect=16/9;
+        const ratio=w/h;
+        camera.aspect=ratio;
+        camera.fov=ratio<originalAspect?Math.min(108,2*180/Math.PI*Math.atan(Math.tan(initial*Math.PI/360)*originalAspect/ratio)):initial;
+        camera.updateProjectionMatrix();
+      }
+      r.render(scene,camera);
+   }
+   window.addEventListener('resize',resize,{passive:true});
+   // A Next.js layout can resize the iframe after the GLB finishes loading.
+   // Observe the actual drawing surface instead of relying only on window events.
+   if(typeof ResizeObserver!=='undefined'){
+     const watcher=new ResizeObserver(()=>resize());
+     watcher.observe(stage);
+   }
+   r.domElement.addEventListener('pointerup',event=>{
+      if(!state.ready||event.button!==0)return;
+      const rect=r.domElement.getBoundingClientRect();
+      pointer.x=(event.clientX-rect.left)/rect.width*2-1;
+      pointer.y=-(event.clientY-rect.top)/rect.height*2+1;
+      ray.setFromCamera(pointer,camera);
+      const hit=ray.intersectObjects(targets,true)[0];
+      if(hit){
+        let object=hit.object;
+        while(object&&!object.userData.atlas_portal_id)object=object.parent;
+        if(object)show(object.userData.atlas_portal_id,'pannello-3d');
+      }
+   });
+   resize();
+   // A finite camera dolly, not an endless rendering loop. The original GLB
+   // camera is restored exactly before any 3D portal can be selected.
+   const finalPosition=camera.position.clone();
+   const finalRotation=camera.quaternion.clone();
+   function completeIntro(skipped){
+     camera.position.copy(finalPosition);
+     camera.quaternion.copy(finalRotation);
+     r.render(scene,camera);
+     state.intro.skipped=skipped;
+     state.intro.completed=true;
+     state.intro.finalPositionError=camera.position.distanceTo(finalPosition);
+     state.intro.finalRotationError=camera.quaternion.angleTo(finalRotation);
+     state.ready=true;
+     progress.textContent='Atrio tridimensionale attivo · Seleziona uno dei quattro portali.';
+   }
+   function startIntro(){
+     state.intro.started=true;
+     if(window.matchMedia('(prefers-reduced-motion: reduce)').matches||document.hidden){
+       completeIntro(true);
+       return;
+     }
+     const offset=new THREE.Vector3(-0.10,-0.10,0.34).applyQuaternion(finalRotation);
+     const firstPosition=finalPosition.clone().add(offset);
+     const firstRotation=finalRotation.clone().multiply(
+       new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),-0.012));
+     const start=performance.now();
+     function frame(now){
+       if(document.hidden){completeIntro(true);return}
+       const t=Math.min(1,Math.max(0,(now-start)/state.intro.durationMs));
+       const ease=1-Math.pow(1-t,3);
+       camera.position.copy(firstPosition).lerp(finalPosition,ease);
+       camera.quaternion.copy(firstRotation).slerp(finalRotation,ease);
+       r.render(scene,camera);
+       if(t<1)requestAnimationFrame(frame);
+       else completeIntro(false);
+     }
+     requestAnimationFrame(frame);
+   }
+   startIntro();
+ },undefined,err=>{state.error=String(err.message||err);progress.textContent='Scena 3D non disponibile: usa i quattro accessi testuali.';});
+}catch(err){state.error=String(err.message||err);progress.textContent='Scena 3D non disponibile: usa i quattro accessi testuali.';}
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+name: ATLAS P3A — Quattro livelli e oculo circolare, Blender Cycles
+on:
+  push:
+    branches: [work/atlas-artdir02-p2-composizioni-01]
+    paths:
+      - "scripts/atlas-gateway-production/p3a_four_gallery_circular_oculus_01.py"
+      - "docs/atlas-gateway/ATLAS-P3A-QUATTRO-LIVELLI-OCULO-CIRCOLARE-01.json"
+      - ".github/workflows/atlas-p3a-four-gallery-circular-oculus.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-p3a-four-levels-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  p3a-real-blender-cycles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify script syntax and parametric architectural contract
+        run: |
+          python3 -m py_compile scripts/atlas-gateway-production/p3a_four_gallery_circular_oculus_01.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path("docs/atlas-gateway/ATLAS-P3A-QUATTRO-LIVELLI-OCULO-CIRCOLARE-01.json").read_text())
+          assert p["schema"]=="atlas.gateway.arch-art-p3a/v1"
+          a=p["architectural_parameters"]
+          assert a["gallery_levels_total_including_ground"]==4
+          assert a["roof"]["circular_oculus"]["type"]=="genuine_circle_in_xy"
+          assert a["roof"]["circular_oculus"]["radius_bu"]==6.25
+          assert len(p["portals"]["retained_routes"])==4
+          assert not p["approvals"]["merge_allowed"] and not p["approvals"]["deployment_allowed"]
+          print("ATLAS_P3A_PARAMETRIC_CONTRACT_PASS")
+          PY
+      - name: Recover exact qualified P2B/R2 artistic Blender source
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45135551152
+          pattern: atlas-p2b-material-finish-24
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/p2b
+      - name: Independently authenticate immutable P2B/R2 binary
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os,hashlib,json
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"p2b"
+          f=p/"atlas-p2b-materiali-luce-editable.blend"
+          r=json.loads((p/"atlas-p2b-materials-receipt.json").read_text())
+          sha="3527837e0be056002c1dddea9082336001e787da9a6d225eff7704c554a84cec"
+          assert hashlib.sha256(f.read_bytes()).hexdigest()==sha==r["files"]["blend"]["sha256"]
+          assert r["source_p2a_blend_sha256"]=="3e425897ccf6092110d27955b3c25dfe28c6a52046aa0576acaf33b67959e56f"
+          assert r["art_direction_approved"] and not r["art_final_approved"] and r["no_deploy"]
+          print("ATLAS_P3A_EXACT_PREVIOUS_BINARY_PASS")
+          PY
+      - name: Install Blender Cycles (no commercial renderer)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender
+      - name: Build four real levels and circular roof, render Cycles
+        run: |
+          mkdir -p "$RUNNER_TEMP/p3a"
+          blender -b "$RUNNER_TEMP/p2b/atlas-p2b-materiali-luce-editable.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/p3a_four_gallery_circular_oculus_01.py -- \
+            --spec docs/atlas-gateway/ATLAS-P3A-QUATTRO-LIVELLI-OCULO-CIRCOLARE-01.json \
+            --parent-receipt "$RUNNER_TEMP/p2b/atlas-p2b-materials-receipt.json" \
+            --out "$RUNNER_TEMP/p3a"
+      - name: Independently check 4 levels, physical circle, roof topology, assets
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os,json,hashlib
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"p3a"
+          r=json.loads((p/"atlas-p3a-qualification-receipt.json").read_text())
+          assert r["schema"]=="atlas.gateway.arch-art-p3a-cycles-result/v1"
+          assert r["source_blender_sha256"]=="3527837e0be056002c1dddea9082336001e787da9a6d225eff7704c554a84cec"
+          assert r["source_blender_intact"] and r["original_objects_intact"]
+          assert r["old_roof_preserved_hidden"]
+          assert r["gallery_levels_ground_included"]==4
+          assert r["gallery3"]["real_deck"]
+          assert r["gallery3"]["glass_segments"]>=30 and r["gallery3"]["supports"]==15
+          assert r["roof"]["single_watertight_mesh"] and r["roof"]["nonmanifold_edges"]==0
+          assert r["roof"]["radius_spread_bu"]<0.001
+          assert abs(r["roof"]["radius_bu"]-6.25)<1e-8
+          assert r["roof"]["opening_increase_percent"]>35
+          assert r["four_orig_portals_verified"]==4
+          assert r["sky"]["procedural_non_external"]
+          assert not r["art_final_approved"] and not r["web_product_approved"]
+          assert not r["student_publication_approved"] and r["no_merge"] and r["no_deploy"]
+          for m in r["files"].values():
+              f=p/m["name"]
+              assert f.stat().st_size==m["bytes"]
+              assert hashlib.sha256(f.read_bytes()).hexdigest()==m["sha256"]
+          print("ATLAS_P3A_FOUR_REAL_LEVELS_ROUND_OCULUS_CYCLES_PASS")
+          PY
+      - name: Preserve edited Blender, authentic Cycles rendering, SHA receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-p3a-four-gallery-circular-oculus-${{ github.run_number }}
+          path: ${{ runner.temp }}/p3a/
+          if-no-files-found: warn
+          retention-days: 30
+# Private laboratory only: NO merge, deploy or student access.

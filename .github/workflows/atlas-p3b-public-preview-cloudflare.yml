@@ -1,0 +1,174 @@
+name: Atlas P3B — Pagina WebGL pubblica di prova, Cloudflare esistente
+on:
+  push:
+    branches: [work/atlas-artdir02-p2-composizioni-01]
+    paths:
+      - ".github/workflows/atlas-p3b-public-preview-cloudflare.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: atlas-p3b-public-preview
+  cancel-in-progress: true
+jobs:
+  qualify-and-publish-isolated-3d:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment: atlas-pr-preview
+    env:
+      PROJECT: atlas-pr-preview
+      SOURCE_GLB_SHA: 04b22de9d6c8f4e98a4eb88bf2f0e87141f9bdc685b742589845f977249e7adb
+    steps:
+      - uses: actions/checkout@v4
+      - name: Recover qualified P3B/R2 GLB with four true interactive portals
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45163398316
+          pattern: atlas-p3b-four-levels-circular-oculus-2
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/qualified
+      - name: Verify immutable parent source, no personal data, release boundary
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os,json,hashlib,struct
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"qualified"
+          r=json.loads((p/"atlas-p3b-webgl-receipt.json").read_text())
+          b=(p/"atlas-p3b-atrio-4-livelli-oculo-circolare.glb").read_bytes()
+          assert r["schema"]=="atlas.gateway.p3b-four-gallery-webgl/v1"
+          assert hashlib.sha256(b).hexdigest()==os.environ["SOURCE_GLB_SHA"]
+          assert r["input_p3a_r2_sha256"]=="35371d226c289bd348a1137f63bfd14c74ee79389c4c1b53b522759ca0246d30"
+          assert r["gallery_levels_including_ground"]==4
+          assert r["circular_oculus_radius_bu"]==6.25
+          assert r["third_gallery_railing_nodes"]==32
+          assert len(r["suppressed_misplaced_decorations"])==2
+          assert [x["path"] for x in r["portals"].values()]==["/curricolo/","/esplora/","/percorsi/","/esperienze/"]
+          assert r["no_merge"] and r["no_deploy"] and not r["student_publication_approved"]
+          assert struct.unpack_from("<III",b)==(0x46546c67,2,len(b))
+          assert len(b)<3500000
+          print("P3B_QUALIFIED_ASSET_PUBLIC_VISUAL_DEMO_ONLY_PASS")
+          PY
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+      - name: Prepare a separate public visual demonstration, never the canonical Atlas
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm install --frozen-lockfile
+          mkdir -p "$RUNNER_TEMP/p3b-public/atlas-p3b"
+          npm pack three@0.128.0 --ignore-scripts --pack-destination "$RUNNER_TEMP" --silent
+          tar -xOf "$RUNNER_TEMP/three-0.128.0.tgz" package/build/three.min.js > "$RUNNER_TEMP/p3b-public/atlas-p3b/three.min.js"
+          tar -xOf "$RUNNER_TEMP/three-0.128.0.tgz" package/examples/js/loaders/GLTFLoader.js > "$RUNNER_TEMP/p3b-public/atlas-p3b/GLTFLoader.js"
+          tar -xOf "$RUNNER_TEMP/three-0.128.0.tgz" package/LICENSE > "$RUNNER_TEMP/p3b-public/atlas-p3b/THREE-LICENSE.txt"
+          test "$(git hash-object "$RUNNER_TEMP/p3b-public/atlas-p3b/three.min.js")" = b14f47c0908bab15e890b468d53bb07db0be3a18
+          test "$(git hash-object "$RUNNER_TEMP/p3b-public/atlas-p3b/GLTFLoader.js")" = cfa518ede1b0893f1da14347d78fcd19355f3686
+          cp scripts/atlas-gateway-production/p3b-private-viewer.html "$RUNNER_TEMP/p3b-public/atlas-p3b/index.html"
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          file=Path(os.environ["RUNNER_TEMP"])/"p3b-public/atlas-p3b/index.html"
+          content=file.read_text(encoding="utf-8")
+          content=content.replace("Anteprima privata","Anteprima pubblica di prova")
+          content=content.replace("Prototipo 3D privato","Prototipo 3D pubblico di prova")
+          content=content.replace("Prova privata. Le destinazioni sono riconosciute, ma questa pagina isolata non le pubblica.","Prova tridimensionale pubblica. I quattro portali sono selezionabili; la navigazione ai contenuti ufficiali non è abilitata in questa dimostrazione.")
+          file.write_text(content,encoding="utf-8")
+          assert "Prova privata." not in content and "Prototipo 3D privato" not in content
+          PY
+          cp "$RUNNER_TEMP/qualified/atlas-p3b-atrio-4-livelli-oculo-circolare.glb" "$RUNNER_TEMP/p3b-public/atlas-p3b/"
+          cp "$RUNNER_TEMP/qualified/atlas-p3b-webgl-receipt.json" "$RUNNER_TEMP/p3b-public/atlas-p3b/"
+          printf '%s\n' 'User-agent: *' 'Disallow: /' > "$RUNNER_TEMP/p3b-public/robots.txt"
+          printf '%s\n' '<!doctype html><html lang="it"><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>Atlas 3D — prova pubblica</title><p><a href="./atlas-p3b/">Apri l’atrio tridimensionale di Atlas</a></p></html>' > "$RUNNER_TEMP/p3b-public/index.html"
+          cat > "$RUNNER_TEMP/p3b-public/_headers" <<'HEADERS'
+          /*
+            X-Robots-Tag: noindex, nofollow
+            X-Content-Type-Options: nosniff
+            Referrer-Policy: no-referrer
+          HEADERS
+          echo "${{ github.sha }}" > "$RUNNER_TEMP/p3b-public/EXACT_HEAD.txt"
+          test "$(sha256sum "$RUNNER_TEMP/p3b-public/atlas-p3b/atlas-p3b-atrio-4-livelli-oculo-circolare.glb" | cut -d' ' -f1)" = "$SOURCE_GLB_SHA"
+      - name: Browser real WebGL and 4 panel tests, before any upload
+        shell: bash
+        env:
+          ATLAS_P3B_PREVIEW_URL: http://127.0.0.1:8765/atlas-p3b/
+          ATLAS_P3B_EVIDENCE_DIR: ${{ runner.temp }}/p3b-public-evidence
+        run: |
+          set -euo pipefail
+          pnpm exec playwright install --with-deps chromium
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory "$RUNNER_TEMP/p3b-public" >"$RUNNER_TEMP/p3b-local.log" 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          for i in {1..35}; do
+            if curl -fsS http://127.0.0.1:8765/atlas-p3b/ > /dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/atlas-gateway-production/p3b_browser_probe.mjs
+      - name: Ensure existing Cloudflare preview project credentials are available
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "Missing existing Cloudflare secret CLOUDFLARE_API_TOKEN" >&2; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "Missing existing Cloudflare secret CLOUDFLARE_ACCOUNT_ID" >&2; exit 1; }
+      - name: Publish only the isolated 3D demo to EXISTING Cloudflare Pages preview project
+        id: publication
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx --yes wrangler@latest pages deploy "$RUNNER_TEMP/p3b-public" \
+            --project-name="$PROJECT" \
+            --branch="p3b-public-demo" \
+            --commit-hash="$GITHUB_SHA" \
+            --commit-message="P3B isolated public 3D demonstration; no student approval, no main merge" \
+            2>&1 | tee "$RUNNER_TEMP/p3b-cloudflare-upload.log"
+          URL="$(grep -Eo 'https://[^[:space:]]+\.pages\.dev' "$RUNNER_TEMP/p3b-cloudflare-upload.log" | tail -1)"
+          test -n "$URL"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+      - name: Verify actual public URL serves a GLB with exact SHA and functional page
+        shell: bash
+        env:
+          URL: ${{ steps.publication.outputs.url }}
+          ATLAS_P3B_EVIDENCE_DIR: ${{ runner.temp }}/p3b-remote-evidence
+        run: |
+          set -euo pipefail
+          for i in {1..15}; do
+            if curl -fsSL "$URL/atlas-p3b/" -o "$RUNNER_TEMP/remote-page.html" && \
+               curl -fsSL "$URL/atlas-p3b/atlas-p3b-atrio-4-livelli-oculo-circolare.glb" -o "$RUNNER_TEMP/remote.glb"; then
+              break
+            fi
+            test "$i" -lt 15 || exit 1
+            sleep 4
+          done
+          test "$(sha256sum "$RUNNER_TEMP/remote.glb" | cut -d' ' -f1)" = "$SOURCE_GLB_SHA"
+          test "$(tr -d '\r\n' < <(curl -fsSL "$URL/EXACT_HEAD.txt"))" = "$GITHUB_SHA"
+          grep -q 'Atlas P3B' "$RUNNER_TEMP/remote-page.html"
+          export ATLAS_P3B_PREVIEW_URL="$URL/atlas-p3b/"
+          node scripts/atlas-gateway-production/p3b_browser_probe.mjs
+          echo "PUBLIC_P3B_URL=$URL/atlas-p3b/" >> "$GITHUB_STEP_SUMMARY"
+          echo "P3B_CLOUDFLARE_PUBLIC_REAL_3D_BROWSER_PASS"
+      - name: Record report, URL and screenshot artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-p3b-public-link-proof-${{ github.run_number }}
+          path: |
+            ${{ runner.temp }}/p3b-public-evidence/
+            ${{ runner.temp }}/p3b-remote-evidence/
+            ${{ runner.temp }}/p3b-cloudflare-upload.log
+          if-no-files-found: warn
+          retention-days: 30
+# User explicitly requested publicly accessible page; this is a separate
+# noindex preview branch on existing free infrastructure, not canonical Atlas
+# main, not student publication approval, and not a production domain change.
