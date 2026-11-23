@@ -132,6 +132,11 @@
       "path": "docs/atlas-gateway/ATLAS-P2B-ART-REVIEW-P2C-HANDOFF-2026-11-23.md",
       "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
       "reason": "URL tecnico immutabile della PR #188 per la tracciabilità P2B-P2C; non compare in etichette dell'esperienza studente."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-P3A-SOLUZIONE-ARCHITETTONICA-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "reason": "Riferimento tecnico canonico al repository e alle esecuzioni Blender P3A; non è terminologia editoriale destinata agli studenti."
     }
   ]
 }
