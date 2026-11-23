@@ -236,7 +236,11 @@ def apply_spec(spec: dict, receipt_path: Path, out_dir: Path, spec_path: Path):
     if sky_model not in allowed:
         raise RuntimeError("ARTSPEC_SKY_BACKEND_NOT_SUPPORTED_" + sky_model)
     sky_node.sky_type = sky_model
-    for property_name, spec_key in (("air_density", "airDensity"), ("dust_density", "dustDensity")):
+    # Blender 5 renamed its dust property to aerosol_density. Both refer to
+    # the same controlled atmosphere parameter in the source art specification.
+    dust_property = "aerosol_density" if bpy.app.version >= (5, 0, 0) else "dust_density"
+    for property_name, spec_key in (("air_density", "airDensity"),
+                                     (dust_property, "dustDensity")):
         if not hasattr(sky_node, property_name):
             raise RuntimeError("ARTSPEC_SKY_PROPERTY_UNAVAILABLE_" + property_name)
         setattr(sky_node, property_name, spec["sky"][spec_key])
