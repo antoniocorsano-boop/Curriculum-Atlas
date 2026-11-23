@@ -16,28 +16,10 @@ test.describe("Atlas ingresso web — accesso reale senza immagini o WebGL", () 
     await expect(nav.locator("a")).toHaveCount(4);
     for (const [id, href] of expected) {
       const link = page.getByTestId(`atlas-accesso-${id}`);
-      await expect(link).toHaveAttribute("href", new RegExp(`^${href}/?import { expect, test } from "@playwright/test";
-
-test.describe("Atlas ingresso web — accesso reale senza immagini o WebGL", () => {
-  test("mostra la pagina, i quattro accessi e le due azioni principali", async ({ page }) => {
-    const response = await page.goto("/");
-    expect(response?.status()).toBe(200);
-    await expect(page.getByRole("heading", { level: 1, name: "Il curricolo, connesso." })).toBeVisible();
-    await expect(page.getByRole("heading", { level: 2, name: /Lasciati guidare/ })).toBeVisible();
-    const expected = [
-      ["curricolo", "/curricolo"],
-      ["esplora", "/esplora"],
-      ["percorsi", "/percorsi"],
-      ["materiali", "/materiali"],
-    ] as const;
-    const nav = page.getByRole("navigation", { name: "Quattro accessi principali di Atlas" });
-    await expect(nav.locator("a")).toHaveCount(4);
-    for (const [id, href] of expected) {
-      const link = page.getByTestId(`atlas-accesso-${id}`);
-      ));
+      await expect(link).toHaveAttribute("href", new RegExp(`^${href}/?$`));
       await expect(link).toBeVisible();
     }
-    await expect(page.getByTestId("atlas-ingresso-entra")).toHaveAttribute("href", /^\/esplora\/?$/);
+    await expect(page.getByTestId("atlas-ingresso-entra")).toHaveAttribute("href", new RegExp("^/esplora/?$"));
     await expect(page.getByText("Vista pubblica")).toBeVisible();
   });
 
