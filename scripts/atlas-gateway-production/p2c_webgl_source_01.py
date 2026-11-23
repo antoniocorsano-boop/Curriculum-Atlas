@@ -31,13 +31,22 @@ if not (r.get("schema")=="atlas.artdir02.p2b-material-finish-01/v1"
     raise RuntimeError("Unqualified P2B/R2 Blender source")
 src_hash=sha(src)
 scene=bpy.context.scene
+# Preserve the true Blender font glyphs before glTF export. Without conversion,
+# the Cycles labels disappear because glTF stores polygonal geometry, not FONT.
+font_names=[ob.name for ob in scene.objects if ob.type=="FONT" and not ob.hide_render and not ob.hide_get()]
+for name in font_names:
+    ob=bpy.data.objects[name]
+    bpy.ops.object.select_all(action="DESELECT")
+    ob.select_set(True)
+    bpy.context.view_layer.objects.active=ob
+    bpy.ops.object.convert(target="MESH")
 for ob in scene.objects:ob.select_set(False)
 routes={"Curricolo":"/curricolo/","Esplora":"/esplora/",
         "Percorsi":"/percorsi/","Esperienze":"/esperienze/"}
 eligible=[]
 for ob in scene.objects:
     if ob.hide_render or ob.hide_get():continue
-    if ob.type in ("MESH","CAMERA") or (ob.type=="EMPTY" and ob.name.startswith("Portale •")) or (ob.type=="CURVE" and ob.name.startswith("ATLAS P2A • bordo luminoso")):
+    if ob.type in ("MESH","CURVE","CAMERA") or (ob.type=="EMPTY" and ob.name.startswith("Portale •")):
         ob.select_set(True)
         eligible.append(ob)
 if len([ob for ob in eligible if ob.type=="MESH"])<70:
@@ -69,6 +78,8 @@ def mat(name,color,metal,rough,alpha=1.,emission=None):
     return material
 glass=mat("vetro traslucido",(.05,.18,.32),.06,.12,.34)
 roof=mat("copertura grafite",(.06,.10,.16),.25,.42)
+sky=mat("cielo zenitale luminoso",(.31,.55,.77),.0,.94,1.,(.36,.60,.83))
+letters=mat("tipografia tridimensionale",(.80,.91,.98),.0,.43,1.,(.68,.78,.94))
 gallery=mat("gallerie blu",(.08,.12,.18),.26,.39)
 filament=mat("filamento caldo",(.34,.21,.10),.38,.25,1.,(.92,.55,.25))
 stone=mat("pavimento",(.10,.16,.24),.15,.23)
@@ -77,9 +88,11 @@ for ob in eligible:
     key=ob.name.lower()
     chosen=None
     if ob.name in [name+" • vetro cobalto" for name in routes]:chosen=glass
+    elif ob.name in font_names:chosen=letters
     elif key.startswith("atlas p2a • bordo luminoso"):chosen=filament
     elif "pavimento lapideo" in key:chosen=stone
-    elif "copertura monolitica" in key or "cielo unico" in key:chosen=roof
+    elif "cielo unico" in key:chosen=sky
+    elif "copertura monolitica" in key:chosen=roof
     elif "gallery" in key or "galleria" in key:chosen=gallery
     if chosen is not None:
         ob.data=ob.data.copy()
@@ -123,7 +136,7 @@ if sha(src)!=src_hash:raise RuntimeError("Qualified R2 original changed")
 report={"schema":"atlas.artdir02.p2c-webgl-source-01/v1",
     "art_reference_sha256":CANON,"approved_architecture_sha256":APPROVED_R4,
     "input_p2b_r2_sha256":src_hash,"input_binary_unchanged":True,
-    "selected_original_objects":len(eligible),"glb_nodes":len(nodes),
+    "selected_original_objects":len(eligible),"original_font_meshes":len(font_names),"glb_nodes":len(nodes),
     "glb_meshes":len(payload.get("meshes",[])),"glb_triangles":triangles,
     "glb_cameras":len(payload.get("cameras",[])),
     "glb_materials":len(payload.get("materials",[])),"portals":portals,
