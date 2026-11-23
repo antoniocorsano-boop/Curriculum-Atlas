@@ -20,8 +20,8 @@ Conservare come fonti immutabili:
 | Componente | Stato P2A/R4 | Obiettivo P3A | Prova richiesta |
 |---|---|---|---|
 | Livelli | Piano terra + due balconate | **Piano terra + tre balconate** | Quattro quote strutturali distinte in 3D, tre parapetti ben visibili |
-| Balconata aggiunta | Seconda galleria, solaio a z≈5,20–5,38 BU | Terza a z≈7,85–8,03 BU; ringhiere z≈8,10–8,81 BU | Continuità col piano sottostante, supporti visivamente plausibili |
-| Copertura | Guscio unico P1F con forte massa percepita | **Guscio anulare più alto e sottile**, bordo esterno z≈10,55 BU, spessore 0,12 BU | Copertura unica, chiusa topologicamente, assenza di compenetrazioni |
+| Balconata aggiunta | Seconda galleria reale, solaio con quota superiore misurata z≈6,94 BU | Terza galleria a z≈9,19–9,24 BU; ringhiere z≈9,28–9,97 BU | Continuità col piano sottostante, supporti visivamente plausibili |
+| Copertura | Guscio unico P1F con forte massa percepita | **Guscio anulare più alto e sottile**, bordo esterno z≈11,55 BU, quota interna z≈12,10 BU, spessore 0,12 BU | Copertura unica, chiusa topologicamente, assenza di compenetrazioni |
 | Lucernario | Superellisse 6,15×4,20 BU, p=2,7 | **Cerchio reale r=6,25 BU**, 160 segmenti | Raggio costante nel piano XY, foro non mascherato |
 | Apertura cielo | Circa 89 BU² di apertura teorica | Circa 123 BU², +38% teorico | Vista zenitale effettiva e cielo leggibile |
 | Portali | Quattro pannelli in arco anteriore | **Invariati** con feritoie fisiche | Quattro vetri identici nella scena, senza coprire il podio |
@@ -39,7 +39,10 @@ Le unità BU sono relative alla scena, non metri utilizzabili per un progetto ed
 - **Composizione:** il podio e quattro accessi costituiscono il primo piano funzionale; oculo e terza balconata danno verticalità. Il cielo non deve occupare il posto dei contenuti per gli studenti.
 - **Significato educativo:** la sala è un ingresso, non il contenuto didattico. Le destinazioni sono Curricolo, Esplora, Percorsi ed Esperienze; la biblioteca deve orientare immediatamente, anche senza rotazione 3D.
 
-## 4. Realizzazione senza perdite
+## 4. Qualificazione Cycles R1 e calibrazione R2
+La prima prova Blender P3A/R1 ha confermato 4 livelli, 32 elementi di parapetto, 15 sostegni e un oculo circolare r=6,25 BU con guscio chiuso topologicamente. [Archivio Blender della prova reale](https://drive.google.com/file/d/1_HYSd4ICin47SWeKdVI5_7rhRqDj2eUE/view). Nel fotogramma Cycles R1 la nuova galleria appariva visivamente spoglia e troppo vicina al tetto. La quota effettiva della seconda galleria è risultata diversa da quella del primo progetto ARCH-04: la quota superiore reale è circa 6,94 BU. La revisione R2 usa pertanto un dislivello effettivo di 2,30 BU (terza galleria circa 9,24 BU), quota esterna del tetto 11,55 BU, spazio libero sopra il solaio circa 2,31 BU, materiali più chiari, 12 nicchie librarie tridimensionali e illuminazione calda localizzata. Non è una nuova variante concettuale, ma la correzione verificabile del medesimo P3A. Lo stato artistico resta da qualificare sulla nuova immagine.
+
+## 5. Realizzazione senza perdite
 1. Verificare SHA del file Blender P2B/R2 prima di qualsiasi alterazione.
 2. Duplicare nella **nuova scena derivata** la seconda galleria, aggiungere parapetti e sostegni veri; non toccare i primi due livelli.
 3. Nascondere, senza cancellare, i vecchi tre oggetti di copertura e costruire un solo guscio anulare reale con foro circolare e bordo sottile.
@@ -48,7 +51,7 @@ Le unità BU sono relative alla scena, non metri utilizzabili per un progetto ed
 6. Se e solo se la prova 3D supera i controlli, derivare GLB/WebGL dal **nuovo** modello e verificare accessibilità, quattro rotte effettive, GPU, smartphone Android reale e LIM.
 7. Conservare anche un'alternativa 2D accessibile per dispositivi che non supportano il 3D.
 
-## 5. Criteri di arresto e scelta conclusiva
+## 6. Criteri di arresto e scelta conclusiva
 **Esito tecnico P3A:** valido soltanto con vera geometria di 4 livelli, oculo circolare verificato, copertura chiusa, sorgente intatta, quattro pannelli, immagine Cycles originale e ricevuta dei controlli.
 
 **Esito artistico P3A:** valutazione separata, su immagine 3D vera, di verticalità, lucernario, luminosità, leggibilità e bilanciamento dei portali; nessuna promozione automatica della sola illustrazione ART-REF-04.
