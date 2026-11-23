@@ -83,6 +83,104 @@ test.describe("Atlas ingresso web — accesso reale senza immagini o WebGL", () 
     await expect(page).toHaveURL(new RegExp("/esperienze/?$"));
   });
 
+  test("P2: la prima curiosità si apre da Esplora senza questionari", async ({ page }) => {
+    await page.goto("/esplora/");
+    await expect(page.getByRole("heading", { level: 1, name: "Da una domanda può nascere un viaggio." })).toBeVisible();
+    await expect(page.getByTestId("atlas-esplora-prima-scoperta")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Perché una lampada si scalda se deve fare luce?" })).toBeVisible();
+    await expect(page.getByTestId("scoperta-tappa-domanda")).toBeVisible();
+    await expect(page.getByTestId("scoperta-tappa-osserva")).toHaveCount(0);
+    await expect(page.getByRole("radio")).toHaveCount(0);
+  });
+
+  test("P2: domanda → trasformazione → approfondimento realmente collegato", async ({ page }) => {
+    await page.goto("/esplora/");
+    await page.getByTestId("scoperta-osserva").click();
+    await expect(page.getByTestId("scoperta-tappa-osserva")).toBeVisible();
+    await expect(page.getByTestId("scoperta-tappa-osserva")).toContainText("Energia elettrica");
+    await expect(page.getByTestId("scoperta-tappa-osserva")).toContainText("Luce · effetto utile");
+    await expect(page.getByTestId("scoperta-tappa-osserva")).toContainText("Calore · dispersione");
+    await page.getByTestId("scoperta-collega").click();
+    await expect(page.getByTestId("scoperta-tappa-collega")).toBeVisible();
+    const link = page.getByTestId("scoperta-apri-schema");
+    const resourcePath = "/materials/2026-09-23/3e/dove-va-l-energia.svg";
+    await expect(link).toHaveAttribute("href", resourcePath);
+    await expect(page.getByTestId("scoperta-risorsa-esistente").locator("img")).toHaveAttribute("src", resourcePath);
+    const asset = await page.request.get(resourcePath);
+    expect(asset.status()).toBe(200);
+    expect(await asset.text()).toContain("DOVE VA L'ENERGIA?");
+  });
+
+  test("P2: dal racconto alla rete e all'obiettivo davvero presente in Arena", async ({ page }) => {
+    await page.goto("/esplora/");
+    await page.getByTestId("scoperta-osserva").click();
+    await page.getByTestId("scoperta-collega").click();
+    await page.getByTestId("scoperta-apri-relazioni").click();
+    await expect(page).toHaveURL(/#atlas-mappa-conoscenze$/);
+    await expect(page.getByRole("button", { name: /Elenco/i })).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator(".atlas-explore-filters select").last()).toHaveValue("tecnologia");
+    await expect(page.locator(".atlas-explore-context")).toContainText("analizzare sistemi energetici/produttivi");
+    await expect(page.locator(".atlas-explore-context")).toContainText("non vigente");
+    await expect(page.locator(".atlas-explore-context a")).toHaveAttribute("href", /^\/obiettivi\//);
+  });
+
+  test("P2: si può tornare alla domanda e ripetere l'osservazione", async ({ page }) => {
+    await page.goto("/esplora/");
+    await page.getByTestId("scoperta-osserva").click();
+    await page.getByRole("button", { name: "Torna alla domanda" }).click();
+    await expect(page.getByTestId("scoperta-tappa-domanda")).toBeVisible();
+    await page.getByTestId("scoperta-osserva").click();
+    await page.getByTestId("scoperta-collega").click();
+    await page.getByTestId("scoperta-ricomincia").click();
+    await expect(page.getByTestId("scoperta-tappa-domanda")).toBeVisible();
+  });
+
+  test("P2: la scoperta è percorribile interamente con la tastiera", async ({ page }) => {
+    await page.goto("/esplora/");
+    const start = page.getByTestId("scoperta-osserva");
+    await start.focus();
+    await start.press("Enter");
+    await expect(page.getByTestId("scoperta-tappa-osserva")).toBeVisible();
+    const continueButton = page.getByTestId("scoperta-collega");
+    await continueButton.focus();
+    await continueButton.press("Enter");
+    await expect(page.getByTestId("scoperta-tappa-collega")).toBeVisible();
+    const mapLink = page.getByTestId("scoperta-apri-relazioni");
+    await mapLink.focus();
+    await mapLink.press("Enter");
+    await expect(page.locator(".atlas-explore-filters select").last()).toHaveValue("tecnologia");
+  });
+
+  for (const width of [320, 360, 390, 768, 1280]) {
+    test("P2: nessun taglio della scoperta a " + width + "px", async ({ page }) => {
+      await page.setViewportSize({ width, height: width < 500 ? 844 : 900 });
+      await page.goto("/esplora/");
+      for (const phase of [0, 1, 2]) {
+        if (phase === 1) await page.getByTestId("scoperta-osserva").click();
+        if (phase === 2) await page.getByTestId("scoperta-collega").click();
+        const metrics = await page.evaluate(() => ({
+          scroll: document.documentElement.scrollWidth,
+          client: document.documentElement.clientWidth,
+        }));
+        expect(metrics.scroll).toBeLessThanOrEqual(metrics.client);
+      }
+      await expect(page.getByTestId("scoperta-apri-schema")).toBeVisible();
+    });
+  }
+
+  test("P2: schema pubblicato locale, nessuna dipendenza da servizi di immagini esterni", async ({ page }) => {
+    const external: string[] = [];
+    page.on("request", request => {
+      const u = new URL(request.url());
+      if (u.hostname !== "127.0.0.1" && u.hostname !== "localhost") external.push(request.url());
+    });
+    await page.goto("/esplora/");
+    await page.getByTestId("scoperta-osserva").click();
+    await page.getByTestId("scoperta-collega").click();
+    await expect(page.getByTestId("scoperta-risorsa-esistente")).toBeVisible();
+    expect(external).toEqual([]);
+  });
+
   test("azione principale operativa e navigazione da tastiera", async ({ page }) => {
     await page.goto("/");
     const action = page.getByTestId("atlas-ingresso-entra");
