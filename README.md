@@ -16,6 +16,14 @@ Chiusura validata su exact head `bc11577eeeeeed9c43ad62ac43fb7561e1197246`, merg
 
 La baseline corrente include l'export curricolare completo Arena e la sincronizzazione governata Arena → Atlas. Atlas non diventa per questo autorità curricolare: lo stato e la provenienza restano vincolati ad Arena.
 
+## Mappa permanente dei quattro portali e delle capacità
+
+**Riferimento canonico, da aggiornare con ogni sviluppo di Atlas:** [ATLAS-PORTALI-02 — Mappa delle capacità](docs/architecture/ATLAS-PORTALI-CAPABILITY-MAP-v1.md).
+
+- [Registro strutturato e stati verificabili](governance/atlas-portal-capability-map.v1.json) — quattro porte **Esplora · Esperienze · Percorsi · Curricolo**, funzioni condivise, prove e autorizzazioni.
+- [Validatore locale](scripts/validate-atlas-portal-capability-map.mjs) — eseguire con `node scripts/validate-atlas-portal-capability-map.mjs --self-test` prima di integrare modifiche al registro.
+- La mappa documenta **stati e provenienza**, non concede pubblicazione né accesso ai contenuti sperimentali. Materiali e Risorse sono capacità trasversali; non costituiscono un quinto portale.
+
 ## Superfici pubbliche
 
 - Home
