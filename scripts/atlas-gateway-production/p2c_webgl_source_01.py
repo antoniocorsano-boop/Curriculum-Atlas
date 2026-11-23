@@ -46,7 +46,7 @@ routes={"Curricolo":"/curricolo/","Esplora":"/esplora/",
 eligible=[]
 for ob in scene.objects:
     if ob.hide_render or ob.hide_get():continue
-    if ob.type in ("MESH","CURVE","CAMERA") or (ob.type=="EMPTY" and ob.name.startswith("Portale •")):
+    if ob.type in ("MESH","CAMERA") or (ob.type=="EMPTY" and ob.name.startswith("Portale •")) or (ob.type=="CURVE" and ob.name.startswith("ATLAS P2A • bordo luminoso")):
         ob.select_set(True)
         eligible.append(ob)
 if len([ob for ob in eligible if ob.type=="MESH"])<70:
@@ -132,6 +132,7 @@ for mesh in payload.get("meshes",[]):
         elif "POSITION" in prim.get("attributes",{}):
             triangles+=payload["accessors"][prim["attributes"]["POSITION"]]["count"]//3
 if triangles<1500:raise RuntimeError("Atrium unexpectedly empty")
+if triangles>120000:raise RuntimeError("Mobile candidate exceeds 120k triangle budget: "+str(triangles))
 if sha(src)!=src_hash:raise RuntimeError("Qualified R2 original changed")
 report={"schema":"atlas.artdir02.p2c-webgl-source-01/v1",
     "art_reference_sha256":CANON,"approved_architecture_sha256":APPROVED_R4,
