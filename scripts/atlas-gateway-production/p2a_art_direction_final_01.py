@@ -283,9 +283,9 @@ for n,pane in zip(names,panes):
 # Gallery horizontal masses become subdued graphite, retaining 3 real levels.
 graphite=mesh_material("ATLAS P2A • gallerie grafite satinata",(.078,.12,.18),.32,.32)
 galley_materials=[]
-portal_members={id(p) for root in roots for p in root.children_recursive}
+portal_members={p.name for root in roots for p in root.children_recursive}
 for o in list(scene.objects):
-    if o.type!="MESH" or o in (roof,sky,rim,floor) or id(o) in portal_members:
+    if o.type!="MESH" or o in (roof,sky,rim,floor) or o.name in portal_members:
         continue
     key=o.name.lower()
     if not any(w in key for w in ("gallery","curved slab","railing","handrail","cornice")):
