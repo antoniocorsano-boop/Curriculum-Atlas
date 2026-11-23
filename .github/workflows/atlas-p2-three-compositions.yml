@@ -154,15 +154,40 @@ jobs:
           assert hashlib.sha256(original.read_bytes()).hexdigest()==r["parent_p2_A_blend_sha256"]
           print("ATLAS_P2A_SINGLE_REFINED_REAL_SCENE_PASS")
           PY
+      - name: Recover immutable user-approved P2A/R4 scene
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 45132450643
+          pattern: atlas-p2a-art-direction-17
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/p2b-parent
+      - name: Verify exact approved R4 source and its SHA
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"p2b-parent"
+          r=json.loads((p/"atlas-p2a-art-direction-receipt.json").read_text())
+          f=p/"atlas-p2-A-monumentale-final-candidate.blend"
+          assert r["schema"]=="atlas.artdir02.p2a-art-direction-01/v1"
+          assert r["selected_candidate"]=="A Monumentale"
+          assert r["files"]["blend"]["sha256"]=="3e425897ccf6092110d27955b3c25dfe28c6a52046aa0576acaf33b67959e56f"
+          assert hashlib.sha256(f.read_bytes()).hexdigest()==r["files"]["blend"]["sha256"]
+          assert r["floor_real_boolean"] and r["three_levels_preserved"]
+          assert not r["art_approved"] and not r["web_approved"]
+          print("ATLAS_P2A_R4_APPROVED_BINARY_EXACT_SHA_PASS")
+          PY
       - name: Verify P2B material finishing script syntax
         run: python3 -m py_compile scripts/atlas-gateway-production/p2b_material_finish_01.py
       - name: Finish material, light and reflection on already approved A geometry
         run: |
           mkdir -p "$RUNNER_TEMP/p2b"
-          blender -b "$RUNNER_TEMP/p2a/atlas-p2-A-monumentale-final-candidate.blend" \
+          blender -b "$RUNNER_TEMP/p2b-parent/atlas-p2-A-monumentale-final-candidate.blend" \
             --threads 2 --python-exit-code 1 \
             --python scripts/atlas-gateway-production/p2b_material_finish_01.py -- \
-            --parent-receipt "$RUNNER_TEMP/p2a/atlas-p2a-art-direction-receipt.json" \
+            --parent-receipt "$RUNNER_TEMP/p2b-parent/atlas-p2a-art-direction-receipt.json" \
             --out "$RUNNER_TEMP/p2b"
       - name: Independently audit unchanged geometry, finishes and receipts
         shell: bash
@@ -173,7 +198,7 @@ jobs:
           base=Path(os.environ["RUNNER_TEMP"])
           p=base/"p2b"
           r=json.loads((p/"atlas-p2b-materials-receipt.json").read_text())
-          parent=json.loads((base/"p2a"/"atlas-p2a-art-direction-receipt.json").read_text())
+          parent=json.loads((base/"p2b-parent"/"atlas-p2a-art-direction-receipt.json").read_text())
           assert r["schema"]=="atlas.artdir02.p2b-material-finish-01/v1"
           assert r["approved_architectural_source"]=="P2A/R4 A Monumentale"
           assert r["reference_sha256"]=="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
