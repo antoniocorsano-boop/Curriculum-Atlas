@@ -229,8 +229,8 @@ scene.render.image_settings.file_format="PNG"
 bpy.context.view_layer.cycles.use_denoising=True
 scene.camera=camera
 scene.view_settings.view_transform="AgX"
-try:scene.view_settings.look="Medium High Contrast"
-except TypeError:scene.view_settings.look="Medium High Contrast" if False else "Medium High Contrast"
+# Keep the qualified source look; only the AgX display transform and exposure
+# are changed. Blender color-management look identifiers differ by version.
 scene.view_settings.exposure=.20
 scene.view_settings.gamma=1.0
 bpy.context.view_layer.update()
