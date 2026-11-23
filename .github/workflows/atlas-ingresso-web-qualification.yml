@@ -6,6 +6,10 @@ on:
       - "src/app/page.tsx"
       - "src/app/ingresso.module.css"
       - "tests/ingresso-web.spec.ts"
+      - "governance/atlas-portal-capability-map.v1.json"
+      - "docs/architecture/ATLAS-PORTALI-CAPABILITY-MAP-v1.md"
+      - "scripts/validate-atlas-portal-capability-map.mjs"
+      - "README.md"
       - ".github/workflows/atlas-ingresso-web-qualification.yml"
   push:
     branches: [work/atlas-ingresso-web-01]
@@ -13,6 +17,10 @@ on:
       - "src/app/page.tsx"
       - "src/app/ingresso.module.css"
       - "tests/ingresso-web.spec.ts"
+      - "governance/atlas-portal-capability-map.v1.json"
+      - "docs/architecture/ATLAS-PORTALI-CAPABILITY-MAP-v1.md"
+      - "scripts/validate-atlas-portal-capability-map.mjs"
+      - "README.md"
       - ".github/workflows/atlas-ingresso-web-qualification.yml"
   workflow_dispatch:
 permissions:
@@ -34,8 +42,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Install locked dependencies
+      - name: Install existing dependencies
         run: pnpm install --no-frozen-lockfile
+      - name: Qualify canonical four-portal capability map and authorization boundaries
+        run: node scripts/validate-atlas-portal-capability-map.mjs --self-test
       - name: Verify TypeScript and app compilation
         run: |
           pnpm typecheck
