@@ -9,6 +9,7 @@ import {
   GitBranch,
   Home,
   Library,
+  Sparkles,
   Search,
   Settings,
   Target,
@@ -19,6 +20,7 @@ import {
 const items = [
   { href: "/", label: "Home", icon: Home },
   { href: "/esplora", label: "Esplora", icon: Compass },
+  { href: "/esperienze", label: "Esperienze", icon: Sparkles },
   { href: "/curricolo", label: "Curricolo", icon: BookOpen },
   { href: "/materiali", label: "Materiali", icon: Boxes },
   { href: "/percorsi", label: "Percorsi", icon: GitBranch },
@@ -28,11 +30,12 @@ const items = [
 ];
 
 const mobileItems = items.filter((item) =>
-  ["/", "/esplora", "/curricolo", "/materiali", "/risorse"].includes(item.href)
+  ["/", "/esplora", "/esperienze", "/percorsi", "/curricolo"].includes(item.href)
 );
 
 const mobileMoreItems = [
-  { href: "/percorsi", label: "Percorsi", icon: GitBranch },
+  { href: "/materiali", label: "Materiali", icon: Boxes },
+  { href: "/risorse", label: "Risorse Atlas", icon: Library },
   { href: "/obiettivi", label: "Obiettivi", icon: Target },
   { href: "/raccordi", label: "Raccordi", icon: Waypoints },
   { href: "/impostazioni", label: "Impostazioni", icon: Settings },
