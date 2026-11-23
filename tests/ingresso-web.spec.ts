@@ -5,7 +5,7 @@ test.describe("Atlas ingresso web — accesso reale senza immagini o WebGL", () 
     const response = await page.goto("/");
     expect(response?.status()).toBe(200);
     await expect(page.getByRole("heading", { level: 1, name: "Il curricolo, connesso." })).toBeVisible();
-    await expect(page.getByRole("heading", { name: /Entra.*Lasciati guidare.*dalla curiosità/s })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: /Lasciati guidare/ })).toBeVisible();
     const expected = [
       ["curricolo", "/curricolo"],
       ["esplora", "/esplora"],
