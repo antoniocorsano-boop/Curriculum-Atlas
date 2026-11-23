@@ -63,6 +63,20 @@ I quattro portali non sono quattro nuove applicazioni, ma quattro **intenzioni d
 5. **P4 — Relazioni tra le porte**: collegare contenuti, percorsi, obiettivi e materiali senza duplicazione di archivi o nuova autorità.
 6. **P5 — Verifica completa**: browser, smartphone fisico, LIM, accessibilità, comprensione per fascia d'età, provenienza e autorizzazione separata a ogni pubblicazione.
 
+## P1 — Attuazione delle quattro porte nel ramo candidato (23 novembre 2026)
+
+La quarta porta **Esperienze** è stata realizzata nella [PR #189](https://github.com/antoniocorsano-boop/Curriculum-Atlas/pull/189), senza integrare o pubblicare il sito canonico:
+
+- home: quattro portali **Esplora · Esperienze · Percorsi · Curricolo** con descrizioni orientate all'utente e con maggiore rilievo per la scoperta;
+- `/esperienze/`: pagina Next.js reale, con presentazione di **Storie · Laboratori · Scoperte** come ambiti futuri; nessuna esperienza candidabile viene mostrata come già fruibile;
+- navigazione comune: accesso a Esperienze dalla barra laterale e da quella mobile; Materiali e Risorse rimangono disponibili come sezioni trasversali;
+- in assenza di autorizzazioni delle esperienze, il portale comunica apertamente che non sono ancora disponibili attività e conduce invece alle sezioni consultabili Esplora e Materiali;
+- codice presentazionale in CSS locale, senza immagini generate, risorse remote, WebGL o nuove dipendenze.
+
+**Stato di governo:** `routeOnMain=false` e `routeOnCandidate=true` nel registro per Esperienze. Questo distingue la rotta presente sulla PR dalla rotta non ancora integrata su `main`. La nuova capacità `experience-portal` è una **superficie pubblica vuota**, non una dichiarazione di approvazione di Missione 118, Museo Zero o dei percorsi candidati. Tutti i loro stati di autorizzazione rimangono invariati.
+
+**Gate successivo:** verifica di compilazione, navigazione reale e accessibilità sul commit della PR, quindi anteprima isolata con revisione umana. L'esito tecnico non integra `main` e non autorizza contenuti learner.
+
 ## Regola permanente di manutenzione
 
 **Ogni modifica a un portale o a una capability richiede nello stesso intervento:**
