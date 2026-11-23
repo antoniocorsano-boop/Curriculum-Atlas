@@ -71,6 +71,17 @@ jobs:
           test "$(git hash-object "$RUNNER_TEMP/p3b-public/atlas-p3b/three.min.js")" = b14f47c0908bab15e890b468d53bb07db0be3a18
           test "$(git hash-object "$RUNNER_TEMP/p3b-public/atlas-p3b/GLTFLoader.js")" = cfa518ede1b0893f1da14347d78fcd19355f3686
           cp scripts/atlas-gateway-production/p3b-private-viewer.html "$RUNNER_TEMP/p3b-public/atlas-p3b/index.html"
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          file=Path(os.environ["RUNNER_TEMP"])/"p3b-public/atlas-p3b/index.html"
+          content=file.read_text(encoding="utf-8")
+          content=content.replace("Anteprima privata","Anteprima pubblica di prova")
+          content=content.replace("Prototipo 3D privato","Prototipo 3D pubblico di prova")
+          content=content.replace("Prova privata. Le destinazioni sono riconosciute, ma questa pagina isolata non le pubblica.","Prova tridimensionale pubblica. I quattro portali sono selezionabili; la navigazione ai contenuti ufficiali non è abilitata in questa dimostrazione.")
+          file.write_text(content,encoding="utf-8")
+          assert "Prova privata." not in content and "Prototipo 3D privato" not in content
+          PY
           cp "$RUNNER_TEMP/qualified/atlas-p3b-atrio-4-livelli-oculo-circolare.glb" "$RUNNER_TEMP/p3b-public/atlas-p3b/"
           cp "$RUNNER_TEMP/qualified/atlas-p3b-webgl-receipt.json" "$RUNNER_TEMP/p3b-public/atlas-p3b/"
           printf '%s\n' 'User-agent: *' 'Disallow: /' > "$RUNNER_TEMP/p3b-public/robots.txt"
@@ -118,7 +129,7 @@ jobs:
           set -euo pipefail
           npx --yes wrangler@latest pages deploy "$RUNNER_TEMP/p3b-public" \
             --project-name="$PROJECT" \
-            --branch="p3b-public-demo-${GITHUB_SHA:0:12}" \
+            --branch="p3b-public-demo" \
             --commit-hash="$GITHUB_SHA" \
             --commit-message="P3B isolated public 3D demonstration; no student approval, no main merge" \
             2>&1 | tee "$RUNNER_TEMP/p3b-cloudflare-upload.log"
