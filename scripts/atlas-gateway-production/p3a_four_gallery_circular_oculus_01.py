@@ -21,7 +21,7 @@ parent=json.loads(Path(arg("--parent-receipt")).read_text(encoding="utf-8"))
 src=Path(bpy.data.filepath).resolve()
 p=spec["architectural_parameters"];r=p["roof"];g=p["new_gallery"];sources=spec["sources"]
 if not (spec["schema"]=="atlas.gateway.arch-art-p3a/v1"
-        and spec["status"]=="DIREZIONE_SELEZIONATA_PER_PROVA_GEOMETRICA__NON_QUALIFICATA"
+        and spec["status"]=="DIREZIONE_P3A_R2_RAFFINAMENTO_DOPO_PROVA_CYCLES_R1"
         and parent["schema"]=="atlas.artdir02.p2b-material-finish-01/v1"
         and parent["reference_sha256"]==sources["art_dir_02_original_sha256"]
         and parent["source_p2a_blend_sha256"]==sources["p2a_r4_blender_sha256"]
@@ -79,9 +79,9 @@ def pbr(name,color,metal=0.,rough=.4,alpha=1.,emission=None):
         if "Emission Color" in bs.inputs:bs.inputs["Emission Color"].default_value=(*emission,1.)
         if "Emission Strength" in bs.inputs:bs.inputs["Emission Strength"].default_value=1.5
     return mat
-graphite=bpy.data.materials.get("ATLAS P2B • volta blu grafite satinata") or pbr("P3A • graphite",(.07,.095,.15),.2,.4)
+graphite=pbr("P3A • copertura in pietra grigio-perla",(.37,.385,.40),.12,.52)
 bronze=pbr("P3A • ottone champagne satinato",(.42,.29,.17),.7,.28)
-glass=pbr("P3A • vetro parapetti",(.18,.42,.62),.02,.11,.34)
+glass=pbr("P3A • vetro parapetti",(.27,.48,.69),.02,.12,.26)
 glow=pbr("P3A • filo luminoso oculo",(.88,.60,.30),.3,.25,1.,(.85,.65,.35))
 support_mat=pbr("P3A • pilastri grafite",(.08,.12,.18),.24,.43)
 
@@ -159,9 +159,59 @@ for k in range(g["support_positions"]):
     ob=mesh("ATLAS P3A • pilastro terzo livello %02d"%k,verts,faces,support_mat)
     ob["atlas_arch_level"]=3
     supports.append(ob)
+# Actual third-level backdrop: modular reading bays and shallow shelves. These
+# are in the editable scene as 3D objects, not pasted picture planes.
+back_mat=pbr("P3A • nicchie blu profonde",(.115,.17,.235),.08,.70)
+shelf_mat=pbr("P3A • ripiani bronzo satinato",(.33,.25,.17),.44,.48,1.,(.13,.07,.03))
+books_mat=pbr("P3A • libri e pannellature",(.36,.42,.46),.1,.68)
+def cuboid_vertices(center,half_tan,half_r,half_z,theta):
+    cx0,cy0,cz0=center
+    radial=Vector((math.cos(theta),math.sin(theta),0))
+    tangent=Vector((-math.sin(theta),math.cos(theta),0))
+    vertices=[]
+    for zsgn in (-1,1):
+        for rsgn in (-1,1):
+            for tsgn in (-1,1):
+                q=Vector((cx0,cy0,cz0))+tangent*(tsgn*half_tan)+radial*(rsgn*half_r)+Vector((0,0,zsgn*half_z))
+                vertices.append(tuple(q))
+    faces=[(0,2,3,1),(4,5,7,6),(0,1,5,4),(2,6,7,3),(0,4,6,2),(1,3,7,5)]
+    return vertices,faces
+reading_bays=[]
+for i in range(12):
+    angle=math.pi*(i+.5)/12
+    rad=11.66
+    centre_bay=(cx+rad*math.cos(angle),cy+rad*math.sin(angle),
+                (b3[1]+r["outer_underside_z_bu"])/2)
+    height=(r["outer_underside_z_bu"]-b3[1])-.40
+    vv,ff=cuboid_vertices(centre_bay,.85,.075,height/2,angle)
+    wall=mesh("ATLAS P3A • alcova lettura %02d"%i,vv,ff,back_mat,False)
+    reading_bays.append(wall)
+    for row in range(3):
+        z=b3[1]+.45+row*.50
+        sp=(centre_bay[0]-.1*math.cos(angle),centre_bay[1]-.1*math.sin(angle),z)
+        vv,ff=cuboid_vertices(sp,.78,.10,.035,angle)
+        mesh("ATLAS P3A • scaffale %02d-%d"%(i,row),vv,ff,shelf_mat,False)
+        for k in range(6):
+            tangent=Vector((-math.sin(angle),math.cos(angle),0))
+            cp=Vector((sp[0],sp[1],sp[2]+.16))+tangent*((k-2.5)*.22)
+            vv,ff=cuboid_vertices(cp,.068,.056,.12,angle)
+            mesh("ATLAS P3A • volume biblioteca %02d-%d-%d"%(i,row,k),vv,ff,books_mat,False)
+# Add restrained photometric wash at the new gallery (not many high-cost lights).
+upper_lights=[]
+for index,theta in enumerate((.18*math.pi,.40*math.pi,.60*math.pi,.82*math.pi)):
+    rr=9.9
+    light=bpy.data.lights.new("ATLAS P3A • luce nicchie superiori %02d"%index,"AREA")
+    light.energy=460.;light.shape="DISK";light.size=3.4
+    light.color=(1.,.82,.67)
+    obj=bpy.data.objects.new(light.name,light);scene.collection.objects.link(obj)
+    obj.location=(cx+rr*math.cos(theta),cy+rr*math.sin(theta),r["outer_underside_z_bu"]-.42)
+    target=Vector((cx+11.65*math.cos(theta),cy+11.65*math.sin(theta),b3[1]+.80))
+    obj.rotation_euler=(target-obj.location).to_track_quat("-Z","Y").to_euler()
+    upper_lights.append(obj)
+
 # 2. New single physically circular oculus, no elliptic/superelliptic deformation.
 rad=r["circular_oculus"]["radius_bu"];outer=r["outer_radius_bu"]
-if not (0<rad<outer and r["inner_underside_z_bu"]>r["outer_underside_z_bu"] and r["outer_underside_z_bu"]>z1):
+if not (0<rad<outer and r["inner_underside_z_bu"]>r["outer_underside_z_bu"] and r["outer_underside_z_bu"]-b3[1]>=g["minimum_headroom_bu"] and r["outer_underside_z_bu"]>z1):
     raise RuntimeError("Roof and new gallery vertical clearance invalid")
 N=r["circular_oculus"]["segments"];K=8;thickness=r["thickness_bu"]
 def roof_z(t):
@@ -253,8 +303,8 @@ dayobj.rotation_euler=direction.to_track_quat("-Z","Y").to_euler()
 # 3. Independent HERO camera. Previous R4 source camera cannot change.
 cam=camera_old.copy();cam.data=camera_old.data.copy();cam.name="ATLAS P3A • CAMERA HERO"
 scene.collection.objects.link(cam);scene.camera=cam
-cam.data.lens=camera_old.data.lens*.89
-cam.data.shift_y=camera_old.data.shift_y
+cam.data.lens=camera_old.data.lens*.82
+cam.data.shift_y=camera_old.data.shift_y+.027
 # Independent spatial validation before rendering.
 if any(name not in bpy.data.objects for name in original_names):
     raise RuntimeError("Original architecture deleted")
@@ -262,7 +312,7 @@ changed=[name for name,previous in protected.items() if spatial(need(name))!=pre
 if changed:raise RuntimeError("Original architecture moved or deformed "+str(changed))
 if digest(src)!=src_hash:raise RuntimeError("Original P2B source changed")
 scene.render.engine="CYCLES"
-scene.cycles.samples=48
+scene.cycles.samples=72
 scene.render.resolution_x=1280;scene.render.resolution_y=720
 scene.render.resolution_percentage=100;scene.render.image_settings.file_format="PNG"
 bpy.context.view_layer.cycles.use_denoising=True
@@ -289,6 +339,8 @@ receipt={
  "gallery_levels_ground_included":4,
  "gallery3":{"object":third.name,"z_world_range":b3,"real_deck":len(third.data.polygons)>0,
    "glass_segments":len(segments),"supports":len(supports),
+   "reading_bays":len(reading_bays),"upper_ambient_lights":len(upper_lights),
+   "headroom_above_deck_bu":r["outer_underside_z_bu"]-b3[1],
    "top_rail":top_rail.name,"under_rail":under_rail.name},
  "roof":{"single_watertight_mesh":edge_count==0,"nonmanifold_edges":edge_count,
    "absolute_volume_bu3":volume,"radius_bu":rad,"radius_spread_bu":radius_range,
