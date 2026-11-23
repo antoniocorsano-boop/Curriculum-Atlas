@@ -301,8 +301,11 @@ try {
     const quatTo=(pos,aim)=>{
       const temp=new THREE.PerspectiveCamera();temp.position.copy(pos);temp.lookAt(aim);return temp.quaternion.clone();
     };
-    const startQ=quatTo(startPos,new THREE.Vector3(0,2.8,5));
-    const homeQ=quatTo(homePos,homeAim);
+    // In portrait the initial sky may introduce the room, but the entered
+    // view must direct attention downward to the portals, not the grey oculus.
+    const isPortrait=window.innerWidth/window.innerHeight<.68;
+    const startQ=quatTo(startPos,new THREE.Vector3(0,isPortrait?2.20:2.8,5));
+    const homeQ=quatTo(homePos,isPortrait?new THREE.Vector3(0,1.48,5.0):homeAim);
     const fromPose={p:startPos,q:startQ},home={p:homePos,q:homeQ};
     let pose=fromPose,transition=null,drag=null;
     let yaw=0,pitch=0,wasMoved=false,lastMotionFrame=0;
@@ -313,7 +316,7 @@ try {
       const width=stage.clientWidth||window.innerWidth,height=stage.clientHeight||window.innerHeight;
       renderer.setSize(width,height,false);
       camera.aspect=width/Math.max(height,1);
-      camera.fov=camera.aspect<.65?88:camera.aspect<1?73:50;
+      camera.fov=camera.aspect<.65?82:camera.aspect<1?73:50;
       camera.updateProjectionMatrix();render();
     }
     window.addEventListener('resize',resize,{passive:true});
