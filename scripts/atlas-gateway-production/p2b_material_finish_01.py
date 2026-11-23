@@ -116,15 +116,15 @@ def replace_material(ob,mat):
 
 # 1. Enrich the existing long pavilion roof and bands; never deform the shell.
 roof_finish=principled("ATLAS P2B • volta blu grafite satinata",
-    (.11,.15,.22),.22,.42,.12)
+    (.065,.095,.15),.32,.43,.12)
 replace_material(roof,roof_finish)
 graphite=bpy.data.materials.get("ATLAS P2A • gallerie grafite satinata")
 if graphite is None or not graphite.use_nodes:
     raise RuntimeError("Certified P2A gallery material missing")
 gshader=graphite.node_tree.nodes.get("Principled BSDF")
-gshader.inputs["Base Color"].default_value=(.11,.145,.21,1.)
+gshader.inputs["Base Color"].default_value=(.085,.115,.17,1.)
 gshader.inputs["Roughness"].default_value=.40
-gshader.inputs["Metallic"].default_value=.23
+gshader.inputs["Metallic"].default_value=.30
 bronze=bpy.data.materials.get("ATLAS P2A • bronzo scuro")
 if bronze is None or not bronze.use_nodes:
     raise RuntimeError("Certified P2A bronze material missing")
@@ -141,8 +141,8 @@ mix=next((x for x in glass.node_tree.nodes if x.type=="MIX_SHADER"),None)
 glass_principled=next((x for x in glass.node_tree.nodes if x.type=="BSDF_PRINCIPLED"),None)
 if mix is None or glass_principled is None:
     raise RuntimeError("Original glass nodes are not as qualified")
-mix.inputs[0].default_value=.65
-glass_principled.inputs["Base Color"].default_value=(.045,.16,.32,1.)
+mix.inputs[0].default_value=.60
+glass_principled.inputs["Base Color"].default_value=(.025,.105,.27,1.)
 glass_principled.inputs["Roughness"].default_value=.10
 glass_principled.inputs["Metallic"].default_value=.06
 if "Coat Weight" in glass_principled.inputs:
@@ -158,8 +158,8 @@ for slot in floor.material_slots:
         slot.material=m
         floor_materials.append(m.name)
         for bs in [n for n in m.node_tree.nodes if n.type=="BSDF_PRINCIPLED"]:
-            bs.inputs["Roughness"].default_value=.26
-            if "Coat Weight" in bs.inputs:bs.inputs["Coat Weight"].default_value=.22
+            bs.inputs["Roughness"].default_value=.22
+            if "Coat Weight" in bs.inputs:bs.inputs["Coat Weight"].default_value=.26
             if "Coat Roughness" in bs.inputs:bs.inputs["Coat Roughness"].default_value=.15
 if not floor_materials:raise RuntimeError("No verified original floor material nodes")
 # Softer but visible 4 gilded frames, no new geometry.
@@ -169,15 +169,15 @@ if frame_emission is None or not frame_emission.use_nodes:
 emissive=next((n for n in frame_emission.node_tree.nodes if n.type=="EMISSION"),None)
 if emissive is None:raise RuntimeError("No physical emission shader on frame")
 emissive.inputs["Color"].default_value=(1.0,.71,.39,1.)
-emissive.inputs["Strength"].default_value=1.65
+emissive.inputs["Strength"].default_value=1.80
 
 # 4. Preserve all lights by name; photometric balance only.
 baseline_lights={
- "ATLAS P2A • luce zenitale principale":(2450.,(.78,.88,1.)),
- "ATLAS P2A • diffuse interior from skylight":(2100.,(.77,.87,1.)),
- "ATLAS P2A • riempimento caldo podio":(980.,(1.,.75,.54)),
- "ATLAS P2A • riflesso laterale 0":(530.,(.58,.78,1.)),
- "ATLAS P2A • riflesso laterale 1":(530.,(.58,.78,1.)),
+ "ATLAS P2A • luce zenitale principale":(2200.,(.73,.85,1.)),
+ "ATLAS P2A • diffuse interior from skylight":(1800.,(.72,.85,1.)),
+ "ATLAS P2A • riempimento caldo podio":(850.,(1.,.75,.54)),
+ "ATLAS P2A • riflesso laterale 0":(410.,(.58,.78,1.)),
+ "ATLAS P2A • riflesso laterale 1":(410.,(.58,.78,1.)),
 }
 for name,(energy,color) in baseline_lights.items():
     light=require(name,"LIGHT")
@@ -192,8 +192,8 @@ scene.world.use_nodes=True
 background=next((n for n in scene.world.node_tree.nodes if n.type=="BACKGROUND"),None)
 if background is None:
     raise RuntimeError("Expected node-based world")
-background.inputs["Color"].default_value=(.14,.19,.28,1.)
-background.inputs["Strength"].default_value=.39
+background.inputs["Color"].default_value=(.055,.10,.17,1.)
+background.inputs["Strength"].default_value=.24
 
 # 5. Two carefully directed area lights for believable warm/cool cross-reflection.
 # New LIGHT objects are permitted, but no mesh, curve or camera geometry.
@@ -213,15 +213,15 @@ def area(name,xyz,target,energy,size,color):
 lights_added=[
  area("ATLAS P2B • bagliore radente bronzo sinistro",
       (centroid.x-9.,centroid.y+1.,6.8),(centroid.x-3.,centroid.y,2.2),
-      380.,4.5,(1.,.68,.36)),
+      260.,4.5,(1.,.68,.36)),
  area("ATLAS P2B • bagliore radente bronzo destro",
       (centroid.x+9.,centroid.y+1.,6.8),(centroid.x+3.,centroid.y,2.2),
-      380.,4.5,(1.,.68,.36))
+      260.,4.5,(1.,.68,.36))
 ]
 
-# 6. Cycles / AgX optical polish. Frame and 3D camera physically unchanged.
+# R5 calibrated after comparing P2B/R1 with canonical ART-DIR-02:\n# recover saturated graphite and luminous depth, avoid grey ambient flattening.\n# 6. Cycles / AgX optical polish. Frame and 3D camera physically unchanged.
 scene.render.engine="CYCLES"
-scene.cycles.samples=80
+scene.cycles.samples=96
 scene.render.resolution_x=1280
 scene.render.resolution_y=720
 scene.render.resolution_percentage=100
@@ -231,7 +231,7 @@ scene.camera=camera
 scene.view_settings.view_transform="AgX"
 # Keep the qualified source look; only the AgX display transform and exposure
 # are changed. Blender color-management look identifiers differ by version.
-scene.view_settings.exposure=.20
+scene.view_settings.exposure=.10
 scene.view_settings.gamma=1.0
 bpy.context.view_layer.update()
 all_spatial_after=spatial_fingerprint()
