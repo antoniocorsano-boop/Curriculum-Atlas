@@ -41,6 +41,16 @@ try {
   if (!state.ready || state.portals !== 4 || !state.camera?.includes("P3A") || !state.canvas || !state.scene) {
     throw Error("Real model in Next iframe not verified " + JSON.stringify(state));
   }
+  const dimensions = await iframe.evaluate(el => {
+    const frame = el.getBoundingClientRect();
+    const canvas = el.contentDocument?.querySelector("canvas")?.getBoundingClientRect();
+    return { frameWidth: frame.width, frameHeight: frame.height,
+      canvasWidth: canvas?.width ?? 0, canvasHeight: canvas?.height ?? 0 };
+  });
+  if (dimensions.frameWidth < 900 || dimensions.frameHeight < 350
+      || dimensions.canvasHeight < 350 || dimensions.canvasWidth < 900) {
+    throw Error("The embedded 3D atrium is visually compressed: " + JSON.stringify(dimensions));
+  }
   await page.screenshot({ path: resolve(out, "p3b-next-desktop-before-click.png") });
   // Click the true Curricolo 3D glass mesh, not a link or a fake image hotspot.
   const click = await iframe.evaluate(el => {
@@ -62,7 +72,7 @@ try {
   if (click.error) throw Error(JSON.stringify(click));
   await page.waitForURL(/\/curricolo\/?$/, { timeout: 60000 });
   results.push({ scenario: "desktop-actual-next-3d-route", passed: true,
-    model: state, click, destination: new URL(page.url()).pathname, errors });
+    model: state, dimensions, click, destination: new URL(page.url()).pathname, errors });
   if (errors.length) throw Error("Unexpected JS errors: " + errors.join("; "));
   await page.close();
 
