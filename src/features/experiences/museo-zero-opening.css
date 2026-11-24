@@ -20,3 +20,12 @@
 
 .mz-mission{min-width:0;overflow-wrap:anywhere;padding:12px 14px;margin:0 0 12px;border-left:3px solid #b6874d;background:#202c33;color:#f4f0e7;border-radius:8px;line-height:1.5}
 .mz-mission h2{font-size:1.1rem;color:inherit;margin:0 0 6px}.mz-mission p{margin:0 0 6px;color:inherit}.mz-mission p:last-child{margin-bottom:0}.mz-mission strong{color:#f4f0e7}.mz-opening__inspection .mz-opening__next{margin:12px 0}
+
+/* The transparent Phaser layer replaces only the effects after successful boot.
+   Existing image, DOM visitor, hotspot buttons and semantic status remain intact. */
+.mz-opening__effects{position:absolute;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+.mz-opening__effects canvas{display:block;width:100%!important;height:100%!important;pointer-events:none}
+.mz-opening__effects:not([data-renderer="phaser"]) canvas{visibility:hidden}
+.mz-opening__effects[data-renderer="phaser"] ~ .mz-opening__sensor,
+.mz-opening__effects[data-renderer="phaser"] ~ .mz-opening__projection,
+.mz-opening__effects[data-renderer="phaser"] ~ .mz-opening__halo{visibility:hidden}

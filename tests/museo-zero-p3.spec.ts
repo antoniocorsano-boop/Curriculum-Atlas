@@ -479,3 +479,48 @@ test("MZ-UX-02 — image action and React Flow share the canonical evidence stat
   await expect(map).toHaveAttribute("data-edge-count","0");
   await expect(page.locator(".experience-decision").getByRole("button",{name:"Continua",exact:true})).toBeDisabled();
 });
+
+
+test("MZ-P2c — Phaser draws the delayed response without owning rehearsal state", async ({page}) => {
+  await page.setViewportSize({width:390,height:844});
+  await page.emulateMedia({reducedMotion:"no-preference"});
+  await page.goto(LAB);
+  await enterTrial(page);
+  const layer=page.getByTestId("mz-rehearsal-effects");
+  const canvas=layer.locator("canvas");
+  await expect(layer).toHaveAttribute("data-renderer","phaser",{timeout:15000});
+  await expect(canvas).toHaveCount(1);
+  const alpha=async (x:number,y:number)=>canvas.evaluate((el:HTMLCanvasElement,point)=>{
+    return el.getContext("2d")!.getImageData(point.x,point.y,1,1).data[3];
+  },{x,y});
+  await expect.poll(()=>alpha(616,196)).toBe(0);
+  await page.getByRole("button",{name:"Passo successivo"}).click();
+  await expect(layer).toHaveAttribute("data-rendered-step","1");
+  await expect.poll(()=>alpha(280,215)).toBeGreaterThan(0);
+  await expect.poll(()=>alpha(616,196)).toBe(0);
+  await finishOpeningFromStepOne(page);
+  await expect(layer).toHaveAttribute("data-rendered-step","3");
+  await expect.poll(()=>alpha(616,196)).toBeGreaterThan(0);
+  await expect.poll(()=>alpha(280,215)).toBe(0);
+  await page.getByRole("button",{name:"Ricomincia prova"}).click();
+  await expect(layer).toHaveAttribute("data-rendered-step","0");
+  await expect.poll(()=>alpha(616,196)).toBe(0);
+  await finishOpening(page);
+  await page.getByRole("button",{name:"Raccogli gli indizi",exact:true}).click();
+  await expect(layer).toHaveCount(0);
+  await expect(page.locator('[data-node="MZ2_RECONSTRUCT_DAY"]')).toBeVisible();
+});
+
+test("MZ-P2c — reduced motion retains the complete DOM rehearsal", async ({page}) => {
+  await page.emulateMedia({reducedMotion:"reduce"});
+  await page.goto(LAB);
+  await enterTrial(page);
+  const layer=page.getByTestId("mz-rehearsal-effects");
+  await expect(layer).toHaveAttribute("data-renderer","fallback");
+  await expect(layer.locator("canvas")).toHaveCount(0);
+  await finishOpening(page);
+  await expect(page.locator(".mz-opening__projection")).toBeVisible();
+  await expect(page.getByRole("button",{name:"Esamina: Sensore B"})).toBeVisible();
+  await page.getByRole("button",{name:"Raccogli gli indizi",exact:true}).click();
+  await expect(page.locator('[data-node="MZ2_RECONSTRUCT_DAY"]')).toBeVisible();
+});

@@ -3,6 +3,7 @@
 import { useEffect, useState, type Ref } from "react";
 import "./museo-zero-opening.css";
 import { MuseoZeroNarrative } from "./museo-zero-narrative";
+import { RehearsalEffects } from "./rehearsal-effects";
 
 const states = [
   ["La sala è in attesa del visitatore.", "In attesa", "Pronto", "Spenta"],
@@ -63,6 +64,7 @@ export function MuseoZeroOpening({title, headingRef, onContinue}: {
         <img className="mz-opening__background" src="/media/museo-zero/sala-zero-r1.webp" alt="Sala Zero: ingresso accessibile, sensore B, cabina di regia e parete di proiezione." />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="mz-opening__visitor" src="/media/museo-zero/visitatore-r1.webp" alt="" aria-hidden="true" />
+        <RehearsalEffects step={step} />
         <div className="mz-opening__sensor" aria-hidden="true" />
         <div className="mz-opening__projection" aria-hidden="true">
           <svg viewBox="0 0 400 220"><circle cx="200" cy="110" r="67" fill="#275b86" stroke="#8bd5ff" strokeWidth="2"/><g fill="none" stroke="#a2e8ff"><ellipse cx="200" cy="110" rx="107" ry="31" transform="rotate(-23 200 110)"/><ellipse cx="200" cy="110" rx="107" ry="31" transform="rotate(35 200 110)"/><ellipse cx="200" cy="110" rx="43" ry="67"/><path d="M133 110h134M200 43v134"/></g></svg>
