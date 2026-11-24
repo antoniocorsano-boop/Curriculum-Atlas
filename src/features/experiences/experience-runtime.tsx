@@ -10,6 +10,7 @@ import type {
 } from "./model";
 import { useExperienceSession } from "./use-experience-session";
 import "./experience-runtime.css";
+import { MuseoZeroRoomResponse, MuseoZeroReviewWorkbench } from "./museo-zero-revision-surfaces";
 import type {VerifiedSceneIllustration} from "../pathways/edutwin-preview-media";
 
 type ResolvedTransition = ExperienceTransition & { key: string };
@@ -48,6 +49,9 @@ export function ExperienceRuntime({
   const [pinnedEvidenceIds, setPinnedEvidenceIds] = useState<string[]>([]);
   const [evidenceCatalog, setEvidenceCatalog] = useState<Record<string, ExperienceStageEvidence>>({});
   const [workbenchMode, setWorkbenchMode] = useState<ExperienceWorkbenchMode | null>(null);
+  const [evidenceConnections, setEvidenceConnections] = useState<Array<{ from: string; to: string }>>([]);
+  const [connectionOriginId, setConnectionOriginId] = useState<string | null>(null);
+  const isMuseoZeroReview = definition.experienceId === "studio-preview-pw-strategy-selection-01-museo-zero";
 
   const view = node ? presentation?.nodes[node.id] : undefined;
   const transitions = useMemo<ResolvedTransition[]>(() => {
@@ -109,6 +113,31 @@ export function ExperienceRuntime({
   const pinnedEvidence = pinnedEvidenceIds
     .map((id) => evidenceCatalog[id])
     .filter((item): item is ExperienceStageEvidence => Boolean(item));
+  const workbenchReady = !isMuseoZeroReview || !stage?.workbench || (
+    pinnedEvidenceIds.length >= stage.workbench.minEvidence && workbenchMode !== null
+  );
+  function reorderEvidence(id: string, direction: -1 | 1) {
+    setPinnedEvidenceIds(current => {
+      const index = current.indexOf(id);
+      const to = index + direction;
+      if (index < 0 || to < 0 || to >= current.length) return current;
+      const next = [...current];
+      [next[index], next[to]] = [next[to], next[index]];
+      return next;
+    });
+  }
+  function joinEvidence(id: string) {
+    if (!connectionOriginId || connectionOriginId === id) {
+      setConnectionOriginId(connectionOriginId === id ? null : id);
+      return;
+    }
+    setEvidenceConnections(current =>
+      current.some(pair => pair.from === connectionOriginId && pair.to === id)
+        ? current
+        : [...current, { from: connectionOriginId, to: id }]
+    );
+    setConnectionOriginId(null);
+  }
 
   function selectTransition(transition: ResolvedTransition) {
     setPendingTransition(transition);
@@ -137,6 +166,8 @@ export function ExperienceRuntime({
     setPendingTransition(null);
     setChoiceFeedback("");
     setWorkbenchMode(null);
+    setEvidenceConnections([]);
+    setConnectionOriginId(null);
     session.restart();
   }
 
@@ -230,6 +261,10 @@ export function ExperienceRuntime({
             ) : null}
           </div>
 
+          {isMuseoZeroReview ? (
+            <MuseoZeroRoomResponse world={activeWorld} sceneId={node.id} changed={worldChangedByChoice} />
+          ) : null}
+
           {stageEvidence.length > 0 ? (
             <section className="experience-investigation" aria-label="Indagine">
               <header>
@@ -305,21 +340,36 @@ export function ExperienceRuntime({
               </div>
 
               {workbenchMode ? (
-                <div className="experience-workbench__surface" data-mode={workbenchMode.toLowerCase()}>
-                  {pinnedEvidence.length === 0 ? (
-                    <p>Porta qui gli indizi che vuoi usare.</p>
-                  ) : (
-                    pinnedEvidence.map((item, index) => (
-                      <div key={item.id} className="experience-workbench__item">
-                        <span>{workbenchMode === "TIMELINE" ? String(index + 1).padStart(2, "0") : "•"}</span>
-                        <div>
-                          <strong>{item.label}</strong>
-                          <small>{item.detail}</small>
+                isMuseoZeroReview ? (
+                  <MuseoZeroReviewWorkbench
+                    mode={workbenchMode}
+                    sceneId={node.id}
+                    evidence={pinnedEvidence}
+                    connections={evidenceConnections}
+                    connectionOrigin={connectionOriginId}
+                    transitions={transitions}
+                    pendingKey={pendingTransition?.key ?? null}
+                    onReorder={reorderEvidence}
+                    onJoin={joinEvidence}
+                    onChoose={selectTransition}
+                  />
+                ) : (
+                  <div className="experience-workbench__surface" data-mode={workbenchMode.toLowerCase()}>
+                    {pinnedEvidence.length === 0 ? (
+                      <p>Porta qui gli indizi che vuoi usare.</p>
+                    ) : (
+                      pinnedEvidence.map((item, index) => (
+                        <div key={item.id} className="experience-workbench__item">
+                          <span>{workbenchMode === "TIMELINE" ? String(index + 1).padStart(2, "0") : "•"}</span>
+                          <div>
+                            <strong>{item.label}</strong>
+                            <small>{item.detail}</small>
+                          </div>
                         </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+                      ))
+                    )}
+                  </div>
+                )
               ) : null}
             </section>
           ) : null}
@@ -330,7 +380,7 @@ export function ExperienceRuntime({
               <h2>{prompt}</h2>
             </div>
 
-            {isChoice ? (
+            {isChoice && !(isMuseoZeroReview && node.id === "MZ5_COMPARE_RECOVERY" && workbenchMode === "COMPARE") ? (
               <div className="experience-decisions" role="group" aria-label={prompt}>
                 {transitions.map((transition) => (
                   <button
@@ -338,6 +388,7 @@ export function ExperienceRuntime({
                     type="button"
                     aria-pressed={pendingTransition?.key === transition.key}
                     onClick={() => selectTransition(transition)}
+                    disabled={!workbenchReady}
                   >
                     {transition.label ?? "Scegli"}
                   </button>
