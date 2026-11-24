@@ -246,13 +246,34 @@
         "esperienze",
         "percorsi"
       ],
-      "maturity": "STUDIO_CANDIDATE",
+      "maturity": "IMPLEMENTED_P3_PRIVATE_REVIEW_HUMAN_REVISE",
       "learnerRuntimeAuthorization": "NOT_AUTHORIZED",
-      "sourcePaths": [],
-      "externalRefs": [
-        "https://github.com/antoniocorsano-boop/trama-ecosistema/blob/main/docs/capabilities/atlas-percorsi/pathways/PW-STRATEGY-SELECTION-01/worlds/MUSEO-ZERO/world-brief-v1.md"
+      "sourcePaths": [
+        "src/app/experience-lab/museo-zero/page.tsx",
+        "src/features/experiences/museo-zero-p3-review-snapshot.ts",
+        "src/features/experiences/museo-zero-revision-surfaces.tsx",
+        "src/features/experiences/museo-zero-revision-surfaces.css",
+        "src/features/experiences/experience-runtime.tsx",
+        "src/features/pathways/studio-atlas-preview-adapter.ts",
+        "tests/museo-zero-p3.spec.ts"
       ],
-      "next": "Verificare sceneggiatura, qualità dell'esperienza, revisione umana e filiera di pubblicazione"
+      "externalRefs": [
+        "https://github.com/antoniocorsano-boop/trama-ecosistema/blob/main/docs/capabilities/atlas-percorsi/pathways/PW-STRATEGY-SELECTION-01/worlds/MUSEO-ZERO/world-brief-v1.md",
+        "https://github.com/antoniocorsano-boop/trama-ecosistema/blob/main/products/studio-atlas/lib/canonical/museo-zero.ts",
+        "https://github.com/antoniocorsano-boop/trama-ecosistema/blob/main/docs/capabilities/atlas-percorsi/pathways/PW-STRATEGY-SELECTION-01/worlds/MUSEO-ZERO/HUMAN-PRODUCT-REVIEW-v0.1.md"
+      ],
+      "next": "Revisione umana P3 contro i rilievi R1-R7 (stato storico REVISE); verifica reale dei quattro luoghi, indizi, timeline/relazioni/confronto e cambiamento percepibile della sala; mantenere student/runtime NON_AUTHORIZED fino a decisioni distinte",
+      "evidenceRefs": [
+        {
+          "sourceBlob": "27037f3af1e12b660e9108d2eaf6be32f1a42f48",
+          "sourceSHA256": "bda63f478da6c073b8e83b23fa07631cd3a9c7cc39d2c062e8c867f788927236",
+          "sourcePath": "trama-ecosistema/products/studio-atlas/lib/canonical/museo-zero.ts",
+          "humanProductDecision": "REVISE",
+          "humanProductReviewDate": "2026-10-04",
+          "studentAuthorized": false,
+          "runtimeAuthorized": false
+        }
+      ]
     },
     {
       "id": "pathway-catalog",
@@ -385,9 +406,11 @@
       "P4_PATHWAY_CURRICOLO_LINKS",
       "P5_HUMAN_DEVICE_RELEASE_REVIEW"
     ],
-    "currentMilestone": "P2_ESPLORA_QUESTION_TO_DISCOVERY_IMPLEMENTED_IN_PR_NOT_PUBLISHED",
+    "currentMilestone": "P3_MUSEO_ZERO_REVIEW_LAB_IMPLEMENTED_NOT_STUDENT_AUTHORIZED",
     "candidateExperiencePortalNoAuthorizedContent": true,
-    "p2ContentStatus": "PUBLIC_MATERIAL_ALREADY_PRESENT_IN_LESSON_CURRICOLO_ARENA_PROVISIONAL"
+    "p2ContentStatus": "PUBLIC_MATERIAL_ALREADY_PRESENT_IN_LESSON_CURRICOLO_ARENA_PROVISIONAL",
+    "p3ProductGate": "HUMAN_PRODUCT_REVIEW_REVISE_NOT_PASS",
+    "p3VisualProduction": "NO_VISUAL_QUALITY_BAR_PASS_NO_NEW_ASSETS"
   },
   "evidence": [
     {
