@@ -267,6 +267,12 @@
       "contains": "curriculum",
       "category": "infrastructure-legacy",
       "reason": "Internal-only machine-readable source references to the existing GitHub slug and fixed legacy file paths must be reconstructible; this registry is expressly not an authorization or student-facing user interface."
+    },
+    {
+      "path": "scripts/verify-discovery-deployment.mjs",
+      "contains": "curriculum",
+      "category": "infrastructure-legacy",
+      "reason": "The local static export browser test intentionally uses the fixed repository deployment prefix to detect broken image paths independently of application configuration."
     }
   ]
 }

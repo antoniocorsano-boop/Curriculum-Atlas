@@ -180,7 +180,15 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
     await joins.last().click();
     await expect(connections).toContainText("Mappatura cue attiva");
     await next.click();
-    await expect(page.locator('[data-node="MZ3_TIMELINE_LIMIT"]')).toBeVisible();
+    // The canonical CONNECTIONS choice leads directly to the mapping trial.
+    await expect(page.locator('[data-node="MZ4_TEST_MAPPING"]')).toBeVisible();
+    await page.getByRole("button", { name: "Provo il trigger su Sensor B" }).click();
+    await page.getByRole("button", { name: "Continua dalla conseguenza" }).click();
+    await expect(page.locator('[data-node="MZ5_COMPARE_RECOVERY"]')).toBeVisible();
+    const compare = page.getByRole("button", { name: "Confronta", exact: true });
+    await expect(compare).toBeEnabled();
+    await compare.click();
+    await expect(page.getByTestId("museo-confronto")).toBeVisible();
   });
 
   test("simulated sensor mapping visibly changes room and preserves authored branched route", async ({ page }) => {

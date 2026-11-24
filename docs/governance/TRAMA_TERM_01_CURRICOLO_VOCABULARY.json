@@ -107,6 +107,11 @@
       "path": "governance/atlas-portal-capability-map.v1.json",
       "contains": "src/features/curriculum/fixtures.ts",
       "reason": "Compatibility reference to the existing technical feature path; no new curriculum terminology in product content."
+    },
+    {
+      "path": "scripts/verify-discovery-deployment.mjs",
+      "contains": "const prefix = \"/Curriculum-Atlas\";",
+      "reason": "The local browser test must serve the exact established GitHub Pages deployment prefix; this is an infrastructure identifier, not public educational terminology."
     }
   ]
 }
