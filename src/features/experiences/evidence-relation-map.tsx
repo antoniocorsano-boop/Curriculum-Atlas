@@ -40,7 +40,7 @@ export function EvidenceRelationMap({ evidence, connections, origin, onSelect }:
   if (!nodes.length) return null;
   return <section className="mz-relation-map" data-testid="mz-relation-map"
     data-node-count={nodes.length} data-edge-count={edges.length} aria-label="Mappa visuale delle relazioni">
-    <p>Seleziona due indizi sulla mappa, oppure usa i pulsanti Collega nell'elenco sottostante.</p>
+    <p>Seleziona due indizi sulla mappa, oppure usa i pulsanti Collega nell’elenco sottostante.</p>
     <div className="mz-relation-map__canvas">
       <ReactFlow key={JSON.stringify(evidence.map(item => item.id))} nodes={nodes} edges={edges}
         onNodeClick={(_, node) => onSelect(node.id)}
