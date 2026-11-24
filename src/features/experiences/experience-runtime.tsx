@@ -11,6 +11,7 @@ import type {
 import { useExperienceSession } from "./use-experience-session";
 import "./experience-runtime.css";
 import { MuseoZeroOpening, museoZeroMission } from "./museo-zero-opening";
+import { museoZeroPortrait } from "./museo-zero-narrative";
 import { MuseoZeroRoomResponse, MuseoZeroReviewWorkbench } from "./museo-zero-revision-surfaces";
 import type {VerifiedSceneIllustration} from "../pathways/edutwin-preview-media";
 
@@ -268,7 +269,10 @@ export function ExperienceRuntime({
             {stage.characterBeat ? (
               <aside className="experience-character">
                 <div className="experience-character__silhouette" aria-hidden="true">
-                  {stage.characterBeat.name.slice(0, 1)}
+                  {isMuseoZeroReview && museoZeroPortrait(stage.characterBeat.name) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img className="mz-character-portrait" src={museoZeroPortrait(stage.characterBeat.name)!} alt="" />
+                  ) : stage.characterBeat.name.slice(0, 1)}
                 </div>
                 <div>
                   <p><strong>{stage.characterBeat.name}</strong> · {stage.characterBeat.role}</p>
@@ -322,6 +326,10 @@ export function ExperienceRuntime({
                 <div className="experience-evidence-detail" role="status">
                   <p className="experience-panel__eyebrow">Dettaglio</p>
                   <h3>{activeEvidence.label}</h3>
+                  {isMuseoZeroReview && activeEvidence.kind === "PERSON" && museoZeroPortrait(activeEvidence.character ?? "") ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img className="mz-evidence-portrait" src={museoZeroPortrait(activeEvidence.character ?? "")!} alt={activeEvidence.character ?? ""} />
+                  ) : null}
                   <p>{activeEvidence.detail}</p>
                 </div>
               ) : null}

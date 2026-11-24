@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type Ref } from "react";
 import "./museo-zero-opening.css";
+import { MuseoZeroNarrative } from "./museo-zero-narrative";
 
 const states = [
   ["La sala è in attesa del visitatore.", "In attesa", "Pronto", "Spenta"],
@@ -26,6 +27,7 @@ export const museoZeroMission = "Scopri perché la sala non reagisce al momento 
 export function MuseoZeroOpening({title, headingRef, onContinue}: {
   title: string; headingRef: Ref<HTMLHeadingElement>; onContinue: () => void;
 }) {
+  const [narrativeComplete, setNarrativeComplete] = useState(false);
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [inspection, setInspection] = useState<Inspection | null>(null);
@@ -37,6 +39,7 @@ export function MuseoZeroOpening({title, headingRef, onContinue}: {
     }, step === 0 ? 350 : step === 1 ? 1400 : 1700);
     return () => window.clearTimeout(timer);
   }, [playing, step]);
+  useEffect(() => { if (narrativeComplete) document.getElementById("experience-heading")?.focus(); }, [narrativeComplete]);
   function reset() { setPlaying(false); setStep(0); setInspection(null); }
   function play() {
     if (playing) { setPlaying(false); return; }
@@ -47,6 +50,7 @@ export function MuseoZeroOpening({title, headingRef, onContinue}: {
   return (
     <section className="mz-opening" aria-labelledby="experience-heading" data-testid="museo-risposta-sala" data-outcome="delayed">
       <h1 id="experience-heading" ref={headingRef} tabIndex={-1}>{title}</h1>
+      {!narrativeComplete ? <MuseoZeroNarrative onStart={() => setNarrativeComplete(true)} /> : <>
       <section className="mz-mission" aria-labelledby="mz-mission-heading" data-testid="museo-mission">
         <h2 id="mz-mission-heading">Il tuo incarico</h2>
         <p>Fai parte del gruppo che prepara Sala Zero per la prova generale del museo.</p>
@@ -81,6 +85,7 @@ export function MuseoZeroOpening({title, headingRef, onContinue}: {
         <button type="button" className="mz-opening__primary" onClick={onContinue}>Raccogli gli indizi</button>
       </section>}
       <small className="mz-opening__notice">Simulazione 2.5D per revisione professionale; visitatore provvisorio, nessun impianto reale.</small>
+      </> }
     </section>
   );
 }

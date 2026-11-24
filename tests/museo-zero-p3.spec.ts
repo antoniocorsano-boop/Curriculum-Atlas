@@ -3,6 +3,12 @@ import { loadDocumentedPublicPathways, type DocumentedPathway } from "../src/fea
 
 const LAB = "/experience-lab/museo-zero/";
 
+async function enterTrial(page: Page) {
+  await page.getByRole("button", { name: "Vai all’incarico", exact: true }).click();
+  await page.getByRole("button", { name: "Osserva la prova", exact: true }).click();
+  await expect(page.getByTestId("mz1-stage")).toHaveAttribute("data-state", "0");
+}
+
 async function finishOpening(page: Page) {
   for (let i=0; i<3; i++) await page.getByRole("button", { name: "Passo successivo" }).click();
   await expect(page.getByTestId("mz1-stage")).toHaveAttribute("data-state","3");
@@ -32,6 +38,7 @@ async function collectEvidence(page: Page) {
 test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
   test("is exclusively a non-authorized, noindex professional review, not a public portal card", async ({ page }) => {
     const response = await page.goto(LAB);
+    await enterTrial(page);
     expect(response?.status()).toBe(200);
     await expect(page.getByTestId("museo-zero-p3-review")).toHaveAttribute("data-student-authorized", "false");
     await expect(page.getByTestId("museo-zero-p3-review")).toHaveAttribute("data-runtime-authorized", "false");
@@ -46,9 +53,34 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
   });
 
 
+  test("six user-selected images and the story are navigable before the trial", async ({ page }) => {
+    await page.setViewportSize({width: 390,height:844});
+    await page.goto(LAB);
+    const prologue = page.getByTestId("mz-narrative");
+    const image = prologue.locator("img");
+    const names = ["sala","squadra","omar","teo","regia","lia"];
+    await expect(page.getByTestId("mz1-stage")).toHaveCount(0);
+    for (let i=0;i<names.length;i++) {
+      await expect(image).toHaveAttribute("src", "/media/museo-zero/narrative-v1/"+names[i]+".webp");
+      await expect.poll(()=>image.evaluate((el:HTMLImageElement)=>el.complete&&el.naturalWidth>0)).toBe(true);
+      await expect(image).not.toHaveAttribute("alt", "");
+      expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
+      if(i<names.length-1) await prologue.getByRole("button",{name:"Continua",exact:true}).click();
+    }
+    await prologue.getByRole("button",{name:"Indietro",exact:true}).click();
+    await expect(image).toHaveAttribute("src","/media/museo-zero/narrative-v1/regia.webp");
+    await prologue.getByRole("button",{name:"Continua",exact:true}).click();
+    await expect(prologue).toContainText("mantenendo accessibile il nuovo ingresso");
+    await prologue.getByRole("button",{name:"Osserva la prova",exact:true}).click();
+    await expect(prologue).toHaveCount(0);
+    await expect(page.getByTestId("mz1-stage")).toHaveAttribute("data-state","0");
+    await expect(page.locator("#experience-heading")).toBeFocused();
+  });
+
   test("optional educational profile is bound to the approved fascicle, excludes answers and preserves the scene", async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 844 });
     await page.goto(LAB);
+    await enterTrial(page);
     const stage = page.getByTestId("mz1-stage");
     await page.getByRole("button", { name: "Passo successivo" }).click();
     await expect(stage).toHaveAttribute("data-state", "1");
@@ -109,6 +141,7 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
   test("mission is clear before the trial and survives the handoff to investigation", async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 844 });
     await page.goto(LAB);
+    await enterTrial(page);
     const mission = page.getByTestId("museo-mission");
     const stage = page.getByTestId("mz1-stage");
     await expect(mission.getByRole("heading", { name: "Il tuo incarico" })).toBeVisible();
@@ -129,6 +162,7 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
 
   test("first failed rehearsal shows observable delayed room, not just status cards", async ({ page }) => {
     await page.goto(LAB);
+    await enterTrial(page);
     await expect(page.getByTestId("museo-risposta-sala")).toHaveAttribute("data-outcome", "delayed");
     const stage = page.getByTestId("mz1-stage");
     await expect(stage).toHaveAttribute("data-state","0");
@@ -150,6 +184,7 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
 
   test("investigation can be followed in non-fixed order, with evidence pinned and timeline reordered", async ({ page }) => {
     await page.goto(LAB);
+    await enterTrial(page);
     await collectEvidence(page);
     const decision = page.locator(".experience-decision");
     const choices = decision.getByRole("button", { name: /Metto in fila|Collego subito/ });
@@ -173,6 +208,7 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
 
   test("removing a clue after choosing blocks progress and removes stale connections and pending origin", async ({ page }) => {
     await page.goto(LAB);
+    await enterTrial(page);
     await collectEvidence(page);
     await page.getByRole("button", { name: "Collega", exact: true }).click();
     const bench = page.getByTestId("museo-relazioni");
@@ -214,6 +250,7 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
 
   test("simulated sensor mapping visibly changes room and preserves authored branched route", async ({ page }) => {
     await page.goto(LAB);
+    await enterTrial(page);
     await collectEvidence(page);
     await page.getByRole("button", { name: "Collega", exact: true }).click();
     await page.locator(".experience-decision").getByRole("button", { name: "Continua" }).click();
@@ -232,6 +269,7 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
 
   test("constraints are actually compared before recommending recovery and closing quietly", async ({ page }) => {
     await page.goto(LAB);
+    await enterTrial(page);
     await collectEvidence(page);
     await page.getByRole("button", { name: "Collega", exact: true }).click();
     await page.locator(".experience-decision").getByRole("button", { name: "Continua" }).click();
@@ -268,6 +306,7 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
       if (!["127.0.0.1", "localhost"].includes(u.hostname)) externals.push(request.url());
     });
     await page.goto(LAB);
+    await enterTrial(page);
     await finishOpening(page);
     await page.getByRole("button", { name: "Raccogli gli indizi", exact: true }).click();
     await expect(page.locator('input[type="email"], input[type="password"]')).toHaveCount(0);
@@ -284,6 +323,7 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
     test("museum review has no document overflow at " + width + "px", async ({ page }) => {
       await page.setViewportSize({ width, height: width < 500 ? 844 : 900 });
       await page.goto(LAB);
+    await enterTrial(page);
       await expect(page.getByTestId("museo-risposta-sala")).toBeVisible();
       const metrics = await page.evaluate(() => ({
         scrollWidth: document.documentElement.scrollWidth,
@@ -296,6 +336,7 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
   test("respects reduced-motion preference with a readable non-animated room state", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(LAB);
+    await enterTrial(page);
     await expect(page.getByTestId("museo-risposta-sala")).toHaveAttribute("data-outcome", "delayed");
     const transition = await page.locator(".mz-opening__visitor").evaluate(el => getComputedStyle(el).transitionDuration);
     expect(transition).toBe("0s");
