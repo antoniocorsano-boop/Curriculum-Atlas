@@ -17,6 +17,10 @@ const inspections = {
 type Inspection = keyof typeof inspections;
 const points: Inspection[] = ["sensor", "control", "projection"];
 
+// Orientamento del fruitore, derivato dalla situazione e dal traguardo canonici.
+// Non introduce nuovi eventi, soluzioni o transizioni nella storia.
+export const museoZeroMission = "Scopri perché la sala non reagisce al momento giusto e trova una soluzione che mantenga accessibile il nuovo ingresso.";
+
 // Presentazione locale di MZ1: non contiene transizioni narrative, punteggi o persistenza.
 // La progressione resta di ExperienceRuntime; il visitatore è provvisorio.
 export function MuseoZeroOpening({title, headingRef, onContinue}: {
@@ -43,6 +47,13 @@ export function MuseoZeroOpening({title, headingRef, onContinue}: {
   return (
     <section className="mz-opening" aria-labelledby="experience-heading" data-testid="museo-risposta-sala" data-outcome="delayed">
       <h1 id="experience-heading" ref={headingRef} tabIndex={-1}>{title}</h1>
+      <section className="mz-mission" aria-labelledby="mz-mission-heading" data-testid="museo-mission">
+        <h2 id="mz-mission-heading">Il tuo incarico</h2>
+        <p>Fai parte del gruppo che prepara Sala Zero per la prova generale del museo.</p>
+        <p>Quando qualcuno entra, la sala dovrebbe reagire al suo passaggio. Durante l’ultima prova qualcosa non ha funzionato.</p>
+        <p><strong>La tua missione:</strong> {museoZeroMission}</p>
+        <p><strong>Da dove cominci:</strong> osserva il passaggio e la risposta della sala. Poi raccogli gli indizi e prova una soluzione.</p>
+      </section>
       <div className="mz-opening__stage" data-testid="mz1-stage" data-state={step}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="mz-opening__background" src="/media/museo-zero/sala-zero-r1.webp" alt="Sala Zero: ingresso accessibile, sensore B, cabina di regia e parete di proiezione." />
@@ -66,7 +77,8 @@ export function MuseoZeroOpening({title, headingRef, onContinue}: {
         <h2>{inspection ? inspections[inspection][0] : "Osserva l’anomalia"}</h2>
         <p aria-live="polite">{inspection ? inspections[inspection][1] : "Quali elementi non sono sincronizzati? Esamina la scena."}</p>
         <div className="mz-opening__controls">{points.map(key => <button type="button" key={key} aria-pressed={inspection===key} onClick={()=>setInspection(key)}>{inspections[key][0]}</button>)}</div>
-        <button type="button" className="mz-opening__primary" onClick={onContinue}>Continua</button>
+        <p className="mz-opening__next"><strong>La prossima mossa:</strong> esplora i luoghi della sala e raccogli gli indizi per capire che cosa è successo.</p>
+        <button type="button" className="mz-opening__primary" onClick={onContinue}>Raccogli gli indizi</button>
       </section>}
       <small className="mz-opening__notice">Simulazione 2.5D per revisione professionale; visitatore provvisorio, nessun impianto reale.</small>
     </section>

@@ -10,7 +10,7 @@ import type {
 } from "./model";
 import { useExperienceSession } from "./use-experience-session";
 import "./experience-runtime.css";
-import { MuseoZeroOpening } from "./museo-zero-opening";
+import { MuseoZeroOpening, museoZeroMission } from "./museo-zero-opening";
 import { MuseoZeroRoomResponse, MuseoZeroReviewWorkbench } from "./museo-zero-revision-surfaces";
 import type {VerifiedSceneIllustration} from "../pathways/edutwin-preview-media";
 
@@ -214,6 +214,9 @@ export function ExperienceRuntime({
             <span>{activeLocation?.label ?? activeWorld?.place ?? title}</span>
           </div>
 
+          {isMuseoZeroReview && !["MZ6_FINAL_REHEARSAL", "MZ7_QUIET_CLOSE"].includes(node.id) ? (
+            <div className="mz-mission" data-testid="museo-mission-reminder"><p><strong>La tua missione:</strong> {museoZeroMission}</p></div>
+          ) : null}
           <div className="experience-cinema__world" data-world-changed={worldChangedByChoice || undefined}>
             <div className="experience-cinema__atmosphere" aria-hidden="true" />
             <div className="experience-cinema__projection" aria-hidden="true" />
