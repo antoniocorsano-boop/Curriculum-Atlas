@@ -119,3 +119,12 @@
 .experience-causal-rail__status{margin:0;padding:10px 12px;background:rgba(7,10,15,.82);color:#f5f1e8;font-size:.9rem;font-weight:700;line-height:1.4;overflow-wrap:anywhere}
 
 
+
+/* ESS-01B: original verified scene image with normalized evidence positions. */
+.experience-hotspot-figure{position:relative;z-index:2;min-width:0;margin:16px 0;padding:12px;border:1px solid #ffffff36;border-radius:14px;background:#152725;color:#f7f4ea}
+.experience-hotspot-image{position:relative;width:100%;max-width:100%;margin:auto}
+.experience-hotspot-image img{display:block;width:100%;height:auto;border-radius:10px}
+.experience-hotspot-point{position:absolute;transform:translate(-50%,-50%);width:44px;height:44px;min-width:44px;border:2px solid #fff;border-radius:50%;background:#214c42;color:#fff;font-weight:700;box-shadow:0 2px 8px #0008;cursor:pointer}
+.experience-hotspot-point[aria-pressed=true]{background:#f1c975;color:#172e28;border-color:#172e28}
+.experience-hotspot-point:focus-visible{outline:3px solid #f1c975;outline-offset:3px}
+.experience-hotspot-figure figcaption,.experience-hotspot-figure p{margin:12px 0 0;overflow-wrap:anywhere}

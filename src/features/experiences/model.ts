@@ -57,6 +57,7 @@ export interface ExperienceStageEvidence {
   locationId: string;
   kind: ExperienceStageEvidenceKind;
   character?: string;
+  hotspot?: { x:number; y:number };
 }
 
 export interface ExperienceStage {

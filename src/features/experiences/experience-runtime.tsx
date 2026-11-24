@@ -108,7 +108,7 @@ export function ExperienceRuntime({
   const actionLabel = authoredSummary ? (pendingTransition ? "Prosegui" : firstTransition?.label ?? prompt) : "Continua";
   const activeWorld = pendingTransition?.worldAfter ?? node.world;
   const worldChangedByChoice = Boolean(pendingTransition?.worldAfter);
-  const illustration = isEduTwin ? verifiedIllustrations?.get(node.id) : undefined;
+  const illustration = definition.qualificationProfileId === "STUDIO_ATLAS_PREVIEW_V0" ? verifiedIllustrations?.get(node.id) : undefined;
   const stage = node.stage;
   const stageEvidence = stage?.evidence ?? [];
   const activeLocation = stage?.locations?.find((location) => location.id === activeLocationId);
@@ -239,6 +239,20 @@ export function ExperienceRuntime({
             </div>
 
             {contextualLocation && review && activeLocation ? <review.Location location={activeLocation.id} activeEvidenceId={activeEvidenceId} onAsk={setActiveEvidenceId} /> : null}
+
+            {illustration&&stageEvidence.some(item=>item.hotspot)&&(
+              <figure className="experience-hotspot-figure">
+                <div className="experience-hotspot-image">
+                  <img src={illustration.src} alt={illustration.alt} width={illustration.width} height={illustration.height}/>
+                  {stageEvidence.filter(item=>item.hotspot).map((item,index)=><button key={item.id} type="button"
+                    className="experience-hotspot-point" aria-label={"Esplora "+item.label} aria-pressed={activeEvidenceId===item.id}
+                    style={{left:item.hotspot!.x+"%",top:item.hotspot!.y+"%"}}
+                    onClick={()=>{setActiveLocationId(item.locationId);setActiveEvidenceId(item.id)}}>{index+1}</button>)}
+                </div>
+                <figcaption>Esplora i punti numerati o usa l’elenco dei luoghi e degli indizi.</figcaption>
+                {activeEvidence&&<p role="status"><strong>{activeEvidence.label}</strong> — {activeEvidence.detail}</p>}
+              </figure>
+            )}
 
             {stage.locations?.length ? (
               <nav className="experience-locations" aria-label="Luoghi del percorso">

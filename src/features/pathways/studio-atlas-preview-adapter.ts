@@ -48,6 +48,7 @@ export interface StudioAtlasPreviewStage {
     locationId: string;
     kind: ExperienceStageEvidenceKind;
     character?: string;
+    hotspot?: { x:number; y:number };
   }>;
   characterBeat?: {
     name: string;
@@ -88,6 +89,7 @@ export interface StudioAtlasPreviewSnapshot {
   studentAuthorized: false;
   scenes: StudioAtlasPreviewScene[];
   edutwinMedia?: PreviewIllustratedMedia;
+  sceneMedia?: PreviewIllustratedMedia;
 }
 
 const WORLD_SIGNAL_STATES = new Set<ExperienceWorldSignalState>([
@@ -159,6 +161,7 @@ function validateStage(
     if (!nonempty(item.locationId) || !locationIds.has(item.locationId)) errors.push(`${prefix}:evidenceLocation`);
     if (!["TRACE", "OBJECT", "PERSON", "SYSTEM"].includes(item.kind)) errors.push(`${prefix}:evidenceKind`);
     if (item.character !== undefined && !nonempty(item.character)) errors.push(`${prefix}:evidenceCharacter`);
+    if(item.hotspot!==undefined&&(!object(item.hotspot)||Object.keys(item.hotspot).length!==2||![item.hotspot.x,item.hotspot.y].every(v=>typeof v==="number"&&Number.isInteger(v)&&v>=0&&v<=100)))errors.push(`${prefix}:hotspot`);
   }
   if (stage.characterBeat !== undefined) {
     const beat = stage.characterBeat;

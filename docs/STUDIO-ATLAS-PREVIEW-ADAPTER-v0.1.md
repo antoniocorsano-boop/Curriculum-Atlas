@@ -141,3 +141,6 @@ bound to:
 - exact snapshot ID.
 
 This avoids a redundant READY leg and removes navigation/hydration race conditions without weakening the origin/channel validation boundary.
+
+## ESS-01B — immagini interattive di scene ordinarie
+Estensione additiva non pubblica: `sceneMedia` usa lo stesso verificatore WebP, SHA-256, budget e digest del trasporto EduTwin, ma richiede revisionDigest uguale a packageDigest e un'immagine di ruolo SCENE per ogni scena con punti. Non coesiste con edutwinMedia, non è ammessa per l'apertura riservata EduTwin. Il punto opzionale `stage.evidence[].hotspot` contiene x e y interi tra 0 e 100 relativi all'immagine; non crea un nuovo indizio. Se un punto è presente senza immagine verificata, l'anteprima viene rifiutata prima del montaggio e ACK. Il motore esistente seleziona luogo e indizio; elenco accessibile e banco restano disponibili. Nessuna autorizzazione, storage in Atlas o chiamata remota. Prove browser positive e negative. Le condizioni legacy EduTwin restano immutate. Candidato da qualificare.
