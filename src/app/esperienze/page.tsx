@@ -4,9 +4,8 @@ import { ArrowLeft, ArrowUpRight, BookOpen, Compass, FlaskConical, Sparkles } fr
 import { AppShell } from "@/components/atlas/app-shell";
 import styles from "./esperienze.module.css";
 import { EducationalLibrary } from "@/features/experiences/educational-library-view";
-import { loadDocumentedPublicPathways } from "@/features/experiences/educational-library";
+import { loadDocumentedPublicPathways, type DocumentedPathway } from "@/features/experiences/educational-library";
 import portfolio from "../../../governance/percorsi-portfolio.json";
-import type { PublicPathwaySource } from "@/features/pathways/load-public-pathways";
 
 export const metadata: Metadata = {
   title: "Esperienze · Atlas",
@@ -35,7 +34,7 @@ const forms = [
 ] as const;
 
 export default function ExperiencesPage() {
-  const documented = loadDocumentedPublicPathways(portfolio.pathways as PublicPathwaySource[]);
+  const documented = loadDocumentedPublicPathways(portfolio.pathways as DocumentedPathway[]);
   return (
     <AppShell>
       <div className={styles.page} data-testid="atlas-portale-esperienze">

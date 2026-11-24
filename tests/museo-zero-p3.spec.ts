@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { loadDocumentedPublicPathways, type DocumentedPathway } from "../src/features/experiences/educational-library";
 
 const LAB = "/experience-lab/museo-zero/";
 
@@ -196,16 +197,19 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
   test("no learner writes, identity prompt, local persistence or external dependency", async ({ page }) => {
     const writes: string[] = [];
     const externals: string[] = [];
+    const diagnostics: string[] = [];
+    page.on("pageerror", error => diagnostics.push(error.stack ?? error.message));
+    page.on("console", message => { if (message.type() === "error" || message.type() === "warning") diagnostics.push(message.type() + ": " + message.text()); });
     page.on("request", request => {
       const u = new URL(request.url());
-      if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method())) writes.push(request.url());
+      if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method())) { writes.push(request.url()); if (u.pathname === "/__nextjs_original-stack-frames") diagnostics.push("Next development diagnostic: " + (request.postData() ?? "").slice(0, 4000)); }
       if (!["127.0.0.1", "localhost"].includes(u.hostname)) externals.push(request.url());
     });
     await page.goto(LAB);
     await finishOpening(page);
     await page.getByRole("button", { name: "Continua" }).click();
     await expect(page.locator('input[type="email"], input[type="password"]')).toHaveCount(0);
-    expect(writes).toEqual([]);
+    expect(writes, diagnostics.join("\n")).toEqual([]);
     expect(externals).toEqual([]);
     const records = await page.evaluate(() =>
       Object.keys(localStorage).filter(key => key.includes("museo-zero"))
@@ -235,4 +239,56 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
     await finishOpening(page);
     await expect(page.getByRole("button",{name:"Continua",exact:true})).toBeVisible();
   });
+});
+
+test("library admission requires an exact authorized, active, documented edition", () => {
+  // Synthetic fixture only; never part of the public portfolio.
+  const binding = {runtimeExactHead:"a".repeat(40),pathwayId:"pw-synthetic",contentVersion:"1.0",publicationId:"pw-synthetic@1.0"};
+  const authorityRef="test:authority", at="2026-11-24T00:00:00Z";
+  const entry: DocumentedPathway = {
+    pathwayId:binding.pathwayId,version:binding.contentVersion,title:"Prodotto sintetico",
+    runtimeAuthorization:"RUNTIME_AUTHORIZED",availability:"ACTIVE",publicationState:"PUBLISHED",
+    provenanceRef:"test:provenance",authorityRef,publicPath:"/percorsi/pw-synthetic/",
+    runtimeQualificationTarget:{...binding,surfaceArtifactDigest:"b".repeat(64),intendedPublicPath:"/percorsi/pw-synthetic/"},
+    runtimeQualificationReceipt:{
+      schemaVersion:"percorsi-g2-runtime-qualification/v1",
+      candidate:{...binding,authorityRef,publicationState:"QUALIFIED",qualificationContractVersion:"v1"},
+      gates:Object.fromEntries(["Q1","Q2","Q3","Q4","Q5","Q6","Q7","Q8"].map(name=>[name,{status:"PASS",evidenceRefs:["test:"+name],reviewerClass:"INDEPENDENT",checkedAt:at,candidateBinding:{...binding}}])),
+      decision:{status:"RUNTIME_AUTHORIZED",authorityRef,decidedAt:at},
+    },
+    educationalProfile:{experienceVersion:binding.contentVersion,publicationId:binding.publicationId,authorityRef,
+      documentVersion:"DOC-1",documentDigest:"c".repeat(64),publicDocumentApproved:true,
+      form:"Percorsi",discipline:"Tecnologia",audience:"Secondaria",summary:"Scheda sintetica",
+      sections:[{title:"Finalità e competenze",text:"Osservare e motivare."}]},
+  };
+  const item=loadDocumentedPublicPathways([entry]);
+  expect(item).toHaveLength(1);
+  expect(item[0]).toMatchObject({id:binding.pathwayId,version:binding.contentVersion,documentVersion:"DOC-1",href:entry.publicPath});
+  expect(item[0]).not.toHaveProperty("runtimeQualificationReceipt");
+  expect(item[0]).not.toHaveProperty("authorityRef");
+  const variants: DocumentedPathway[]=[
+    {...entry,runtimeAuthorization:"NOT_RUNTIME_AUTHORIZED"},
+    {...entry,availability:"WITHDRAWN"},
+    {...entry,publicationState:"QUALIFIED"},
+    {...entry,publicPath:"/experience-lab/museo-zero/"},
+    {...entry,runtimeQualificationReceipt:undefined},
+    {...entry,authorityRef:"test:other"},
+    {...entry,runtimeQualificationTarget:{...entry.runtimeQualificationTarget,runtimeExactHead:"d".repeat(40)}},
+    {...entry,runtimeQualificationTarget:{...entry.runtimeQualificationTarget,surfaceArtifactDigest:"invalid"}},
+    {...entry,educationalProfile:undefined},
+    {...entry,educationalProfile:{...entry.educationalProfile!,experienceVersion:"2.0"}},
+    {...entry,educationalProfile:{...entry.educationalProfile!,publicationId:"different"}},
+    {...entry,educationalProfile:{...entry.educationalProfile!,documentDigest:"invalid"}},
+    {...entry,educationalProfile:{...entry.educationalProfile!,sections:[]}},
+    {...entry,educationalProfile:{...entry.educationalProfile!,sections:[{title:"Finalità",text:"Test"},{title:"Finalità",text:"Duplicato"}]}},
+  ];
+  for(const variant of variants) expect(loadDocumentedPublicPathways([variant])).toEqual([]);
+  expect(loadDocumentedPublicPathways([entry,structuredClone(entry)])).toEqual([]);
+  const invalid=structuredClone(entry);
+  const receipt=invalid.runtimeQualificationReceipt as {gates:Record<string,{status:string;candidateBinding:Record<string,string>}>};
+  receipt.gates.Q3.status="FAIL";
+  expect(loadDocumentedPublicPathways([invalid])).toEqual([]);
+  receipt.gates.Q3.status="PASS";
+  receipt.gates.Q3.candidateBinding.contentVersion="2.0";
+  expect(loadDocumentedPublicPathways([invalid])).toEqual([]);
 });
