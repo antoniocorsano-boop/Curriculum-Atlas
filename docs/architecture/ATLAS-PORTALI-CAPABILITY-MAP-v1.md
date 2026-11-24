@@ -93,6 +93,36 @@ La quarta porta **Esperienze** è stata realizzata nella [PR #189](https://githu
 
 **Gate:** questa capacità è `IMPLEMENTED_P2_IN_PR_NOT_CANONICAL`: resta nel ramo PR #189, non nel sito principale, fino a collaudo automatico e revisione diretta dell'esperienza. Sviluppi successivi possono aggiungere altre domande solo se esistono riferimenti verificabili e diritti/qualità adeguati.
 
+## P3 — MUSEO ZERO: ricostruzione del primo mondo narrativo nel laboratorio (24 novembre 2026)
+
+**Candidato scelto:** *MUSEO ZERO · La sala che non torna*, già sviluppato in Studio Atlas con **sette scene canoniche, quattro luoghi, otto indizi, personaggi Lia/Omar/Teo, branching esplicito e conseguenze `worldAfter`**.
+
+**Decisione di governo imprescindibile:** [Human Product Review del 4 ottobre 2026](https://github.com/antoniocorsano-boop/trama-ecosistema/blob/main/docs/capabilities/atlas-percorsi/pathways/PW-STRATEGY-SELECTION-01/worlds/MUSEO-ZERO/HUMAN-PRODUCT-REVIEW-v0.1.md) = **REVISE**, non PASS. Il progetto originale resta `worldReview=READY`, `productReview=READY`, `storyboardReady=false`, `production=NOT_REQUESTED`; il nuovo prototipo non cambia questi stati. Il livello narrativo è un **artefatto di revisione professionale**, non una lezione o esperienza student-facing. Non inserirlo nella home `/esperienze/` o nella biblioteca `/percorsi/` e non concedere `runtimeAuthorized` o `studentAuthorized`.
+
+### Provenienza e materiale congelato
+
+- Sorgente autorevole: [TRAMA · Studio Atlas, `museo-zero.ts`](https://github.com/antoniocorsano-boop/trama-ecosistema/blob/main/products/studio-atlas/lib/canonical/museo-zero.ts).
+- Blob Git della sorgente letta: `27037f3af1e12b660e9108d2eaf6be32f1a42f48`.
+- SHA-256 della sorgente in formato UTF-8: `bda63f478da6c073b8e83b23fa07631cd3a9c7cc39d2c062e8c867f788927236`.
+- Proiezione congelata con scene, posizioni, indizi, scelta e conseguenze **copiati integralmente** dal documento originale: `src/features/experiences/museo-zero-p3-review-snapshot.ts`. È una **derivazione per collaudo**, non una nuova sorgente editoriale: eventuali nuove revisioni della storia devono nascere in Studio Atlas e produrre uno snapshot aggiornato con nuova provenienza. Il digest lega il candidato alla specifica sorgente, non approva il prodotto.
+- Adattatore già esistente: `src/features/pathways/studio-atlas-preview-adapter.ts` (fail closed, valide destinazioni, scene TRANSFER, `studentAuthorized=false`, `runtimeAuthorized=false`). Esecuzione: `PathwayRuntimeSurface → ExperienceRuntime`; nessun motore duplicato.
+
+### Modifiche mirate ai rilievi della Human Review
+
+| Rilievo precedente | Nuova superficie di revisione da qualificare | Residuo da verificare da persona |
+| --- | --- | --- |
+| R1 · luogo non percepibile | Quattro luoghi già navigabili nel runtime, rappresentati da una scena ambientale CSS; nessuna grafica pretesa come Q4 approvata | Credibilità spaziale e accoglienza del museo |
+| R2 · indizi passivi | Otto evidenze verificabili sul posto e appuntabili al banco nell'ordine scelto | Effettiva iniziativa del ragazzo |
+| R3 · rappresentazioni nominali | Ordinamento cronologico modificabile con frecce; creazione esplicita di collegamenti fra indizi; tavola comparativa derivata dagli stati `worldAfter` delle scelte canoniche | Scelta non meccanica della rappresentazione e comprensione delle cause |
+| R4 · conseguenze testuali | Nuova rappresentazione della Sala Zero con proiezione, sensore, percorso e stati osservabili *ritardo / stabile / manuale*, accompagnati da alternativa testuale accessibile | Leggibilità del mutamento **prima** del feedback verbale |
+| R5 · trasferimento già risolto | In MZ5 si confrontano accessibilità, affidabilità e lavoro necessario prima di consigliare un intervento e vederne la conseguenza | Giustificazione della raccomandazione e qualità del compromesso |
+| R6 · personaggi tutor | Ripristinati battute e tracce originali di Lia, Omar e Teo, senza alterare la trama | Autenticità dei caratteri e loro contributo all'indagine |
+| R7 · ritmo passivo | Strumenti persistenti nel medesimo motore e tre operazioni effettive; nessun quiz o punteggio | Sensazione di essere dentro la sala, non in un formulario |
+
+**Rotta tecnica di laboratorio:** `/experience-lab/museo-zero/` con `noindex,nofollow`, avviso esplicito di revisione professionale e blocco dei collegamenti dai portali pubblici. Nessun dato personale, account, telemetria o connessione a impianti reali. Durante il collaudo il prototipo rimane nel ramo della PR #189, separato dal sito principale.
+
+**Gate di uscita P3:** prima, compilazione, verifica dell'adattatore, test di indagine e rappresentazioni, biforcazioni, `worldAfter`, trasferimento, conclusione, accessibilità/tastiera, mobilità e nessuna scrittura dei dati. Poi **seconda Human Product Review** su questa versione congelata; non attribuire PASS per inferenza dai test. Solo in caso di PASS potranno essere valutate separatamente la Quality Bar visiva, i diritti, l'accessibilità di prodotto, la revisione di uso umano e un'eventuale futura autorizzazione agli studenti.
+
 ## Regola permanente di manutenzione
 
 **Ogni modifica a un portale o a una capability richiede nello stesso intervento:**
