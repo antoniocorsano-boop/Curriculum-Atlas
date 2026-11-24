@@ -14,14 +14,29 @@ const definition = studioAtlasSnapshotToExperience(museoZeroP3ReviewSnapshot);
 export default function MuseoZeroReviewPage() {
   return (
     <div data-testid="museo-zero-p3-review" data-student-authorized="false" data-runtime-authorized="false">
-      <div role="note" className="atlas-domain-note">
-        <strong>Solo revisione professionale · MUSEO ZERO P3</strong>
-        <span>
+      <aside
+        role="note"
+        data-testid="museo-review-notice"
+        style={{
+          display: "block",
+          visibility: "visible",
+          padding: "16px 20px",
+          margin: "0 0 16px",
+          border: "2px solid #ab8251",
+          borderRadius: "12px",
+          background: "#fff4df",
+          color: "#332718",
+        }}
+      >
+        <strong style={{ display: "block", fontSize: "15px", marginBottom: "6px" }}>
+          Solo revisione professionale · MUSEO ZERO P3
+        </strong>
+        <p style={{ margin: 0, fontSize: "13px", lineHeight: 1.6 }}>
           Il controllo umano del prodotto è ancora REVISE. Questa riproduzione
           delle sette scene di Studio Atlas serve per correggere e valutare
           l&apos;esperienza; non è approvata per studenti o per la pubblicazione.
-        </span>
-      </div>
+        </p>
+      </aside>
       <PathwayRuntimeSurface
         definition={definition}
         title="Museo Zero · La sala che non torna"
