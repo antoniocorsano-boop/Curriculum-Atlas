@@ -31,6 +31,8 @@ jobs:
         run: pnpm install --no-frozen-lockfile
       - name: Experience contracts
         run: pnpm test:experience:contracts
+      - name: Ink authoring interoperability
+        run: pnpm test:experience:ink
       - name: Experience grammar registry
         run: pnpm test:experience:grammar
       - name: Generic experience factory
