@@ -19,7 +19,7 @@ export default function MuseoZeroReviewPage() {
         <span>
           Il controllo umano del prodotto è ancora REVISE. Questa riproduzione
           delle sette scene di Studio Atlas serve per correggere e valutare
-          l'esperienza; non è approvata per studenti o per la pubblicazione.
+          l&apos;esperienza; non è approvata per studenti o per la pubblicazione.
         </span>
       </div>
       <PathwayRuntimeSurface
