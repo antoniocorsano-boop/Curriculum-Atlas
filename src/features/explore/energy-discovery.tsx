@@ -100,7 +100,7 @@ export function EnergyDiscovery({ onExploreConnections }: { onExploreConnections
             </div>
             {illustration ? (
               <figure className={styles.resource} data-testid="scoperta-risorsa-esistente">
-                <Image src={illustration.href} width={1600} height={900} unoptimized alt="Schema già presente in Atlas: energia in entrata, trasformazione, effetto utile e dispersioni; esempi di lampada, automobile e asciugacapelli." loading="lazy" />
+                <Image src={`${process.env.NEXT_PUBLIC_ATLAS_BASE_PATH ?? ""}${illustration.href}`} width={1600} height={900} unoptimized alt="Schema già presente in Atlas: energia in entrata, trasformazione, effetto utile e dispersioni; esempi di lampada, automobile e asciugacapelli." loading="lazy" />
                 <figcaption>
                   <strong>{illustration.title}</strong>
                   <span>{illustration.lesson} · Materiale già collegato a una lezione pubblica.</span>

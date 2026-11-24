@@ -150,6 +150,39 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
     await expect(page.locator(".museo-bench__connections p").first()).toContainText("→");
   });
 
+  test("removing a clue after choosing blocks progress and removes stale connections and pending origin", async ({ page }) => {
+    await page.goto(LAB);
+    await collectEvidence(page);
+    await page.getByRole("button", { name: "Collega", exact: true }).click();
+    const bench = page.getByTestId("museo-relazioni");
+    const decision = page.locator(".experience-decision");
+    const next = decision.getByRole("button", { name: "Continua", exact: true });
+    const joins = bench.getByRole("button", { name: "Collega", exact: true });
+    await joins.first().click();
+    await joins.last().click();
+    const connections = bench.locator(".museo-bench__connections");
+    await expect(connections).toContainText("Percorso invertito");
+    await expect(connections).toContainText("Mappatura cue attiva");
+    await joins.last().click();
+    await expect(bench.getByRole("button", { name: "Scegli un secondo indizio" })).toHaveCount(1);
+    await expect(next).toBeEnabled();
+    const clue = page.locator(".experience-evidence").filter({ hasText: "Mappatura cue attiva" });
+    await clue.getByRole("button", { name: "Sul banco", exact: true }).click();
+    await expect(next).toBeDisabled();
+    await expect(page.locator('[data-node="MZ2_RECONSTRUCT_DAY"]')).toBeVisible();
+    await expect(connections).toContainText("Non hai ancora collegato due indizi.");
+    await expect(connections).not.toContainText(/ev-route|ev-mapping/);
+    await expect(bench.getByRole("button", { name: "Scegli un secondo indizio" })).toHaveCount(0);
+    await clue.getByRole("button", { name: "Porta sul banco", exact: true }).click();
+    await expect(next).toBeEnabled();
+    await expect(connections).toContainText("Non hai ancora collegato due indizi.");
+    await joins.first().click();
+    await joins.last().click();
+    await expect(connections).toContainText("Mappatura cue attiva");
+    await next.click();
+    await expect(page.locator('[data-node="MZ3_TIMELINE_LIMIT"]')).toBeVisible();
+  });
+
   test("simulated sensor mapping visibly changes room and preserves authored branched route", async ({ page }) => {
     await page.goto(LAB);
     await collectEvidence(page);

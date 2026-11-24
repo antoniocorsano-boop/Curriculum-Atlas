@@ -71,3 +71,4 @@ jobs:
           node scripts/filter-unauthorized-pathway-routes.mjs out
           node scripts/canonical-atlas-export.mjs --verify out
           node scripts/verify-smart-export.mjs
+          node scripts/verify-discovery-deployment.mjs

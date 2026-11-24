@@ -60,6 +60,7 @@ export function MuseoZeroReviewWorkbench({
   onChoose: (choice: ReviewTransition) => void;
 }) {
   const names = new Map(evidence.map(item => [item.id, item.label]));
+  const visibleConnections = connections.filter(pair => names.has(pair.from) && names.has(pair.to));
   if (mode === "COMPARE" && sceneId === "MZ5_COMPARE_RECOVERY") {
     const constraints = [
       { key: "accessibility", label: "Nuovo ingresso accessibile" },
@@ -118,8 +119,8 @@ export function MuseoZeroReviewWorkbench({
       </div>
       {mode === "CONNECTIONS" && <div className="museo-bench__connections" aria-live="polite">
         <h3>Le relazioni che stai costruendo</h3>
-        {connections.length ? connections.map((pair, i) =>
-          <p key={pair.from + pair.to + i}>{names.get(pair.from) ?? pair.from} <span aria-hidden="true">→</span> {names.get(pair.to) ?? pair.to}</p>
+        {visibleConnections.length ? visibleConnections.map((pair, i) =>
+          <p key={pair.from + pair.to + i}>{names.get(pair.from)} <span aria-hidden="true">→</span> {names.get(pair.to)}</p>
         ) : <p>Non hai ancora collegato due indizi.</p>}
       </div>}
     </div>

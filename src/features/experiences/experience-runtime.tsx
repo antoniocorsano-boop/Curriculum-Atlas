@@ -148,6 +148,7 @@ export function ExperienceRuntime({
   }
 
   function proceed() {
+    if (!workbenchReady) return;
     // Every authored summary, including the opening, exposes its consequence before navigation.
     if (revealAfterAction && !pendingTransition && firstTransition) {
       selectTransition(firstTransition);
@@ -173,6 +174,10 @@ export function ExperienceRuntime({
   }
 
   function togglePinned(id: string) {
+    if (isMuseoZeroReview && pinnedEvidenceIds.includes(id)) {
+      setEvidenceConnections(current => current.filter(pair => pair.from !== id && pair.to !== id));
+      setConnectionOriginId(current => current === id ? null : current);
+    }
     setPinnedEvidenceIds((current) =>
       current.includes(id) ? current.filter((candidate) => candidate !== id) : [...current, id],
     );
@@ -426,7 +431,7 @@ export function ExperienceRuntime({
                 <button
                   type="button"
                   onClick={proceed}
-                  disabled={isChoice ? !pendingTransition : !firstTransition}
+                  disabled={!workbenchReady || (isChoice ? !pendingTransition : !firstTransition)}
                 >
                   {authoredSummary ? actionLabel : worldChangedByChoice ? "Continua dalla conseguenza" : "Continua"}
                 </button>

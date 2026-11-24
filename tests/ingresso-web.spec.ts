@@ -109,6 +109,9 @@ test.describe("Atlas ingresso web — accesso reale senza immagini o WebGL", () 
     const asset = await page.request.get(resourcePath);
     expect(asset.status()).toBe(200);
     expect(await asset.text()).toContain("DOVE VA L'ENERGIA?");
+    const image = page.getByTestId("scoperta-risorsa-esistente").locator("img");
+    await image.scrollIntoViewIfNeeded();
+    await expect.poll(() => image.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
   });
 
   test("P2: dal racconto alla rete e all'obiettivo davvero presente in Arena", async ({ page }) => {
@@ -209,6 +212,26 @@ test.describe("Atlas ingresso web — accesso reale senza immagini o WebGL", () 
       await expect(page.getByTestId("atlas-accesso-esperienze")).toBeVisible();
     });
   }
+
+  test("footer text and links meet normal-text contrast on the canvas", async ({ page }) => {
+    await page.goto("/");
+    const footer = page.getByTestId("atlas-ingresso-web").locator("footer");
+    await expect(footer).toBeVisible();
+    const ratios = await footer.evaluate(el => {
+      const luminance = (rgb: number[]) => rgb.slice(0, 3).map(value => {
+        const s = value / 255;
+        return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+      }).reduce((sum, value, i) => sum + value * [0.2126, 0.7152, 0.0722][i], 0);
+      const canvas = [245, 247, 251];
+      return Array.from(el.querySelectorAll("p, a, span")).map(node => {
+        const fg = getComputedStyle(node).color.match(/[\d.]+/g)?.map(Number) ?? [];
+        const l1 = luminance(fg), l2 = luminance(canvas);
+        return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+      });
+    });
+    expect(ratios.length).toBeGreaterThanOrEqual(3);
+    for (const ratio of ratios) expect(ratio).toBeGreaterThanOrEqual(4.5);
+  });
 
   test("rispetta le preferenze di movimento ridotto", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
