@@ -123,6 +123,33 @@ La quarta porta **Esperienze** è stata realizzata nella [PR #189](https://githu
 
 **Gate di uscita P3:** prima, compilazione, verifica dell'adattatore, test di indagine e rappresentazioni, biforcazioni, `worldAfter`, trasferimento, conclusione, accessibilità/tastiera, mobilità e nessuna scrittura dei dati. Poi **seconda Human Product Review** su questa versione congelata; non attribuire PASS per inferenza dai test. Solo in caso di PASS potranno essere valutate separatamente la Quality Bar visiva, i diritti, l'accessibilità di prodotto, la revisione di uso umano e un'eventuale futura autorizzazione agli studenti.
 
+## P3 — Esito negativo della verifica su telefono: blocco di prodotto (24 novembre 2026)
+
+**Decisione del committente dopo visione reale su Android: P3 NON ACCETTATA.** Tre schermate della candidata `8ac77219afb8c616dacc73c394bc22a14aa2802b` mostrano che l'esperienza non rappresenta un museo credibile ed esplorabile. L'esito vale **per la qualità del prodotto e dell'interfaccia**, non cancella la qualifica tecnica `12/12 GitHub`, né il patrimonio di sette scene, quattro luoghi, otto indizi, tre personaggi e scelte canoniche.
+
+### Evidenza e cause accertate
+
+1. **Collisioni reali di interfaccia:** testo della situazione e riferimenti allo stato occupano lo stesso spazio del contesto grafico; su telefono personaggio, riquadri di stato e pulsanti dei luoghi si sovrappongono. Nel CSS della scena condivisa la geometria mobile usa `min-height:660px/710px` e posizionamenti `absolute` per `.experience-causal-rail`, `.experience-character` e `.experience-locations`. Le quote di posizionamento non garantiscono zone distinte quando i testi vanno su più righe.
+2. **Regia mancata:** prevalgono titolo, paragrafi, indicatori tecnici e comandi, mentre la rappresentazione d'ambiente è astratta. La grafica creata con CSS mostra sensore, ingresso e schermo come un diagramma, non come un luogo da esplorare.
+3. **Interazione separata dal mondo:** quattro rettangoli nominano i luoghi senza renderli parte della scena. Il comando `Continua` conferma il ritmo procedurale invece di far avanzare le conseguenze nel mondo.
+4. **Rivelazione prematura e gerarchia errata:** la pagina racconta il problema e anticipa il ruolo di sensori e configurazione, riducendo il mistero; avvisi amministrativi e schermate tecniche sottraggono centralità all'esperienza.
+5. **Prove insufficienti:** 32/32 test Chromium e 12/12 qualificazioni GitHub verificano codice, percorsi, elementi e casi specifici, **non** qualità artistica, assenza di collisioni tra contenuti, esplorabilità percepita, fluidità sul telefono reale e comprensione spontanea. Eventuali guasti funzionali segnalati dall'utente richiedono prove riproducibili separate; non sono dimostrabili dalle immagini statiche.
+
+### Decisione e contromisure
+
+**BLOCCO P3**: non integrare, non collegare ai quattro portali, non autorizzare studenti e non dichiarare la revisione umana superata. Conservare gli artefatti, il codice e i test come **baseline negativa tracciabile**, non continuare a ritoccare questa stessa pagina come se il difetto fosse un tema estetico. La PR #189 contiene anche lavoro indipendente P1/P2 che resta distinto.
+
+**Nuovo criterio di progetto: mondo prima dell'interfaccia.** Al prossimo sviluppo di P3 deve comparire un unico luogo credibile con un evento percepibile, prima del testo. L'utente esplora oggetti e tracce nel luogo; informazioni e comandi emergono solo nel contesto e al momento utile. Si deve creare una prova tecnica *verticale*, breve e completa (ingresso → ispezione → esperimento con conseguenza), e valutarla su smartphone **prima** di reintegrare le sette scene. Preservare la grammatica narrativa, i dati canonici e il runtime, ma sostituire la componente di presentazione della scena, non soltanto i colori.
+
+**Gate di accettazione obbligatori e separati:**
+- Regia e qualità: una scena credibile che comunica un mondo prima dei testi, senza un pannello di indicatori come soggetto principale.
+- Interazione: un oggetto ispezionabile dentro la scena, azione determinata dal contesto e cambiamento di scena riconoscibile **senza leggere il feedback**.
+- Mobile reale: nessuna collisione/copertura nei punti di vista 320/360/390 px, testo ingrandito al 200%, navigazione tattile e tastiera; verifiche tramite schermate e prove fisiche, non solo presenza dei selettori o `scrollWidth`.
+- Comprensione: un ragazzo deve poter capire dove si trova, cosa può fare e cosa cambia senza leggere istruzioni tecniche preliminari.
+- Governance: solo dopo il superamento di questi controlli ha senso una nuova Human Product Review; `studentAuthorized=false` e `runtimeAuthorized=false` restano invariati.
+
+**Esito formalizzato nel registro** `governance/atlas-portal-capability-map.v1.json`, capacità `museo-zero` = `P3_PRODUCT_NOT_ACCEPTED_BLOCKED_REDIRECTION_REQUIRED`. Non confondere l'esito di collaudo funzionale con approvazione educativa o visuale.
+
 ## Regola permanente di manutenzione
 
 **Ogni modifica a un portale o a una capability richiede nello stesso intervento:**
