@@ -61,3 +61,13 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Browser conformance
         run: pnpm exec playwright test tests/experience-runtime.spec.ts tests/museo-zero-p3.spec.ts --project=chromium
+
+      - name: Qualify canonical public export separately from review
+        env:
+          ATLAS_GITHUB_PAGES: "true"
+        run: |
+          node scripts/test-canonical-atlas-export.mjs
+          node scripts/canonical-atlas-export.mjs --build
+          node scripts/filter-unauthorized-pathway-routes.mjs out
+          node scripts/canonical-atlas-export.mjs --verify out
+          node scripts/verify-smart-export.mjs
