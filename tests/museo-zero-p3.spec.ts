@@ -209,6 +209,7 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
     await finishOpening(page);
     await page.getByRole("button", { name: "Continua" }).click();
     await expect(page.locator('input[type="email"], input[type="password"]')).toHaveCount(0);
+    expect(diagnostics.filter(message => /Each child in a list should have a unique|Next development diagnostic:/.test(message)), diagnostics.join("\n")).toEqual([]);
     expect(writes, diagnostics.join("\n")).toEqual([]);
     expect(externals).toEqual([]);
     const records = await page.evaluate(() =>

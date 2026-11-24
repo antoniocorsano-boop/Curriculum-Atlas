@@ -43,7 +43,7 @@ export default function MuseoZeroReviewPage() {
         title="Museo Zero · La sala che non torna"
         description="Quattro luoghi, indizi da confrontare e una sala interattiva che non risponde come dovrebbe. Indaga, prova una mappatura simulata e osserva che cosa cambia."
         reviewNotice="Revisione narrativa: REVISE · Solo laboratorio"
-        educationalInfo={<MuseoZeroEducationalInfo snapshot={{
+        educationalInfo={<MuseoZeroEducationalInfo key="museo-zero-educational-info" snapshot={{
           pathwayId: museoZeroP3ReviewSnapshot.pathwayId,
           snapshotId: museoZeroP3ReviewSnapshot.snapshotId,
           packageDigest: museoZeroP3ReviewSnapshot.packageDigest,
