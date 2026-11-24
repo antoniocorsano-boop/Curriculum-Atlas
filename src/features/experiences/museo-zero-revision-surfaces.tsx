@@ -97,7 +97,7 @@ export function MuseoZeroReviewWorkbench({
 
   return (
     <div className="museo-bench" data-testid={mode === "TIMELINE" ? "museo-cronologia" : mode === "CONNECTIONS" ? "museo-relazioni" : "museo-indizi"}>
-      {mode === "TIMELINE" && <p className="museo-bench__intro">Disponi gli indizi in una sequenza: usa le frecce per cambiare l'ordine. La cronologia chiarisce quando si sono verificati i cambiamenti, ma potrebbe non bastare a spiegarne la causa.</p>}
+      {mode === "TIMELINE" && <p className="museo-bench__intro">Disponi gli indizi in una sequenza: usa le frecce per cambiare l&apos;ordine. La cronologia chiarisce quando si sono verificati i cambiamenti, ma potrebbe non bastare a spiegarne la causa.</p>}
       {mode === "CONNECTIONS" && <p className="museo-bench__intro">Scegli un indizio e poi un secondo per costruire un collegamento. Il modello è tuo: sperimenta relazioni tra percorso, sensore e regia.</p>}
       {mode === "COMPARE" && <p className="museo-bench__intro">Confronta le prove raccolte. Alcuni cambiamenti possono essere reali senza aver provocato il ritardo.</p>}
       <div className="museo-bench__evidence" role="list">
