@@ -46,8 +46,9 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
     await collectEvidence(page);
     const decision = page.locator(".experience-decision");
     const choices = decision.getByRole("button", { name: /Metto in fila|Collego subito/ });
-    await expect(choices.first()).toBeEnabled();
+    await expect(choices.first()).toBeDisabled();
     await page.getByRole("button", { name: "Metti in fila" }).click();
+    await expect(choices.first()).toBeEnabled();
     await expect(page.getByTestId("museo-cronologia")).toBeVisible();
     await expect(page.getByTestId("museo-cronologia").getByRole("listitem")).toHaveCount(3);
     await page.getByRole("button", { name: "Sposta prima: Sensor B spostato" }).click();
