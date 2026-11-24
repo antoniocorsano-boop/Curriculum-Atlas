@@ -1,0 +1,174 @@
+/* MUSEO ZERO P3 · Visual simulation and representation bench (review-only).
+   No new image assets, external fonts, WebGL, or real hardware controls. */
+.museo-response {
+  --mz-amber: #efbd71;
+  padding: clamp(18px, 3.3vw, 35px);
+  background: #111a24;
+  color: #edeae3;
+  border-top: 1px solid rgb(255 255 255 / .13);
+  display: grid;
+  gap: 13px;
+}
+.museo-response__caption { display: flex; gap: 12px; align-items: baseline; justify-content: space-between; }
+.museo-response__caption span { text-transform: uppercase; letter-spacing: .13em; font-size: 11px; color: #d2b486; }
+.museo-response__caption strong { font-size: 13px; font-weight: 650; color: #faf0dc; }
+.museo-response__world {
+  position: relative;
+  isolation: isolate;
+  min-height: clamp(180px, 24vw, 310px);
+  overflow: hidden;
+  border-radius: 13px;
+  border: 1px solid rgb(255 255 255 / .15);
+  background: radial-gradient(ellipse at 81% 35%, #263a4a, transparent 44%),linear-gradient(160deg,#101927,#233043 60%,#131925);
+}
+.museo-response__world::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 21%;
+  background: linear-gradient(103deg,transparent 0 15%,rgb(255 255 255 / .05) 15.2% 15.7%,transparent 15.9% 82%,rgb(255 255 255 / .07) 82.4% 82.9%,transparent 83%),linear-gradient(180deg,rgb(255 255 255 / .04),transparent);
+}
+.museo-response__world::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;right: 0;
+  height: 23%;
+  background: linear-gradient(165deg,#131d29,#293747);
+  border-top: 1px solid rgb(255 255 255 / .13);
+  transform: perspective(200px) rotateX(12deg);
+  transform-origin: top;
+}
+.museo-response__path {
+  position: absolute;
+  left: 7%;bottom: 16%;z-index: 1;
+  width: 27%;height: 34%;
+  transform: skewY(-10deg);
+  border: 1px solid rgb(246 197 123 / .35);
+  border-radius: 4px;
+  background: rgb(17 28 42 / .42);
+  display: grid;
+  place-items: start center;
+  padding: 12px 8px;
+  color: #ecd9bc;
+  font-size: 12px;
+  font-weight: 650;
+}
+.museo-response__visitor {
+  position: absolute;
+  width: 17px;height: 30px;
+  left: 28%;bottom: 8%;
+  background: linear-gradient(160deg,#b2ad9d,#7d9ca4);
+  border-radius: 10px 10px 4px 4px;
+  box-shadow: 0 -11px 0 -2px #c3b2a0,0 7px 12px #080b11;
+}
+.museo-response__sensor {
+  position: absolute;
+  left: 38%;top: 40%;z-index: 2;
+  display: flex;flex-direction: column;align-items: center;gap: 8px;
+  color: #e7dfd1;font-size: 12px;font-weight: 650;
+}
+.museo-response__sensor-light {
+  display: block;
+  width: 20px;height:20px;
+  border-radius: 50%;
+  background: #70e3c6;
+  box-shadow: 0 0 0 8px rgb(112 227 198 / .11),0 0 29px 3px rgb(112 227 198 / .38);
+}
+.museo-response__signal {
+  position: absolute;
+  left: 44%;top: 45%;width: 22%;height: 2px;
+  z-index: 1;
+  background: repeating-linear-gradient(90deg,#e9b97b 0 13px,transparent 13px 20px);
+  opacity: .26;
+}
+.museo-response__projection {
+  position: absolute;
+  right: 8%;top: 16%;
+  width: 28%;height: 52%;
+  background: linear-gradient(145deg,#1e2f41,#233b45);
+  box-shadow: inset 0 0 0 8px rgb(16 21 29 / .5),0 12px 28px rgb(0 0 0 / .35);
+  transform: perspective(620px) rotateY(-9deg);
+  border: 1px solid rgb(255 255 255 / .18);
+}
+.museo-response__projection-core {
+  position: absolute;inset: 15% 16%;
+  background: radial-gradient(ellipse,#f2daa7,#ca9451);
+  opacity: .08;
+  filter: blur(3px);
+  transition: opacity .35s ease,box-shadow .35s ease;
+}
+.museo-response__rays {
+  position: absolute;z-index: 1;
+  right: 12%;bottom: 14%;
+  display: flex;gap: 7px;opacity: .1;
+  transform: skewX(13deg);
+  transition: opacity .35s ease;
+}
+.museo-response__rays i {
+  display: block;width: 22px;height: 5px;border-radius: 2px;
+  background: #f5be6e;
+  box-shadow: 0 0 16px #f5be6e;
+}
+.museo-response[data-outcome="stable"] .museo-response__projection-core { opacity: .98;box-shadow: 0 0 70px 28px rgb(246 188 102 / .48); }
+.museo-response[data-outcome="stable"] .museo-response__rays { opacity: .96; }
+.museo-response[data-outcome="stable"] .museo-response__signal { opacity: .86;background: #8ae1c0;box-shadow: 0 0 18px #8ae1c0; }
+.museo-response[data-outcome="manual"] .museo-response__projection-core { opacity: .62; }
+.museo-response[data-outcome="manual"] .museo-response__rays { opacity: .52; }
+.museo-response[data-outcome="manual"] .museo-response__signal { opacity: .6;background: repeating-linear-gradient(90deg,#e9b97b 0 5px,transparent 5px 13px); }
+.museo-response[data-outcome="delayed"] .museo-response__sensor-light { background: #70e3c6; }
+.museo-response__explanation {font-size: 14px;line-height: 1.6;color: #f6e9d2;max-width: 85ch;margin: 0;}
+.museo-response__hint {font-size: 11px;color: #afbec4;margin: 0;}
+.museo-bench {display: grid;gap: 14px;min-width: 0;}
+.museo-bench__intro {margin: 0;max-width: 80ch;line-height: 1.55;}
+.museo-bench__evidence {display: grid;gap: 9px;}
+.museo-bench__item {
+  display: grid;grid-template-columns: auto minmax(0,1fr) auto;
+  gap: 11px;align-items: center;
+  padding: 12px;
+  background: rgb(255 255 255 / .52);
+  border: 1px solid rgb(47 57 67 / .18);
+  border-radius: 11px;
+}
+.museo-bench__index {font-weight: 800;font-size: 13px;color: #577878;}
+.museo-bench__item-text {min-width: 0;display: grid;gap: 5px;}
+.museo-bench__item-text strong {font-size: 14px;}
+.museo-bench__item-text small {font-size: 12px;line-height: 1.5;color: #4d5e63;}
+.museo-bench__buttons {display: flex;gap: 5px;}
+.museo-bench button {
+  min-height: 42px;min-width: 42px;
+  padding: 8px 12px;border-radius: 7px;
+  border: 1px solid #53666d;background: #f9fcfa;color: #1c343b;
+  cursor: pointer;font: inherit;font-weight: 700;font-size: 12px;
+}
+.museo-bench button:disabled {opacity: .38;cursor: not-allowed;}
+.museo-bench button:hover:not(:disabled) {background: #e1f0e9;}
+.museo-bench button[aria-pressed="true"] {background: #244f55;color: #fff;}
+.museo-bench button:focus-visible {outline: 3px solid #a57e43;outline-offset: 3px;}
+.museo-bench__connections {display: grid;gap: 7px;padding: 12px;background: #dbece6;border-radius: 10px;}
+.museo-bench__connections h3,.museo-bench__connections p {margin: 0;font-size: 13px;}
+.museo-bench__connections p {padding: 9px;background: white;border-radius: 6px;}
+.museo-bench__connections span {color: #2b7b71;font-weight: 900;}
+.museo-bench__table-wrap {max-width: 100%;overflow-x: auto;border: 1px solid #c5cec8;border-radius: 12px;}
+.museo-bench__table {width: 100%;border-collapse: collapse;min-width: 690px;text-align: left;font-size: 12px;}
+.museo-bench__table caption {caption-side: top;text-align: left;padding: 10px 14px;background: #e5eee9;font-weight: 750;}
+.museo-bench__table thead {background: #dde9e5;}
+.museo-bench__table th,.museo-bench__table td {padding: 12px 10px;border-bottom: 1px solid #cbd8d2;vertical-align: top;}
+.museo-bench__table tbody th {min-width: 135px;}
+.museo-bench__table td {min-width: 115px;}
+.museo-bench__table td span {display: block;font-size: 11px;color: #45595f;margin-top: 5px;line-height: 1.4;}
+.museo-bench__table [data-state="stable"],.museo-bench__table [data-state="active"] {background: #e1f3e6;}
+.museo-bench__table [data-state="mismatch"],.museo-bench__table [data-state="manual"] {background: #fff0df;}
+.museo-bench__table tr[data-selected="true"] {box-shadow: inset 4px 0 0 #247e6b;}
+.museo-bench__note {font-size: 11px;opacity: .75;line-height: 1.5;}
+@media(max-width: 620px) {
+  .museo-response {padding: 15px;}
+  .museo-response__world {min-height: 185px;}
+  .museo-response__path {font-size: 10px;left: 5%;width: 30%;}
+  .museo-response__sensor {font-size: 10px;}
+  .museo-response__projection {right: 6%;width: 33%;}
+  .museo-bench__item {grid-template-columns: auto minmax(0,1fr);}
+  .museo-bench__buttons,.museo-bench__join {grid-column: 2;justify-self: start;}
+}
+@media(prefers-reduced-motion: reduce) {
+  .museo-response *, .museo-response *::before, .museo-response *::after {transition: none !important;animation: none !important;}
+}
