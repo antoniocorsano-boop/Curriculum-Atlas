@@ -246,7 +246,7 @@
         "esperienze",
         "percorsi"
       ],
-      "maturity": "IMPLEMENTED_P3_PRIVATE_REVIEW_HUMAN_REVISE",
+      "maturity": "P3_PRODUCT_NOT_ACCEPTED_BLOCKED_REDIRECTION_REQUIRED",
       "learnerRuntimeAuthorization": "NOT_AUTHORIZED",
       "sourcePaths": [
         "src/app/experience-lab/museo-zero/page.tsx",
@@ -262,7 +262,7 @@
         "https://github.com/antoniocorsano-boop/trama-ecosistema/blob/main/products/studio-atlas/lib/canonical/museo-zero.ts",
         "https://github.com/antoniocorsano-boop/trama-ecosistema/blob/main/docs/capabilities/atlas-percorsi/pathways/PW-STRATEGY-SELECTION-01/worlds/MUSEO-ZERO/HUMAN-PRODUCT-REVIEW-v0.1.md"
       ],
-      "next": "Revisione umana P3 contro i rilievi R1-R7 (stato storico REVISE); verifica reale dei quattro luoghi, indizi, timeline/relazioni/confronto e cambiamento percepibile della sala; mantenere student/runtime NON_AUTHORIZED fino a decisioni distinte",
+      "next": "Bloccare promozione P3 e nuove presentazioni della medesima interfaccia. Ripartire dalla regia dell'esperienza: primo piano d'ambiente continuo, un'azione contestuale per volta, investigazione guidata dall'osservazione e non da testi/indicatori; collaudo fisico e Human Product Review prima di eventuale riattivazione. Non confondere 32/32 prove con qualità del prodotto.",
       "evidenceRefs": [
         {
           "sourceBlob": "27037f3af1e12b660e9108d2eaf6be32f1a42f48",
@@ -273,7 +273,26 @@
           "studentAuthorized": false,
           "runtimeAuthorized": false
         }
-      ]
+      ],
+      "fieldReview": {
+        "date": "2026-11-24",
+        "basis": "three owner screenshots from Android phone, Cloudflare P3 preview 8ac77219",
+        "outcome": "NOT_ACCEPTED",
+        "blockingFindings": [
+          "Mobile: scena iniziale con sovrapposizioni tra testo, stato, personaggio e pulsanti dei luoghi",
+          "Visual: sintassi da pannello tecnico e diagramma astratto, anziché museo credibile ed esplorabile",
+          "Narrativa: esposizione anticipata della causa e ritmo di istruzioni, prima dell'osservazione",
+          "Navigazione: luoghi presentati come quattro pulsanti scollegati dall'ambiente",
+          "Densità: scorrimento verticale eccessivo e avviso di revisione dominante",
+          "Funzionalità: verifiche automatiche 32/32 non equiparabili a prova d'uso; malfunzionamenti reali da riprodurre separatamente"
+        ],
+        "sourceGitHead": "8ac77219afb8c616dacc73c394bc22a14aa2802b",
+        "productReleaseGate": "BLOCKED",
+        "humanProductReview": "REVISE",
+        "visualQualityBar": "NOT_PASSED",
+        "studentAuthorized": false,
+        "publicCatalogAuthorized": false
+      }
     },
     {
       "id": "pathway-catalog",
@@ -406,11 +425,13 @@
       "P4_PATHWAY_CURRICOLO_LINKS",
       "P5_HUMAN_DEVICE_RELEASE_REVIEW"
     ],
-    "currentMilestone": "P3_MUSEO_ZERO_REVIEW_LAB_IMPLEMENTED_NOT_STUDENT_AUTHORIZED",
+    "currentMilestone": "P3_MUSEO_ZERO_OWNER_REVIEW_NOT_ACCEPTED_REDESIGN_BLOCKED",
     "candidateExperiencePortalNoAuthorizedContent": true,
     "p2ContentStatus": "PUBLIC_MATERIAL_ALREADY_PRESENT_IN_LESSON_CURRICOLO_ARENA_PROVISIONAL",
-    "p3ProductGate": "HUMAN_PRODUCT_REVIEW_REVISE_NOT_PASS",
-    "p3VisualProduction": "NO_VISUAL_QUALITY_BAR_PASS_NO_NEW_ASSETS"
+    "p3ProductGate": "OWNER_NOT_ACCEPTED_HUMAN_PRODUCT_REVIEW_REVISE",
+    "p3VisualProduction": "NO_VISUAL_QUALITY_BAR_PASS_NO_NEW_ASSETS",
+    "p3VisualRelease": "BLOCKED_REAL_MOBILE_SCREENSHOTS_SHOW_COLLISIONS_AND_TECHNICAL_PRESENTATION",
+    "p3EngineeringQualification": "TECHNICAL_12_OF_12_PASS_DOES_NOT_QUALIFY_PRODUCT"
   },
   "evidence": [
     {
