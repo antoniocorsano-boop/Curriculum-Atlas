@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { studioAtlasSnapshotToExperience } from "@/features/pathways/studio-atlas-preview-adapter";
 import { museoZeroP3ReviewSnapshot } from "@/features/experiences/museo-zero-p3-review-snapshot";
 import { MuseoZeroEducationalInfo } from "@/features/experiences/museo-zero-educational-info";
-import { PathwayRuntimeSurface } from "@/features/pathways/pathway-runtime-surface";
+import { MuseoZeroReviewSurface } from "@/features/experiences/museo-zero-review-surface";
 
 export const metadata: Metadata = {
   title: "Museo Zero · Laboratorio di revisione · Atlas",
@@ -38,7 +38,7 @@ export default function MuseoZeroReviewPage() {
           l&apos;esperienza; non è approvata per studenti o per la pubblicazione.
         </p>
       </aside>
-      <PathwayRuntimeSurface
+      <MuseoZeroReviewSurface
         definition={definition}
         title="Museo Zero · La sala che non torna"
         description="Quattro luoghi, indizi da confrontare e una sala interattiva che non risponde come dovrebbe. Indaga, prova una mappatura simulata e osserva che cosa cambia."

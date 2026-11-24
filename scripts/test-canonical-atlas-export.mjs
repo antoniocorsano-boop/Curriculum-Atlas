@@ -37,7 +37,9 @@ try {
     const top = rel.startsWith("_next/") ? "_next" : rel.startsWith("percorsi/") ? "percorsi/lab" : rel.startsWith("media/") ? "media/museo-zero" : "experience-lab";
     fs.rmSync(path.join(out, top), { recursive: true, force: true });
   }
-  for (const marker of ["MZ-DID-0.1", "museo-zero-p3-review-27037f3af1e1", "educational-library-review"]) {
+  for (const marker of ["MZ-DID-0.1", "museo-zero-p3-review-27037f3af1e1", "educational-library-review",
+    "Un museo da vivere", "Due visitatori, una sola sala", "/media/museo-zero/narrative-v1/sala.webp",
+    "studio-preview-pw-strategy-selection-01-museo-zero", "MZ4_TEST_MAPPING", "mz-prediction"]) {
     put(out, "_next/static/chunks/shared.js", marker);
     assert.throws(() => verifyCanonicalExport(out), /REVIEW_PAYLOAD_PRESENT/);
   }

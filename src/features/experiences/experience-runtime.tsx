@@ -10,10 +10,7 @@ import type {
 } from "./model";
 import { useExperienceSession } from "./use-experience-session";
 import "./experience-runtime.css";
-import { MuseoZeroOpening, museoZeroMission } from "./museo-zero-opening";
-import { museoZeroPortrait } from "./museo-zero-narrative";
-import { MuseoZeroRoomResponse, MuseoZeroReviewWorkbench } from "./museo-zero-revision-surfaces";
-import { MuseoLocation, MuseoPrediction, MuseoExtension, museoOutcome, type Prediction } from "./museo-zero-investigation";
+import type { ReviewPresentationAdapter, TrialPrediction } from "./review-presentation-adapter";
 import type {VerifiedSceneIllustration} from "../pathways/edutwin-preview-media";
 
 type ResolvedTransition = ExperienceTransition & { key: string };
@@ -29,8 +26,10 @@ export function ExperienceRuntime({
   presentation,
   onTransition,
   verifiedIllustrations,
+  reviewAdapter,
 }: {
   definition: ExperienceDefinition;
+  reviewAdapter?: ReviewPresentationAdapter;
   presentation?: ExperiencePresentation;
   verifiedIllustrations?: ReadonlyMap<string,VerifiedSceneIllustration>;
   onTransition?: (nodeId: string, transitionId: string, targetNodeId: string) => void;
@@ -54,9 +53,9 @@ export function ExperienceRuntime({
   const [workbenchMode, setWorkbenchMode] = useState<ExperienceWorkbenchMode | null>(null);
   const [evidenceConnections, setEvidenceConnections] = useState<Array<{ from: string; to: string }>>([]);
   const [connectionOriginId, setConnectionOriginId] = useState<string | null>(null);
-  const [prediction, setPrediction] = useState<Prediction | "">("");
-  const [lastPrediction, setLastPrediction] = useState<{prediction:Prediction; observed:Prediction} | null>(null);
-  const isMuseoZeroReview = definition.experienceId === "studio-preview-pw-strategy-selection-01-museo-zero";
+  const [prediction, setPrediction] = useState<TrialPrediction | "">("");
+  const [lastPrediction, setLastPrediction] = useState<{prediction:TrialPrediction; observed:TrialPrediction} | null>(null);
+  const review = reviewAdapter?.experienceId === definition.experienceId ? reviewAdapter : undefined;
 
   const view = node ? presentation?.nodes[node.id] : undefined;
   const transitions = useMemo<ResolvedTransition[]>(() => {
@@ -120,7 +119,7 @@ export function ExperienceRuntime({
   const pinnedEvidence = pinnedEvidenceIds
     .map((id) => evidenceCatalog[id])
     .filter((item): item is ExperienceStageEvidence => Boolean(item));
-  const workbenchReady = !isMuseoZeroReview || !stage?.workbench || (
+  const workbenchReady = !review || !stage?.workbench || (
     pinnedEvidenceIds.length >= stage.workbench.minEvidence && workbenchMode !== null
   );
   function reorderEvidence(id: string, direction: -1 | 1) {
@@ -146,11 +145,11 @@ export function ExperienceRuntime({
     setConnectionOriginId(null);
   }
 
-  const requiresPrediction = isMuseoZeroReview && node.id === "MZ4_TEST_MAPPING";
+  const requiresPrediction = Boolean(review && node.id === review.predictionScene);
   function selectTransition(transition: ResolvedTransition) {
-    if (requiresPrediction) {
+    if (review && requiresPrediction) {
       if (!prediction) return;
-      setLastPrediction({prediction, observed:museoOutcome(transition.worldAfter)});
+      setLastPrediction({prediction, observed:review.outcome(transition.worldAfter)});
       setPrediction("");
     }
     setPendingTransition(transition);
@@ -186,7 +185,7 @@ export function ExperienceRuntime({
   }
 
   function togglePinned(id: string) {
-    if (isMuseoZeroReview && pinnedEvidenceIds.includes(id)) {
+    if (review && pinnedEvidenceIds.includes(id)) {
       setEvidenceConnections(current => current.filter(pair => pair.from !== id && pair.to !== id));
       setConnectionOriginId(current => current === id ? null : current);
     }
@@ -204,10 +203,10 @@ export function ExperienceRuntime({
     }
   }
 
-  if (isMuseoZeroReview && node.id === "MZ1_FAILED_REHEARSAL") {
+  if (review && node.id === review.openingScene) {
     return (
       <div className="experience-runtime" data-session={session.sessionVersion} data-node={node.id}>
-        <MuseoZeroOpening key={session.sessionVersion} title={title} headingRef={headingRef} onContinue={proceed} />
+        <review.Opening key={session.sessionVersion} title={title} headingRef={headingRef} onContinue={proceed} />
       </div>
     );
   }
@@ -226,9 +225,7 @@ export function ExperienceRuntime({
             <span>{activeLocation?.label ?? activeWorld?.place ?? title}</span>
           </div>
 
-          {isMuseoZeroReview && !["MZ6_FINAL_REHEARSAL", "MZ7_QUIET_CLOSE"].includes(node.id) ? (
-            <div className="mz-mission" data-testid="museo-mission-reminder"><p><strong>La tua missione:</strong> {museoZeroMission}</p></div>
-          ) : null}
+          {review && !review.missionHiddenScenes.includes(node.id) ? <review.Mission /> : null}
           <div className="experience-cinema__world" data-world-changed={worldChangedByChoice || undefined}>
             <div className="experience-cinema__atmosphere" aria-hidden="true" />
             <div className="experience-cinema__projection" aria-hidden="true" />
@@ -280,10 +277,7 @@ export function ExperienceRuntime({
             {stage.characterBeat ? (
               <aside className="experience-character">
                 <div className="experience-character__silhouette" aria-hidden="true">
-                  {isMuseoZeroReview && museoZeroPortrait(stage.characterBeat.name) ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img className="mz-character-portrait" src={museoZeroPortrait(stage.characterBeat.name)!} alt="" />
-                  ) : stage.characterBeat.name.slice(0, 1)}
+                  {review ? <review.Portrait name={stage.characterBeat.name} variant="character" /> : stage.characterBeat.name.slice(0, 1)}
                 </div>
                 <div>
                   <p><strong>{stage.characterBeat.name}</strong> · {stage.characterBeat.role}</p>
@@ -293,11 +287,11 @@ export function ExperienceRuntime({
             ) : null}
           </div>
 
-          {isMuseoZeroReview ? (
-            <MuseoZeroRoomResponse world={activeWorld} sceneId={node.id} changed={worldChangedByChoice} />
+          {review ? (
+            <review.RoomResponse world={activeWorld} sceneId={node.id} changed={worldChangedByChoice} />
           ) : null}
 
-          {isMuseoZeroReview && activeLocation && <MuseoLocation location={activeLocation.id} activeEvidenceId={activeEvidenceId} onAsk={node.id === "MZ2_RECONSTRUCT_DAY" ? setActiveEvidenceId : undefined} />}
+          {review && activeLocation && <review.Location location={activeLocation.id} activeEvidenceId={activeEvidenceId} onAsk={node.id === review.interviewScene ? setActiveEvidenceId : undefined} />}
 
           {stageEvidence.length > 0 ? (
             <section className="experience-investigation" aria-label="Indagine">
@@ -339,10 +333,7 @@ export function ExperienceRuntime({
                 <div className="experience-evidence-detail" role="status">
                   <p className="experience-panel__eyebrow">Dettaglio</p>
                   <h3>{activeEvidence.label}</h3>
-                  {isMuseoZeroReview && activeEvidence.kind === "PERSON" && museoZeroPortrait(activeEvidence.character ?? "") ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img className="mz-evidence-portrait" src={museoZeroPortrait(activeEvidence.character ?? "")!} alt={activeEvidence.character ?? ""} />
-                  ) : null}
+                  {review && activeEvidence.kind === "PERSON" ? <review.Portrait name={activeEvidence.character ?? ""} variant="evidence" /> : null}
                   <p>{activeEvidence.detail}</p>
                 </div>
               ) : null}
@@ -378,8 +369,8 @@ export function ExperienceRuntime({
               </div>
 
               {workbenchMode ? (
-                isMuseoZeroReview ? (
-                  <MuseoZeroReviewWorkbench
+                review ? (
+                  <review.Workbench
                     mode={workbenchMode}
                     sceneId={node.id}
                     evidence={pinnedEvidence}
@@ -418,8 +409,8 @@ export function ExperienceRuntime({
               <h2>{prompt}</h2>
             </div>
 
-            {requiresPrediction && <MuseoPrediction value={prediction} onChange={setPrediction} last={lastPrediction} />}
-            {isChoice && !(isMuseoZeroReview && node.id === "MZ5_COMPARE_RECOVERY" && workbenchMode === "COMPARE") ? (
+            {review && requiresPrediction && <review.PredictionPanel value={prediction} onChange={setPrediction} last={lastPrediction} />}
+            {isChoice && !(review && node.id === review.comparisonScene && workbenchMode === "COMPARE") ? (
               <div className="experience-decisions" role="group" aria-label={prompt}>
                 {transitions.map((transition) => (
                   <button
@@ -451,7 +442,7 @@ export function ExperienceRuntime({
               </p>
             ) : null}
 
-            {isMuseoZeroReview && node.id === "MZ7_QUIET_CLOSE" && <MuseoExtension key={session.sessionVersion} />}
+            {review && node.id === review.extensionScene && <review.Extension key={session.sessionVersion} />}
             <div className="experience-actions experience-actions--cinematic">
               {!node.terminal ? (
                 <button

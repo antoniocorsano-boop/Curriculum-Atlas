@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { ExperienceRuntime } from "@/features/experiences/experience-runtime";
 import type { ExperienceDefinition, ExperiencePresentation } from "@/features/experiences/model";
+import type { ReviewPresentationAdapter } from "@/features/experiences/review-presentation-adapter";
 import { LocalGrowthPanel, useLocalPathwayGrowth, type LocalGrowthAchievement } from "./local-growth-panel";
 import "./pw-missing-information-01/pathway.css";
 import type {VerifiedSceneIllustration} from "./edutwin-preview-media";
@@ -11,15 +12,7 @@ type DefinitionWithPresentations = ExperienceDefinition & {
   presentationData?: Record<string, ExperiencePresentation>;
 };
 
-export function PathwayRuntimeSurface({
-  definition,
-  title,
-  description,
-  growthAchievements = [],
-  reviewNotice,
-  verifiedIllustrations,
-  educationalInfo,
-}: {
+export type PathwayRuntimeSurfaceProps = {
   definition: DefinitionWithPresentations;
   title: string;
   description: string;
@@ -27,7 +20,12 @@ export function PathwayRuntimeSurface({
   reviewNotice?: string;
   educationalInfo?: ReactNode;
   verifiedIllustrations?: ReadonlyMap<string,VerifiedSceneIllustration>;
-}) {
+  reviewAdapter?: ReviewPresentationAdapter;
+};
+export function PathwayRuntimeSurface({
+  definition, title, description, growthAchievements = [], reviewNotice,
+  verifiedIllustrations, educationalInfo, reviewAdapter,
+}: PathwayRuntimeSurfaceProps) {
   const availablePresentations = useMemo(
     () => definition.presentationGrammarIds.filter((id) => Boolean(definition.presentationData?.[id])),
     [definition],
@@ -85,7 +83,7 @@ export function PathwayRuntimeSurface({
         />
       )}
 
-      <ExperienceRuntime definition={definition} presentation={presentation} verifiedIllustrations={verifiedIllustrations} onTransition={(nodeId, transitionId) => growth.noteOutcome(nodeId, transitionId)} />
+      <ExperienceRuntime reviewAdapter={reviewAdapter} definition={definition} presentation={presentation} verifiedIllustrations={verifiedIllustrations} onTransition={(nodeId, transitionId) => growth.noteOutcome(nodeId, transitionId)} />
 
       <details className="pathwayPrototype__privacy">
         <summary><strong>Privacy del percorso</strong></summary>

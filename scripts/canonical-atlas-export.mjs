@@ -17,6 +17,12 @@ const forbiddenMarkers = [
   "MZ-DID-0.1",
   "educational-library-review",
   "museo-zero-p3-review",
+  // Candidate-specific strings and asset/style references, including shared chunks.
+  "studio-preview-pw-strategy-selection-01-museo-zero",
+  "MZ1_FAILED_REHEARSAL", "MZ4_TEST_MAPPING", "MZ7_QUIET_CLOSE",
+  "Un museo da vivere", "Due visitatori, una sola sala",
+  "/media/museo-zero/", "mz-narrative", "mz-prediction", "mz-extension",
+  "museo-risposta-sala", "museo-mission-reminder", "MZ-NARRATIVE-01/03",
 ];
 const requiredRoutes = ["index.html", "esperienze/index.html", "percorsi/index.html",
   "materiali/index.html", "curricolo/index.html"];
