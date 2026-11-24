@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { ExperienceRuntime } from "@/features/experiences/experience-runtime";
 import type { ExperienceDefinition, ExperiencePresentation } from "@/features/experiences/model";
 import { LocalGrowthPanel, useLocalPathwayGrowth, type LocalGrowthAchievement } from "./local-growth-panel";
@@ -18,12 +18,14 @@ export function PathwayRuntimeSurface({
   growthAchievements = [],
   reviewNotice,
   verifiedIllustrations,
+  educationalInfo,
 }: {
   definition: DefinitionWithPresentations;
   title: string;
   description: string;
   growthAchievements?: LocalGrowthAchievement[];
   reviewNotice?: string;
+  educationalInfo?: ReactNode;
   verifiedIllustrations?: ReadonlyMap<string,VerifiedSceneIllustration>;
 }) {
   const availablePresentations = useMemo(
@@ -46,6 +48,7 @@ export function PathwayRuntimeSurface({
           <p className="pathwayPrototype__eyebrow">Atlas · Percorsi</p>
           <h1>{title}</h1>
           <p>{description}</p>
+          {educationalInfo}
         </div>
         <div className="pathwayPrototype__status">
           {reviewNotice ? <strong>{reviewNotice}</strong> : <strong>Sessione locale</strong>}

@@ -7,6 +7,11 @@ async function finishOpening(page: Page) {
   await expect(page.getByTestId("mz1-stage")).toHaveAttribute("data-state","3");
 }
 
+async function finishOpeningFromStepOne(page: Page) {
+  for (let i=0; i<2; i++) await page.getByRole("button", { name: "Passo successivo" }).click();
+  await expect(page.getByTestId("mz1-stage")).toHaveAttribute("data-state","3");
+}
+
 async function collectEvidence(page: Page) {
   await finishOpening(page);
   await page.getByRole("button", { name: "Continua", exact: true }).click();
@@ -37,6 +42,37 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
     await expect(page.locator('a[href*="museo-zero"]')).toHaveCount(0);
     await page.goto("/percorsi/");
     await expect(page.locator('a[href*="museo-zero"]')).toHaveCount(0);
+  });
+
+
+  test("optional educational profile is bound to the approved fascicle, excludes answers and preserves the scene", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 844 });
+    await page.goto(LAB);
+    const stage = page.getByTestId("mz1-stage");
+    await page.getByRole("button", { name: "Passo successivo" }).click();
+    await expect(stage).toHaveAttribute("data-state", "1");
+    const trigger = page.getByRole("button", { name: "Il progetto educativo" });
+    const dialog = page.getByTestId("museo-educational-info");
+    await expect(dialog).not.toBeVisible();
+    await trigger.click();
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toHaveAttribute("data-document-version", "MZ-DID-0.1");
+    await expect(dialog).toHaveAttribute("data-experience-version", "P3-REVIEW-1");
+    await expect(dialog).toHaveAttribute("data-student-authorized", "false");
+    await expect(dialog).toContainText("Finalità e competenze");
+    await expect(dialog).toContainText("PROVISIONAL_COMPLETE");
+    await expect(dialog).not.toContainText(/Sensor [AB]|mappatura [AB]|raccomandazione attesa|soluzioni riservate/i);
+    await expect(dialog.locator("a[href]")).toHaveCount(0);
+    expect(await dialog.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+    await page.keyboard.press("Escape");
+    await expect(dialog).not.toBeVisible();
+    await expect(trigger).toBeFocused();
+    await expect(stage).toHaveAttribute("data-state", "1");
+    await finishOpeningFromStepOne(page);
+    await page.getByRole("button", { name: "Continua", exact: true }).click();
+    await trigger.click();
+    await dialog.getByRole("button", { name: "Chiudi", exact: true }).click();
+    await expect(page.locator('[data-node="MZ2_RECONSTRUCT_DAY"]')).toBeVisible();
   });
 
   test("first failed rehearsal shows observable delayed room, not just status cards", async ({ page }) => {
