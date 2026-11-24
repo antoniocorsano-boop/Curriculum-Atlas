@@ -213,6 +213,7 @@ export function ExperienceRuntime({
 
   if (stage) {
     const contextualLocation = Boolean(review && activeLocation && node.id === review.interviewScene);
+    const illustratedScene = Boolean(illustration && stageEvidence.some(item=>item.hotspot));
     return (
       <section
         className="experience-runtime experience-runtime--cinematic"
@@ -227,7 +228,7 @@ export function ExperienceRuntime({
           </div>
 
           {review && !review.missionHiddenScenes.includes(node.id) ? <review.Mission /> : null}
-          <div className="experience-cinema__world" data-world-changed={worldChangedByChoice || undefined}>
+          <div className="experience-cinema__world" data-illustrated-scene={illustratedScene || undefined} data-world-changed={worldChangedByChoice || undefined}>
             <div className="experience-cinema__atmosphere" aria-hidden="true" />
             <div className="experience-cinema__projection" aria-hidden="true" />
             <div className="experience-cinema__floorline" aria-hidden="true" />

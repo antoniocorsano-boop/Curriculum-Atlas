@@ -128,3 +128,15 @@
 .experience-hotspot-point[aria-pressed=true]{background:#f1c975;color:#172e28;border-color:#172e28}
 .experience-hotspot-point:focus-visible{outline:3px solid #f1c975;outline-offset:3px}
 .experience-hotspot-figure figcaption,.experience-hotspot-figure p{margin:12px 0 0;overflow-wrap:anywhere}
+
+/* ESS-01B-R1: reserve real layout space for all overlays in illustrated scenes.
+   The 24px inset preserves complete 44px targets even at coordinates 0 and 100. */
+.experience-cinema__world[data-illustrated-scene="true"]{display:grid;gap:16px;min-height:0;padding:clamp(16px,3vw,32px);overflow-wrap:anywhere}
+.experience-cinema__world[data-illustrated-scene="true"] .experience-cinema__copy{max-width:none;padding:0;min-width:0}
+.experience-cinema__world[data-illustrated-scene="true"] .experience-cinema__copy h1{max-width:none}
+.experience-cinema__world[data-illustrated-scene="true"] :is(.experience-cinema__projection,.experience-cinema__floorline){display:none}
+.experience-cinema__world[data-illustrated-scene="true"] :is(.experience-locations,.experience-causal-rail,.experience-character){position:relative;inset:auto;width:auto;max-width:none;min-width:0;margin:0;z-index:2}
+.experience-cinema__world[data-illustrated-scene="true"] .experience-causal-rail__signal:nth-child(n+4){display:grid}
+.experience-cinema__world[data-illustrated-scene="true"] .experience-hotspot-figure{margin:0;padding:24px;min-width:0}
+.experience-cinema__world[data-illustrated-scene="true"] .experience-location{min-width:0}
+@media(max-width:430px){.experience-cinema__world[data-illustrated-scene="true"] .experience-locations{grid-template-columns:minmax(0,1fr)}}
