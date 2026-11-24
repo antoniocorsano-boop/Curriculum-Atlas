@@ -2,6 +2,7 @@
 
 import type { ExperienceStageEvidence, ExperienceTransition, ExperienceWorkbenchMode, ExperienceWorldState, ExperienceWorldSignalState } from "./model";
 import "./museo-zero-revision-surfaces.css";
+import {museoOutcome} from "./museo-zero-investigation";
 
 type ReviewTransition = ExperienceTransition & { key: string };
 
@@ -14,11 +15,7 @@ export function MuseoZeroRoomResponse({
   world, sceneId, changed,
 }: { world?: ExperienceWorldState; sceneId: string; changed: boolean }) {
   if (!["MZ1_FAILED_REHEARSAL", "MZ4_TEST_MAPPING", "MZ6_FINAL_REHEARSAL", "MZ7_QUIET_CLOSE"].includes(sceneId)) return null;
-  const projection = world?.signals.find(signal => signal.id === "projection");
-  const manual = world?.signals.some(signal => signal.state === "MANUAL");
-  const outputStable = projection?.state === "STABLE" ||
-    world?.signals.some(signal => (signal.id === "sequence" || signal.id === "room") && signal.state === "STABLE");
-  const outcome = manual ? "manual" : outputStable ? "stable" : "delayed";
+  const outcome = museoOutcome(world);
   const result = outcome === "stable"
     ? "La parete si illumina mentre il visitatore attraversa il nuovo ingresso. Suono e luce seguono la stessa sequenza."
     : outcome === "manual"
@@ -31,6 +28,11 @@ export function MuseoZeroRoomResponse({
         <span>Dentro Sala Zero</span>
         <strong>{changed ? "La sala dopo la prova" : "La sala prima della prova"}</strong>
       </div>
+      <figure className="mz-room-reference">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/media/museo-zero/narrative-v1/sala.webp" alt="Sala Zero, ambiente illustrato di riferimento" loading="lazy"/>
+        <figcaption>Sala Zero · immagine di riferimento. Lo schema qui sotto mostra l’esito della prova simulata.</figcaption>
+      </figure>
       <div className="museo-response__world" aria-hidden="true">
         <div className="museo-response__path"><span>Nuovo ingresso</span><span className="museo-response__visitor" /></div>
         <div className="museo-response__sensor"><span className="museo-response__sensor-light" /><span>Sensor B</span></div>

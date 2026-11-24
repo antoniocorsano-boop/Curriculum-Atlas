@@ -52,6 +52,7 @@ export function MuseoZeroEducationalInfo({ snapshot }: { snapshot: EducationalIn
             <div key={section.title}><dt>{section.title}</dt><dd>{section.text}</dd></div>
           ))}
         </dl>
+        <section data-testid="mz-didactic-supplement"><h3>Supplemento progettuale in revisione · MZ-NARRATIVE-01/03</h3><p>Il racconto introduce il ruolo del discente; i dialoghi aprono le testimonianze, la previsione precede la prova e il confronto tra previsione ed esito invita a rivedere la spiegazione. Dopo la conclusione è disponibile un caso facoltativo di trasferimento, senza punteggio né registrazione. Obiettivi osservabili: distinguere indizi, motivare ipotesi, confrontare risultati e adattare la rappresentazione alla domanda. Il supplemento non sostituisce l’edizione approvata MZ-DID-0.1.</p></section>
         <p className="mz-educational-info__edition">Edizione documentale {educationalProfile.documentVersion} · Esperienza {educationalProfile.experienceVersion}</p>
       </dialog>
     </div>

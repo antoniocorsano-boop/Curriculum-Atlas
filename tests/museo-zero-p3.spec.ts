@@ -182,6 +182,20 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
     await expect(stage).toHaveAttribute("data-state","0");
   });
 
+  test("location and character questions reveal the canonical clues without pinning them",async({page})=>{
+    await page.goto(LAB); await enterTrial(page); await finishOpening(page);
+    await page.getByRole("button",{name:"Raccogli gli indizi",exact:true}).click();
+    const location=page.getByTestId("mz-location");
+    await expect(location).toHaveAttribute("data-location","entry");
+    await location.getByRole("button",{name:"Perché avete cambiato il percorso?"}).click();
+    await expect(page.locator(".experience-evidence-detail")).toContainText("Lia conferma");
+    await expect(page.getByText("0 indizi sul banco")).toBeVisible();
+    await page.getByRole("navigation",{name:"Luoghi del percorso"}).getByRole("button",{name:/Cabina regia/}).click();
+    await expect(location.locator("figure img")).toHaveAttribute("src","/media/museo-zero/narrative-v1/regia.webp");
+    await location.getByRole("button",{name:"Che cosa è successo durante la prova?"}).click();
+    await expect(page.locator(".experience-evidence-detail")).toContainText("Il cue parte regolarmente");
+  });
+
   test("investigation can be followed in non-fixed order, with evidence pinned and timeline reordered", async ({ page }) => {
     await page.goto(LAB);
     await enterTrial(page);
@@ -239,6 +253,7 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
     await next.click();
     // The canonical CONNECTIONS choice leads directly to the mapping trial.
     await expect(page.locator('[data-node="MZ4_TEST_MAPPING"]')).toBeVisible();
+    await page.getByRole("button",{name:"La sala risponde al passaggio senza intervento umano",exact:true}).click();
     await page.getByRole("button", { name: "Provo il trigger su Sensor B" }).click();
     await page.getByRole("button", { name: "Continua dalla conseguenza" }).click();
     await expect(page.locator('[data-node="MZ5_COMPARE_RECOVERY"]')).toBeVisible();
@@ -256,12 +271,18 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
     await page.locator(".experience-decision").getByRole("button", { name: "Continua" }).click();
     await expect(page.locator('[data-node="MZ4_TEST_MAPPING"]')).toBeVisible();
     await expect(page.getByTestId("museo-risposta-sala")).toHaveAttribute("data-outcome", "delayed");
+    await expect(page.getByRole("button", {name:"Provo il trigger su Sensor B"})).toBeDisabled();
+    await page.getByRole("button",{name:"La risposta arriva in ritardo",exact:true}).click();
     await page.getByRole("button", { name: "Provo il trigger su Sensor B" }).click();
     await expect(page.getByTestId("museo-risposta-sala")).toHaveAttribute("data-outcome", "stable");
     await expect(page.getByTestId("museo-risposta-sala")).toHaveAttribute("data-after-choice", "true");
+    await expect(page.getByTestId("mz-prediction-result")).toContainText("non coincide");
+    await expect(page.getByRole("button", {name:"Provo un cue manuale"})).toBeDisabled();
     await expect(page.getByTestId("museo-risposta-sala")).toContainText("parete si illumina");
+    await page.getByRole("button",{name:"La risposta dipende dall’operatore",exact:true}).click();
     await page.getByRole("button", { name: "Provo un cue manuale" }).click();
     await expect(page.getByTestId("museo-risposta-sala")).toHaveAttribute("data-outcome", "manual");
+    await page.getByRole("button",{name:"La sala risponde al passaggio senza intervento umano",exact:true}).click();
     await page.getByRole("button", { name: "Provo il trigger su Sensor B" }).click();
     await page.getByRole("button", { name: "Continua dalla conseguenza" }).click();
     await expect(page.locator('[data-node="MZ5_COMPARE_RECOVERY"]')).toBeVisible();
@@ -273,6 +294,7 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
     await collectEvidence(page);
     await page.getByRole("button", { name: "Collega", exact: true }).click();
     await page.locator(".experience-decision").getByRole("button", { name: "Continua" }).click();
+    await page.getByRole("button",{name:"La sala risponde al passaggio senza intervento umano",exact:true}).click();
     await page.getByRole("button", { name: "Provo il trigger su Sensor B" }).click();
     await page.getByRole("button", { name: "Continua dalla conseguenza" }).click();
     await expect(page.locator('[data-node="MZ5_COMPARE_RECOVERY"]')).toBeVisible();
@@ -290,6 +312,11 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
     await expect(page.getByTestId("museo-risposta-sala")).toHaveAttribute("data-outcome", "stable");
     await page.getByRole("button", { name: "Continua" }).click();
     await expect(page.locator('[data-node="MZ7_QUIET_CLOSE"]')).toBeVisible();
+    await page.getByRole("button",{name:"Esplora un nuovo caso"}).click();
+    await page.getByRole("button",{name:"Metto in fila ingressi e risposte"}).click();
+    await expect(page.getByTestId("mz-extension")).toContainText("Ti manca ancora");
+    await page.getByLabel("Quale prova faresti per ottenere l’informazione mancante?").fill("Confronto i due ingressi.");
+    await page.getByRole("button",{name:"Chiudi approfondimento"}).click();
     await page.getByRole("button", { name: "Ricomincia" }).click();
     await expect(page.locator('[data-node="MZ1_FAILED_REHEARSAL"]')).toBeVisible();
   });

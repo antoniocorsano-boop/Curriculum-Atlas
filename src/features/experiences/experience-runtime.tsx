@@ -13,6 +13,7 @@ import "./experience-runtime.css";
 import { MuseoZeroOpening, museoZeroMission } from "./museo-zero-opening";
 import { museoZeroPortrait } from "./museo-zero-narrative";
 import { MuseoZeroRoomResponse, MuseoZeroReviewWorkbench } from "./museo-zero-revision-surfaces";
+import { MuseoLocation, MuseoPrediction, MuseoExtension, museoOutcome, type Prediction } from "./museo-zero-investigation";
 import type {VerifiedSceneIllustration} from "../pathways/edutwin-preview-media";
 
 type ResolvedTransition = ExperienceTransition & { key: string };
@@ -53,6 +54,8 @@ export function ExperienceRuntime({
   const [workbenchMode, setWorkbenchMode] = useState<ExperienceWorkbenchMode | null>(null);
   const [evidenceConnections, setEvidenceConnections] = useState<Array<{ from: string; to: string }>>([]);
   const [connectionOriginId, setConnectionOriginId] = useState<string | null>(null);
+  const [prediction, setPrediction] = useState<Prediction | "">("");
+  const [lastPrediction, setLastPrediction] = useState<{prediction:Prediction; observed:Prediction} | null>(null);
   const isMuseoZeroReview = definition.experienceId === "studio-preview-pw-strategy-selection-01-museo-zero";
 
   const view = node ? presentation?.nodes[node.id] : undefined;
@@ -73,6 +76,8 @@ export function ExperienceRuntime({
   useEffect(() => {
     setPendingTransition(null);
     setChoiceFeedback("");
+    setPrediction("");
+    setLastPrediction(null);
     setActiveEvidenceId("");
     setWorkbenchMode(null);
     if (node?.stage?.evidence?.length) {
@@ -141,7 +146,13 @@ export function ExperienceRuntime({
     setConnectionOriginId(null);
   }
 
+  const requiresPrediction = isMuseoZeroReview && node.id === "MZ4_TEST_MAPPING";
   function selectTransition(transition: ResolvedTransition) {
+    if (requiresPrediction) {
+      if (!prediction) return;
+      setLastPrediction({prediction, observed:museoOutcome(transition.worldAfter)});
+      setPrediction("");
+    }
     setPendingTransition(transition);
     setChoiceFeedback(
       transition.feedback ?? node!.feedbackCategory.replaceAll("_", " ").toLowerCase(),
@@ -286,6 +297,8 @@ export function ExperienceRuntime({
             <MuseoZeroRoomResponse world={activeWorld} sceneId={node.id} changed={worldChangedByChoice} />
           ) : null}
 
+          {isMuseoZeroReview && activeLocation && <MuseoLocation location={activeLocation.id} activeEvidenceId={activeEvidenceId} onAsk={node.id === "MZ2_RECONSTRUCT_DAY" ? setActiveEvidenceId : undefined} />}
+
           {stageEvidence.length > 0 ? (
             <section className="experience-investigation" aria-label="Indagine">
               <header>
@@ -405,6 +418,7 @@ export function ExperienceRuntime({
               <h2>{prompt}</h2>
             </div>
 
+            {requiresPrediction && <MuseoPrediction value={prediction} onChange={setPrediction} last={lastPrediction} />}
             {isChoice && !(isMuseoZeroReview && node.id === "MZ5_COMPARE_RECOVERY" && workbenchMode === "COMPARE") ? (
               <div className="experience-decisions" role="group" aria-label={prompt}>
                 {transitions.map((transition) => (
@@ -413,7 +427,7 @@ export function ExperienceRuntime({
                     type="button"
                     aria-pressed={pendingTransition?.key === transition.key}
                     onClick={() => selectTransition(transition)}
-                    disabled={!workbenchReady}
+                    disabled={!workbenchReady || (requiresPrediction && !prediction)}
                   >
                     {transition.label ?? "Scegli"}
                   </button>
@@ -437,6 +451,7 @@ export function ExperienceRuntime({
               </p>
             ) : null}
 
+            {isMuseoZeroReview && node.id === "MZ7_QUIET_CLOSE" && <MuseoExtension key={session.sessionVersion} />}
             <div className="experience-actions experience-actions--cinematic">
               {!node.terminal ? (
                 <button

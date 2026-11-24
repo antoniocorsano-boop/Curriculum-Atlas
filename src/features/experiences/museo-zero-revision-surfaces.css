@@ -172,3 +172,5 @@
 @media(prefers-reduced-motion: reduce) {
   .museo-response *, .museo-response *::before, .museo-response *::after {transition: none !important;animation: none !important;}
 }
+
+.mz-room-reference{margin:0;min-width:0}.mz-room-reference img{width:100%;height:auto;display:block;border-radius:9px}.mz-room-reference figcaption{font-size:.8rem;color:#e6d3b8;padding:5px 0}
