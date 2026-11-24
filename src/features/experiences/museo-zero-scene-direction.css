@@ -50,3 +50,18 @@
   .mz-scene-directed .experience-cinema__world *::before,
   .mz-scene-directed .experience-cinema__world *::after { animation: none !important; transition: none !important; }
 }
+
+/* Contextual discovery: hotspot is anchored to the image frame, not the whole page. */
+.mz-scene-directed .mz-location__image { position: relative; }
+.mz-scene-directed .mz-location__hotspot {
+  position: absolute; right: 8px; bottom: 8px; display: inline-flex;
+  gap: 8px; align-items: center; min-height: 44px; max-width: calc(100% - 16px);
+  background: #14232e; border: 2px solid #efbf80; color: #fff;
+  border-radius: 999px; padding: 8px 14px; font-weight: 700;
+}
+.mz-scene-directed .mz-location__hotspot span { font-size: 1.25em; }
+.mz-scene-directed .mz-location__hotspot[aria-pressed=true] { background: #efbf80; color: #16222b; }
+.mz-relation-map { min-width: 0; }
+.mz-relation-map__canvas { height: 300px; width: 100%; min-width: 0; border: 1px solid #83958e; border-radius: 10px; overflow: hidden; background: #f8fbf8; }
+.mz-relation-map .react-flow__node { font-size: 12px; color: #18332d; }
+.mz-relation-map p { margin: 6px 0; line-height: 1.45; }

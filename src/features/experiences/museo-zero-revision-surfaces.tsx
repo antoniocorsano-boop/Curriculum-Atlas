@@ -3,6 +3,7 @@
 import type { ExperienceStageEvidence, ExperienceTransition, ExperienceWorkbenchMode, ExperienceWorldState, ExperienceWorldSignalState } from "./model";
 import "./museo-zero-revision-surfaces.css";
 import {museoOutcome} from "./museo-zero-investigation";
+import { EvidenceRelationMap } from "./evidence-relation-map";
 
 type ReviewTransition = ExperienceTransition & { key: string };
 
@@ -103,6 +104,7 @@ export function MuseoZeroReviewWorkbench({
       {mode === "TIMELINE" && <p className="museo-bench__intro">Disponi gli indizi in una sequenza: usa le frecce per cambiare l&apos;ordine. La cronologia chiarisce quando si sono verificati i cambiamenti, ma potrebbe non bastare a spiegarne la causa.</p>}
       {mode === "CONNECTIONS" && <p className="museo-bench__intro">Scegli un indizio e poi un secondo per costruire un collegamento. Il modello è tuo: sperimenta relazioni tra percorso, sensore e regia.</p>}
       {mode === "COMPARE" && <p className="museo-bench__intro">Confronta le prove raccolte. Alcuni cambiamenti possono essere reali senza aver provocato il ritardo.</p>}
+      {mode === "CONNECTIONS" && <EvidenceRelationMap evidence={evidence} connections={visibleConnections} origin={connectionOrigin} onSelect={onJoin} />}
       <div className="museo-bench__evidence" role="list">
         {evidence.map((item, index) => (
           <div className="museo-bench__item" role="listitem" key={item.id}>

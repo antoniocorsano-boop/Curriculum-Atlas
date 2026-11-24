@@ -454,3 +454,28 @@ test("MZ-UX-01 — directed investigation regions do not overlap", async ({page}
     }
   }
 });
+
+
+test("MZ-UX-02 — image action and React Flow share the canonical evidence state", async ({page}) => {
+  await page.setViewportSize({width:390,height:844});
+  await page.goto(LAB);
+  await enterTrial(page);
+  await collectEvidence(page);
+  await page.getByRole("navigation",{name:"Luoghi del percorso"}).getByRole("button",{name:/Ingresso/}).click();
+  await page.getByTestId("mz-location").getByRole("button",{name:"Incontra Lia",exact:true}).click();
+  await expect(page.locator(".experience-evidence-detail")).toContainText("Lia conferma");
+  await expect(page.getByText("3 indizi sul banco")).toBeVisible();
+  await page.getByRole("button",{name:"Collega",exact:true}).click();
+  const map=page.getByTestId("mz-relation-map");
+  await expect(map).toHaveAttribute("data-node-count","3");
+  await expect(map.locator(".react-flow__node")).toHaveCount(3);
+  await map.locator(".react-flow__node").first().click();
+  await map.locator(".react-flow__node").last().click();
+  await expect(map).toHaveAttribute("data-edge-count","1");
+  await expect(map.locator(".react-flow__edge")).toHaveCount(1);
+  const clue=page.locator(".experience-evidence").filter({hasText:"Percorso invertito"});
+  await clue.getByRole("button",{name:"Sul banco",exact:true}).click();
+  await expect(map).toHaveAttribute("data-node-count","2");
+  await expect(map).toHaveAttribute("data-edge-count","0");
+  await expect(page.locator(".experience-decision").getByRole("button",{name:"Continua",exact:true})).toBeDisabled();
+});

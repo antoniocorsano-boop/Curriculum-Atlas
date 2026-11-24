@@ -21,8 +21,11 @@ export function MuseoLocation({location,onAsk,activeEvidenceId}:{location:string
  const scene=locations[location];if(!scene)return null;
  return <section className="mz-location" data-testid="mz-location" data-location={location} aria-label="Ambiente dell’indagine">
    <figure>
-     {/* eslint-disable-next-line @next/next/no-img-element */}
-     <img src={base+scene.image+".webp"} alt={scene.alt} loading="lazy"/>
+     <div className="mz-location__image">
+       {/* eslint-disable-next-line @next/next/no-img-element */}
+       <img src={base+scene.image+".webp"} alt={scene.alt} loading="lazy"/>
+       {scene.person && scene.evidence && onAsk && <button type="button" className="mz-location__hotspot" aria-label={"Incontra "+scene.person} aria-pressed={activeEvidenceId===scene.evidence} onClick={()=>onAsk(scene.evidence!)}><span aria-hidden="true">+</span> {scene.person}</button>}
+     </div>
      <figcaption>{location==="lab"?"La squadra al lavoro":location==="entry"?"Ingresso della galleria":location==="control"?"Cabina di regia":"Dentro Sala Zero"} · ambiente illustrato</figcaption>
    </figure>
    {scene.person&&scene.evidence&&onAsk&&<div className="mz-location__dialogue">
