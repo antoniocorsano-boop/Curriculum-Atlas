@@ -10,6 +10,7 @@ import type {
 } from "./model";
 import { useExperienceSession } from "./use-experience-session";
 import "./experience-runtime.css";
+import { MuseoZeroOpening } from "./museo-zero-opening";
 import { MuseoZeroRoomResponse, MuseoZeroReviewWorkbench } from "./museo-zero-revision-surfaces";
 import type {VerifiedSceneIllustration} from "../pathways/edutwin-preview-media";
 
@@ -184,6 +185,14 @@ export function ExperienceRuntime({
       const transition = transitions.find((candidate) => candidate.key === transitionId || candidate.id === transitionId);
       if (transition) selectTransition(transition);
     }
+  }
+
+  if (isMuseoZeroReview && node.id === "MZ1_FAILED_REHEARSAL") {
+    return (
+      <div className="experience-runtime" data-session={session.sessionVersion} data-node={node.id}>
+        <MuseoZeroOpening key={session.sessionVersion} title={title} headingRef={headingRef} onContinue={proceed} />
+      </div>
+    );
   }
 
   if (stage) {

@@ -2,7 +2,13 @@ import { test, expect, type Page } from "@playwright/test";
 
 const LAB = "/experience-lab/museo-zero/";
 
+async function finishOpening(page: Page) {
+  for (let i=0; i<3; i++) await page.getByRole("button", { name: "Passo successivo" }).click();
+  await expect(page.getByTestId("mz1-stage")).toHaveAttribute("data-state","3");
+}
+
 async function collectEvidence(page: Page) {
+  await finishOpening(page);
   await page.getByRole("button", { name: "Continua", exact: true }).click();
   await expect(page.locator('[data-node="MZ2_RECONSTRUCT_DAY"]')).toBeVisible();
   const room = page.locator(".experience-runtime--cinematic");
@@ -36,9 +42,22 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
   test("first failed rehearsal shows observable delayed room, not just status cards", async ({ page }) => {
     await page.goto(LAB);
     await expect(page.getByTestId("museo-risposta-sala")).toHaveAttribute("data-outcome", "delayed");
+    const stage = page.getByTestId("mz1-stage");
+    await expect(stage).toHaveAttribute("data-state","0");
+    await expect.poll(() => stage.locator("img").evaluateAll(imgs => imgs.every(img => (img as HTMLImageElement).complete && (img as HTMLImageElement).naturalWidth > 0))).toBe(true);
+    await expect(page.getByRole("button", {name:"Continua",exact:true})).toHaveCount(0);
+    await page.getByRole("button", {name:"Passo successivo"}).click();
+    await expect(stage).toHaveAttribute("data-state","1");
+    await expect(stage.locator(".mz-opening__projection")).toHaveCSS("opacity","0");
+    await page.getByRole("button", {name:"Passo successivo"}).click();
     await expect(page.getByTestId("museo-risposta-sala")).toContainText("parete rimane spenta");
-    await expect(page.locator(".museo-response__projection")).toBeVisible();
-    await expect(page.getByRole("navigation", { name: "Luoghi del percorso" }).getByRole("button")).toHaveCount(4);
+    await page.getByRole("button", {name:"Passo successivo"}).click();
+    await expect(stage.locator(".mz-opening__projection")).toHaveCSS("opacity","1");
+    await expect(stage.getByRole("button")).toHaveCount(3);
+    await stage.getByRole("button",{name:"Esamina: Sensore B"}).click();
+    await expect(page.getByRole("heading",{name:"Sensore B"})).toBeVisible();
+    await page.getByRole("button",{name:"Ricomincia prova"}).click();
+    await expect(stage).toHaveAttribute("data-state","0");
   });
 
   test("investigation can be followed in non-fixed order, with evidence pinned and timeline reordered", async ({ page }) => {
@@ -117,6 +136,7 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
       if (!["127.0.0.1", "localhost"].includes(u.hostname)) externals.push(request.url());
     });
     await page.goto(LAB);
+    await finishOpening(page);
     await page.getByRole("button", { name: "Continua" }).click();
     await expect(page.locator('input[type="email"], input[type="password"]')).toHaveCount(0);
     expect(writes).toEqual([]);
@@ -144,7 +164,9 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(LAB);
     await expect(page.getByTestId("museo-risposta-sala")).toHaveAttribute("data-outcome", "delayed");
-    const anim = await page.locator(".museo-response__projection-core").evaluate(el => getComputedStyle(el).animationName);
-    expect(anim).toBe("none");
+    const transition = await page.locator(".mz-opening__visitor").evaluate(el => getComputedStyle(el).transitionDuration);
+    expect(transition).toBe("0s");
+    await finishOpening(page);
+    await expect(page.getByRole("button",{name:"Continua",exact:true})).toBeVisible();
   });
 });

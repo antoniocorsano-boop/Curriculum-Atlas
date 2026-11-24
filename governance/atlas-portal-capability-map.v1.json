@@ -255,14 +255,18 @@
         "src/features/experiences/museo-zero-revision-surfaces.css",
         "src/features/experiences/experience-runtime.tsx",
         "src/features/pathways/studio-atlas-preview-adapter.ts",
-        "tests/museo-zero-p3.spec.ts"
+        "tests/museo-zero-p3.spec.ts",
+        "src/features/experiences/museo-zero-opening.tsx",
+        "src/features/experiences/museo-zero-opening.css",
+        "public/media/museo-zero/sala-zero-r1.webp",
+        "public/media/museo-zero/visitatore-r1.webp"
       ],
       "externalRefs": [
         "https://github.com/antoniocorsano-boop/trama-ecosistema/blob/main/docs/capabilities/atlas-percorsi/pathways/PW-STRATEGY-SELECTION-01/worlds/MUSEO-ZERO/world-brief-v1.md",
         "https://github.com/antoniocorsano-boop/trama-ecosistema/blob/main/products/studio-atlas/lib/canonical/museo-zero.ts",
         "https://github.com/antoniocorsano-boop/trama-ecosistema/blob/main/docs/capabilities/atlas-percorsi/pathways/PW-STRATEGY-SELECTION-01/worlds/MUSEO-ZERO/HUMAN-PRODUCT-REVIEW-v0.1.md"
       ],
-      "next": "Bloccare promozione P3 e nuove presentazioni della medesima interfaccia. Ripartire dalla regia dell'esperienza: primo piano d'ambiente continuo, un'azione contestuale per volta, investigazione guidata dall'osservazione e non da testi/indicatori; collaudo fisico e Human Product Review prima di eventuale riattivazione. Non confondere 32/32 prove con qualità del prodotto.",
+      "next": "MZ1: campione 2.5D nel runtime P3, fondale R1 approvato; collaudare build e regressioni, poi Android reale e Human Product Review. Personaggi originali da recuperare; mantenere la promozione bloccata e non estendere le altre scene prima della prova.",
       "evidenceRefs": [
         {
           "sourceBlob": "27037f3af1e12b660e9108d2eaf6be32f1a42f48",
