@@ -60,4 +60,4 @@ jobs:
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
       - name: Browser conformance
-        run: pnpm exec playwright test tests/experience-runtime.spec.ts --project=chromium
+        run: pnpm exec playwright test tests/experience-runtime.spec.ts tests/museo-zero-p3.spec.ts --project=chromium
