@@ -1,0 +1,16 @@
+.educational-library{min-width:0;color:#173045;display:grid;gap:18px;border:1px solid #d8e4e4;border-radius:18px;background:#fff;padding:clamp(18px,4vw,32px);overflow-wrap:anywhere}
+.educational-library h2,.educational-library h3{font:400 clamp(24px,3vw,34px)/1.2 Georgia,serif;margin:5px 0;color:inherit}
+.educational-library h3{font-size:24px}
+.educational-library p{line-height:1.6;margin:5px 0;color:#435b69}
+.educational-library__eyebrow{font-size:12px;font-weight:700;color:#315f65!important}
+.educational-library__edition{font-size:12px}
+.educational-library__filters,.educational-library__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.educational-library__filters label{display:grid;gap:6px;font-weight:600;min-width:0}
+.educational-library input,.educational-library select{min-height:44px;width:100%;box-sizing:border-box;min-width:0;padding:9px;border:1px solid #778c96;border-radius:8px;background:#fff;color:#173045;font:inherit}
+.educational-library__card{min-width:0;border:1px solid #cddcdb;background:#f6faf8;border-radius:12px;padding:18px}
+.educational-library summary{cursor:pointer;min-height:44px;padding-block:10px;font-weight:700;color:#245c62}
+.educational-library dt{font-weight:700;margin-top:10px}
+.educational-library dd{margin:4px 0;line-height:1.55}
+.educational-library a{color:#245c62;text-decoration:underline;display:inline-block;min-height:44px;padding-block:10px}
+.educational-library :is(a,input,select,summary):focus-visible{outline:3px solid #9e6a29;outline-offset:3px}
+@media(max-width:700px){.educational-library__filters,.educational-library__grid{grid-template-columns:1fr}}

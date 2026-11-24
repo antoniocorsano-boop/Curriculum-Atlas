@@ -112,9 +112,14 @@
       "learnerRuntimeAuthorization": "NOT_APPLICABLE",
       "sourcePaths": [
         "src/app/esperienze/page.tsx",
-        "src/app/esperienze/esperienze.module.css"
+        "src/app/esperienze/esperienze.module.css",
+        "src/features/experiences/educational-library.ts",
+        "src/features/experiences/educational-library-view.tsx",
+        "src/features/experiences/educational-library.css",
+        "src/app/experience-lab/biblioteca/page.tsx",
+        "tests/museo-zero-p3.spec.ts"
       ],
-      "next": "Catalogo attualmente vuoto: collegare in seguito solo esperienze con approvazione e autorizzazione esplicite, senza esporre laboratori o anteprime private"
+      "next": "Biblioteca educativa documentata: proiezione pubblica filtrata dal portfolio esistente, prototipo di revisione separato. Qualificare consultazione, filtri, corrispondenza della documentazione e esclusione di candidate/ritirate. Collegare altre famiglie soltanto tramite autorità di pubblicazione verificata; nessuna autorizzazione implicita."
     },
     {
       "id": "explore-relations",
@@ -259,7 +264,10 @@
         "src/features/experiences/museo-zero-opening.tsx",
         "src/features/experiences/museo-zero-opening.css",
         "public/media/museo-zero/sala-zero-r1.webp",
-        "public/media/museo-zero/visitatore-r1.webp"
+        "public/media/museo-zero/visitatore-r1.webp",
+        "src/features/experiences/museo-zero-educational-profile.ts",
+        "src/features/experiences/museo-zero-educational-info.tsx",
+        "src/features/experiences/museo-zero-educational-info.css"
       ],
       "externalRefs": [
         "https://github.com/antoniocorsano-boop/trama-ecosistema/blob/main/docs/capabilities/atlas-percorsi/pathways/PW-STRATEGY-SELECTION-01/worlds/MUSEO-ZERO/world-brief-v1.md",

@@ -3,6 +3,10 @@ import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, BookOpen, Compass, FlaskConical, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/atlas/app-shell";
 import styles from "./esperienze.module.css";
+import { EducationalLibrary } from "@/features/experiences/educational-library-view";
+import { loadDocumentedPublicPathways } from "@/features/experiences/educational-library";
+import portfolio from "../../../governance/percorsi-portfolio.json";
+import type { PublicPathwaySource } from "@/features/pathways/load-public-pathways";
 
 export const metadata: Metadata = {
   title: "Esperienze · Atlas",
@@ -31,6 +35,7 @@ const forms = [
 ] as const;
 
 export default function ExperiencesPage() {
+  const documented = loadDocumentedPublicPathways(portfolio.pathways as PublicPathwaySource[]);
   return (
     <AppShell>
       <div className={styles.page} data-testid="atlas-portale-esperienze">
@@ -59,6 +64,8 @@ export default function ExperiencesPage() {
           </div>
         </header>
 
+        <EducationalLibrary items={documented} />
+
         <section className={styles.forms} aria-labelledby="esperienze-forme">
           <div className={styles.sectionIntro}>
             <span className={styles.eyebrow}>Tre modi di vivere una scoperta</span>
@@ -76,7 +83,7 @@ export default function ExperiencesPage() {
           </div>
         </section>
 
-        <section className={styles.emptyState} aria-labelledby="esperienze-disponibilita" data-testid="esperienze-non-disponibili">
+        {documented.length === 0 && <section className={styles.emptyState} aria-labelledby="esperienze-disponibilita" data-testid="esperienze-non-disponibili">
           <div>
             <span className={styles.eyebrow}>Prima della partenza</span>
             <h2 id="esperienze-disponibilita">Le prime esperienze sono ancora in preparazione.</h2>
@@ -94,7 +101,7 @@ export default function ExperiencesPage() {
               Cerca materiali <ArrowUpRight size={17} aria-hidden="true" />
             </Link>
           </div>
-        </section>
+        </section>}
       </div>
     </AppShell>
   );

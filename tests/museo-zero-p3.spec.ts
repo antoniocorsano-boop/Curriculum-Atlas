@@ -34,7 +34,7 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
     expect(response?.status()).toBe(200);
     await expect(page.getByTestId("museo-zero-p3-review")).toHaveAttribute("data-student-authorized", "false");
     await expect(page.getByTestId("museo-zero-p3-review")).toHaveAttribute("data-runtime-authorized", "false");
-    await expect(page.getByText(/Solo revisione professionale/)).toBeVisible();
+    await expect(page.getByTestId("museo-review-notice").getByText(/Solo revisione professionale/)).toBeVisible();
     await expect(page.getByText(/Revisione prodotto: REVISE|controllo umano del prodotto è ancora REVISE/)).toBeVisible();
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
     await expect(page.locator('[data-node="MZ1_FAILED_REHEARSAL"]')).toBeVisible();
@@ -73,6 +73,36 @@ test.describe("P3 — MUSEO ZERO · review-only canonical derivative", () => {
     await trigger.click();
     await dialog.getByRole("button", { name: "Chiudi", exact: true }).click();
     await expect(page.locator('[data-node="MZ2_RECONSTRUCT_DAY"]')).toBeVisible();
+  });
+
+
+  test("public library excludes candidates and review library exposes a documented preview with working filters", async ({ page }) => {
+    await page.goto("/esperienze/");
+    const publicLibrary = page.getByTestId("atlas-educational-library");
+    await expect(publicLibrary).toBeVisible();
+    await expect(publicLibrary.getByTestId("educational-library-empty")).toBeVisible();
+    await expect(publicLibrary).not.toContainText("Museo Zero");
+    await expect(publicLibrary.locator('a[href*="experience-lab"]')).toHaveCount(0);
+    await page.setViewportSize({ width: 320, height: 844 });
+    await page.goto("/experience-lab/biblioteca/");
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+    await expect(page.getByTestId("educational-library-review")).toHaveAttribute("data-student-authorized","false");
+    const library = page.getByTestId("atlas-educational-library");
+    const card = library.getByTestId("educational-library-card");
+    await expect(card).toContainText("Museo Zero");
+    await library.getByLabel("Cerca un prodotto").fill("astronomia");
+    await expect(card).toHaveCount(0);
+    await library.getByLabel("Cerca un prodotto").fill("tecnologia");
+    await expect(card).toHaveCount(1);
+    await library.getByLabel("Tipologia").selectOption("Storie");
+    await expect(card).toHaveCount(0);
+    await library.getByLabel("Tipologia").selectOption("Laboratori");
+    await expect(card).toHaveCount(1);
+    await card.getByText("Il progetto educativo",{exact:true}).click();
+    await expect(card.getByText("Finalità e competenze")).toBeVisible();
+    await expect(card).toContainText("MZ-DID-0.1");
+    await expect(card.getByRole("link",{name:"Apri l’anteprima professionale"})).toHaveAttribute("href","/experience-lab/museo-zero/");
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
   });
 
   test("first failed rehearsal shows observable delayed room, not just status cards", async ({ page }) => {
