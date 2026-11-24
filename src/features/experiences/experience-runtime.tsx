@@ -212,6 +212,7 @@ export function ExperienceRuntime({
   }
 
   if (stage) {
+    const contextualLocation = Boolean(review && activeLocation && node.id === review.interviewScene);
     return (
       <section
         className="experience-runtime experience-runtime--cinematic"
@@ -237,6 +238,8 @@ export function ExperienceRuntime({
               {facts.map((fact, index) => <p key={index} className="experience-cinema__situation">{fact}</p>)}
             </div>
 
+            {contextualLocation && review && activeLocation ? <review.Location location={activeLocation.id} activeEvidenceId={activeEvidenceId} onAsk={setActiveEvidenceId} /> : null}
+
             {stage.locations?.length ? (
               <nav className="experience-locations" aria-label="Luoghi del percorso">
                 {stage.locations.map((location) => (
@@ -244,6 +247,7 @@ export function ExperienceRuntime({
                     key={location.id}
                     type="button"
                     className={activeLocationId === location.id ? "experience-location experience-location--active" : "experience-location"}
+                    aria-pressed={activeLocationId === location.id}
                     data-position={location.position.toLowerCase()}
                     onClick={() => {
                       setActiveLocationId(location.id);
@@ -291,7 +295,7 @@ export function ExperienceRuntime({
             <review.RoomResponse world={activeWorld} sceneId={node.id} changed={worldChangedByChoice} />
           ) : null}
 
-          {review && activeLocation && <review.Location location={activeLocation.id} activeEvidenceId={activeEvidenceId} onAsk={node.id === review.interviewScene ? setActiveEvidenceId : undefined} />}
+          {review && activeLocation && !contextualLocation && <review.Location location={activeLocation.id} activeEvidenceId={activeEvidenceId} onAsk={node.id === review.interviewScene ? setActiveEvidenceId : undefined} />}
 
           {stageEvidence.length > 0 ? (
             <section className="experience-investigation" aria-label="Indagine">

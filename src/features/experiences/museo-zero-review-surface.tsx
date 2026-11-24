@@ -6,6 +6,7 @@ import { MuseoZeroOpening, museoZeroMission } from "./museo-zero-opening";
 import { museoZeroPortrait } from "./museo-zero-narrative";
 import { MuseoZeroRoomResponse, MuseoZeroReviewWorkbench } from "./museo-zero-revision-surfaces";
 import { MuseoLocation, MuseoPrediction, MuseoExtension, museoOutcome } from "./museo-zero-investigation";
+import "./museo-zero-scene-direction.css";
 
 function Mission() {
   return <div className="mz-mission" data-testid="museo-mission-reminder"><p><strong>La tua missione:</strong> {museoZeroMission}</p></div>;
@@ -30,5 +31,5 @@ const adapter: ReviewPresentationAdapter = {
   Extension:MuseoExtension, outcome:museoOutcome,
 };
 export function MuseoZeroReviewSurface(props: Omit<PathwayRuntimeSurfaceProps,"reviewAdapter">) {
-  return <PathwayRuntimeSurface {...props} reviewAdapter={adapter} />;
+  return <div className="mz-scene-directed"><PathwayRuntimeSurface {...props} reviewAdapter={adapter} /></div>;
 }

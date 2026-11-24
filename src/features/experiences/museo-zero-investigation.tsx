@@ -23,7 +23,7 @@ export function MuseoLocation({location,onAsk,activeEvidenceId}:{location:string
    <figure>
      {/* eslint-disable-next-line @next/next/no-img-element */}
      <img src={base+scene.image+".webp"} alt={scene.alt} loading="lazy"/>
-     <figcaption>{location==="lab"?"La squadra al lavoro · riferimento illustrativo":"Ambiente di riferimento"}</figcaption>
+     <figcaption>{location==="lab"?"La squadra al lavoro":location==="entry"?"Ingresso della galleria":location==="control"?"Cabina di regia":"Dentro Sala Zero"} · ambiente illustrato</figcaption>
    </figure>
    {scene.person&&scene.evidence&&onAsk&&<div className="mz-location__dialogue">
      {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -423,3 +423,34 @@ test("library admission requires an exact authorized, active, documented edition
   receipt.gates.Q3.candidateBinding.contentVersion="2.0";
   expect(loadDocumentedPublicPathways([invalid])).toEqual([]);
 });
+
+
+// Real-device regression: semantic scene regions must not overlap, even with enlarged text.
+test("MZ-UX-01 — directed investigation regions do not overlap", async ({page}) => {
+  test.setTimeout(90000);
+  for (const width of [320, 360, 390, 412, 1280]) {
+    await page.setViewportSize({width,height:844});
+    await page.goto(LAB);
+    await enterTrial(page);
+    await finishOpening(page);
+    await page.getByRole("button",{name:"Raccogli gli indizi",exact:true}).click();
+    const scene=page.locator(".mz-scene-directed .experience-cinema__world");
+    await expect(scene.getByTestId("mz-location")).toBeVisible();
+    await expect(page.getByTestId("mz-location")).toHaveCount(1);
+    const nav=scene.getByRole("navigation",{name:"Luoghi del percorso"});
+    await expect(nav.getByRole("button",{name:/Ingresso/})).toHaveAttribute("aria-pressed","true");
+    await nav.getByRole("button",{name:/Cabina regia/i}).click();
+    await expect(scene.getByTestId("mz-location")).toHaveAttribute("data-location","control");
+    await expect(nav.getByRole("button",{name:/Cabina regia/i})).toHaveAttribute("aria-pressed","true");
+    for (const scale of [1,2]) {
+      await page.evaluate(s=>{document.documentElement.style.fontSize=(16*s)+"px";},scale);
+      const geometry=await scene.evaluate(el=>{
+        const regions=Array.from(el.querySelectorAll(":scope > .experience-cinema__copy, :scope > .mz-location, :scope > .experience-locations, :scope > .experience-causal-rail, :scope > .experience-character")).map(x=>x.getBoundingClientRect());
+        return {count:regions.length,overlap:regions.some((a,i)=>regions.slice(i+1).some(b=>a.top<b.bottom-1&&a.bottom>b.top+1&&a.left<b.right-1&&a.right>b.left+1)),overflow:el.scrollWidth>el.clientWidth};
+      });
+      expect(geometry.count).toBeGreaterThanOrEqual(4);
+      expect(geometry.overlap).toBe(false);
+      expect(geometry.overflow).toBe(false);
+    }
+  }
+});
