@@ -214,12 +214,16 @@ export function ExperienceRuntime({
   if (stage) {
     const contextualLocation = Boolean(review && activeLocation && node.id === review.interviewScene);
     const illustratedScene = Boolean(illustration && stageEvidence.some(item=>item.hotspot));
+    // A single-place illustrated investigation needs only one visible evidence surface.
+    // Keep the equivalent text list expandable, and retain the full workspace for multi-place/workbench paths.
+    const compactIllustration = illustratedScene && !review && !stage.workbench && stage.locations?.length === 1 && stageEvidence.every(item=>item.hotspot);
     return (
       <section
         className="experience-runtime experience-runtime--cinematic"
         aria-labelledby="experience-heading"
         data-session={session.sessionVersion}
         data-node={node.id}
+        data-compact-illustration={compactIllustration || undefined}
       >
         <div className="experience-cinema">
           <div className="experience-cinema__topline">
@@ -237,6 +241,7 @@ export function ExperienceRuntime({
               <p className="experience-cinema__scene">{activeLocation?.detail ?? activeWorld?.place}</p>
               <h1 id="experience-heading" ref={headingRef} tabIndex={-1}>{title}</h1>
               {facts.map((fact, index) => <p key={index} className="experience-cinema__situation">{fact}</p>)}
+              {compactIllustration&&<p className="experience-compact-task"><strong>La tua missione</strong> · {prompt}</p>}
             </div>
 
             {contextualLocation && review && activeLocation ? <review.Location location={activeLocation.id} activeEvidenceId={activeEvidenceId} onAsk={setActiveEvidenceId} /> : null}
@@ -250,12 +255,12 @@ export function ExperienceRuntime({
                     style={{left:item.hotspot!.x+"%",top:item.hotspot!.y+"%"}}
                     onClick={()=>{setActiveLocationId(item.locationId);setActiveEvidenceId(item.id)}}>{index+1}</button>)}
                 </div>
-                <figcaption>Esplora i punti numerati o usa l’elenco dei luoghi e degli indizi.</figcaption>
+                <figcaption>{compactIllustration?"Tocca un punto per osservare, oppure apri gli indizi in formato testuale.":"Esplora i punti numerati o usa l’elenco dei luoghi e degli indizi."}</figcaption>
                 {activeEvidence&&<p role="status"><strong>{activeEvidence.label}</strong> — {activeEvidence.detail}</p>}
               </figure>
             )}
 
-            {stage.locations?.length ? (
+            {!compactIllustration && stage.locations?.length ? (
               <nav className="experience-locations" aria-label="Luoghi del percorso">
                 {stage.locations.map((location) => (
                   <button
@@ -293,7 +298,7 @@ export function ExperienceRuntime({
               </div>
             ) : null}
 
-            {stage.characterBeat ? (
+            {!compactIllustration && stage.characterBeat ? (
               <aside className="experience-character">
                 <div className="experience-character__silhouette" aria-hidden="true">
                   {review ? <review.Portrait name={stage.characterBeat.name} variant="character" /> : stage.characterBeat.name.slice(0, 1)}
@@ -312,7 +317,9 @@ export function ExperienceRuntime({
 
           {review && activeLocation && !contextualLocation && <review.Location location={activeLocation.id} activeEvidenceId={activeEvidenceId} onAsk={node.id === review.interviewScene ? setActiveEvidenceId : undefined} />}
 
-          {stageEvidence.length > 0 ? (
+          {compactIllustration ? (
+            <details className="experience-compact-evidence"><summary>Indizi in formato testuale</summary><ul>{stageEvidence.map(item=><li key={item.id}><strong>{item.label}</strong><p>{item.detail}</p></li>)}</ul></details>
+          ) : stageEvidence.length > 0 ? (
             <section className="experience-investigation" aria-label="Indagine">
               <header>
                 <div>
@@ -425,7 +432,7 @@ export function ExperienceRuntime({
           <section className="experience-decision">
             <div>
               <p className="experience-panel__eyebrow">{node.primitive === "TRANSFER" ? "Decisione del team" : "La tua prossima mossa"}</p>
-              <h2>{prompt}</h2>
+              <h2>{compactIllustration ? (isChoice?"Scegli e confronta le conseguenze":node.terminal?"Concludi la missione":"Prosegui quando hai osservato") : prompt}</h2>
             </div>
 
             {review && requiresPrediction && <review.PredictionPanel value={prediction} onChange={setPrediction} last={lastPrediction} />}
