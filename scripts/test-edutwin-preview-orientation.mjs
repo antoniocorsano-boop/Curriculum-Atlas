@@ -44,3 +44,28 @@ for(const target of ["world","worldAfter"]){
  assert.throws(()=>studioAtlasSnapshotToExperience(bad),/signalDetail/);
 }
 console.log("World signal detail validation: PASS.");
+
+
+// ESS-02-R2a.1: generic discovery choice must preserve the author's revelation
+// after every choice, including a retry, without exposing it in the opening facts.
+const generic=JSON.parse(readFileSync(new URL("../fixtures/studio-atlas-preview/valid/minimal.json",import.meta.url),"utf8"));
+const authored=generic.scenes[1];
+authored.stage={visualMode:"CINEMATIC_EDITORIAL",focusLocationId:"site",locations:[{id:"site",label:"Sala",detail:"Luogo di prova",position:"ROOM"}],evidence:[{id:"trace",label:"Misura",detail:"Misura osservata",locationId:"site",kind:"TRACE",hotspot:{x:50,y:50}}],discovery:{minObservations:1,reflectionPrompt:"Quale esito prevedi?"}};
+const discoveryChoice=studioAtlasSnapshotToExperience(generic).graph.nodes[1];
+assert.deepEqual(discoveryChoice.facts,[authored.visibleSituation]);
+assert.equal(discoveryChoice.transitions.length,authored.choices.length);
+for(const [index,transition] of discoveryChoice.transitions.entries()){
+ const choice=authored.choices[index];
+ assert.equal(transition.feedback,choice.feedback+"\n\n"+authored.reveal);
+ assert.equal(transition.targetNodeId,choice.targetSceneId);
+ assert.deepEqual(transition.worldAfter,choice.worldAfter);
+}
+const withoutReveal=structuredClone(generic);
+delete withoutReveal.scenes[1].reveal;
+assert.deepEqual(studioAtlasSnapshotToExperience(withoutReveal).graph.nodes[1].transitions.map(t=>t.feedback),authored.choices.map(c=>c.feedback));
+const legacyChoice=structuredClone(generic);
+delete legacyChoice.scenes[1].stage.discovery;
+const legacyNode=studioAtlasSnapshotToExperience(legacyChoice).graph.nodes[1];
+assert.deepEqual(legacyNode.facts,[authored.visibleSituation,authored.reveal]);
+assert.deepEqual(legacyNode.transitions.map(t=>t.feedback),authored.choices.map(c=>c.feedback));
+console.log("ESS-02-R2a.1 discovery choice: PASS (deferred reveal on every branch, unchanged targets and effects, optional reveal, legacy compatibility).");

@@ -303,7 +303,7 @@ export function studioAtlasSnapshotToExperience(
             id: choice.choiceId,
             targetNodeId: choice.targetSceneId,
             label: choice.label,
-            feedback: isEduTwin ? withReveal(choice.feedback, scene.reveal) : choice.feedback,
+            feedback: isEduTwin || discovery ? withReveal(choice.feedback, scene.reveal) : choice.feedback,
             worldAfter: choice.worldAfter,
           }))
         : [{

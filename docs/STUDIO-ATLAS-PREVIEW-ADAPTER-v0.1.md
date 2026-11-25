@@ -147,3 +147,6 @@ Estensione additiva non pubblica: `sceneMedia` usa lo stesso verificatore WebP, 
 
 ### ESS-01B-R1 — P2 sovrapposizione punti e navigazione
 Rilievo Codex discussion_r4686705045: la navigazione assoluta può coprire i punti al bordo inferiore. Solo per scene con immagine verificata e punti, navigazione, segnali e personaggio entrano nel flusso normale; bordo di 24px attorno all'immagine per i comandi di 44px, nessun taglio ai limiti 0 e 100. Prova reale a 320, 390 e 1280px: geometria, hit-test, clic e testo, separazione navigazione, assenza di overflow. Le scene senza immagini mantengono la disposizione precedente. Nessuna modifica al contratto o all'autorizzazione.
+
+## ESS-02-R2a.1 — rivelazione differita nelle scelte
+Rilievo P2 discussion_r4690471931: la scena generica con discovery e CHOICE non deve perdere il reveal. Per ogni ramo il feedback conserva il riscontro specifico seguito dalla rivelazione comune, mai nei fatti iniziali; restano invariati destinazione, effetti, compatibilità legacy e caso senza reveal. Prova di contratto aggiunta allo script già eseguito dalla qualificazione. Nessuna modifica al runtime o alle autorizzazioni.
