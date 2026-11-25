@@ -11,7 +11,7 @@ export async function verifyGateway(page,base){
   assert.deepEqual(routes.map(x=>x.href).sort(),expectedRoutes.sort(),"Gateway destinations differ from the required routes");
   for(const r of routes){
     assert(r.name&&r.w>=44&&r.h>=44&&r.left>=-1&&r.right<=r.viewport+1&&r.top>=-1&&r.bottom<=r.height+1,"Unusable gateway portal "+JSON.stringify(r));
-    const response=await page.request.get(base+r.href);assert(response.ok(),"Gateway route unavailable "+r.href);
+    const response=await page.request.get(base+r.href+"/");assert(response.ok(),"Gateway route unavailable "+r.href+" HTTP "+response.status());
   }
   const entry=gateway.getByRole("link",{name:/Entra in Atlas/});
   assert(await entry.isVisible(),"Missing entrance action");

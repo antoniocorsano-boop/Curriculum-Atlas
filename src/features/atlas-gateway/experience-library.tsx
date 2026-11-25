@@ -9,15 +9,15 @@ import "./gateway.css";
 const categories = ["Tutte", "Storie", "Laboratori", "Scoperte", "Percorsi"] as const;
 type Category = typeof categories[number];
 
-export function ExperienceLibrary({ pathways }: { pathways: PublicPathwaySummary[] }) {
+export function ExperienceLibrary({ pathways, preview = false }: { pathways: PublicPathwaySummary[]; preview?: boolean }) {
   const [category, setCategory] = useState<Category>("Tutte");
   const [query, setQuery] = useState("");
   const authorized = pathways.filter(p => p.availability === "ACTIVE" && safePathwayHref(p.launchHref));
   const results = (category === "Tutte" || category === "Percorsi" ? authorized : [])
     .filter(p => p.title.toLocaleLowerCase("it").includes(query.trim().toLocaleLowerCase("it")));
   return (
-    <div className="atlas-gateway-library">
-      <Link href="/gateway">← Torna alla sala Atlas</Link>
+    <div className="atlas-gateway-library" data-atlas-experience-catalog={preview ? "preview" : "public"}>
+      <Link data-atlas-catalog-return href={preview ? "/gateway" : "/"}>← Torna alla sala Atlas</Link>
       <header className="atlas-page-heading">
         <div><span className="atlas-eyebrow">Atlas · Biblioteca della conoscenza</span>
           <h1>Esplora, scopri, comprendi.</h1>

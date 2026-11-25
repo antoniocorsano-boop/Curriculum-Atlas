@@ -5,6 +5,8 @@ on:
     paths:
       - "src/**"
       - "scripts/s3-v2-exit-check.mjs"
+      - "scripts/atlas-surface-contract.mjs"
+      - "scripts/verify-atlas-experience-access.mjs"
       - "docs/S3-V2-F5-EXIT.md"
       - "README.md"
       - "package.json"
@@ -67,3 +69,37 @@ jobs:
 
       - name: Run S3-V2 exit checks
         run: node scripts/s3-v2-exit-check.mjs
+
+      - name: Verify public catalog and technical gateway boundary
+        run: node scripts/verify-atlas-experience-access.mjs
+
+      - name: Verify existing publication exclusion contract
+        run: node scripts/test-percorsi-publication-filter.mjs
+
+  preview-access:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ATLAS_GATEWAY_PREVIEW: "true"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm build
+      - name: Start isolated technical preview
+        run: |
+          pnpm start > /tmp/atlas-preview.log 2>&1 &
+          for i in {1..60}; do
+            if curl -fsS http://127.0.0.1:3000/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/atlas-preview.log
+          exit 1
+      - run: node scripts/verify-atlas-experience-access.mjs

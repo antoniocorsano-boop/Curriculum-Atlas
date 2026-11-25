@@ -5,6 +5,7 @@ on:
     paths:
       - "src/**"
       - "scripts/capture-f4-visual.mjs"
+      - "scripts/atlas-surface-contract.mjs"
       - "docs/S3-V2-F4-MOBILE-LIM.md"
       - "package.json"
       - ".github/workflows/s3-v2-f4-visual.yml"
