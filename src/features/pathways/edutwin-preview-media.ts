@@ -6,7 +6,7 @@ export type PreviewIllustrationBinding={sceneId:string;assetId:string;alt:string
 export type PreviewImage={assetId:string;sha256:string;pixelWidth:number;pixelHeight:number;base64:string};
 export type PreviewIllustratedMedia={revisionDigest:string;mediaDigest:string;bindings:PreviewIllustrationBinding[];images:PreviewImage[]};
 export type VerifiedSceneIllustration={src:string;alt:string;role:PreviewIllustrationBinding["role"];width:number;height:number};
-type Snapshot={snapshotId:string;packageDigest:string;pathwayId:string;version:string;title:string;description:string;scenes:Array<{sceneId:string;stage?:unknown}>;edutwinMedia?:unknown};
+type Snapshot={snapshotId:string;packageDigest:string;pathwayId:string;version:string;title:string;description:string;scenes:Array<{sceneId:string;stage?:{evidence?:Array<{id:string;hotspot?:{x:number;y:number}}>}}>;edutwinMedia?:unknown;sceneMedia?:unknown};
 const fail=():never=>{throw new Error("EDUTWIN_PREVIEW_MEDIA_INVALID");};
 function record(x:unknown,keys:string[]):Record<string,unknown>{
  if(!x||typeof x!=="object"||Array.isArray(x)||Object.keys(x).length!==keys.length||keys.some(k=>!Object.hasOwn(x,k)))return fail();
@@ -62,10 +62,15 @@ function decodeImage(base64:unknown){
  return {bytes,...image};
 }
 export async function verifyPreviewIllustrations(snapshot:Snapshot):Promise<ReadonlyMap<string,VerifiedSceneIllustration>>{
- if(snapshot.edutwinMedia===undefined)return new Map();
- if(snapshot.scenes[0]?.sceneId!=="edutwin-opening"||snapshot.scenes.some(s=>s.stage))return fail();
- const m=record(snapshot.edutwinMedia,["revisionDigest","mediaDigest","bindings","images"]);
+ const hotspots=snapshot.scenes.filter(s=>s.stage?.evidence?.some(e=>e.hotspot!==undefined));
+ const generic=snapshot.sceneMedia!==undefined;
+ if(snapshot.edutwinMedia===undefined&&!generic){if(hotspots.length)return fail();return new Map();}
+ if(generic){
+  if(snapshot.edutwinMedia!==undefined||snapshot.scenes[0]?.sceneId==="edutwin-opening")return fail();
+ }else if(snapshot.scenes[0]?.sceneId!=="edutwin-opening"||snapshot.scenes.some(s=>s.stage))return fail();
+ const m=record(generic?snapshot.sceneMedia:snapshot.edutwinMedia,["revisionDigest","mediaDigest","bindings","images"]);
  const revisionDigest=str(m.revisionDigest,hex),mediaDigest=str(m.mediaDigest,hex);
+ if(generic&&revisionDigest!==snapshot.packageDigest)return fail();
  if(!Array.isArray(m.bindings)||!Array.isArray(m.images)||m.bindings.length>100||m.images.length>32||m.bindings.length===0||m.images.length===0)return fail();
  const bindings:PreviewIllustrationBinding[]=[],sceneIds=new Set<string>(),wanted=new Set<string>();
  for(const raw of m.bindings){
@@ -75,6 +80,7 @@ export async function verifyPreviewIllustrations(snapshot:Snapshot):Promise<Read
    (b.role!=="SETTING"&&b.role!=="CHARACTER"&&b.role!=="SCENE"))return fail();
   bindings.push({sceneId,assetId,alt:b.alt,role:b.role});sceneIds.add(sceneId);wanted.add(assetId);
  }
+ if(generic&&(hotspots.length!==bindings.length||hotspots.some(s=>!sceneIds.has(s.sceneId))||bindings.some(b=>b.role!=="SCENE")))return fail();
  const images:PreviewImage[]=[],verified=new Map<string,PreviewImage>();
  let total=0,pixels=0;
  for(const raw of m.images){

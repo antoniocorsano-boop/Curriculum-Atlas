@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { ExperienceRuntime } from "@/features/experiences/experience-runtime";
 import type { ExperienceDefinition, ExperiencePresentation } from "@/features/experiences/model";
+import type { ReviewPresentationAdapter } from "@/features/experiences/review-presentation-adapter";
 import { LocalGrowthPanel, useLocalPathwayGrowth, type LocalGrowthAchievement } from "./local-growth-panel";
 import "./pw-missing-information-01/pathway.css";
 import type {VerifiedSceneIllustration} from "./edutwin-preview-media";
@@ -11,21 +12,20 @@ type DefinitionWithPresentations = ExperienceDefinition & {
   presentationData?: Record<string, ExperiencePresentation>;
 };
 
-export function PathwayRuntimeSurface({
-  definition,
-  title,
-  description,
-  growthAchievements = [],
-  reviewNotice,
-  verifiedIllustrations,
-}: {
+export type PathwayRuntimeSurfaceProps = {
   definition: DefinitionWithPresentations;
   title: string;
   description: string;
   growthAchievements?: LocalGrowthAchievement[];
   reviewNotice?: string;
+  educationalInfo?: ReactNode;
   verifiedIllustrations?: ReadonlyMap<string,VerifiedSceneIllustration>;
-}) {
+  reviewAdapter?: ReviewPresentationAdapter;
+};
+export function PathwayRuntimeSurface({
+  definition, title, description, growthAchievements = [], reviewNotice,
+  verifiedIllustrations, educationalInfo, reviewAdapter,
+}: PathwayRuntimeSurfaceProps) {
   const availablePresentations = useMemo(
     () => definition.presentationGrammarIds.filter((id) => Boolean(definition.presentationData?.[id])),
     [definition],
@@ -46,6 +46,7 @@ export function PathwayRuntimeSurface({
           <p className="pathwayPrototype__eyebrow">Atlas · Percorsi</p>
           <h1>{title}</h1>
           <p>{description}</p>
+          {educationalInfo}
         </div>
         <div className="pathwayPrototype__status">
           {reviewNotice ? <strong>{reviewNotice}</strong> : <strong>Sessione locale</strong>}
@@ -82,7 +83,7 @@ export function PathwayRuntimeSurface({
         />
       )}
 
-      <ExperienceRuntime definition={definition} presentation={presentation} verifiedIllustrations={verifiedIllustrations} onTransition={(nodeId, transitionId) => growth.noteOutcome(nodeId, transitionId)} />
+      <ExperienceRuntime reviewAdapter={reviewAdapter} definition={definition} presentation={presentation} verifiedIllustrations={verifiedIllustrations} onTransition={(nodeId, transitionId) => growth.noteOutcome(nodeId, transitionId)} />
 
       <details className="pathwayPrototype__privacy">
         <summary><strong>Privacy del percorso</strong></summary>

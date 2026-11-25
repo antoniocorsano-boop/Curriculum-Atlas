@@ -1,68 +1,133 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, Compass, Library, Waypoints } from "lucide-react";
+import { ArrowRight, ArrowUpRight, BookOpen, Compass, Sparkles, Waypoints } from "lucide-react";
 import { AppShell } from "@/components/atlas/app-shell";
+import styles from "./ingresso.module.css";
 
-const quick = [
-  { href: "/esplora", label: "Esplora", detail: "Mappa relazionale del curricolo", icon: Compass },
-  { href: "/curricolo", label: "Curricolo", detail: "Struttura, annualità e obiettivi", icon: BookOpen },
-  { href: "/materiali", label: "Materiali", detail: "Materiali pubblicati, organizzati per lezione", icon: Library },
-  { href: "/percorsi", label: "Percorsi", detail: "Itinerari e connessioni didattiche", icon: Waypoints },
-];
+const destinations = [
+  {
+    id: "esplora",
+    href: "/esplora",
+    number: "01",
+    title: "Esplora",
+    description: "Una domanda, un'idea, qualcosa che ti incuriosisce: scopri dove ti porta.",
+    icon: Compass,
+  },
+  {
+    id: "esperienze",
+    href: "/esperienze",
+    number: "02",
+    title: "Esperienze",
+    description: "Un luogo per storie, laboratori e scoperte da vivere. Le attività arriveranno dopo la verifica.",
+    icon: Sparkles,
+  },
+  {
+    id: "percorsi",
+    href: "/percorsi",
+    number: "03",
+    title: "Percorsi",
+    description: "Segui un itinerario, affronta una sfida, trova nuove possibilità.",
+    icon: Waypoints,
+  },
+  {
+    id: "curricolo",
+    href: "/curricolo",
+    number: "04",
+    title: "Curricolo",
+    description: "Trova discipline, argomenti e collegamenti per approfondire.",
+    icon: BookOpen,
+  },
+] as const;
 
 export default function HomePage() {
   return (
     <AppShell>
-      <header className="atlas-page-heading">
-        <div>
-          <span className="atlas-eyebrow">Atlas · TRAMA</span>
-          <h1>Il curricolo, connesso.</h1>
-          <p>Una mappa leggibile di curricolo, relazioni e risorse.</p>
-        </div>
-      </header>
-
-      <div className="atlas-home-grid">
-        <section className="atlas-hero">
-          <span className="atlas-eyebrow">Esplora. Comprendi. Costruisci.</span>
-          <h2>Esplora connessioni, progressioni e risorse.</h2>
-          <p>
-            Atlas rende visibili le relazioni tra annualità, nuclei, obiettivi, prerequisiti e raccordi.
-            Arena resta la fonte curricolare; Atlas organizza l&apos;esplorazione e collega le risorse.
-          </p>
-
-          <div className="atlas-feature-grid">
-            <article className="atlas-feature">
-              <Compass size={22} color="var(--domain-atlas)" aria-hidden="true" />
-              <strong>Esplorazione semantica</strong>
-              <span>Connessioni leggibili tra discipline, concetti e risorse.</span>
-            </article>
-            <article className="atlas-feature">
-              <Waypoints size={22} color="var(--connection-gold)" aria-hidden="true" />
-              <strong>Curricolo vivo</strong>
-              <span>Progressioni, prerequisiti e raccordi in una struttura navigabile.</span>
-            </article>
-            <article className="atlas-feature">
-              <Library size={22} color="var(--authority-arena)" aria-hidden="true" />
-              <strong>Risorse autorevoli</strong>
-              <span>Materiali Atlas collegati a riferimenti curricolari verificabili.</span>
-            </article>
+      <div className={styles.gateway} data-testid="atlas-ingresso-web">
+        <header className={styles.pageHeading}>
+          <div>
+            <span className={styles.kicker}>ATLAS · TRAMA</span>
+            <h1>Che cosa vuoi scoprire oggi?</h1>
+            <p>Parti da una curiosità. Il resto del viaggio si costruisce passo dopo passo.</p>
           </div>
+          <span className={styles.publicNote}>Accesso libero <span aria-hidden="true">·</span> Nessun account</span>
+        </header>
+
+        <section className={styles.hero} aria-labelledby="atlas-ingresso-title">
+          <div className={styles.heroContent}>
+            <span className={styles.heroOverline}>
+              <span className={styles.smallStar} aria-hidden="true">✧</span>
+              Quattro porte, infinite domande
+            </span>
+            <h2 id="atlas-ingresso-title">
+              Ogni scoperta<br />
+              <em>comincia da una</em><br />
+              domanda.
+            </h2>
+            <p>
+              Esplora quello che ti incuriosisce, scegli un percorso oppure
+              trova un argomento da approfondire. Senza dover sapere già da dove iniziare.
+            </p>
+            <div className={styles.heroActions}>
+              <Link href="/esplora" className={styles.primaryLink} data-testid="atlas-ingresso-entra">
+                Inizia a esplorare <ArrowUpRight size={19} aria-hidden="true" />
+              </Link>
+              <Link href="/curricolo" className={styles.secondaryLink}>
+                Consulta il curricolo <ArrowRight size={17} aria-hidden="true" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Decorative architecture: native CSS, not a downloaded image or a 3D viewer. */}
+          <div className={styles.architecture} aria-hidden="true">
+            <div className={styles.atmosphere} />
+            <div className={styles.oculusOuter}>
+              <div className={styles.oculusInner} />
+            </div>
+            <div className={styles.galleryUpper} />
+            <div className={styles.galleryMiddle} />
+            <div className={styles.galleryLower} />
+            <div className={styles.horizon} />
+            <div className={styles.portalLights}>
+              <span /><span /><span /><span />
+            </div>
+            <div className={styles.floor} />
+            <span className={styles.sceneLabel}>UN MONDO DI CONNESSIONI</span>
+          </div>
+          <span className={styles.heroIndex} aria-hidden="true">ATLAS — 01 / 04</span>
         </section>
 
-        <aside className="atlas-panel">
-          <h3>Esplora Atlas</h3>
-          <div className="atlas-quick-list">
-            {quick.map(({ href, label, detail, icon: Icon }) => (
-              <Link key={href} href={href} className="atlas-quick-link">
-                <Icon size={20} aria-hidden="true" />
-                <span>
-                  <strong>{label}</strong><br />
-                  <small>{detail}</small>
+        <section className={styles.destinations} aria-labelledby="atlas-destinazioni">
+          <div className={styles.sectionHeading}>
+            <div>
+              <span className={styles.kicker}>QUATTRO MODI PER COMINCIARE</span>
+              <h2 id="atlas-destinazioni">Scegli la tua porta.</h2>
+            </div>
+            <p>Ogni porta conduce a una sezione vera; le attività ancora in preparazione sono dichiarate.</p>
+          </div>
+          <nav aria-label="Quattro accessi principali di Atlas" className={styles.cards}>
+            {destinations.map(({ id, href, number, title, description, icon: Icon }) => (
+              <Link
+                className={styles.card}
+                href={href}
+                key={id}
+                data-testid={`atlas-accesso-${id}`}
+                data-destination={id}
+              >
+                <span className={styles.cardTop}>
+                  <span className={styles.cardIcon}><Icon size={22} strokeWidth={1.6} aria-hidden="true" /></span>
+                  <span className={styles.cardNumber}>{number}</span>
                 </span>
-                <ArrowRight size={16} aria-hidden="true" />
+                <strong>{title}</strong>
+                <span className={styles.cardDescription}>{description}</span>
+                <span className={styles.cardBottom}>Apri la sezione <ArrowUpRight size={17} aria-hidden="true" /></span>
               </Link>
             ))}
-          </div>
-        </aside>
+          </nav>
+        </section>
+
+        <footer className={styles.gatewayFooter}>
+          <span>ATLAS <span aria-hidden="true">·</span> Esplora, collega, approfondisci.</span>
+          <p>Per cercare una lezione o una risorsa, visita anche <Link href="/materiali">Materiali</Link> e <Link href="/risorse">Risorse</Link>.</p>
+        </footer>
       </div>
     </AppShell>
   );

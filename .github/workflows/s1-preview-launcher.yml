@@ -17,6 +17,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
       ATLAS_GITHUB_PAGES: "true"
@@ -51,13 +52,19 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: Build static Atlas
-        run: pnpm build
+      - name: Test canonical review separation
+        run: node scripts/test-canonical-atlas-export.mjs
+
+      - name: Build static Atlas without review sources
+        run: node scripts/canonical-atlas-export.mjs --build
 
       - name: Enforce fail-closed Percorsi publication boundary
         run: |
           node scripts/test-percorsi-publication-filter.mjs
           node scripts/filter-unauthorized-pathway-routes.mjs out
+
+      - name: Verify canonical artifact excludes review surfaces
+        run: node scripts/canonical-atlas-export.mjs --verify out
 
       - name: Verify public materials in export
         run: |

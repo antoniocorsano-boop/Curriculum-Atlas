@@ -53,7 +53,7 @@ export function StudioAtlasPreviewBridge() {
       if (!isSnapshotMessage(event.data, channel!)) return;
 
       const snapshot=event.data.snapshot;
-      const mediaDigest=snapshot.edutwinMedia?.mediaDigest;
+      const mediaDigest=snapshot.sceneMedia?.mediaDigest??snapshot.edutwinMedia?.mediaDigest;
       if(!active||rejected||checking)return;
       function acknowledge(){
         opener.postMessage({type:ACK_TYPE,channel,snapshotId:snapshot.snapshotId},studioOrigin!);

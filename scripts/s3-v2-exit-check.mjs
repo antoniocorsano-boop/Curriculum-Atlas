@@ -1,9 +1,9 @@
 import { chromium } from "playwright";
 
 const base = process.env.BASE_URL || "http://127.0.0.1:3000";
-const routes = ["/", "/curricolo", "/esplora", "/materiali", "/risorse", "/percorsi", "/obiettivi", "/raccordi", "/impostazioni"];
-const requiredPrimary = ["/", "/esplora", "/curricolo", "/materiali", "/risorse"];
-const requiredSecondary = ["/percorsi", "/obiettivi", "/raccordi", "/impostazioni"];
+const routes = ["/", "/esplora", "/esperienze", "/percorsi", "/curricolo", "/materiali", "/risorse", "/obiettivi", "/raccordi", "/impostazioni"];
+const requiredPrimary = ["/", "/esplora", "/esperienze", "/percorsi", "/curricolo"];
+const requiredSecondary = ["/materiali", "/risorse", "/obiettivi", "/raccordi", "/impostazioni"];
 
 const browser = await chromium.launch();
 try {
@@ -52,6 +52,17 @@ try {
           if (!secondary.includes(href)) throw new Error(`Missing secondary mobile destination ${href} on ${route}`);
         }
         await more.click();
+      }
+
+      if (route === "/esperienze") {
+        const portal = page.locator('[data-testid="atlas-portale-esperienze"]');
+        if ((await portal.count()) !== 1) throw new Error("Esperienze portal missing");
+        const body = await portal.innerText();
+        if (!body.includes("Nessuna esperienza è disponibile")) {
+          throw new Error("Esperienze portal must disclose absent authorized experiences");
+        }
+        const unauthorized = await portal.locator('a[href*="/lab/"], a[href*="/percorsi/pw-"]').count();
+        if (unauthorized) throw new Error("Candidate or lab link exposed from Experiences portal");
       }
 
       if (route === "/esplora") {

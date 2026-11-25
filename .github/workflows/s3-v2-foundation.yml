@@ -55,7 +55,9 @@ jobs:
           grep -q -- "--domain-atlas" src/app/globals.css
           grep -q "atlas-mobile-nav" src/app/globals.css
           grep -q "Cerca in Atlas" src/components/atlas/app-shell.tsx
-          grep -q "Il curricolo, connesso" src/app/page.tsx
+          grep -q "Che cosa vuoi scoprire oggi" src/app/page.tsx
+          grep -q 'href: "/esperienze"' src/app/page.tsx
+          test -f src/app/esperienze/page.tsx
           if grep -R -E "(login studente|student account|tracking individuale)" src; then
             echo "Forbidden student identity/tracking concept found in foundation" >&2
             exit 1

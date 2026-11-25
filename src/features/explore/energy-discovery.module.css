@@ -1,0 +1,240 @@
+.journey {
+  --q-ink: #173249;
+  --q-teal: #265c65;
+  display: grid;
+  gap: 20px;
+  padding: clamp(19px, 3vw, 35px);
+  border: 1px solid #d2e4df;
+  border-radius: 22px;
+  background: linear-gradient(140deg, #f3f9f4 0%, #fffdf8 49%, #f1f5f6 100%);
+  color: var(--q-ink);
+  box-shadow: 0 15px 40px rgb(23 50 73 / 0.055);
+}
+.eyebrow,
+.sceneLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #366b6e;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .09em;
+}
+.intro h2 {
+  max-width: 18ch;
+  margin: 8px 0 9px;
+  font: 400 clamp(29px, 4vw, 46px)/1.13 Georgia, "Times New Roman", serif;
+  letter-spacing: -.038em;
+}
+.intro p {
+  margin: 0;
+  max-width: 65ch;
+  color: #526b77;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.progressItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px 5px 6px;
+  border: 1px solid #dce5df;
+  border-radius: 100px;
+  background: rgb(255 255 255 / .5);
+  font-size: 12px;
+  color: #6b7c7f;
+}
+.progressItem[data-current="true"] {
+  background: #d8eee4;
+  border-color: #a9d4c4;
+  color: #215b58;
+  font-weight: 750;
+}
+.progressItem[data-completed="true"] { color: #417c72; }
+.progressNumber {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  border-radius: 50%;
+  background: #ecf2ef;
+  font-size: 12px;
+  font-weight: 800;
+}
+.progressItem[data-current="true"] .progressNumber { background: #257467; color: white; }
+.scene {
+  overflow: hidden;
+  min-width: 0;
+  padding: clamp(18px, 3vw, 30px);
+  background: #fff;
+  border: 1px solid #e4e9e6;
+  border-radius: 17px;
+}
+.scene h3 {
+  margin: 10px 0 13px;
+  font: 400 clamp(24px, 3vw, 33px)/1.19 Georgia, "Times New Roman", serif;
+  letter-spacing: -.02em;
+}
+.scene p { font-size: 14px; line-height: 1.7; color: #596e79; }
+.questionScene {
+  display: grid;
+  grid-template-columns: minmax(185px, .75fr) minmax(0, 1.25fr);
+  gap: clamp(18px, 4vw, 55px);
+  align-items: center;
+  min-height: 245px;
+}
+.lampScene {
+  display: grid;
+  position: relative;
+  place-items: center;
+  isolation: isolate;
+  min-height: 215px;
+  border-radius: 19px;
+  background: radial-gradient(circle, #f9e4af 0%, #fbf4e4 38%, #ebf4f0 90%);
+  color: #866a35;
+}
+.lampHalo {
+  position: absolute;
+  z-index: -1;
+  width: 134px; height: 134px;
+  border: 1px solid #e7ce8b;
+  border-radius: 50%;
+  box-shadow: 0 0 0 18px rgb(234 190 100 / .12), 0 0 0 44px rgb(244 206 128 / .09);
+}
+.lampBase {
+  position: absolute;
+  bottom: 31px;
+  width: 78px;
+  height: 4px;
+  border-radius: 100%;
+  background: rgb(138 115 66 / .28);
+}
+.sceneText p { max-width: 50ch; }
+.primaryAction,
+.backAction {
+  display: inline-flex;
+  min-height: 46px;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 17px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.primaryAction {
+  background: var(--q-teal);
+  color: white;
+  border: 1px solid var(--q-teal);
+  margin-top: 9px;
+}
+.primaryAction:hover { background: #174b50; }
+.backAction { color: var(--q-teal); background: transparent; border: 1px solid #c7dad4; }
+.backAction:hover { background: #ebf3f0; }
+.primaryAction:focus-visible,.backAction:focus-visible,.resource a:focus-visible,.fallbackResource a:focus-visible {
+  outline: 3px solid #be975a;
+  outline-offset: 3px;
+}
+.observationScene { display: grid; gap: 13px; }
+.observationScene > div:first-child { max-width: 70ch; }
+.observationScene p { margin: 0; }
+.flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 15px;
+  background: #f7f9f5;
+}
+.flowBox,
+.flowResults {
+  min-height: 91px;
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+  padding: 13px;
+  border-radius: 12px;
+  border: 1px solid #dce7e2;
+  background: white;
+}
+.flowBox span { color: #687e80; font-size: 11px; font-weight: 650; }
+.flowBox strong { color: #233e4c; font-size: 14px; }
+.flowArrow { flex: 0 0 auto; color: #497e77; }
+.flowResults { gap: 5px; }
+.flowResults span { display: block; border-radius: 8px; padding: 9px 11px; font-size: 12px; font-weight: 750; }
+.useful { background: #e0f3e8; color: #1d6954; }
+.heat { background: #fff0df; color: #8a5a27; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.discoveryScene { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .85fr); gap: 25px; }
+.insight { background: #edf5f2; padding: 13px 15px; border-radius: 11px; }
+.resource {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 13px;
+  background: #f6f9f8;
+  border: 1px solid #d8e6e3;
+}
+.resource img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  background: #fff;
+}
+.resource figcaption { display: grid; gap: 8px; padding: 10px 15px 15px; }
+.resource figcaption strong { font-size: 13px; }
+.resource figcaption span { font-size: 11px; color: #6c7e88; line-height: 1.6; }
+.resource a, .fallbackResource a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #26666e;
+  font-size: 12px;
+  font-weight: 800;
+}
+.fallbackResource { padding: 22px; display: grid; gap: 12px; color: #6a7e86; background: #f4f8f6; }
+.sourceNote { color: #647780; font-size: 11px; line-height: 1.6; margin: 0; }
+@media(max-width: 840px) {
+  .questionScene { grid-template-columns: 185px 1fr; gap: 18px; }
+  .discoveryScene { grid-template-columns: 1fr; }
+}
+@media(max-width: 720px) {
+  .journey { gap: 15px; padding: 15px; border-radius: 16px; }
+  .intro h2 { font-size: clamp(28px, 8vw, 37px); }
+  .scene { padding: 15px; }
+  .questionScene { display: flex; flex-direction: column; align-items: stretch; gap: 15px; }
+  .lampScene { min-height: 145px; }
+  .lampScene svg { width: 58px; height: 58px; }
+  .lampBase { bottom: 14px; }
+  .sceneText h3 { margin-top: 4px; }
+  .flow { flex-direction: column; align-items: stretch; gap: 8px; padding: 9px; }
+  .flowBox,.flowResults { min-height: auto; width: 100%; }
+  .flowArrow { transform: rotate(90deg); align-self: center; }
+  .actions { flex-direction: column; }
+  .actions > *,.sceneText .primaryAction { width: 100%; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .journey *, .journey *::before, .journey *::after { transition: none !important; animation: none !important; }
+}
+
+/* Shared spacing for the narrative-to-map transition. */
+.hub { display: grid; gap: clamp(24px, 4vw, 48px); }
+.mapSection { scroll-margin-top: 88px; }
+.mapSection h2 { font: 400 clamp(25px, 3.2vw, 37px)/1.16 Georgia, "Times New Roman", serif; letter-spacing: -.03em; margin: 5px 0 0; }
+@media(max-width:720px) { .mapSection { scroll-margin-top: 115px; } }

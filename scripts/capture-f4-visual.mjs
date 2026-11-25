@@ -7,7 +7,7 @@ const viewports = [
   { name: "mobile-430", width: 430, height: 932 },
   { name: "lim-1080p", width: 1920, height: 1080 }
 ];
-const surfaces = ["", "curricolo", "esplora", "materiali", "risorse"];
+const surfaces = ["", "esplora", "esperienze", "percorsi", "curricolo", "materiali", "risorse"];
 
 await fs.mkdir("artifacts/f4-visual", { recursive: true });
 
@@ -71,6 +71,15 @@ try {
           throw new Error(`Mobile nav target below 44px on ${path} / ${viewport.name}: ${targets.join(",")}`);
         }
 
+        const primaryHrefs = await page.locator(".atlas-mobile-nav > a").evaluateAll((nodes) =>
+          nodes.map(node => node.getAttribute("href")).filter(Boolean)
+            .map(href => href.length > 1 && href.endsWith("/") ? href.slice(0, -1) : href)
+        );
+        const requiredPrimary = ["/", "/esplora", "/esperienze", "/percorsi", "/curricolo"];
+        if (requiredPrimary.some(href => !primaryHrefs.includes(href))) {
+          throw new Error(`Incomplete mobile primary navigation on ${path} / ${viewport.name}: ${primaryHrefs.join(",")}`);
+        }
+
         await page.locator(".atlas-mobile-more > summary").click();
         const secondaryHrefs = await page.locator(".atlas-mobile-more-menu a").evaluateAll((nodes) =>
           nodes
@@ -78,7 +87,7 @@ try {
             .filter(Boolean)
             .map((href) => href.length > 1 ? href.replace(/\/$/, "") : href)
         );
-        const requiredSecondary = ["/percorsi", "/obiettivi", "/raccordi", "/impostazioni"];
+        const requiredSecondary = ["/materiali", "/risorse", "/obiettivi", "/raccordi", "/impostazioni"];
         if (requiredSecondary.some((href) => !secondaryHrefs.includes(href))) {
           throw new Error(`Incomplete mobile secondary navigation on ${path} / ${viewport.name}: ${secondaryHrefs.join(",")}`);
         }

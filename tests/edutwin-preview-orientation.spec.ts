@@ -156,3 +156,69 @@ test("invalid consequence signal detail blocks preview before mounting",async({p
  const {runtime}=await openPreview(page,context,candidate,false);
  await expect(runtime).toHaveCount(0);
 });
+
+function genericSceneFixture(){
+ const candidate=structuredClone(fixture);delete candidate.edutwinMedia;
+ candidate.scenes[0].sceneId="agri-opening";
+ for(const s of candidate.scenes)for(const choice of s.choices??[])if(choice.targetSceneId==="edutwin-opening")choice.targetSceneId="agri-opening";
+ candidate.scenes[0].stage={visualMode:"CINEMATIC_EDITORIAL",locations:[{id:"field",label:"Campo",detail:"Terreno",position:"ROOM"},{id:"water",label:"Irrigazione",detail:"Acqua",position:"CONTROL"}],evidence:[{id:"soil",label:"Suolo",detail:"Il terreno trattiene l’acqua.",locationId:"field",kind:"OBJECT",hotspot:{x:30,y:50}},{id:"pipe",label:"Tubo",detail:"Distribuisce l’acqua.",locationId:"water",kind:"OBJECT",hotspot:{x:70,y:60}}]};
+ const m={revisionDigest:candidate.packageDigest,bindings:[{sceneId:"agri-opening",assetId:"field-art",alt:"Illustrazione sintetica del campo",role:"SCENE" as const}],images:[{...media.images[0],assetId:"field-art"}]};
+ candidate.sceneMedia={...m,mediaDigest:sha(mediaDigestInput(candidate,m))};return candidate;
+}
+test("ESS-01B verified scene image: points reveal the same authored evidence and preserve accessible list",async({page,context})=>{
+ const {runtime,preview}=await openPreview(page,context,genericSceneFixture(),true);
+ await expect(runtime.getByRole("img",{name:"Illustrazione sintetica del campo"})).toBeVisible();
+ await runtime.getByRole("button",{name:"Esplora Tubo",exact:true}).click();
+ await expect(runtime.locator(".experience-hotspot-figure")).toContainText("Distribuisce l’acqua.");
+ await expect(runtime.locator(".experience-evidence-grid")).toContainText("Tubo");
+ await runtime.getByRole("button",{name:"Esplora Suolo",exact:true}).click();
+ await expect(runtime.locator(".experience-hotspot-figure")).toContainText("Il terreno trattiene l’acqua.");
+ await runtime.getByRole("button",{name:"Porta sul banco",exact:true}).click();
+ await expect(runtime.getByText("1 indizi sul banco",{exact:true})).toBeVisible();
+ expect(await preview.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+});
+test("ESS-01B rejects points without verified scene image",async({page,context})=>{
+ const bad=genericSceneFixture();delete bad.sceneMedia;
+ const {runtime}=await openPreview(page,context,bad,false);await expect(runtime).toHaveCount(0);
+});
+test("ESS-01B rejects altered original bytes",async({page,context})=>{
+ const bad=genericSceneFixture();bad.sceneMedia.images[0].base64="AA==";
+ const {runtime}=await openPreview(page,context,bad,false);await expect(runtime).toHaveCount(0);
+});
+test("ESS-01B rejects out-of-range points even if digest is recomputed",async({page,context})=>{
+ const bad=genericSceneFixture();bad.scenes[0].stage.evidence[0].hotspot.x=101;
+ bad.sceneMedia.mediaDigest=sha(mediaDigestInput(bad,bad.sceneMedia));
+ const {runtime}=await openPreview(page,context,bad,false);await expect(runtime).toHaveCount(0);
+});
+
+test("ESS-01B-R1 edge hotspots remain clickable without overlapping navigation on mobile and desktop",async({page,context})=>{
+ const candidate=genericSceneFixture();
+ const stage=candidate.scenes[0].stage;
+ stage.evidence[0].hotspot={x:0,y:0};
+ stage.evidence[1].hotspot={x:100,y:100};
+ candidate.sceneMedia.mediaDigest=sha(mediaDigestInput(candidate,candidate.sceneMedia));
+ const {runtime,preview}=await openPreview(page,context,candidate,true);
+ for(const width of [320,390,1280]){
+  await preview.setViewportSize({width,height:844});
+  const figure=runtime.locator(".experience-hotspot-figure");
+  const nav=runtime.getByRole("navigation",{name:"Luoghi del percorso"});
+  const first=figure.getByRole("button",{name:"Esplora Suolo",exact:true});
+  const last=figure.getByRole("button",{name:"Esplora Tubo",exact:true});
+  for(const point of [first,last]){
+   await point.scrollIntoViewIfNeeded();
+   const geometry=await point.evaluate(el=>{
+    const rect=el.getBoundingClientRect(),parent=el.closest("figure")!.getBoundingClientRect();
+    return {contained:rect.left>=parent.left&&rect.right<=parent.right&&rect.top>=parent.top&&rect.bottom<=parent.bottom,uncovered:el.contains(document.elementFromPoint(rect.left+rect.width/2,rect.top+rect.height/2)),width:rect.width,height:rect.height};
+   });
+   expect(geometry).toEqual({contained:true,uncovered:true,width:44,height:44});
+  }
+  await last.click();
+  await expect(figure).toContainText("Distribuisce l’acqua.");
+  await first.click();
+  await expect(figure).toContainText("Il terreno trattiene l’acqua.");
+  const [a,b]=await Promise.all([figure.boundingBox(),nav.boundingBox()]);
+  expect(a).not.toBeNull();expect(b).not.toBeNull();
+  expect(a!.y+a!.height).toBeLessThanOrEqual(b!.y);
+  expect(await preview.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+ }
+});

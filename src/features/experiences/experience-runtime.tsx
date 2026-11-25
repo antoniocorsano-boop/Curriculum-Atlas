@@ -10,6 +10,7 @@ import type {
 } from "./model";
 import { useExperienceSession } from "./use-experience-session";
 import "./experience-runtime.css";
+import type { ReviewPresentationAdapter, TrialPrediction } from "./review-presentation-adapter";
 import type {VerifiedSceneIllustration} from "../pathways/edutwin-preview-media";
 
 type ResolvedTransition = ExperienceTransition & { key: string };
@@ -25,8 +26,10 @@ export function ExperienceRuntime({
   presentation,
   onTransition,
   verifiedIllustrations,
+  reviewAdapter,
 }: {
   definition: ExperienceDefinition;
+  reviewAdapter?: ReviewPresentationAdapter;
   presentation?: ExperiencePresentation;
   verifiedIllustrations?: ReadonlyMap<string,VerifiedSceneIllustration>;
   onTransition?: (nodeId: string, transitionId: string, targetNodeId: string) => void;
@@ -45,9 +48,17 @@ export function ExperienceRuntime({
   const [choiceFeedback, setChoiceFeedback] = useState("");
   const [activeLocationId, setActiveLocationId] = useState("");
   const [activeEvidenceId, setActiveEvidenceId] = useState("");
+  const [observedIds,setObservedIds]=useState<string[]>([]);
+  const [reflection,setReflection]=useState("");
+  const [discoveryClosed,setDiscoveryClosed]=useState(false);
   const [pinnedEvidenceIds, setPinnedEvidenceIds] = useState<string[]>([]);
   const [evidenceCatalog, setEvidenceCatalog] = useState<Record<string, ExperienceStageEvidence>>({});
   const [workbenchMode, setWorkbenchMode] = useState<ExperienceWorkbenchMode | null>(null);
+  const [evidenceConnections, setEvidenceConnections] = useState<Array<{ from: string; to: string }>>([]);
+  const [connectionOriginId, setConnectionOriginId] = useState<string | null>(null);
+  const [prediction, setPrediction] = useState<TrialPrediction | "">("");
+  const [lastPrediction, setLastPrediction] = useState<{prediction:TrialPrediction; observed:TrialPrediction} | null>(null);
+  const review = reviewAdapter?.experienceId === definition.experienceId ? reviewAdapter : undefined;
 
   const view = node ? presentation?.nodes[node.id] : undefined;
   const transitions = useMemo<ResolvedTransition[]>(() => {
@@ -67,7 +78,10 @@ export function ExperienceRuntime({
   useEffect(() => {
     setPendingTransition(null);
     setChoiceFeedback("");
+    setPrediction("");
+    setLastPrediction(null);
     setActiveEvidenceId("");
+    setObservedIds([]);setReflection("");setDiscoveryClosed(false);
     setWorkbenchMode(null);
     if (node?.stage?.evidence?.length) {
       setEvidenceCatalog((current) => {
@@ -94,11 +108,13 @@ export function ExperienceRuntime({
   const firstTransition = transitions[0];
   const isEduTwin = definition.qualificationProfileId === "STUDIO_ATLAS_PREVIEW_V0" && definition.graph.entryNodeId === "edutwin-opening";
   const authoredSummary = isEduTwin && !isChoice && !isText;
-  const revealAfterAction = authoredSummary && !node.terminal;
+  const discovery=definition.qualificationProfileId==="STUDIO_ATLAS_PREVIEW_V0"&&!review?node.stage?.discovery:undefined;
+  const discoveryReady=!discovery||(observedIds.length>=discovery.minObservations&&reflection.trim().length>0);
+  const revealAfterAction = (authoredSummary||Boolean(discovery&&!isChoice)) && !node.terminal;
   const actionLabel = authoredSummary ? (pendingTransition ? "Prosegui" : firstTransition?.label ?? prompt) : "Continua";
   const activeWorld = pendingTransition?.worldAfter ?? node.world;
   const worldChangedByChoice = Boolean(pendingTransition?.worldAfter);
-  const illustration = isEduTwin ? verifiedIllustrations?.get(node.id) : undefined;
+  const illustration = definition.qualificationProfileId === "STUDIO_ATLAS_PREVIEW_V0" ? verifiedIllustrations?.get(node.id) : undefined;
   const stage = node.stage;
   const stageEvidence = stage?.evidence ?? [];
   const activeLocation = stage?.locations?.find((location) => location.id === activeLocationId);
@@ -109,8 +125,41 @@ export function ExperienceRuntime({
   const pinnedEvidence = pinnedEvidenceIds
     .map((id) => evidenceCatalog[id])
     .filter((item): item is ExperienceStageEvidence => Boolean(item));
+  const workbenchReady = !review || !stage?.workbench || (
+    pinnedEvidenceIds.length >= stage.workbench.minEvidence && workbenchMode !== null
+  );
+  function reorderEvidence(id: string, direction: -1 | 1) {
+    setPinnedEvidenceIds(current => {
+      const index = current.indexOf(id);
+      const to = index + direction;
+      if (index < 0 || to < 0 || to >= current.length) return current;
+      const next = [...current];
+      [next[index], next[to]] = [next[to], next[index]];
+      return next;
+    });
+  }
+  function joinEvidence(id: string) {
+    if (!connectionOriginId || connectionOriginId === id) {
+      setConnectionOriginId(connectionOriginId === id ? null : id);
+      return;
+    }
+    setEvidenceConnections(current =>
+      current.some(pair => pair.from === connectionOriginId && pair.to === id)
+        ? current
+        : [...current, { from: connectionOriginId, to: id }]
+    );
+    setConnectionOriginId(null);
+  }
 
+  function observeEvidence(id:string){setActiveEvidenceId(id);setObservedIds(current=>current.includes(id)?current:[...current,id]);}
+  const requiresPrediction = Boolean(review && node.id === review.predictionScene);
   function selectTransition(transition: ResolvedTransition) {
+    if(!discoveryReady)return;
+    if (review && requiresPrediction) {
+      if (!prediction) return;
+      setLastPrediction({prediction, observed:review.outcome(transition.worldAfter)});
+      setPrediction("");
+    }
     setPendingTransition(transition);
     setChoiceFeedback(
       transition.feedback ?? node!.feedbackCategory.replaceAll("_", " ").toLowerCase(),
@@ -118,6 +167,7 @@ export function ExperienceRuntime({
   }
 
   function proceed() {
+    if (!workbenchReady||!discoveryReady) return;
     // Every authored summary, including the opening, exposes its consequence before navigation.
     if (revealAfterAction && !pendingTransition && firstTransition) {
       selectTransition(firstTransition);
@@ -132,15 +182,22 @@ export function ExperienceRuntime({
 
   function restartExperience() {
     setPinnedEvidenceIds([]);
+    setObservedIds([]);setReflection("");setDiscoveryClosed(false);
     setEvidenceCatalog({});
     setActiveEvidenceId("");
     setPendingTransition(null);
     setChoiceFeedback("");
     setWorkbenchMode(null);
+    setEvidenceConnections([]);
+    setConnectionOriginId(null);
     session.restart();
   }
 
   function togglePinned(id: string) {
+    if (review && pinnedEvidenceIds.includes(id)) {
+      setEvidenceConnections(current => current.filter(pair => pair.from !== id && pair.to !== id));
+      setConnectionOriginId(current => current === id ? null : current);
+    }
     setPinnedEvidenceIds((current) =>
       current.includes(id) ? current.filter((candidate) => candidate !== id) : [...current, id],
     );
@@ -155,13 +212,27 @@ export function ExperienceRuntime({
     }
   }
 
+  if (review && node.id === review.openingScene) {
+    return (
+      <div className="experience-runtime" data-session={session.sessionVersion} data-node={node.id}>
+        <review.Opening key={session.sessionVersion} title={title} headingRef={headingRef} onContinue={proceed} />
+      </div>
+    );
+  }
+
   if (stage) {
+    const contextualLocation = Boolean(review && activeLocation && node.id === review.interviewScene);
+    const illustratedScene = Boolean(illustration && stageEvidence.some(item=>item.hotspot));
+    // A single-place illustrated investigation needs only one visible evidence surface.
+    // Keep the equivalent text list expandable, and retain the full workspace for multi-place/workbench paths.
+    const compactIllustration = illustratedScene && !review && !stage.workbench && stage.locations?.length === 1 && stageEvidence.every(item=>item.hotspot);
     return (
       <section
         className="experience-runtime experience-runtime--cinematic"
         aria-labelledby="experience-heading"
         data-session={session.sessionVersion}
         data-node={node.id}
+        data-compact-illustration={compactIllustration || undefined}
       >
         <div className="experience-cinema">
           <div className="experience-cinema__topline">
@@ -169,7 +240,8 @@ export function ExperienceRuntime({
             <span>{activeLocation?.label ?? activeWorld?.place ?? title}</span>
           </div>
 
-          <div className="experience-cinema__world" data-world-changed={worldChangedByChoice || undefined}>
+          {review && !review.missionHiddenScenes.includes(node.id) ? <review.Mission /> : null}
+          <div className="experience-cinema__world" data-illustrated-scene={illustratedScene || undefined} data-world-changed={worldChangedByChoice || undefined}>
             <div className="experience-cinema__atmosphere" aria-hidden="true" />
             <div className="experience-cinema__projection" aria-hidden="true" />
             <div className="experience-cinema__floorline" aria-hidden="true" />
@@ -178,15 +250,33 @@ export function ExperienceRuntime({
               <p className="experience-cinema__scene">{activeLocation?.detail ?? activeWorld?.place}</p>
               <h1 id="experience-heading" ref={headingRef} tabIndex={-1}>{title}</h1>
               {facts.map((fact, index) => <p key={index} className="experience-cinema__situation">{fact}</p>)}
+              {compactIllustration&&<p className="experience-compact-task"><strong>La tua missione</strong> · {prompt}</p>}
             </div>
 
-            {stage.locations?.length ? (
+            {contextualLocation && review && activeLocation ? <review.Location location={activeLocation.id} activeEvidenceId={activeEvidenceId} onAsk={setActiveEvidenceId} /> : null}
+
+            {illustration&&stageEvidence.some(item=>item.hotspot)&&(
+              <figure className="experience-hotspot-figure">
+                <div className="experience-hotspot-image">
+                  <img src={illustration.src} alt={illustration.alt} width={illustration.width} height={illustration.height}/>
+                  {stageEvidence.filter(item=>item.hotspot).map((item,index)=><button key={item.id} type="button"
+                    className="experience-hotspot-point" aria-label={"Esplora "+item.label} aria-pressed={activeEvidenceId===item.id}
+                    style={{left:item.hotspot!.x+"%",top:item.hotspot!.y+"%"}}
+                    onClick={()=>{setActiveLocationId(item.locationId);observeEvidence(item.id)}}>{index+1}</button>)}
+                </div>
+                <figcaption>{compactIllustration?"Tocca un punto per osservare, oppure apri gli indizi in formato testuale.":"Esplora i punti numerati o usa l’elenco dei luoghi e degli indizi."}</figcaption>
+                {activeEvidence&&<p role="status"><strong>{activeEvidence.label}</strong> — {activeEvidence.detail}</p>}
+              </figure>
+            )}
+
+            {!compactIllustration && stage.locations?.length ? (
               <nav className="experience-locations" aria-label="Luoghi del percorso">
                 {stage.locations.map((location) => (
                   <button
                     key={location.id}
                     type="button"
                     className={activeLocationId === location.id ? "experience-location experience-location--active" : "experience-location"}
+                    aria-pressed={activeLocationId === location.id}
                     data-position={location.position.toLowerCase()}
                     onClick={() => {
                       setActiveLocationId(location.id);
@@ -217,10 +307,10 @@ export function ExperienceRuntime({
               </div>
             ) : null}
 
-            {stage.characterBeat ? (
+            {!compactIllustration && stage.characterBeat ? (
               <aside className="experience-character">
                 <div className="experience-character__silhouette" aria-hidden="true">
-                  {stage.characterBeat.name.slice(0, 1)}
+                  {review ? <review.Portrait name={stage.characterBeat.name} variant="character" /> : stage.characterBeat.name.slice(0, 1)}
                 </div>
                 <div>
                   <p><strong>{stage.characterBeat.name}</strong> · {stage.characterBeat.role}</p>
@@ -230,7 +320,15 @@ export function ExperienceRuntime({
             ) : null}
           </div>
 
-          {stageEvidence.length > 0 ? (
+          {review ? (
+            <review.RoomResponse world={activeWorld} sceneId={node.id} changed={worldChangedByChoice} />
+          ) : null}
+
+          {review && activeLocation && !contextualLocation && <review.Location location={activeLocation.id} activeEvidenceId={activeEvidenceId} onAsk={node.id === review.interviewScene ? setActiveEvidenceId : undefined} />}
+
+          {compactIllustration ? (
+            <details className="experience-compact-evidence"><summary>Indizi in formato testuale</summary>{stage.characterBeat&&<p><strong>{stage.characterBeat.name} · {stage.characterBeat.role}</strong> — {stage.characterBeat.line}</p>}<ul>{stageEvidence.map(item=><li key={item.id}>{discovery?<><button type="button" aria-pressed={observedIds.includes(item.id)} onClick={()=>observeEvidence(item.id)}>{item.label} · Osserva</button>{observedIds.includes(item.id)&&<p>{item.detail}</p>}</>:<><strong>{item.label}</strong><p>{item.detail}</p></>}<button type="button" disabled={Boolean(discovery&&!observedIds.includes(item.id))} aria-pressed={pinnedEvidenceIds.includes(item.id)} onClick={()=>togglePinned(item.id)}>{pinnedEvidenceIds.includes(item.id)?"Sul banco":"Porta sul banco"}</button></li>)}</ul></details>
+          ) : stageEvidence.length > 0 ? (
             <section className="experience-investigation" aria-label="Indagine">
               <header>
                 <div>
@@ -270,6 +368,7 @@ export function ExperienceRuntime({
                 <div className="experience-evidence-detail" role="status">
                   <p className="experience-panel__eyebrow">Dettaglio</p>
                   <h3>{activeEvidence.label}</h3>
+                  {review && activeEvidence.kind === "PERSON" ? <review.Portrait name={activeEvidence.character ?? ""} variant="evidence" /> : null}
                   <p>{activeEvidence.detail}</p>
                 </div>
               ) : null}
@@ -305,21 +404,36 @@ export function ExperienceRuntime({
               </div>
 
               {workbenchMode ? (
-                <div className="experience-workbench__surface" data-mode={workbenchMode.toLowerCase()}>
-                  {pinnedEvidence.length === 0 ? (
-                    <p>Porta qui gli indizi che vuoi usare.</p>
-                  ) : (
-                    pinnedEvidence.map((item, index) => (
-                      <div key={item.id} className="experience-workbench__item">
-                        <span>{workbenchMode === "TIMELINE" ? String(index + 1).padStart(2, "0") : "•"}</span>
-                        <div>
-                          <strong>{item.label}</strong>
-                          <small>{item.detail}</small>
+                review ? (
+                  <review.Workbench
+                    mode={workbenchMode}
+                    sceneId={node.id}
+                    evidence={pinnedEvidence}
+                    connections={evidenceConnections}
+                    connectionOrigin={connectionOriginId}
+                    transitions={transitions}
+                    pendingKey={pendingTransition?.key ?? null}
+                    onReorder={reorderEvidence}
+                    onJoin={joinEvidence}
+                    onChoose={selectTransition}
+                  />
+                ) : (
+                  <div className="experience-workbench__surface" data-mode={workbenchMode.toLowerCase()}>
+                    {pinnedEvidence.length === 0 ? (
+                      <p>Porta qui gli indizi che vuoi usare.</p>
+                    ) : (
+                      pinnedEvidence.map((item, index) => (
+                        <div key={item.id} className="experience-workbench__item">
+                          <span>{workbenchMode === "TIMELINE" ? String(index + 1).padStart(2, "0") : "•"}</span>
+                          <div>
+                            <strong>{item.label}</strong>
+                            <small>{item.detail}</small>
+                          </div>
                         </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+                      ))
+                    )}
+                  </div>
+                )
               ) : null}
             </section>
           ) : null}
@@ -327,10 +441,16 @@ export function ExperienceRuntime({
           <section className="experience-decision">
             <div>
               <p className="experience-panel__eyebrow">{node.primitive === "TRANSFER" ? "Decisione del team" : "La tua prossima mossa"}</p>
-              <h2>{prompt}</h2>
+              <h2>{compactIllustration ? (isChoice?"Scegli e confronta le conseguenze":node.terminal?"Concludi la missione":"Prosegui quando hai osservato") : prompt}</h2>
             </div>
 
-            {isChoice ? (
+            {discovery&&<div className="experience-discovery">
+              <p role="status">{observedIds.length} / {discovery.minObservations} osservazioni richieste</p>
+              <label>{discovery.reflectionPrompt}<textarea value={reflection} maxLength={600} disabled={Boolean(pendingTransition)||discoveryClosed} onChange={event=>setReflection(event.target.value)} placeholder="Scrivi una breve ipotesi, senza dati personali." /></label>
+              <small>La risposta resta nella sessione; non viene valutata automaticamente.</small>
+            </div>}
+            {review && requiresPrediction && <review.PredictionPanel value={prediction} onChange={setPrediction} last={lastPrediction} />}
+            {isChoice && !(review && node.id === review.comparisonScene && workbenchMode === "COMPARE") ? (
               <div className="experience-decisions" role="group" aria-label={prompt}>
                 {transitions.map((transition) => (
                   <button
@@ -338,6 +458,7 @@ export function ExperienceRuntime({
                     type="button"
                     aria-pressed={pendingTransition?.key === transition.key}
                     onClick={() => selectTransition(transition)}
+                    disabled={!workbenchReady || !discoveryReady || (requiresPrediction && !prediction)}
                   >
                     {transition.label ?? "Scegli"}
                   </button>
@@ -361,18 +482,21 @@ export function ExperienceRuntime({
               </p>
             ) : null}
 
+            {review && node.id === review.extensionScene && <review.Extension key={session.sessionVersion} />}
             <div className="experience-actions experience-actions--cinematic">
               {!node.terminal ? (
                 <button
                   type="button"
                   onClick={proceed}
-                  disabled={isChoice ? !pendingTransition : !firstTransition}
+                  disabled={!workbenchReady || !discoveryReady || (isChoice ? !pendingTransition : !firstTransition)}
                 >
-                  {authoredSummary ? actionLabel : worldChangedByChoice ? "Continua dalla conseguenza" : "Continua"}
+                  {discovery&&!isChoice?(pendingTransition?"Prosegui":"Verifica la tua ipotesi"):authoredSummary ? actionLabel : worldChangedByChoice ? "Continua dalla conseguenza" : "Continua"}
                 </button>
               ) : null}
 
-              {node.terminal && definition.mode === "PATHWAY" ? (
+              {discovery&&node.terminal&&!discoveryClosed&&<button type="button" disabled={!discoveryReady} onClick={()=>setDiscoveryClosed(true)}>Confronta la tua proposta</button>}
+              {discovery&&node.terminal&&discoveryClosed&&<p role="status" className="experience-feedback experience-feedback--cinematic">{node.discoveryClosure}</p>}
+              {node.terminal && definition.mode === "PATHWAY" && (!discovery||discoveryClosed) ? (
                 <>
                   <a href="/percorsi">Esci</a>
                   <button type="button" onClick={restartExperience}>Ricomincia</button>

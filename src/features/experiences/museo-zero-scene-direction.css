@@ -1,0 +1,67 @@
+/* Review-only scene direction: semantic regions in normal flow, without fixed-height text overlays. */
+.mz-scene-directed .experience-cinema__world {
+  min-height: 0; display: grid; grid-template-columns: minmax(0,1fr);
+  gap: 12px; padding: clamp(12px,3vw,28px); overflow: visible; background: #111a24;
+}
+.mz-scene-directed .experience-cinema__world::before,
+.mz-scene-directed .experience-cinema__world::after,
+.mz-scene-directed .experience-cinema__world > .experience-cinema__atmosphere,
+.mz-scene-directed .experience-cinema__world > .experience-cinema__projection,
+.mz-scene-directed .experience-cinema__world > .experience-cinema__floorline { display: none; }
+.mz-scene-directed .experience-cinema__copy { position: static; max-width: none; min-width: 0; padding: 0; }
+.mz-scene-directed .experience-cinema__copy h1 { max-width: none; font-size: clamp(1.5rem,4vw,2.65rem); line-height: 1.15; letter-spacing: -.025em; margin: 0 0 10px; overflow-wrap: anywhere; }
+.mz-scene-directed .experience-cinema__situation { max-width: 70ch; font-size: 1rem; line-height: 1.5; }
+.mz-scene-directed .experience-cinema__world > .mz-location { padding: 0; background: transparent; min-width: 0; }
+.mz-scene-directed .mz-location figure { border: 1px solid #52606a; border-radius: 12px; overflow: hidden; background: #17232a; }
+.mz-scene-directed .mz-location figure img { width: 100%; height: auto; max-height: 460px; object-fit: contain; border-radius: 0; }
+.mz-scene-directed .mz-location figcaption { padding: 8px 12px; margin: 0; }
+.mz-scene-directed .mz-location__dialogue { align-items: start; padding: 12px; border-radius: 10px; background: #202c37; }
+.mz-scene-directed .mz-location__dialogue button { width: 100%; overflow-wrap: anywhere; }
+.mz-scene-directed .experience-locations,
+.mz-scene-directed .experience-causal-rail,
+.mz-scene-directed .experience-character { position: static; inset: auto; width: auto; max-width: none; min-width: 0; z-index: auto; }
+.mz-scene-directed .experience-locations { grid-template-columns: repeat(auto-fit,minmax(min(125px,100%),1fr)); }
+.mz-scene-directed .experience-location { min-height: 48px; border-radius: 9px; overflow-wrap: anywhere; align-content: center; }
+.mz-scene-directed .experience-location small { display: block; }
+.mz-scene-directed .experience-causal-rail { grid-template-columns: minmax(0,1fr); }
+.mz-scene-directed .experience-causal-rail__signal:nth-child(n+4) { display: grid; }
+.mz-scene-directed .experience-causal-rail__signal { overflow-wrap: anywhere; }
+.mz-scene-directed .experience-character { align-items: start; }
+.mz-scene-directed .experience-character > div { min-width: 0; overflow-wrap: anywhere; }
+.mz-scene-directed .experience-evidence-grid,
+.mz-scene-directed .experience-decisions { grid-template-columns: repeat(auto-fit,minmax(min(170px,100%),1fr)); }
+.mz-scene-directed .experience-evidence { min-height: 0; min-width: 0; overflow-wrap: anywhere; }
+.mz-scene-directed .experience-evidence__inspect { align-content: start; }
+.mz-scene-directed .experience-evidence__pin { min-height: 44px; }
+.mz-scene-directed .experience-workbench__modes button,
+.mz-scene-directed .experience-decisions button { max-width: 100%; overflow-wrap: anywhere; }
+.mz-scene-directed .experience-cinema__topline { flex-wrap: wrap; }
+.mz-scene-directed button:focus-visible { outline: 3px solid #e9ba73; outline-offset: 3px; }
+@media (max-width: 430px) {
+  .mz-scene-directed .experience-location small { font-size: .8rem; }
+  .mz-scene-directed .mz-location__dialogue { grid-template-columns: 52px minmax(0,1fr); gap: 8px; }
+  .mz-scene-directed .mz-location__dialogue img { width: 52px; height: 70px; }
+  .mz-scene-directed .experience-investigation,
+  .mz-scene-directed .experience-workbench,
+  .mz-scene-directed .experience-decision { padding: 16px 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mz-scene-directed .experience-cinema__world *,
+  .mz-scene-directed .experience-cinema__world *::before,
+  .mz-scene-directed .experience-cinema__world *::after { animation: none !important; transition: none !important; }
+}
+
+/* Contextual discovery: hotspot is anchored to the image frame, not the whole page. */
+.mz-scene-directed .mz-location__image { position: relative; }
+.mz-scene-directed .mz-location__hotspot {
+  position: absolute; right: 8px; bottom: 8px; display: inline-flex;
+  gap: 8px; align-items: center; min-height: 44px; max-width: calc(100% - 16px);
+  background: #14232e; border: 2px solid #efbf80; color: #fff;
+  border-radius: 999px; padding: 8px 14px; font-weight: 700;
+}
+.mz-scene-directed .mz-location__hotspot span { font-size: 1.25em; }
+.mz-scene-directed .mz-location__hotspot[aria-pressed=true] { background: #efbf80; color: #16222b; }
+.mz-relation-map { min-width: 0; }
+.mz-relation-map__canvas { height: 300px; width: 100%; min-width: 0; border: 1px solid #83958e; border-radius: 10px; overflow: hidden; background: #f8fbf8; }
+.mz-relation-map .react-flow__node { font-size: 12px; color: #18332d; }
+.mz-relation-map p { margin: 6px 0; line-height: 1.45; }

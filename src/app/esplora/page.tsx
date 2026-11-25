@@ -1,17 +1,20 @@
 import { AppShell } from "@/components/atlas/app-shell";
-import { RelationExplorer } from "@/components/atlas/relation-explorer";
+import { ExploreHub } from "@/features/explore/explore-hub";
 
 export default function ExplorePage() {
   return (
     <AppShell>
       <header className="atlas-page-heading">
         <div>
-          <span className="atlas-eyebrow">Esplora · Mappa relazionale</span>
-          <h1>Vedi come il curricolo si connette.</h1>
-          <p>Passa dalla struttura gerarchica alla rete di relazioni tra discipline, ordini di scuola, obiettivi e raccordi.</p>
+          <span className="atlas-eyebrow">Esplora · La prima scoperta</span>
+          <h1>Da una domanda può nascere un viaggio.</h1>
+          <p>
+            Inizia da qualcosa che ti incuriosisce, osserva che cosa accade
+            e segui le connessioni con le altre conoscenze.
+          </p>
         </div>
       </header>
-      <RelationExplorer />
+      <ExploreHub />
     </AppShell>
   );
 }

@@ -33,7 +33,9 @@
     "test:percorsi:factory": "node scripts/test-percorsi-pathway-factory.mjs",
     "test:experience:generality": "node scripts/test-experience-generality.mjs",
     "test:smart:publication": "node scripts/test-smart-publication-reconciliation.mjs",
-    "test:percorsi:product": "node scripts/test-percorsi-student-product.mjs"
+    "test:percorsi:product": "node scripts/test-percorsi-student-product.mjs",
+    "test:experience:ink": "node scripts/test-ink-authoring.mjs",
+    "generate:experience:ink": "node scripts/test-ink-authoring.mjs --write"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
@@ -45,7 +47,8 @@
     "react-dom": "^19.1.1",
     "tailwind-merge": "^3.3.1",
     "@xyflow/react": "^12.8.6",
-    "sharp": "^0.35.4"
+    "sharp": "^0.35.4",
+    "phaser": "3.90.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.13",
@@ -58,7 +61,8 @@
     "typescript": "^5.9.2",
     "@eslint/eslintrc": "^3.3.1",
     "playwright": "^1.55.0",
-    "@playwright/test": "^1.55.0"
+    "@playwright/test": "^1.55.0",
+    "inkjs": "2.4.0"
   },
   "packageManager": "pnpm@10.17.1"
 }

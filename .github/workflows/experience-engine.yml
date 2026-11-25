@@ -31,6 +31,8 @@ jobs:
         run: pnpm install --no-frozen-lockfile
       - name: Experience contracts
         run: pnpm test:experience:contracts
+      - name: Ink authoring interoperability
+        run: pnpm test:experience:ink
       - name: Experience grammar registry
         run: pnpm test:experience:grammar
       - name: Generic experience factory
@@ -60,4 +62,15 @@ jobs:
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
       - name: Browser conformance
-        run: pnpm exec playwright test tests/experience-runtime.spec.ts --project=chromium
+        run: pnpm exec playwright test tests/experience-runtime.spec.ts tests/museo-zero-p3.spec.ts --project=chromium
+
+      - name: Qualify canonical public export separately from review
+        env:
+          ATLAS_GITHUB_PAGES: "true"
+        run: |
+          node scripts/test-canonical-atlas-export.mjs
+          node scripts/canonical-atlas-export.mjs --build
+          node scripts/filter-unauthorized-pathway-routes.mjs out
+          node scripts/canonical-atlas-export.mjs --verify out
+          node scripts/verify-smart-export.mjs
+          node scripts/verify-discovery-deployment.mjs

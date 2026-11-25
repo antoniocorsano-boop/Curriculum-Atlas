@@ -82,6 +82,36 @@
       "path": "scripts/sync-arena-curriculum.mjs",
       "contains": "input.curriculum",
       "reason": "The Arena v1 export keeps its published curriculum payload key; the sync adapter canonicalizes messages while preserving the wire field."
+    },
+    {
+      "path": "docs/architecture/ATLAS-PORTALI-CAPABILITY-MAP-v1.md",
+      "contains": "Curriculum-Atlas",
+      "reason": "The repository's published GitHub name is a fixed technical slug required for verifiable links in the internal planning map, not learner-facing terminology."
+    },
+    {
+      "path": "docs/architecture/ATLAS-PORTALI-CAPABILITY-MAP-v1.md",
+      "contains": "src/components/atlas/curriculum-tree.tsx",
+      "reason": "A precise existing source filename must remain unchanged in the internal provenance register; the user-facing concept remains curricolo."
+    },
+    {
+      "path": "governance/atlas-portal-capability-map.v1.json",
+      "contains": "Curriculum-Atlas",
+      "reason": "Verifiable GitHub links use the repository's immutable existing slug; only internal provenance metadata is excepted."
+    },
+    {
+      "path": "governance/atlas-portal-capability-map.v1.json",
+      "contains": "src/components/atlas/curriculum-tree.tsx",
+      "reason": "Compatibility reference to the actual committed source file path, not a public or editorial label."
+    },
+    {
+      "path": "governance/atlas-portal-capability-map.v1.json",
+      "contains": "src/features/curriculum/fixtures.ts",
+      "reason": "Compatibility reference to the existing technical feature path; no new curriculum terminology in product content."
+    },
+    {
+      "path": "scripts/verify-discovery-deployment.mjs",
+      "contains": "const prefix = \"/Curriculum-Atlas\";",
+      "reason": "The local browser test must serve the exact established GitHub Pages deployment prefix; this is an infrastructure identifier, not public educational terminology."
     }
   ]
 }

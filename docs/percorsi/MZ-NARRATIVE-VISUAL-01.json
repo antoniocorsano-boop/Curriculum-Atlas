@@ -1,0 +1,127 @@
+{
+  "id": "MZ-NARRATIVE-VISUAL-01",
+  "experience": "pw-strategy-selection-01-museo-zero",
+  "date": "2026-11-24",
+  "atlasBase": "aadaae81798f8fa008ce51bbf8f5389e86cbe05f",
+  "tramaDossierPR": 356,
+  "status": "USER_SELECTED_REVIEW_ONLY",
+  "studentAuthorized": false,
+  "assets": [
+    {
+      "id": "sala",
+      "source": "ChatGPT image generation, user-selected 2026-11-24; not recovered historical original",
+      "generationId": "c55e335f-ebd4-4f26-a15d-88ba311294ca",
+      "original": "originali/sala_zero_galleria_immersiva_notturna.png",
+      "originalSha256": "41dc58e48039e7316dde045f10dd2d33cf776c1e1b04c6eab0aeb4bc8fd255cb",
+      "webPath": "public/media/museo-zero/narrative-v1/sala.webp",
+      "sha256": "2de533e7d3f96298c196a03eae5fd5ad918aea1a3f7fe1383ba79931544f874a",
+      "bytes": 121098,
+      "width": 1440,
+      "height": 810,
+      "alt": "Sala Zero, mostra interattiva in funzione"
+    },
+    {
+      "id": "squadra",
+      "source": "ChatGPT image generation, user-selected 2026-11-24; not recovered historical original",
+      "generationId": "8a4b609f-6b2a-4a0d-90b5-074b57826eff",
+      "original": "originali/allestimento_notturno_al_museo_zero.png",
+      "originalSha256": "fe38f7979e80a6c4e72ea235f836889cb94bc2fb6f24973696db886d5d552935",
+      "webPath": "public/media/museo-zero/narrative-v1/squadra.webp",
+      "sha256": "bf99816d42415d5cb7edb00cb973b0b4dd4bf91b234335b73360450e133503bb",
+      "bytes": 172230,
+      "width": 1440,
+      "height": 1080,
+      "alt": "Lia, Omar e Teo al lavoro nella Sala Zero"
+    },
+    {
+      "id": "lia",
+      "source": "ChatGPT image generation, user-selected 2026-11-24; not recovered historical original",
+      "generationId": "25df3abe-df5d-4c8b-9322-7c5d128c192d",
+      "original": "originali/lia_nel_museo_al_crepuscolo.png",
+      "originalSha256": "9013bc4f4118ae99e6f44afb44993df03faf2cdc56eb308be2cdab1e6ae2d06f",
+      "webPath": "public/media/museo-zero/narrative-v1/lia.webp",
+      "sha256": "2ed48bd7ee8452f3ff2bb36c554570fd2faf5c6ca06f692062b4d7ad6dc9ed7a",
+      "bytes": 102418,
+      "width": 960,
+      "height": 1200,
+      "alt": "Lia, responsabile del percorso accessibile"
+    },
+    {
+      "id": "omar",
+      "source": "ChatGPT image generation, user-selected 2026-11-24; not recovered historical original",
+      "generationId": "dd183022-bd09-420f-bf7c-7294ff2943b5",
+      "original": "originali/omar_tecnico_museale_in_azione.png",
+      "originalSha256": "66193ed7885d5728c161d04889ed7131eefcf2f069b27f1dca54cb1cd6a651e0",
+      "webPath": "public/media/museo-zero/narrative-v1/omar.webp",
+      "sha256": "c229dcd8b3456b1ef5de3df8238a82c28342f04bbd5e0fe93b926185efb8798f",
+      "bytes": 99246,
+      "width": 960,
+      "height": 1200,
+      "alt": "Omar, responsabile dei dispositivi"
+    },
+    {
+      "id": "teo",
+      "source": "ChatGPT image generation, user-selected 2026-11-24; not recovered historical original",
+      "generationId": "ef543034-722d-466d-a4b4-ea9d70ed3e7a",
+      "original": "originali/teo_nella_sala_di_controllo_museale.png",
+      "originalSha256": "28772198e0e41bacee08d3652f0e332d0d7e1f105af4eac5203663eaf341b3f0",
+      "webPath": "public/media/museo-zero/narrative-v1/teo.webp",
+      "sha256": "fb925abc633d869ec6cce9d561a3732bdce7169ea9cfd96bf879948011bcd5af",
+      "bytes": 94696,
+      "width": 960,
+      "height": 1200,
+      "alt": "Teo, responsabile di regia e prove"
+    },
+    {
+      "id": "regia",
+      "source": "ChatGPT image generation, user-selected 2026-11-24; not recovered historical original",
+      "generationId": "48ea5f2a-fcd9-4964-bb57-68061d56a709",
+      "original": "originali/cabina_regia_affacciata_su_sala_zero.png",
+      "originalSha256": "015cdc3ff65855003f836855ae0efceb823bb3af91f3359be5ca83e52676b127",
+      "webPath": "public/media/museo-zero/narrative-v1/regia.webp",
+      "sha256": "353428c63b7a41a2dd5a736e9938d323d4e45204af26a717bd5b8305cf14bf50",
+      "bytes": 168034,
+      "width": 1440,
+      "height": 810,
+      "alt": "Cabina di regia adiacente alla sala"
+    }
+  ],
+  "scenes": [
+    {
+      "image": "sala",
+      "title": "Un museo da vivere",
+      "speaker": "Narratore",
+      "text": "Qui non si viene soltanto a guardare. Quando un visitatore entra, immagini, suoni e luci lo accompagnano lungo il percorso. Domani apre la mostra."
+    },
+    {
+      "image": "squadra",
+      "title": "La squadra",
+      "speaker": "Lia",
+      "text": "Abbiamo cambiato l’ingresso per rendere la mostra accessibile a tutti. Prima di aprire, ci resta l’ultima prova."
+    },
+    {
+      "image": "omar",
+      "title": "I dispositivi",
+      "speaker": "Omar",
+      "text": "Ho controllato i dispositivi. Il sensore rileva il passaggio. Teo, possiamo cominciare."
+    },
+    {
+      "image": "teo",
+      "title": "L’ultima prova",
+      "speaker": "Teo",
+      "text": "Lia, attraversa la soglia come farebbe un visitatore. Dalla regia controllerò quando partono immagini, suoni e luci."
+    },
+    {
+      "image": "regia",
+      "title": "Qualcosa non torna",
+      "speaker": "Teo",
+      "text": "La risposta è arrivata troppo tardi. Eppure Omar ha verificato il sensore. Lia, che cosa è cambiato durante la giornata?"
+    },
+    {
+      "image": "lia",
+      "title": "Il tuo incarico",
+      "speaker": "Lia",
+      "text": "Ognuno di noi ha visto una parte della storia. Aiutaci a capire perché la sala risponde in ritardo, mantenendo accessibile il nuovo ingresso. Comincia osservando l’ultima prova."
+    }
+  ]
+}
