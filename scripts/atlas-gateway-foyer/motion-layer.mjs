@@ -33,6 +33,13 @@ export function createAtmosphereLayer(T,scene,{mobile=false,reduced=false}={}){
       material.opacity=.75*envelope;light.intensity=1.2*envelope;
       return true;
     },
+    applySample(values){
+      if(disposed||reduce)return;
+      points.visible=values.particles>0;
+      material.opacity=.75*values.particles;
+      points.position.y=values.rise;
+      light.intensity=1.2*values.light;
+    },
     stop,
     setReduced(value){reduce=Boolean(value);if(reduce)stop();},
     dispose(){if(disposed)return;stop();disposed=true;scene.remove(points,light);geometry.dispose();material.dispose();},

@@ -102,7 +102,26 @@ try{
     const sorted=[...frames].sort((a,b)=>a-b);
     const motion={frames:frames.length,meanFps:frames.length?1000*frames.length/frames.reduce((a,b)=>a+b,0):null,
       p95Ms:sorted.length?sorted[Math.ceil(sorted.length*.95)-1]:null,kind:"software-rAF-not-physical-phone"};
-    report.devices.push({device:dim.name,width:dim.width,height:dim.height,...info,motion});
+    await page.emulateMedia({reducedMotion:"no-preference"});
+    await page.goto(origin+"/atrio/?vf-motion=2");
+    await page.waitForFunction(()=>document.body.classList.contains("webgl-ready"));
+    const director=page.locator("#motion-preview");
+    await director.click();
+    await page.waitForFunction(()=>["reveal","focus"].includes(document.querySelector("#motion-preview").dataset.cue),null,{timeout:10000});
+    const activeCue=await director.getAttribute("data-cue");
+    await page.screenshot({path:join(output,dim.name+"-timeline.png"),fullPage:true});
+    await page.waitForFunction(()=>document.querySelector("#motion-preview").dataset.running==="false",null,{timeout:10000});
+    assert.equal(await director.getAttribute("data-cue"),"idle");
+    await director.click();
+    await page.locator("#camera-right").click();
+    assert.equal(await director.getAttribute("data-running"),"false");
+    assert.equal(await director.getAttribute("data-cue"),"idle");
+    await director.click();
+    await page.emulateMedia({reducedMotion:"reduce"});
+    await page.waitForFunction(()=>document.querySelector("#motion-preview").disabled);
+    assert.equal(await director.getAttribute("data-running"),"false");
+    assert.equal(await director.getAttribute("data-cue"),"idle");
+    report.devices.push({device:dim.name,width:dim.width,height:dim.height,...info,motion,timeline:{activeCue,manualOverride:true,reducedMotion:true}});
     await context.close();
   }
   assert.deepEqual(report.errors,[]);

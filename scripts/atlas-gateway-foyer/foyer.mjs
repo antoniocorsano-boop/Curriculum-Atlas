@@ -1,6 +1,8 @@
 // ATLAS-GATEWAY-01 / G1.1 — atrio tridimensionale reale; nessuna libreria 3D aggiunta.
 import {PORTALS,FOYER_SCHEMA,verifyPortalContract} from "./portal-contract.mjs";
 import {createAtmosphereLayer} from "./motion-layer.mjs";
+import {createTimelinePlayer} from "./scene-timeline.mjs";
+import {FOYER_TIMELINE} from "./foyer-timeline.mjs";
 
 const stage=document.querySelector(".stage");
 const canvas=document.getElementById("foyer-canvas");
@@ -20,7 +22,22 @@ let renderer,scene,camera,request=0,orbit=0,vertical=0,pressed=null,portalPanels
 let stopped=false,selected=null,motionLayer=null;
 const motionButton=document.getElementById("motion-preview");
 const motionPreference=window.matchMedia("(prefers-reduced-motion: reduce)");
-const motionOptIn=new URLSearchParams(location.search).get("vf-motion")==="1";
+const motionMode=new URLSearchParams(location.search).get("vf-motion");
+const motionOptIn=motionMode==="1"||motionMode==="2";
+const timeline=motionMode==="2"?createTimelinePlayer(FOYER_TIMELINE):null;
+let timelineOrbit=0,timelineVertical=0,lastCue="idle",readyStatus="";
+const cueText={arrival:"Ingresso",reveal:"Rivelazione della sala",focus:"Messa a fuoco",idle:""};
+function syncCue(cue){
+  if(lastCue===cue)return;
+  lastCue=cue;
+  if(motionButton)motionButton.dataset.cue=cue;
+  if(readyStatus)setStatus(cue==="idle"?readyStatus:readyStatus+" · "+cueText[cue]);
+}
+function stopMotion(){
+  timeline?.stop();motionLayer?.stop();timelineOrbit=0;timelineVertical=0;syncCue("idle");
+  if(motionButton)motionButton.dataset.running="false";
+  schedule();
+}
 function highlight(id){
   selected=id;
   for(const {pane,portal} of portalPanels){
@@ -379,14 +396,19 @@ function setCamera(){
   const viewHeight=portrait?2.65:3.1;
   const target=new T.Vector3(0,viewHeight,-.65);
   const offset=new T.Vector3(0,portrait?2.7:2.3,z);
-  offset.applyAxisAngle(new T.Vector3(0,1,0),orbit);
+  offset.applyAxisAngle(new T.Vector3(0,1,0),T.MathUtils.clamp(orbit+timelineOrbit,-.28,.28));
   camera.position.copy(target).add(offset);
-  camera.lookAt(new T.Vector3(0,viewHeight+vertical,-.65));
+  camera.lookAt(new T.Vector3(0,viewHeight+T.MathUtils.clamp(vertical+timelineVertical,-.2,.2),-.65));
   camera.aspect=aspect;camera.fov=portrait?60:53;camera.updateProjectionMatrix();
 }
 function render(now){
   request=0;if(stopped)return;
-  const active=motionLayer?.tick(now)??false;
+  let active=false;
+  if(timeline&&motionLayer){
+    const sample=timeline.tick(now);active=sample.active;
+    timelineOrbit=sample.values.orbit;timelineVertical=sample.values.vertical;
+    motionLayer.applySample(sample.values);syncCue(sample.cue);
+  }else active=motionLayer?.tick(now)??false;
   if(motionButton&&!motionButton.hidden)motionButton.dataset.running=String(active);
   setCamera();renderer.render(scene,camera);
   if(active)schedule();
@@ -429,25 +451,27 @@ async function init(){
     if(motionOptIn&&motionButton){
       motionLayer=createAtmosphereLayer(T,scene,{mobile:mobile(),reduced:motionPreference.matches});
       motionButton.hidden=false;
+      if(timeline){motionButton.textContent="Prova regia / arresta";motionButton.dataset.cue="idle";}
       const syncMotionPreference=()=>{
+        stopMotion();
         motionLayer.setReduced(motionPreference.matches);
+        timeline?.setReduced(motionPreference.matches);
         motionButton.disabled=motionPreference.matches;
-        motionButton.dataset.running="false";
-        schedule();
       };
       syncMotionPreference();
       motionPreference.addEventListener("change",syncMotionPreference);
       motionButton.addEventListener("click",()=>{
-        if(motionButton.dataset.running==="true"){motionLayer.stop();motionButton.dataset.running="false";}
-        else if(motionLayer.play(performance.now()))motionButton.dataset.running="true";
+        if(motionButton.dataset.running==="true")stopMotion();
+        else if((timeline??motionLayer).play(performance.now()))motionButton.dataset.running="true";
         schedule();
       });
       document.addEventListener("visibilitychange",()=>{
-        if(document.hidden){motionLayer.stop();motionButton.dataset.running="false";schedule();}
+        if(document.hidden)stopMotion();
       });
     }
     canvas.style.touchAction="none";
     canvas.addEventListener("pointerdown",e=>{
+      if(timeline)stopMotion();
       pressed={x:e.clientX,y:e.clientY,orbit,vertical,moved:false};
       canvas.setPointerCapture(e.pointerId);
     });
@@ -465,9 +489,9 @@ async function init(){
       const moved=pressed.moved;pressed=null;if(!moved)pick(e);else schedule();
     });
     canvas.addEventListener("pointercancel",()=>{pressed=null;schedule();});
-    document.getElementById("camera-left").addEventListener("click",()=>{orbit=T.MathUtils.clamp(orbit-.10,-.28,.28);schedule();});
-    document.getElementById("camera-right").addEventListener("click",()=>{orbit=T.MathUtils.clamp(orbit+.10,-.28,.28);schedule();});
-    document.getElementById("camera-reset").addEventListener("click",()=>{orbit=0;vertical=0;highlight(null);schedule();});
+    document.getElementById("camera-left").addEventListener("click",()=>{if(timeline)stopMotion();orbit=T.MathUtils.clamp(orbit-.10,-.28,.28);schedule();});
+    document.getElementById("camera-right").addEventListener("click",()=>{if(timeline)stopMotion();orbit=T.MathUtils.clamp(orbit+.10,-.28,.28);schedule();});
+    document.getElementById("camera-reset").addEventListener("click",()=>{if(timeline)stopMotion();orbit=0;vertical=0;highlight(null);schedule();});
     for(const a of links){
       a.addEventListener("mouseenter",()=>highlight(a.dataset.portal));
       a.addEventListener("focus",()=>highlight(a.dataset.portal));
@@ -477,8 +501,9 @@ async function init(){
     canvas.addEventListener("webglcontextlost",e=>{e.preventDefault();fallback("Contesto grafico interrotto");});
     window.addEventListener("pagehide",()=>{stopped=true;cancelAnimationFrame(request);motionLayer?.dispose();renderer?.dispose();});
     document.body.classList.add("webgl-ready");
-    resize();setStatus(artLoaded?"Atrio tridimensionale pronto · modello Blender verificato":
-      artError?"Atrio tridimensionale pronto · versione geometrica di ripiego":"Atrio tridimensionale pronto · scegli una destinazione");
+    readyStatus=artLoaded?"Atrio tridimensionale pronto · modello Blender verificato":
+      artError?"Atrio tridimensionale pronto · versione geometrica di ripiego":"Atrio tridimensionale pronto · scegli una destinazione";
+    resize();setStatus(readyStatus);
     console.info("ATLAS_FOYER_READY",FOYER_SCHEMA);
   }catch(error){
     console.error("ATLAS_FOYER_ERROR",error);

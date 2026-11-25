@@ -8,6 +8,7 @@ on:
       - "scripts/test-atlas-gateway-foyer-browser.mjs"
       - "scripts/test-atlas-gateway-foyer.mjs"
       - "scripts/test-atlas-motion-layer.mjs"
+      - "scripts/test-atlas-scene-timeline.mjs"
       - ".github/workflows/atlas-gateway-foyer-check.yml"
   workflow_dispatch:
 concurrency:
@@ -34,6 +35,7 @@ jobs:
         run: |
           node scripts/test-atlas-gateway-foyer.mjs
           node scripts/test-atlas-motion-layer.mjs
+          node scripts/test-atlas-scene-timeline.mjs
       - name: Install existing Playwright dependencies
         uses: pnpm/action-setup@v4
         with:
