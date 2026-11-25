@@ -106,12 +106,18 @@ try{
     await page.goto(origin+"/atrio/?vf-motion=2");
     await page.waitForFunction(()=>document.body.classList.contains("webgl-ready"));
     const director=page.locator("#motion-preview");
+    const trace=[];
+    await page.exposeFunction("captureRenderedCue",cue=>trace.push(cue));
+    await director.evaluate(el=>el.addEventListener("atlas:scene-cue-rendered",e=>void window.captureRenderedCue(e.detail.cue)));
     await director.click();
-    await page.waitForFunction(()=>["reveal","focus"].includes(document.querySelector("#motion-preview").dataset.cue),null,{timeout:10000});
-    const activeCue=await director.getAttribute("data-cue");
-    await page.screenshot({path:join(output,dim.name+"-timeline.png"),fullPage:true});
-    await page.waitForFunction(()=>document.querySelector("#motion-preview").dataset.running==="false",null,{timeout:10000});
-    assert.equal(await director.getAttribute("data-cue"),"idle");
+    try{
+      await page.waitForFunction(()=>document.querySelector("#motion-preview").dataset.running==="false",null,{timeout:15000});
+      // The host callback runs after each actual render, so polling cannot miss a brief phase.
+      assert.deepEqual(trace,["arrival","reveal","focus","idle"]);
+      assert.equal(await director.getAttribute("data-cue"),"idle");
+    }catch(error){
+      console.error("VF-MOTION-02 rendered trace",JSON.stringify(trace));throw error;
+    }
     await director.click();
     await page.locator("#camera-right").click();
     assert.equal(await director.getAttribute("data-running"),"false");
@@ -121,7 +127,7 @@ try{
     await page.waitForFunction(()=>document.querySelector("#motion-preview").disabled);
     assert.equal(await director.getAttribute("data-running"),"false");
     assert.equal(await director.getAttribute("data-cue"),"idle");
-    report.devices.push({device:dim.name,width:dim.width,height:dim.height,...info,motion,timeline:{activeCue,manualOverride:true,reducedMotion:true}});
+    report.devices.push({device:dim.name,width:dim.width,height:dim.height,...info,motion,timeline:{renderedCues:trace.slice(0,4),manualOverride:true,reducedMotion:true}});
     await context.close();
   }
   assert.deepEqual(report.errors,[]);

@@ -25,7 +25,7 @@ const motionPreference=window.matchMedia("(prefers-reduced-motion: reduce)");
 const motionMode=new URLSearchParams(location.search).get("vf-motion");
 const motionOptIn=motionMode==="1"||motionMode==="2";
 const timeline=motionMode==="2"?createTimelinePlayer(FOYER_TIMELINE):null;
-let timelineOrbit=0,timelineVertical=0,lastCue="idle",readyStatus="";
+let timelineOrbit=0,timelineVertical=0,lastCue="idle",readyStatus="",renderedCue="idle";
 const cueText={arrival:"Ingresso",reveal:"Rivelazione della sala",focus:"Messa a fuoco",idle:""};
 function syncCue(cue){
   if(lastCue===cue)return;
@@ -411,6 +411,10 @@ function render(now){
   }else active=motionLayer?.tick(now)??false;
   if(motionButton&&!motionButton.hidden)motionButton.dataset.running=String(active);
   setCamera();renderer.render(scene,camera);
+  if(timeline&&renderedCue!==lastCue){
+    renderedCue=lastCue;
+    motionButton.dispatchEvent(new CustomEvent("atlas:scene-cue-rendered",{detail:{cue:renderedCue}}));
+  }
   if(active)schedule();
 }
 function schedule(){if(!request&&!stopped)request=requestAnimationFrame(render);}

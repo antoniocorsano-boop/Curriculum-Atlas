@@ -25,12 +25,23 @@ export function sampleTimeline(timeline,elapsed){
   return {active:true,cue:a.cue,values:Object.fromEntries(keys.map(k=>[k,a.values[k]+(b.values[k]-a.values[k])*e]))};
 }
 export function createTimelinePlayer(timeline){
-  let start=null,reduced=false;
+  let start=null,reduced=false,last=-1;
+  const idle=()=>({active:false,cue:"idle",values:zero()});
   return {
-    play(now){if(reduced||!Number.isFinite(now))return false;start=now;return true;},
-    stop(){start=null;},
-    setReduced(value){reduced=Boolean(value);if(reduced)start=null;},
-    tick(now){if(start===null)return {active:false,cue:"idle",values:zero()};
-      const result=sampleTimeline(timeline,Math.max(0,now-start));if(!result.active)start=null;return result;}
+    play(now){if(reduced||!Number.isFinite(now))return false;start=now;last=-1;return true;},
+    stop(){start=null;last=-1;},
+    setReduced(value){reduced=Boolean(value);if(reduced){start=null;last=-1;}},
+    tick(now){
+      if(start===null||!Number.isFinite(now))return idle();
+      // The wall clock may jump on a slow GPU. Render every key boundary
+      // once, in order, rather than silently jumping over semantic phases.
+      const target=Math.max(last,Math.max(0,now-start));
+      const boundary=timeline.frames.find(f=>f.at>last);
+      const elapsed=boundary?Math.min(target,boundary.at):target;
+      last=elapsed;
+      const result=sampleTimeline(timeline,elapsed);
+      if(!result.active){start=null;last=-1;}
+      return result;
+    }
   };
 }

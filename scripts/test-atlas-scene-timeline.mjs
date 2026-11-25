@@ -17,9 +17,11 @@ for(const bad of [
  {...t,frames:[{...t.frames[0],values:{...t.frames[0].values,light:.2}},...t.frames.slice(1)]}
 ])assert.throws(()=>compileTimeline(bad));
 const p=createTimelinePlayer(t);
-assert.equal(p.play(100),true);assert.equal(p.tick(1300).cue,"reveal");
+assert.equal(p.play(100),true);assert.equal(p.tick(100).cue,"arrival");assert.equal(p.tick(1300).cue,"reveal");
 p.stop();assert.equal(p.tick(1500).active,false);
 p.setReduced(true);assert.equal(p.play(1600),false);
-p.setReduced(false);assert.equal(p.play(2000),true);assert.equal(p.tick(6500).active,false);
+p.setReduced(false);assert.equal(p.play(2000),true);
+// Severe frame delay: every cue remains observable, even when the clock has passed the end.
+assert.equal(p.tick(6500).cue,"arrival");assert.equal(p.tick(6600).cue,"reveal");assert.equal(p.tick(6700).cue,"focus");assert.equal(p.tick(6800).active,false);
 assert.equal(p.tick(6600).values.orbit,0);
 console.log("VF-MOTION-02 timeline contracts PASS");

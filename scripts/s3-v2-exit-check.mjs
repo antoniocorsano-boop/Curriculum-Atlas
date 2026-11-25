@@ -1,4 +1,5 @@
 import { chromium } from "playwright";
+import {verifyGateway} from "./atlas-surface-contract.mjs";
 
 const base = process.env.BASE_URL || "http://127.0.0.1:3000";
 const routes = ["/", "/curricolo", "/esplora", "/materiali", "/risorse", "/percorsi", "/obiettivi", "/raccordi", "/impostazioni"];
@@ -33,6 +34,10 @@ try {
         throw new Error(`Authentication affordance unexpectedly exposed on public Atlas route ${route}`);
       }
 
+      if(route==="/" && await page.locator('[data-atlas-surface="gateway"]').count()){
+        await verifyGateway(page,base);
+        continue;
+      }
       await page.getByText("Vista pubblica", { exact: true }).first().waitFor({ state: "visible" });
 
       if (viewport.name === "mobile-360") {

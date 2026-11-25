@@ -32,7 +32,8 @@ function resetPortal(event: PointerEvent<HTMLAnchorElement>) {
 
 export function AtlasEntry() {
   return (
-    <main id="atlas-entry-root" className={styles.entry}>
+    <main id="atlas-entry-root" className={styles.entry} data-atlas-surface="gateway">
+      <span className={styles.publicContext} data-atlas-public>Vista pubblica · nessun account</span>
       <h1 className={styles.visuallyHidden}>ATLAS — Mondi della conoscenza</h1>
       <section className={styles.artboard} aria-label="Atrio della conoscenza e accesso alle quattro aree di Atlas">
         <img
