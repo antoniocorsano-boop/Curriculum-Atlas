@@ -62,6 +62,7 @@ export interface ExperienceStageEvidence {
 
 export interface ExperienceStage {
   visualMode: "CINEMATIC_EDITORIAL";
+  discovery?: {minObservations:number; reflectionPrompt:string};
   focusLocationId?: string;
   locations?: ExperienceStageLocation[];
   evidence?: ExperienceStageEvidence[];
@@ -98,6 +99,7 @@ export interface ExperienceNode {
   feedbackCategory: FeedbackCategory;
   transitions: ExperienceTransition[];
   terminal?: boolean;
+  discoveryClosure?: string;
 }
 
 export interface ExperiencePresentationTransition {

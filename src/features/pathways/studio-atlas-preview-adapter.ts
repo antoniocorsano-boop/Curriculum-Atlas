@@ -34,6 +34,7 @@ export interface StudioAtlasPreviewSceneChoice {
 
 export interface StudioAtlasPreviewStage {
   visualMode: "CINEMATIC_EDITORIAL";
+  discovery?: {minObservations:number;reflectionPrompt:string};
   focusLocationId?: string;
   locations?: Array<{
     id: string;
@@ -163,6 +164,10 @@ function validateStage(
     if (item.character !== undefined && !nonempty(item.character)) errors.push(`${prefix}:evidenceCharacter`);
     if(item.hotspot!==undefined&&(!object(item.hotspot)||Object.keys(item.hotspot).length!==2||![item.hotspot.x,item.hotspot.y].every(v=>typeof v==="number"&&Number.isInteger(v)&&v>=0&&v<=100)))errors.push(`${prefix}:hotspot`);
   }
+  if(stage.discovery!==undefined){
+    const d=stage.discovery;
+    if(!object(d)||!Number.isInteger(d.minObservations)||d.minObservations<1||d.minObservations>evidence.length||!nonempty(d.reflectionPrompt)||locations.length!==1||stage.workbench!==undefined||evidence.some(item=>!item?.hotspot))errors.push(`${prefix}:discovery`);
+  }
   if (stage.characterBeat !== undefined) {
     const beat = stage.characterBeat;
     if (!object(beat) || !nonempty(beat.name) || !nonempty(beat.role) || !nonempty(beat.line)) {
@@ -283,6 +288,7 @@ export function studioAtlasSnapshotToExperience(
   const nodes = snapshot.scenes.map((scene, index) => {
     const next = snapshot.scenes[index + 1];
     const isTerminal = index === snapshot.scenes.length - 1;
+    const discovery=Boolean(scene.stage?.discovery);
     const interaction = scene.interaction === "CHOICE" ? "choice" : "summary";
     const primitive =
       scene.kind === "TRANSFER" ? "TRANSFER" :
@@ -304,7 +310,7 @@ export function studioAtlasSnapshotToExperience(
             id: "continue",
             targetNodeId: next.sceneId,
             label: isEduTwin ? scene.learnerAction : "Continua",
-            feedback: isEduTwin ? withReveal(scene.consequence, scene.reveal) : scene.consequence,
+            feedback: isEduTwin || discovery ? withReveal(scene.consequence, scene.reveal) : scene.consequence,
           }];
 
     return {
@@ -316,7 +322,7 @@ export function studioAtlasSnapshotToExperience(
       facts: [
         scene.visibleSituation,
         ...(isEduTwin && isTerminal && scene.consequence.trim() !== scene.visibleSituation.trim() ? [scene.consequence] : []),
-        ...((!isEduTwin || isTerminal) && scene.reveal?.trim() ? [scene.reveal.trim()] : []),
+        ...(!discovery && (!isEduTwin || isTerminal) && scene.reveal?.trim() ? [scene.reveal.trim()] : []),
       ],
       world: scene.world,
       stage: scene.stage as ExperienceStage | undefined,
@@ -326,6 +332,7 @@ export function studioAtlasSnapshotToExperience(
         index === 0 ? "EVIDENCE_INCOMPLETE" :
         "EVIDENCE_SUPPORTED",
       terminal: isTerminal || undefined,
+      ...(discovery&&isTerminal?{discoveryClosure:withReveal(scene.consequence,scene.reveal)}:{}),
       transitions,
     } satisfies ExperienceDefinition["graph"]["nodes"][number];
   });
