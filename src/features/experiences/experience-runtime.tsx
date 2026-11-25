@@ -318,7 +318,7 @@ export function ExperienceRuntime({
           {review && activeLocation && !contextualLocation && <review.Location location={activeLocation.id} activeEvidenceId={activeEvidenceId} onAsk={node.id === review.interviewScene ? setActiveEvidenceId : undefined} />}
 
           {compactIllustration ? (
-            <details className="experience-compact-evidence"><summary>Indizi in formato testuale</summary><ul>{stageEvidence.map(item=><li key={item.id}><strong>{item.label}</strong><p>{item.detail}</p></li>)}</ul></details>
+            <details className="experience-compact-evidence"><summary>Indizi in formato testuale</summary>{stage.characterBeat&&<p><strong>{stage.characterBeat.name} · {stage.characterBeat.role}</strong> — {stage.characterBeat.line}</p>}<ul>{stageEvidence.map(item=><li key={item.id}><strong>{item.label}</strong><p>{item.detail}</p><button type="button" aria-pressed={pinnedEvidenceIds.includes(item.id)} onClick={()=>togglePinned(item.id)}>{pinnedEvidenceIds.includes(item.id)?"Sul banco":"Porta sul banco"}</button></li>)}</ul></details>
           ) : stageEvidence.length > 0 ? (
             <section className="experience-investigation" aria-label="Indagine">
               <header>
