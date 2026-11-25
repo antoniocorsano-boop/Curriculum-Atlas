@@ -4,6 +4,7 @@ import {readFileSync,writeFileSync,mkdirSync,statSync,existsSync} from "node:fs"
 import {resolve,extname,join,sep} from "node:path";
 import assert from "node:assert/strict";
 import {chromium} from "playwright";
+import sharp from "sharp";
 
 const root=resolve(process.argv[2]||"out"),output=resolve(process.argv[3]||"evidence/atlas-foyer");
 mkdirSync(output,{recursive:true});
@@ -127,7 +128,31 @@ try{
     await page.waitForFunction(()=>document.querySelector("#motion-preview").disabled);
     assert.equal(await director.getAttribute("data-running"),"false");
     assert.equal(await director.getAttribute("data-cue"),"idle");
-    report.devices.push({device:dim.name,width:dim.width,height:dim.height,...info,motion,timeline:{renderedCues:trace.slice(0,4),manualOverride:true,reducedMotion:true}});
+    // Optical comparison uses identical camera, viewport, motion-off state and geometry.
+    const opticalEvidence=[];
+    for(const mode of ["baseline","1"]){
+      await page.goto(origin+"/atrio/?vf-optics="+mode);
+      await page.waitForFunction(()=>Number(document.querySelector("#foyer-canvas")?.dataset.opticsFrame)>0,null,{timeout:30000});
+      await page.waitForFunction(()=>getComputedStyle(document.querySelector(".destinations")).opacity==="0");
+      const surface=page.locator("#foyer-canvas");
+      const metrics=await surface.evaluate(el=>({state:el.dataset.optics,calls:Number(el.dataset.opticsCalls),triangles:Number(el.dataset.opticsTriangles),programs:Number(el.dataset.opticsPrograms)}));
+      const png=await surface.screenshot({path:join(output,dim.name+"-optics-"+mode+".png")});
+      const pixels=await sharp(png).removeAlpha().raw().toBuffer({resolveWithObject:true});
+      opticalEvidence.push({metrics,pixels});
+    }
+    const [a,b]=opticalEvidence;
+    assert.deepEqual(a.pixels.info,b.pixels.info);
+    let sum=0;for(let i=0;i<a.pixels.data.length;i++)sum+=Math.abs(a.pixels.data[i]-b.pixels.data[i]);
+    const delta=sum/a.pixels.data.length/255;
+    if(process.env.ATLAS_FOYER_EXPECT_ART==="true"){
+      assert.equal(b.metrics.state,"preserved-master");
+    }else{
+      assert.equal(b.metrics.state,"active");
+      assert(delta>.001,"Optical recipe must visibly change the rendered frame");
+      assert.equal(b.metrics.triangles,a.metrics.triangles,"No extra optical geometry");
+      assert(b.metrics.calls<=a.metrics.calls+1,"Optical draw-call budget exceeded");
+    }
+    report.devices.push({device:dim.name,width:dim.width,height:dim.height,...info,motion,timeline:{renderedCues:trace.slice(0,4),manualOverride:true,reducedMotion:true},optics:{baseline:a.metrics,profile:b.metrics,meanAbsoluteRGBDelta:delta,physicalPerformanceVerified:false}});
     await context.close();
   }
   assert.deepEqual(report.errors,[]);
