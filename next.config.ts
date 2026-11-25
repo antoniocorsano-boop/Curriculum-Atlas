@@ -11,6 +11,7 @@ if (existsSync("public/atlas-gateway-native") && (process.env.ATLAS_GATEWAY_PREV
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  devIndicators: false, // La porta d'accesso immersiva non mostra controlli tecnici sovrapposti
   poweredByHeader: false,
   output: isGitHubPages || isAtlasPreviewRootScoped ? "export" : process.env.ATLAS_LIBRARY_WEB_DELIVERY === "true" ? "standalone" : undefined,
   trailingSlash: true,

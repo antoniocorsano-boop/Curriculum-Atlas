@@ -1,0 +1,41 @@
+name: "Atlas ARCH-04 — Architectural geometry specification"
+on:
+  pull_request:
+    branches: [work/atlas-library-web-delivery]
+    paths:
+      - "docs/atlas-gateway/ARCH-04-ARCHITECTURAL-GEOMETRY-PROJECT-01.json"
+      - "docs/atlas-gateway/ARCH-04-CONSTRUCTION-JOINTS-01.json"
+      - "docs/atlas-gateway/ARCH-04-ARCHITECTURAL-GEOMETRY-PROJECT-01.md"
+      - "docs/atlas-gateway/drawings/ARCH-04-*"
+      - "docs/atlas-gateway/ATLAS-GATEWAY-LOCKED-DELIVERY-SEQUENCE-01.md"
+      - "scripts/atlas-gateway-production/validate_arch04_architectural_project_01.py"
+      - ".github/workflows/atlas-arch04-architectural-project.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: arch04-project-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate-project:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python syntax and SVG geometry contract validation
+        run: |
+          python3 -m py_compile scripts/atlas-gateway-production/validate_arch04_architectural_project_01.py
+          python3 scripts/atlas-gateway-production/validate_arch04_architectural_project_01.py
+      - name: Non-publication guard
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          f=Path('docs/atlas-gateway/ARCH-04-ARCHITECTURAL-GEOMETRY-PROJECT-01.json')
+          j=json.loads(f.read_text(encoding='utf8'))
+          assert 'NOT' in j['status']
+          assert all('NOT_ART_APPROVED' in x['current_status'] for x in j['drawings'])
+          assert all('PENDING' in gate['status'] or 'REQUIRES_HUMAN' in gate['status'] for gate in j['gates'])
+          assert not Path('public/atlas-gateway-entry/arch04-approved.glb').exists()
+          print('ARCH-04 project only — no publication, human sign-off still required')
+          PY

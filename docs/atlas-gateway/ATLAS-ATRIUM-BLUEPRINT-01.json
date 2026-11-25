@@ -1,0 +1,198 @@
+{
+  "schema": "atlas.atrium.blueprint/v1",
+  "id": "ATLAS-ATRIUM-BLUEPRINT-01",
+  "created": "2026-11-20",
+  "status": "PARAMETRIC_PROPOSAL_NOT_FITTED_TO_ART_DIR_02_IMAGE",
+  "original_seed": "ATLAS-COMPOSER-SEED-01.json",
+  "geometric_reference": "ATLAS-GEO-SPEC-01.md",
+  "design_reference": "ATLAS-PROMPT-ART-01.md",
+  "art_direction": "ATLAS-GATEWAY-ART-DIRECTION-02.md",
+  "reference": {
+    "name": "atrio_futuristico_atlas_della_conoscenza.png",
+    "sha256": "7b3ffb9a355b89057acea02489020ad43d871e10b6cf5bbb29f8769ff3073336",
+    "canonical_file_in_production": false,
+    "pixel_landmarks_measured": false
+  },
+  "coordinate_system": {
+    "origin": "center of rotunda at finished-floor elevation",
+    "X": "positive to the viewer's right",
+    "Y": "positive to the rear of the atrium; viewer at negative Y",
+    "Z": "vertical upward",
+    "units": "normalized R (rotunda radius), not meters"
+  },
+  "dimensions_R": {
+    "rotunda_outer_radius": 1.0,
+    "gallery_inner_radius": 0.82,
+    "wall_shell_thickness": 0.06,
+    "levels_z": [
+      0.42,
+      0.78
+    ],
+    "visible_top_z": 1.35,
+    "skylight_center": [
+      0,
+      0,
+      1.35
+    ],
+    "skylight_radius": 0.34,
+    "skylight_shape_3d": "candidate_circle_not_yet_fitted",
+    "platform_radius": 0.3,
+    "platform_top_z": 0.03,
+    "podium_major_semiaxis_x": 0.22,
+    "podium_minor_semiaxis_y": 0.18,
+    "podium_top_z": 0.14,
+    "portal_radius": 0.64,
+    "portal_angles_from_rear_y_deg": [
+      -42,
+      -14,
+      14,
+      42
+    ],
+    "portal_width": 0.16,
+    "portal_height": 0.46,
+    "portal_thickness": 0.02,
+    "portal_base_z": 0.03,
+    "roof_edge_z_R": 1.05
+  },
+  "portals": [
+    {
+      "id": "curricolo",
+      "name": "Curricolo",
+      "subtitle": "Struttura e obiettivi",
+      "illustration": "piani traslucidi sovrapposti"
+    },
+    {
+      "id": "esplora",
+      "name": "Esplora",
+      "subtitle": "Relazioni e connessioni",
+      "illustration": "rete tridimensionale di nodi"
+    },
+    {
+      "id": "percorsi",
+      "name": "Percorsi",
+      "subtitle": "Itinerari formativi",
+      "illustration": "scala luminosa crescente"
+    },
+    {
+      "id": "esperienze",
+      "name": "Esperienze",
+      "subtitle": "Attività e mondi",
+      "illustration": "pianeta blu e tracciati digitali"
+    }
+  ],
+  "cameras_R": {
+    "CAM_HERO": {
+      "position": [
+        0,
+        -1.9,
+        0.25
+      ],
+      "target": [
+        0,
+        0,
+        0.61
+      ],
+      "horizontal_fov_deg": 70,
+      "ratio": [
+        16,
+        9
+      ],
+      "purpose": "frontal cinematic reference-fit camera; preliminary only"
+    },
+    "CAM_SIDE": {
+      "position": [
+        1.65,
+        -1.55,
+        0.62
+      ],
+      "target": [
+        0,
+        0,
+        0.55
+      ],
+      "horizontal_fov_deg": 70,
+      "ratio": [
+        16,
+        9
+      ],
+      "purpose": "side parallax and true geometry test"
+    },
+    "CAM_MOBILE": {
+      "position": [
+        0,
+        -1.85,
+        0.29
+      ],
+      "target": [
+        0,
+        0,
+        0.65
+      ],
+      "horizontal_fov_deg": 76,
+      "ratio": [
+        9,
+        16
+      ],
+      "purpose": "separate mobile vertical composition; pending actual crop validation"
+    }
+  },
+  "overrides_from_seed": {
+    "portal_radius": {
+      "old": 0.46,
+      "new": 0.64,
+      "rationale": "prevent portal crowding in the initial concept, and keep rear arc passage"
+    },
+    "portal_angles_deg": {
+      "old": [
+        -34,
+        -12,
+        12,
+        34
+      ],
+      "new": [
+        -42,
+        -14,
+        14,
+        42
+      ],
+      "rationale": "provide visible separation for four panels, hypothetical pending real image matching"
+    },
+    "portal_width": {
+      "old": 0.18,
+      "new": 0.16,
+      "rationale": "retain safe modeled clearances between adjacent panels"
+    },
+    "hero_camera": {
+      "old": [
+        0,
+        -1.15,
+        0.18
+      ],
+      "new": [
+        0,
+        -1.9,
+        0.25
+      ],
+      "rationale": "provide wider vertical room for oculus and platform, pending actual render fitting"
+    },
+    "podium_semiaxes": {
+      "old": "not established",
+      "new": [
+        0.22,
+        0.18
+      ],
+      "rationale": "candidate low elliptical convex footprint; not measured"
+    }
+  },
+  "deliverables": {
+    "drawing": "ATLAS-ATRIUM-BLUEPRINT-01.svg",
+    "report": "ATLAS-ATRIUM-BLUEPRINT-01-measures.json",
+    "generator": "scripts/atlas-gateway-production/render-blueprint.py"
+  },
+  "limits": [
+    "Not reverse-engineered from the final four-portal image; dimensional values are hypotheses",
+    "Cannot assert exact image-space alignment, photogrammetric reconstruction or real-world architectural scale",
+    "An SVG is a 2D technical proposal, not a rendered Blender .blend or a navigable 3D scene",
+    "Preserve original ATLAS-COMPOSER-SEED-01, record all local overrides in this versioned proposal"
+  ]
+}

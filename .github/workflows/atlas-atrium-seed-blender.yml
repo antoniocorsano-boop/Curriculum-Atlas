@@ -1,0 +1,104 @@
+name: "ATLAS Atrium — SEED 3D in Blender (non approvato)"
+# Esegue realmente Blender su una scena parametrica SEED. Non è ART-DIR-02 approvato,
+# non produce alcun rilascio e NON sostituisce il riferimento canonico.
+on:
+  push:
+    branches: [work/atlas-gateway-01-foyer]
+    paths:
+      - ".github/workflows/atlas-atrium-seed-blender.yml"
+      - "scripts/atlas-gateway-production/generate-atrium-seed.py"
+      - "scripts/atlas-gateway-production/import-atrium-seed-blender.py"
+      - "docs/atlas-gateway/ATLAS-ATRIUM-BLUEPRINT-01.json"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: atlas-atrium-seed-blender-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  blender-seed:
+    name: "Generazione GLB, Blender e tre render di prova"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      PYTHONUNBUFFERED: "1"
+      MPLBACKEND: "Agg"
+      SEED_GLTF: "evidence/atlas-atrium-seed/assets/ATLAS-ATRIUM-3D-SEED-01.glb"
+      BLUEPRINT: "docs/atlas-gateway/ATLAS-ATRIUM-BLUEPRINT-01.json"
+      EVIDENCE_DIR: "evidence/atlas-atrium-seed"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Verify source code and blueprint before creation
+        run: |
+          python -m py_compile scripts/atlas-gateway-production/generate-atrium-seed.py
+          python -m py_compile scripts/atlas-gateway-production/import-atrium-seed-blender.py
+          python -m json.tool "$BLUEPRINT" > /dev/null
+          python - <<'PY'
+          import json,os
+          b=json.load(open(os.environ["BLUEPRINT"]))
+          assert len(b["portals"])==4
+          assert [x["name"] for x in b["portals"]]==["Curricolo","Esplora","Percorsi","Esperienze"]
+          assert set(b["cameras_R"])=={"CAM_HERO","CAM_SIDE","CAM_MOBILE"}
+          assert b["reference"]["canonical_file_in_production"] is False
+          print("INPUT: scenario parametrico non calibrato, 4 portali, 3 camere")
+          PY
+      - name: Install geometry generator dependencies (open source)
+        run: python -m pip install --disable-pip-version-check "numpy>=1.26,<3" "trimesh>=4.3,<5" "matplotlib>=3.8,<4" "Pillow>=10,<13"
+      - name: Rebuild genuine GLB mesh from the versioned blueprint
+        run: |
+          mkdir -p "$EVIDENCE_DIR/assets" "$EVIDENCE_DIR/blender"
+          python scripts/atlas-gateway-production/generate-atrium-seed.py "$BLUEPRINT" "$EVIDENCE_DIR/assets"
+      - name: Install open-source Blender for real .blend authoring and Cycles
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender
+          blender --version | head -2
+      - name: Import GLB into Blender, save real .blend, render three views
+        run: |
+          blender --background --factory-startup --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/import-atrium-seed-blender.py -- \
+            --glb "$SEED_GLTF" --blueprint "$BLUEPRINT" \
+            --output "$EVIDENCE_DIR/blender" --samples 6 --render
+      - name: Validate saved .blend, three images and immutable evidence hashes
+        run: |
+          python - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          from PIL import Image,ImageStat
+          e=Path(os.environ["EVIDENCE_DIR"])
+          b=e/"blender"
+          report=json.loads((b/"atlas-atrium-blender-evidence.json").read_text())
+          assert report["status"]=="BLENDER_DRAFT_RENDERED"
+          assert report["mesh_nodes_imported"]>=100
+          assert set(report["camera_names"])=={"CAM_HERO","CAM_SIDE","CAM_MOBILE"}
+          blend=b/"atlas-atrium-3d-seed-01.blend"
+          assert blend.is_file() and blend.stat().st_size>10_000
+          artifacts=[]
+          for n in ("cam_hero","cam_side","cam_mobile"):
+              p=b/(n+".png")
+              assert p.is_file(),p
+              with Image.open(p) as img:
+                  img.load()
+                  assert min(img.size)>=450
+                  extrema=img.convert("RGB").getextrema()
+                  assert any(hi-lo>10 for lo,hi in extrema),f"empty/uniform render: {p}"
+                  print(n, img.size, "RGB extrema:",extrema)
+              artifacts.append(p)
+          for p in [blend,*artifacts]:
+              print(p,p.stat().st_size,"SHA256",hashlib.sha256(p.read_bytes()).hexdigest())
+          assert report["production_quality"]=="NOT_APPROVED_ART_DIR_02_REFERENCE_NOT_FITTED"
+          (e/"CI-STATUS.txt").write_text(
+              "SEED: THREE RENDERS + ACTUAL .blend VERIFIED. NO ART-DIR-02 APPROVAL. NO RELEASE.\n"
+          )
+          PY
+      - name: Always archive generated 3D source and evidence for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-atrium-seed-3d-blender-${{ github.run_number }}
+          path: evidence/atlas-atrium-seed/
+          retention-days: 30
+          if-no-files-found: warn

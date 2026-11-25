@@ -1,0 +1,115 @@
+{
+  "schema": "atlas.art-dir-02.canonical-source/v2",
+  "status": "CANONICAL_BY_EXPLICIT_USER_DECISION_2026-11-21",
+  "active": true,
+  "decision": "L'utente considera l'immagine JPEG allegata il vero originale per ART-DIR-02; utilizzo come sorgente vincolante, senza esigere la vecchia copia PNG.",
+  "file": {
+    "archive_name": "ATLAS-ART-DIR-02-CANONICO-2026-11-21.jpg",
+    "uploaded_name": "1000032808.png",
+    "format": "JPEG",
+    "mime_type": "image/jpeg",
+    "width": 1536,
+    "height": 864,
+    "bytes": 224117,
+    "sha256": "a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+  },
+  "drive": {
+    "id": "1vSC_ynSxAF-pxR071TiKjEE0OtaFjXCn",
+    "url": "https://drive.google.com/file/d/1vSC_ynSxAF-pxR071TiKjEE0OtaFjXCn/view?usp=drivesdk",
+    "metadata_verified": true,
+    "remote_hash_recomputed": false
+  },
+  "archive": {
+    "id": "1qCcL9ioPFoE33eFx0OdPrnNezmmoF-EO",
+    "url": "https://drive.google.com/file/d/1qCcL9ioPFoE33eFx0OdPrnNezmmoF-EO/view?usp=drivesdk",
+    "zip_sha256": "aeaf9c0ca536a9a2315468a8b9f3830ff740554cee3b4f541a6f6533e9ab9241",
+    "includes": [
+      "original image",
+      "manual landmarks",
+      "camera-fit diagnostic",
+      "Python fit script",
+      "portal contract snapshot",
+      "README"
+    ]
+  },
+  "landmarks": "docs/atlas-gateway/ART-DIR-02-CANONICAL-LANDMARKS.json",
+  "prefit": "docs/atlas-gateway/ATLAS-CAMERA-FIT-CANONICAL-02.json",
+  "history": {
+    "former_png_sha256": "7b3ffb9a355b89057acea02489020ad43d871e10b6cf5bbb29f8769ff3073336",
+    "former_png_size": [
+      1672,
+      941
+    ],
+    "role": "SUPERSEDED_AS_PRODUCTION_REFERENCE__RETAIN_HISTORY",
+    "former_auxiliary_portal_jpeg_sha256": "b3bb8bb9c184acee97f479c522669059602c0797e4d8e7033a0627fc88ed0e81"
+  },
+  "gates": {
+    "canonical_source_archived": "PASS",
+    "canonical_sha_local": "PASS",
+    "ci_file_mount": "NOT_VERIFIED",
+    "blender_fit": "NOT_APPROVED",
+    "webgl_release": false,
+    "student_use": false
+  },
+  "visual_reading": {
+    "version": "ATLAS-ART-DIR-02-VISUAL-READING-01",
+    "reading_date": "2026-11-21",
+    "github_path": "docs/atlas-gateway/ATLAS-ART-DIR-02-VISUAL-READING-01.md",
+    "archive_drive_id": "1MopbiQmx7-aoLoGwt_qylPVsSmuAAZR_",
+    "archive_url": "https://drive.google.com/file/d/1MopbiQmx7-aoLoGwt_qylPVsSmuAAZR_/view",
+    "archive_bytes": 474296,
+    "archive_sha256": "bf03940b5f16a654156bfbe2d393d1cb69e728b06de1320fa2187ceff3d887e2",
+    "interactive_drive_id": "1xi15jm8P-m_2WG_6ZFd7lF11MMja2-7q",
+    "interactive_url": "https://drive.google.com/file/d/1xi15jm8P-m_2WG_6ZFd7lF11MMja2-7q/view",
+    "inventory_objects": 26,
+    "original_jpeg_included_binary_identical": true,
+    "drive_folder_same_as_canonical": true,
+    "status": "ARCHIVED_SOURCE_READING__NOT_BLENDER_ART_APPROVAL"
+  },
+  "latest_art_decisions": {
+    "portal_base": "Single slim luminous metal plinth, no detailed slit/glass recess requirement",
+    "priority": "Finishes, interiors, foliage, gallery glass and dark cladding, smaller-looking skylight and bright sky, fewer exposed steel ribs, directional floor strips/reflections",
+    "status": "USER_APPROVED_DESIGN_INTENT_NOT_MODEL"
+  },
+  "visual_reading_history": [
+    {
+      "version": "ATLAS-ART-DIR-02-VISUAL-READING-01",
+      "reading_date": "2026-11-21",
+      "github_path": "docs/atlas-gateway/ATLAS-ART-DIR-02-VISUAL-READING-01.md",
+      "archive_drive_id": "1MopbiQmx7-aoLoGwt_qylPVsSmuAAZR_",
+      "archive_url": "https://drive.google.com/file/d/1MopbiQmx7-aoLoGwt_qylPVsSmuAAZR_/view",
+      "archive_bytes": 474296,
+      "archive_sha256": "bf03940b5f16a654156bfbe2d393d1cb69e728b06de1320fa2187ceff3d887e2",
+      "interactive_drive_id": "1xi15jm8P-m_2WG_6ZFd7lF11MMja2-7q",
+      "interactive_url": "https://drive.google.com/file/d/1xi15jm8P-m_2WG_6ZFd7lF11MMja2-7q/view",
+      "inventory_objects": 26,
+      "original_jpeg_included_binary_identical": true,
+      "drive_folder_same_as_canonical": true,
+      "status": "ARCHIVED_SOURCE_READING__NOT_BLENDER_ART_APPROVAL"
+    }
+  ],
+  "visual_reading_current": {
+    "version": "ATLAS-ART-DIR-02-VISUAL-READING-02",
+    "status": "ARCHIVED_AND_REMOTE_BYTES_VERIFIED__NOT_ART_APPROVED",
+    "reading_date": "2026-11-21",
+    "github_path": "docs/atlas-gateway/ATLAS-ART-DIR-02-VISUAL-READING-02.md",
+    "drive_archive_id": "16Rnkm8FNzDH_TfXY2QtzKSpFAtOazcWY",
+    "drive_archive_url": "https://drive.google.com/file/d/16Rnkm8FNzDH_TfXY2QtzKSpFAtOazcWY/view",
+    "archive_bytes": 1282652,
+    "archive_sha256": "07d8025a4c2c19d9486e13278b03ea56c9c55d3c25343d4a8d5fef27bfcd2d25",
+    "interactive_drive_id": "1ZTOXQqzArEcNvMCmgJ6891ojeUgKPYCG",
+    "markdown_drive_id": "1ZXYUZLM9Js0BYs7iELQAP72XamB503l_",
+    "json_drive_id": "1NrVGZvdRNiVoUVj34Kt9LsC-sYSZsmiy",
+    "palette_drive_id": "1Vo-uTPRgpDPA_wwFJZLjKwY5DOEOX5Tu",
+    "original_jpeg_sha256": "a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe",
+    "original_jpeg_bytes": 224117,
+    "original_preserved": true,
+    "previous_reading_preserved": true,
+    "objects": 26,
+    "compositional_relations": 16,
+    "source_color_samples": 12,
+    "diagnostic_crops": 6,
+    "source_grouping": "same ZIP, plus linked independent assets in the long-term Drive archive",
+    "note": "Source JPEG unchanged; v1 archived and included; observations, interpretations, approved decisions and proposed tests separated."
+  }
+}

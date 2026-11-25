@@ -1,0 +1,119 @@
+name: "ATLAS ART-DIR-02 — R5 gallerie e audit sezione"
+on:
+  pull_request:
+    branches: [work/atlas-library-web-delivery]
+    paths:
+      - "scripts/atlas-gateway-production/upgrade_finishings_r5.py"
+      - ".github/workflows/atlas-finishings-r5.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: atlas-art-finishings-r5-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  gallery-and-section-r5:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify R5 source integrity and canonical image
+        run: |
+          python3 -m py_compile \
+            scripts/atlas-gateway-production/upgrade_finishings_r5.py \
+            scripts/atlas-gateway-production/apply_finishings_r4.py \
+            scripts/atlas-gateway-production/fetch_finishings_cc0.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          a=json.loads(Path("docs/atlas-gateway/ART-DIR-02-CANONICAL-LANDMARKS.json").read_text())
+          assert a["source"]["sha256"]=="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+          assert len(a["portals"])==4
+          PY
+      - name: Fetch official CC0 assets and lock SHA receipts
+        run: |
+          python3 -m pip install --quiet zstandard==0.25.0
+          mkdir -p "$RUNNER_TEMP/atlas-r5/assets"
+          python3 scripts/atlas-gateway-production/fetch_finishings_cc0.py \
+            --out "$RUNNER_TEMP/atlas-r5/assets"
+      - name: Install Blender production engine
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Reconstruct unchanged 3D master and architectural base
+        run: |
+          mkdir -p "$RUNNER_TEMP/atlas-r5/master" "$RUNNER_TEMP/atlas-r5/geometry" "$RUNNER_TEMP/atlas-r5/art" "$RUNNER_TEMP/atlas-r5/r2" "$RUNNER_TEMP/atlas-r5/r4" "$RUNNER_TEMP/atlas-r5/r5"
+          blender -b --factory-startup --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-foyer/blender_master.py -- \
+            --out "$RUNNER_TEMP/atlas-r5/master"
+          blender -b "$RUNNER_TEMP/atlas-r5/master/atlas-foyer-master.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/build_architecture_04_geometry.py -- \
+            --out "$RUNNER_TEMP/atlas-r5/geometry" --geometry-only
+          blender -b "$RUNNER_TEMP/atlas-r5/geometry/atlas-foyer-arch04b-geometric-candidate.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/art_proof_01_cinematic.py -- \
+            --out "$RUNNER_TEMP/atlas-r5/art" --model-only
+      - name: Reconstruct R2 portal bases and floor incision
+        run: |
+          blender -b "$RUNNER_TEMP/atlas-r5/art/atlas-art-proof-01b-cinematic.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/art_proof_01b_portals_corrective.py -- \
+            --out "$RUNNER_TEMP/atlas-r5/r2"
+      - name: Reproduce real CC0 R4 materials and licensed model
+        run: |
+          blender -b "$RUNNER_TEMP/atlas-r5/r2/atlas-art-proof-01b-portal-reading-r2.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/apply_finishings_r4.py -- \
+            --assets "$RUNNER_TEMP/atlas-r5/assets" \
+            --out "$RUNNER_TEMP/atlas-r5/r4"
+      - name: Add R5 gallery finishes, rescale reusable plants and audit real section
+        run: |
+          blender -b "$RUNNER_TEMP/atlas-r5/r4/atlas-art-dir02-finishings-r4-candidate.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/upgrade_finishings_r5.py -- \
+            --out "$RUNNER_TEMP/atlas-r5/r5"
+      - name: Validate source lineage, section offset, files and no publication
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])/"atlas-r5"
+          r4=json.loads((root/"r4"/"atlas-finishings-r4-receipt.json").read_text())
+          r5=json.loads((root/"r5"/"atlas-finishings-r5-receipt.json").read_text())
+          section=json.loads((root/"r5"/"atlas-portal-section-r5-audit.json").read_text())
+          def sha(f):return hashlib.sha256(f.read_bytes()).hexdigest()
+          f4=root/"r4"/"atlas-art-dir02-finishings-r4-candidate.blend"
+          f5=root/"r5"/"atlas-art-dir02-gallery-finishings-r5.blend"
+          assert sha(f4)==r5["source_r4_sha256"]
+          assert sha(f5)==r5["candidate_blend_sha256"]
+          assert r4["plant_source_status"]=="IMPORTED_CC0"
+          assert len(r5["plant_floor_instances"])==2
+          assert len(r5["plant_upper_gallery_instances"])==2
+          for category in ("gallery_bays","decks","rails"):
+              assert len(r5["gallery_objects_by_material"][category])>0
+          for p,old in r4["portals_unmodified"].items():
+              now=r5["portal_transforms_unchanged"][p]
+              for k in ("location","rotation","scale"):
+                  assert all(abs(a-b)<1e-5 for a,b in zip(old[k],now[k]))
+          assert not section["current_glass_slot_overlap"]
+          assert section["current_minimal_horizontal_gap_bu"]>0.09
+          assert section["proposal_only"] and section["r5_does_not_change_legacy_slot"]
+          assert r5["no_publication"] and r5["no_merge"]
+          assert r5["human_art_approved"] is False
+          assert set(r5["renders"])=={"hero","gallery_detail"}
+          for item in r5["renders"].values():
+              image=root/"r5"/item["file"]
+              assert image.is_file() and image.stat().st_size>12000
+              assert sha(image)==item["sha256"]
+          print("R5 TECHNICAL PASS — gallery CC0 materials, 4 plant instances, SECTION MISALIGNMENT CONFIRMED")
+          print("ARTIST APPROVAL AND RUNTIME WEB VALIDATION STILL REQUIRED")
+          PY
+      - name: Preserve masters, source assets, renders and measured section
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-dir02-r5-gallery-section-${{ github.run_number }}
+          path: ${{ runner.temp }}/atlas-r5/
+          retention-days: 30
+          if-no-files-found: warn

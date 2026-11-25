@@ -1,0 +1,312 @@
+/* ATLAS-GATEWAY-HYBRID-ENTRY-01 · camera fixed, scenery only, no AppShell */
+.entry {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  isolation: isolate;
+  overflow: hidden;
+  color: #f9f3e8;
+  background: #061222;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.entry *, .entry *::before, .entry *::after { box-sizing: border-box; }
+.visuallyHidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  clip-path: inset(50%) !important;
+}
+.artboard {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100vw, calc(100dvh * 1672 / 941));
+  height: max(100dvh, calc(100vw * 941 / 1672));
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+  isolation: isolate;
+  background: radial-gradient(circle at 50% 15%, #21537d 0, #061222 70%);
+}
+.plate {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+  user-select: none;
+}
+/* The approved 21/11 logo is a transparent, traceable vector.
+   A soft navy architectural mask replaces the former baked header lettering
+   in the temporary photographic panorama without affecting portal hit zones. */
+.brandScreen {
+  position: absolute;
+  z-index: 4;
+  left: 0;
+  top: 0;
+  width: 43%;
+  height: 14%;
+  background: linear-gradient(90deg, #081625 0%, #081625fa 60%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 72%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 72%, transparent 100%);
+  pointer-events: none;
+}
+.brand {
+  position: absolute;
+  z-index: 8;
+  top: 2.4%;
+  left: max(4.5%, calc((100% - 100vw) / 2 + 24px));
+  pointer-events: none;
+}
+.brandLogo {
+  display: block;
+  width: clamp(260px, 27vw, 460px);
+  max-width: 100%;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+}
+
+.portals {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  pointer-events: none;
+  perspective: 1050px;
+}
+.portal {
+  position: absolute;
+  display: block;
+  pointer-events: auto;
+  text-decoration: none;
+  border: 0;
+  border-radius: 15px;
+  padding: 0;
+  margin: 0;
+  outline-offset: 5px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transform-origin: 50% 52%;
+  transform: perspective(1050px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateY(var(--lift, 0px)) scale(var(--zoom, 1));
+  transition: transform 240ms cubic-bezier(.18,.66,.18,1), filter 220ms ease-out;
+  filter: brightness(1);
+}
+.portal img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+  user-select: none;
+}
+.portal[data-portal="curricolo"] { left: 9.9282%; top: 18.8098%; width: 18.6603%; height: 45.271%; }
+.portal[data-portal="esplora"] { left: 28.9474%; top: 21.8916%; width: 19.1388%; height: 36.3443%; }
+.portal[data-portal="percorsi"] { left: 51.6746%; top: 21.4665%; width: 18.4211%; height: 38.1509%; }
+.portal[data-portal="esperienze"] { left: 70.2751%; top: 19.3411%; width: 18.4809%; height: 44.7396%; }
+.portal:hover, .portal:focus-visible {
+  z-index: 7;
+  --lift: -3px;
+  --zoom: 1.025;
+  filter: brightness(1.09) drop-shadow(0 0 7px #f6ca76);
+}
+.portal:focus-visible { outline: 3px solid #ffdc96; }
+.enter {
+  position: absolute;
+  z-index: 9;
+  left: 50%;
+  bottom: 7.15%;
+  transform: translateX(-50%);
+  width: 18.45%;
+  min-height: 5.8%;
+  padding: .6em .75em;
+  border: 1px solid transparent;
+  border-radius: 13px;
+  background: transparent;
+  box-shadow: none;
+  color: #241a11;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .75em;
+  font-weight: 700;
+  font-size: clamp(13px, 1.55vw, 24px);
+  white-space: nowrap;
+  text-decoration: none;
+  transition: filter 180ms, box-shadow 180ms;
+}
+.enter:hover, .enter:focus-visible { filter: brightness(1.12); box-shadow: 0 0 23px #f3cd89; }
+.enter:focus-visible { outline: 3px solid #fff9d9; outline-offset: 4px; }
+.arrow { font-size: 1.3em; line-height: 1; }
+/* The desktop photograph contains the CTA: retain only its accessible click target. */
+.enter span { opacity: 0; }
+.enter:hover { background: rgb(241 193 113 / .10); box-shadow: 0 0 15px #ffe0a066; }
+
+/* The mobile original is a coherent 9:16 scene with four smaller portals
+   integrated into the same rotunda (not four detached image cards). */
+.mobileUnderlay,
+.mobileComposition { display: none; }
+
+/* Portrait: use the separate mobile asset. A blurred extension occupies any
+   difference between the exact 948:1659 artwork and the phone viewport,
+   without black letterbox bands or horizontal image cropping. */
+@media (orientation: portrait) and (max-width: 900px) {
+  .artboard {
+    width: 100%;
+    height: 100%;
+    background: #081726;
+  }
+  .plate,
+  .portals { display: none; }
+  .mobileUnderlay {
+    display: block;
+    position: absolute;
+    inset: -3%;
+    z-index: 0;
+    background-image: url("/atlas-gateway-entry/mobile-atrium-01.png");
+    background-size: cover;
+    background-position: center;
+    filter: blur(23px) brightness(.42);
+    transform: scale(1.05);
+    pointer-events: none;
+  }
+  .mobileComposition {
+    display: block;
+    position: absolute;
+    z-index: 2;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%,-50%);
+    width: min(100%, calc(100dvh * 948 / 1659));
+    aspect-ratio: 948 / 1659;
+    overflow: visible;
+    isolation: isolate;
+  }
+  .mobileImage {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    user-select: none;
+  }
+  .mobileHotspots {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+    pointer-events: none;
+  }
+  .mobileHotspot {
+    position: absolute;
+    z-index: 2;
+    display: grid;
+    justify-items: center;
+    align-items: center;
+    text-align: center;
+    color: #f9f4e7;
+    border-radius: 12px;
+    pointer-events: auto;
+    cursor: pointer;
+    touch-action: manipulation;
+    text-decoration: none;
+    outline-offset: 2px;
+    -webkit-tap-highlight-color: transparent;
+    transition: filter 220ms ease-out, transform 220ms ease-out;
+  }
+  .mobileHotspot[data-mobile-portal="curricolo"] {
+    left: 7.1%; top: 39.3%; width: 21.5%; height: 20.6%;
+  }
+  .mobileHotspot[data-mobile-portal="esplora"] {
+    left: 29.25%; top: 41.15%; width: 20.6%; height: 18.8%;
+  }
+  .mobileHotspot[data-mobile-portal="percorsi"] {
+    left: 49.75%; top: 41.1%; width: 20.1%; height: 18.9%;
+  }
+  .mobileHotspot[data-mobile-portal="esperienze"] {
+    left: 69.9%; top: 39.3%; width: 20.6%; height: 20.6%;
+  }
+  .mobileHotspot:focus-visible {
+    outline: 3px solid #ffe5a9;
+    background: rgb(255 214 146 / .09);
+  }
+  .mobileHotspot:hover {
+    filter: drop-shadow(0 0 9px #ffe3a6);
+    transform: translateY(-2px);
+  }
+  .brandScreen {
+    width: 100%;
+    height: 13%;
+    background: linear-gradient(180deg,#061426ed,#061426bf 63%,transparent);
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .brand {
+    left: 4%;
+    top: max(1.5%, env(safe-area-inset-top));
+  }
+  .brandLogo { width: clamp(190px, 66vw, 300px); }
+  .enter {
+    border-color: #fff0bc;
+    background: linear-gradient(180deg, #ffe9b4, #ddb06a 60%, #e6bd77);
+    box-shadow: 0 0 20px #e9b36c99, inset 0 2px #fff9e7, 0 5px 13px #0007;
+    bottom: calc(2.2% + env(safe-area-inset-bottom));
+    width: min(74vw, 320px);
+    min-height: 49px;
+    border-radius: 14px;
+    font-size: clamp(16px, 4.5vw, 22px);
+  }
+  .enter span { opacity: 1; }
+}
+@media (orientation: portrait) and (max-width: 350px) {
+  .brandLogo { width: min(72vw, 245px); }
+}
+/* A rotated phone keeps the same panoramic composition as desktop;
+   only the controls are moved away from the clipped edges. */
+@media (orientation: landscape) and (pointer: coarse) and (max-height: 520px) {
+  /* Preserve the complete 16:9 stage, fitted to available height.
+     The extra horizontal space is dark scenery, not a cropped image. */
+  .artboard {
+    width: min(100vw, calc(100dvh * 1672 / 941));
+    height: min(100dvh, calc(100vw * 941 / 1672));
+  }
+  .brand { top: 4%; left: 4.25%; }
+  .brandScreen { height: 16%; }
+  /* The panoramic master already contains the visible CTA.
+     Keep one large semantic clickable link over it, without printing it twice. */
+  .enter {
+    bottom: 6%;
+    min-height: 44px;
+    font-size: clamp(13px, 2vw, 18px);
+    padding: .35em .4em;
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+  }
+  .enter:focus-visible { outline: 3px solid #ffe4aa; }
+  .enter:hover { background: rgb(241 193 113 / .10); box-shadow: 0 0 15px #ffe0a066; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .portal, .mobileHotspot, .enter { transition: none !important; }
+  .portal, .mobileHotspot { transform: none !important; }
+}
+
+/* Root-scoped reset: Atlas content pages keep their existing global layout. */
+:global(html):has(.entry),
+:global(body):has(.entry) {
+  margin: 0;
+  padding: 0 !important;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+.publicContext { position:absolute; z-index:10; top:max(12px,env(safe-area-inset-top)); right:12px; color:#fff3dc; background:#081726e8; border:1px solid #a38a64; border-radius:8px; padding:5px 8px; font-size:11px; pointer-events:none; }
+@media (orientation:portrait) and (max-width:900px) {.publicContext {top:max(12%,64px);right:4%;}}

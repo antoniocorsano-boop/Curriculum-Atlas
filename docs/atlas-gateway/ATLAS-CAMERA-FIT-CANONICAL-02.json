@@ -1,0 +1,58 @@
+{
+  "schema": "atlas.gateway.camera-fit-canonical/v2",
+  "status": "NUMERIC_CANDIDATE_FROM_CANONICAL_IMAGE_NOT_APPLIED_NOT_ART_APPROVED",
+  "source": {
+    "sha256": "a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe",
+    "width": 1536,
+    "height": 864,
+    "verified_against_attached_bytes": true
+  },
+  "method": "deterministic Nelder-Mead 3D pinhole projection of 4 portal rectangles; soft priors; camera geometry from PR #152",
+  "measurements_path": "docs/atlas-gateway/ART-DIR-02-CANONICAL-LANDMARKS.json",
+  "original": {
+    "rms_px": 88.76,
+    "max_coordinate_error_px": 125.17,
+    "camera": {
+      "camera_y": -15.5,
+      "camera_z": 4.6,
+      "target_z": 3,
+      "lens_mm": 29,
+      "portal_x_scale": 1,
+      "portal_width_scale": 1
+    }
+  },
+  "camera_only": {
+    "rms_px": 35.2,
+    "max_coordinate_error_px": 61.11,
+    "camera": {
+      "camera_y": -8.26315,
+      "camera_z": 4.87165,
+      "target_z": 1.60273,
+      "lens_mm": 18.67288,
+      "portal_x_scale": 1,
+      "portal_width_scale": 1
+    }
+  },
+  "camera_and_layout_candidate": {
+    "rms_px": 16.51,
+    "max_coordinate_error_px": 36.01,
+    "camera": {
+      "camera_y": -17.37455,
+      "camera_z": 3.24909,
+      "target_z": 1.76636,
+      "lens_mm": 32.58633,
+      "portal_x_scale": 1.27069,
+      "portal_width_scale": 1.18925
+    }
+  },
+  "proof": {
+    "reproducible_archive": "https://drive.google.com/file/d/1qCcL9ioPFoE33eFx0OdPrnNezmmoF-EO/view?usp=drivesdk",
+    "overlay": "https://drive.google.com/file/d/1JlwaRzfCuxNLX5QO2eLCVKXbbz9yHqye/view?usp=drivesdk"
+  },
+  "safety": [
+    "Measures portal 2D silhouettes only, not dome/podium/balconies",
+    "Not unique camera/metric recovery",
+    "Do not automatically update Blender master or live user routes",
+    "Require Cycles HERO/SIDE/MOBILE and human ART-DIR-02 decision"
+  ]
+}

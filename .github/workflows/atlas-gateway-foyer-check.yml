@@ -1,0 +1,85 @@
+name: Atlas Gateway 3D — verifica primo atrio
+on:
+  pull_request:
+    branches: [work/atlas-library-web-delivery]
+    paths:
+      - "scripts/atlas-gateway-foyer/**"
+      - "scripts/build-atlas-gateway-foyer.mjs"
+      - "scripts/test-atlas-gateway-foyer-browser.mjs"
+      - "scripts/test-atlas-gateway-foyer.mjs"
+      - "scripts/test-atlas-motion-layer.mjs"
+      - "scripts/test-atlas-scene-timeline.mjs"
+      - "scripts/test-atlas-optical-profile.mjs"
+      - "scripts/build-atlas-foyer-media.mjs"
+      - "scripts/test-atlas-video-layer.mjs"
+      - "scripts/atlas-media-toolchain.mjs"
+      - "scripts/test-atlas-media-toolchain.mjs"
+      - ".github/workflows/atlas-gateway-foyer-check.yml"
+  workflow_dispatch:
+concurrency:
+  group: atlas-foyer-browser-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  foyer-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check scripts/atlas-gateway-foyer/foyer.mjs
+          node --check scripts/atlas-gateway-foyer/portal-contract.mjs
+          node --check scripts/build-atlas-gateway-foyer.mjs
+          node --check scripts/test-atlas-gateway-foyer.mjs
+      - name: Test gateway and motion contracts
+        run: |
+          node scripts/test-atlas-gateway-foyer.mjs
+          node scripts/test-atlas-motion-layer.mjs
+          node scripts/test-atlas-scene-timeline.mjs
+          node scripts/test-atlas-optical-profile.mjs
+          node scripts/test-atlas-video-layer.mjs
+          node scripts/test-atlas-media-toolchain.mjs
+      - name: Install existing Playwright dependencies
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+      - name: Restore repository dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install system media tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends ffmpeg
+      - name: Qualify media toolchain before building
+        run: |
+          mkdir -p "$RUNNER_TEMP/foyer-visual"
+          set -o pipefail
+          node scripts/atlas-media-toolchain.mjs | tee "$RUNNER_TEMP/foyer-visual/media-toolchain.json"
+      - name: Install test Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Build self-contained foyer sample without deployment
+        env:
+          ATLAS_GATEWAY_FOYER_PREVIEW: 'true'
+          ATLAS_FOYER_VIDEO_PREVIEW: 'true'
+        run: |
+          mkdir -p out/curricolo out/esplora out/percorsi out/esperienze
+          for route in curricolo esplora percorsi esperienze; do printf '%s\n' '<!doctype html><html lang="it"><title>Route sample</title></html>' > "out/$route/index.html"; done
+          node scripts/build-atlas-gateway-foyer.mjs out
+          test -f out/atrio/three.min.js
+          test -f out/atrio/preview-receipt.json
+          echo "ATLAS_FOYER_PACKAGE_PASS (no public deploy)"
+      - name: Validate and capture actual WebGL frame
+        env:
+          ATLAS_FOYER_EXPECT_VIDEO: "true"
+        run: node scripts/test-atlas-gateway-foyer-browser.mjs out "$RUNNER_TEMP/foyer-visual"
+      - name: Preserve visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-gateway-foyer-visual
+          path: ${{ runner.temp }}/foyer-visual/
+          if-no-files-found: warn

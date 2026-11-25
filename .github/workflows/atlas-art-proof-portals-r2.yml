@@ -1,0 +1,97 @@
+name: "ATLAS ART-PROOF-01B — Revisione portali vetrati"
+on:
+  pull_request:
+    branches: [work/atlas-library-web-delivery]
+    paths:
+      - "scripts/atlas-gateway-production/art_proof_01b_portals_corrective.py"
+      - "scripts/atlas-gateway-production/art_proof_01_cinematic.py"
+      - ".github/workflows/atlas-art-proof-portals-r2.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: atlas-art-portal-reading-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  portal-reading:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate corrected reading and script syntax
+        run: |
+          python3 -m py_compile \
+            scripts/atlas-gateway-foyer/blender_master.py \
+            scripts/atlas-gateway-production/build_architecture_04_geometry.py \
+            scripts/atlas-gateway-production/art_proof_01_cinematic.py \
+            scripts/atlas-gateway-production/art_proof_01b_portals_corrective.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path("docs/atlas-gateway/ARCH-04-ARCHITECTURAL-GEOMETRY-PROJECT-01.json").read_text())
+          r=j["geometry"]["portals"]["reading_revision"]
+          assert r["change_class"].startswith("REFINEMENT")
+          assert r["candidate_geometry"]["center_xy"]==[0,-2]
+          assert r["validation"]["human_art_gate"]
+          print("Portal reading remains unapproved, historical files preserved")
+          PY
+      - name: Install headless Blender
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Rebuild original master
+        run: |
+          mkdir -p "$RUNNER_TEMP/atlas-portal-r2/master" "$RUNNER_TEMP/atlas-portal-r2/geometry" "$RUNNER_TEMP/atlas-portal-r2/art" "$RUNNER_TEMP/atlas-portal-r2/revision"
+          blender -b --factory-startup --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-foyer/blender_master.py -- \
+            --out "$RUNNER_TEMP/atlas-portal-r2/master"
+      - name: Reuse ARCH-04B geometry (no extra render)
+        run: |
+          blender -b "$RUNNER_TEMP/atlas-portal-r2/master/atlas-foyer-master.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/build_architecture_04_geometry.py -- \
+            --out "$RUNNER_TEMP/atlas-portal-r2/geometry" --geometry-only
+      - name: Reuse proven Cycles look (no redundant old image renders)
+        run: |
+          blender -b "$RUNNER_TEMP/atlas-portal-r2/geometry/atlas-foyer-arch04b-geometric-candidate.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/art_proof_01_cinematic.py -- \
+            --out "$RUNNER_TEMP/atlas-portal-r2/art" --model-only
+      - name: Correct the concentric glass portal curve and actual floor slots
+        run: |
+          blender -b "$RUNNER_TEMP/atlas-portal-r2/art/atlas-art-proof-01b-cinematic.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/art_proof_01b_portals_corrective.py -- \
+            --out "$RUNNER_TEMP/atlas-portal-r2/revision"
+      - name: Check actual geometry, 3 images, hashes and no publication
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os, json, hashlib, math
+          root=Path(os.environ["RUNNER_TEMP"])/"atlas-portal-r2"
+          j=json.loads((root/"revision"/"portal-reading-r2-receipt.json").read_text())
+          sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+          src=root/"art"/"atlas-art-proof-01b-cinematic.blend"
+          out=root/"revision"/"atlas-art-proof-01b-portal-reading-r2.blend"
+          assert j["source_art_proof_blend_sha256"]==sha(src)
+          assert j["candidate_blend_sha256"]==sha(out)
+          assert j["old_artistic_scene_preserved"]
+          assert j["corrected_floor_polygon_count"]>j["original_floor_polygon_count"]
+          assert len(j["portals"])==4 and set(j["portals"])=={"Curricolo","Esplora","Percorsi","Esperienze"}
+          assert all(p["tangent_radial_abs_dot"]<1e-8 and len(p["previous_independent_bases_removed"])==2 and p["real_floor_boolean"] for p in j["portals"].values())
+          assert j["portals"]["Esplora"]["new_root"][1]>j["portals"]["Curricolo"]["new_root"][1]
+          assert set(j["renders"])=={"hero","oblique","top_ortho"}
+          for value in j["renders"].values():
+              p=root/"revision"/value["file"]
+              assert p.is_file() and p.stat().st_size>9000 and value["sha256"]==sha(p)
+          assert j["no_publication"] and j["no_gltf_runtime"]
+          print("REAL PORTAL GEOMETRY + 3-VIEW TECHNICAL PASS — NOT ARTISTIC APPROVAL")
+          PY
+      - name: Preserve Blender candidate and three views regardless of verification result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-proof-portal-reading-r2-${{ github.run_number }}
+          path: ${{ runner.temp }}/atlas-portal-r2/
+          retention-days: 30
+          if-no-files-found: warn

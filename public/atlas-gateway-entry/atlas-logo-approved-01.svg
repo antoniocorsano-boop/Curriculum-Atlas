@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1312" height="286" viewBox="0 0 1312 286" role="img" aria-labelledby="name">
+  <title id="name">ATLAS</title>
+  <desc>Marchio Atlas approvato: A dorata geometrica e denominazione ATLAS in avorio, ricostruiti per contorni dalla risorsa originale del 21 novembre 2026.</desc>
+  <defs>
+    <linearGradient id="gold" x1="0" x2="0.18" y1="0" y2="1" objectBoundingBox="true">
+      <stop offset="0" stop-color="#ffe4a3"/><stop offset=".48" stop-color="#f4cb68"/><stop offset="1" stop-color="#b9842d"/>
+    </linearGradient>
+    <linearGradient id="ivory" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#fffdf3"/><stop offset="1" stop-color="#e9e0cf"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#gold)" fill-rule="evenodd" d="M157,10 7,284 81,284 114,212 99,210 99,175 101,173 129,173 130,177 144,177 145,164 169,164 170,177 184,177 186,173 214,174 214,210 199,212 232,284 305,284Z M157,114 168,137 148,139 146,136Z"/>
+  <path fill="url(#ivory)" fill-rule="evenodd" d="M466,83 405,219 429,219 444,186 507,186 521,219 546,219 486,83Z M475,112 494,153 497,165 452,164Z"/>
+  <path fill="url(#ivory)" fill-rule="evenodd" d="M607,84 607,105 651,106 651,219 676,219 676,106 721,105 721,84Z"/>
+  <path fill="url(#ivory)" fill-rule="evenodd" d="M807,84 807,219 903,219 902,198 832,197 832,83Z"/>
+  <path fill="url(#ivory)" fill-rule="evenodd" d="M1059,83 1036,85 977,219 1002,219 1016,186 1078,186 1094,220 1118,219Z M1047,112 1069,160 1069,165 1024,164Z"/>
+  <path fill="url(#ivory)" fill-rule="evenodd" d="M1240,81 1216,89 1205,99 1198,116 1200,135 1211,149 1220,154 1272,170 1279,179 1278,190 1264,200 1243,201 1224,195 1205,183 1192,200 1207,211 1226,219 1259,222 1277,218 1297,204 1304,186 1302,169 1297,160 1288,152 1230,132 1223,124 1223,115 1232,105 1253,102 1269,106 1288,117 1300,100 1290,92 1269,83Z"/>
+</svg>

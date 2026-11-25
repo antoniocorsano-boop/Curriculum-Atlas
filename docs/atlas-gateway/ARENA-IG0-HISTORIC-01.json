@@ -1,0 +1,321 @@
+{
+  "study_id": "ARENA-IG0-HISTORIC-01",
+  "date": "2026-11-20",
+  "status": "PRELIMINARY_MANUAL_IMAGE_LANDMARKS_NOT_CANONICAL_ATLAS",
+  "source": {
+    "image": "1000032603.png",
+    "dimension_px": [
+      1536,
+      864
+    ],
+    "sha256": "1a5a75b661bc47c21655465e78cdb052027ef858a8c7b73390431f1ccda78bc8",
+    "origin_note": "Utente: screenshot dell'immagine ARENA a cinque pannelli, acquisita da una precedente generazione; metadati Android per un file originario diverso",
+    "phone_file_reported": "file_00000000f530821093d99fbab9cd7d5b.png",
+    "phone_local_saved_at": "2026-11-16T06:25:00+01:00",
+    "not_original_binary": true
+  },
+  "canonical_atlas": {
+    "image": "atrio_futuristico_atlas_della_conoscenza.png",
+    "sha256": "7b3ffb9a355b89057acea02489020ad43d871e10b6cf5bbb29f8769ff3073336",
+    "not_present_in_working_tree": true
+  },
+  "method": "tracciatura manuale approssimativa di landmark visibili, senza calibrazione metrica o misura automatica. Fonte ARENA storica, NON riferimento compositivo normativo Atlas ART-DIR-02",
+  "geometry": {
+    "visual_axis_x_px": 768,
+    "portals": [
+      {
+        "id": "arena_curriculum",
+        "label": "Curriculum",
+        "polygon_px": [
+          [
+            164,
+            178
+          ],
+          [
+            412,
+            262
+          ],
+          [
+            401,
+            517
+          ],
+          [
+            151,
+            522
+          ]
+        ],
+        "polygon_normalized": [
+          [
+            0.10677,
+            0.20602
+          ],
+          [
+            0.26823,
+            0.30324
+          ],
+          [
+            0.26107,
+            0.59838
+          ],
+          [
+            0.09831,
+            0.60417
+          ]
+        ]
+      },
+      {
+        "id": "arena_governance",
+        "label": "Governance",
+        "polygon_px": [
+          [
+            437,
+            198
+          ],
+          [
+            639,
+            239
+          ],
+          [
+            636,
+            508
+          ],
+          [
+            439,
+            499
+          ]
+        ],
+        "polygon_normalized": [
+          [
+            0.28451,
+            0.22917
+          ],
+          [
+            0.41602,
+            0.27662
+          ],
+          [
+            0.41406,
+            0.58796
+          ],
+          [
+            0.28581,
+            0.57755
+          ]
+        ]
+      },
+      {
+        "id": "arena_evidence",
+        "label": "Evidence",
+        "polygon_px": [
+          [
+            661,
+            164
+          ],
+          [
+            885,
+            163
+          ],
+          [
+            901,
+            488
+          ],
+          [
+            659,
+            493
+          ]
+        ],
+        "polygon_normalized": [
+          [
+            0.43034,
+            0.18981
+          ],
+          [
+            0.57617,
+            0.18866
+          ],
+          [
+            0.58659,
+            0.56481
+          ],
+          [
+            0.42904,
+            0.5706
+          ]
+        ]
+      },
+      {
+        "id": "arena_operations",
+        "label": "Operations",
+        "polygon_px": [
+          [
+            911,
+            259
+          ],
+          [
+            1116,
+            198
+          ],
+          [
+            1113,
+            515
+          ],
+          [
+            917,
+            492
+          ]
+        ],
+        "polygon_normalized": [
+          [
+            0.5931,
+            0.29977
+          ],
+          [
+            0.72656,
+            0.22917
+          ],
+          [
+            0.72461,
+            0.59606
+          ],
+          [
+            0.59701,
+            0.56944
+          ]
+        ]
+      },
+      {
+        "id": "arena_review",
+        "label": "Review",
+        "polygon_px": [
+          [
+            1146,
+            233
+          ],
+          [
+            1378,
+            191
+          ],
+          [
+            1390,
+            534
+          ],
+          [
+            1148,
+            512
+          ]
+        ],
+        "polygon_normalized": [
+          [
+            0.74609,
+            0.26968
+          ],
+          [
+            0.89714,
+            0.22106
+          ],
+          [
+            0.90495,
+            0.61806
+          ],
+          [
+            0.7474,
+            0.59259
+          ]
+        ]
+      }
+    ],
+    "oculus_lower_arc_px": [
+      [
+        441,
+        0
+      ],
+      [
+        484,
+        42
+      ],
+      [
+        557,
+        87
+      ],
+      [
+        658,
+        111
+      ],
+      [
+        768,
+        125
+      ],
+      [
+        872,
+        113
+      ],
+      [
+        981,
+        80
+      ],
+      [
+        1068,
+        29
+      ],
+      [
+        1101,
+        0
+      ]
+    ],
+    "podium_base_ellipse_bbox_px": [
+      361,
+      487,
+      1176,
+      638
+    ],
+    "podium_upper_outline_px": [
+      [
+        469,
+        530
+      ],
+      [
+        483,
+        492
+      ],
+      [
+        550,
+        448
+      ],
+      [
+        667,
+        414
+      ],
+      [
+        760,
+        394
+      ],
+      [
+        862,
+        411
+      ],
+      [
+        982,
+        458
+      ],
+      [
+        1067,
+        521
+      ],
+      [
+        1060,
+        562
+      ]
+    ],
+    "floor_vanishing_region_px": [
+      767,
+      476
+    ]
+  },
+  "limitations": [
+    "La foto ARENA ha cinque portali, il canone Atlas ART-DIR-02 ne ha quattro",
+    "I punti sono indicativi e ricavati manualmente dallo screenshot compresso, non dai byte del file originario",
+    "Da una sola vista non si ricavano quote metriche, profondità nascoste o una topologia 3D certa",
+    "L'atlante storico non determina la pianta definitiva di Atlas"
+  ],
+  "next": "Recuperare il PNG canonico Atlas, verificare SHA-256, estrarre landmark direttamente da quello, ricostruire prospettiva/pianta/sezioni e solo poi avviare la prova image-to-3D"
+}

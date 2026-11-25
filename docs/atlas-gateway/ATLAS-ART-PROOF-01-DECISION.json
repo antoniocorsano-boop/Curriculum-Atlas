@@ -1,0 +1,231 @@
+{
+  "schema": "atlas.gateway.art-feasibility-decision/v1",
+  "decision_id": "ATLAS-ART-PROOF-01",
+  "authorized_on": "2026-11-21",
+  "user_decision": "Approve a change from geometry-first iterations to visual-quality-first feasibility proof with canonical-image fallback.",
+  "state": "PROTOTYPE_A_PRESERVED__B_RENDERED_TECH_PASS__ARTISTIC_NOT_APPROVED",
+  "authority": {
+    "canonical_image": {
+      "drive_url": "https://drive.google.com/file/d/1vSC_ynSxAF-pxR071TiKjEE0OtaFjXCn/view",
+      "size_px": [
+        1536,
+        864
+      ],
+      "sha256": "a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe",
+      "bytes": 224117
+    },
+    "blender_comparison": {
+      "drive_url": "https://drive.google.com/file/d/1aaqZFB3Etg4IFjnb1qpOnI3C7HdUx4zH/view",
+      "run": "https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/44868819041",
+      "hero_png_sha256": "4c6a48cfe4f75e0c8c31ca3cbd2703f4a539652e5041fca9e2ea60fc1c5d0b37"
+    }
+  },
+  "priority_change": {
+    "before": "ARCH-04C geometry and camera fit, then VIS-01 materials, then WEB-01.",
+    "after": "ART-PROOF-01 canonical-faithful interactive reference + controlled Blender artistic proof; decision gate first, then choose image-led gateway or a 3D derivation; WEB only after artistic acceptance.",
+    "prior_geometry_status": "PRESERVED_NOT_DISCARDED",
+    "archived_master_status": "ARTISTICALLY_NOT_APPROVED",
+    "paused_tasks": [
+      "New ARCH-04 camera/oculus micro-adjustments",
+      "More mesh-count-optimizing work",
+      "New geometric parallel candidates",
+      "VIS-01 full scene deployment"
+    ]
+  },
+  "stage_a": {
+    "name": "CANONICAL_IMAGE_INTERACTION_PROTOTYPE",
+    "state": "PROTOTYPE_CREATED_OFFLINE__BROWSER_EMULATION_TESTED__NOT_DEPLOYED",
+    "output": "ATLAS-ART-PROOF-01.html (standalone, embedded exact source pixels)",
+    "output_sha256": "a4b2001cce167e618eac21bc813017383221bbb2e59d17e42a030fbac4c1c1d7",
+    "manifest": "ATLAS-ART-PROOF-01.json",
+    "package": "ATLAS-ART-PROOF-01.zip",
+    "evidence": {
+      "original_file_sha_match": true,
+      "hotspot_count": 4,
+      "demo_entry_button_count": 1,
+      "mobile_focus_options": [
+        "both-left",
+        "both-right",
+        "all"
+      ],
+      "image_modes": [
+        "source",
+        "blender",
+        "wipe-compare"
+      ],
+      "tested_in": "Headless Chromium via Playwright: 1440x900 desktop and 390x844 mobile viewport",
+      "passed": [
+        "image present without resynthesis",
+        "4 portal regions + demo CTA",
+        "dialog triggered and closed on desktop and mobile focused pairs",
+        "comparison mode shown",
+        "no horizontal scroll in test viewports",
+        "Chromium mobile focused-pair keyboard interaction limited to visible portals"
+      ],
+      "untested": [
+        "real Android touch responsiveness",
+        "actual Atlas navigation",
+        "GPU 3D performance",
+        "3D visual equivalence"
+      ],
+      "not_tested_on_real_device": true
+    },
+    "drive": {
+      "html_url": "https://drive.google.com/file/d/1VbiuhCg7aAd-Mi8YG8I_8HNYhVaVACmN/view",
+      "html_bytes": 1511122,
+      "zip_url": "https://drive.google.com/file/d/11dIKw3ZgGnmAs2YO6sL6CFCjpIVhSXc9/view",
+      "zip_bytes": 2274084,
+      "verification": "Google Drive upload accepted; metadata readback sizes matched original generated assets",
+      "decision_record_url": "https://docs.google.com/document/d/1AFZqsUUjEpUKFNLPJulGtf7FFlJ3DATigJcJMyoIvxE/edit"
+    }
+  },
+  "stage_b": {
+    "name": "BLENDER_SINGLE_FRAME_CINEMATIC_ART_PROOF",
+    "state": "RENDERED_TECH_PASS__PORTAL_CORRECTION_VERIFIED__ARTISTIC_NOT_APPROVED",
+    "source": "Independent copy of verified ARCH-04B .blend; original untouched",
+    "scope": "One fully art-directed HERO view and one oblique parallax check; complete four individual portal contents, realistic floor/brass/glass, skylight daylight, subtle rays, real reflections",
+    "inputs": [
+      "canonical ART-DIR-02 image and landmarks",
+      "ARCH-04B Blender master and previous render",
+      "15-material/12-light-role existing VIS-01 contract"
+    ],
+    "stop_conditions": [
+      "No perceivable artistic leap vs ARCH-04B and reference",
+      "Portals/text/icons/illustrations not recognized faithfully",
+      "Skylight/daylight/podium/floor fail as a visually unified composition",
+      "Only the front view looks convincing because entire scene is a 2D projection"
+    ],
+    "outputs": [
+      "Cycles HERO PNG",
+      "oblique view PNG",
+      "comparison board with canonical image",
+      "material and lighting rig receipt",
+      "Blender file with SHA256",
+      "human go/no-go decision"
+    ],
+    "production": {
+      "run": "https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/44872186496",
+      "tool": "Blender 5.0.1 Cycles",
+      "input_arch04b_sha256": "f5442cdbaa76c95173d0d49c605ff709038382b1384cd2eb1cf699907f994c03",
+      "candidate_blend_sha256": "ebe34b412d4d2a28035126c440a41962e14043947e7a1ef9da7d87193dd6c1e3",
+      "images": {
+        "hero": {
+          "px": [
+            1280,
+            720
+          ],
+          "sha256": "fb0b02b21bf4bfd3b16c98a563738c3429bd12b99cabb9c0e39d6d41b3e44efc"
+        },
+        "oblique": {
+          "px": [
+            1024,
+            576
+          ],
+          "sha256": "1e590e2cf516dbd88a61506d77b91fc4f71b1eacb0fc884dbadaa161f8b40e39"
+        }
+      },
+      "drive_archive": "https://drive.google.com/file/d/1AUkGQjGVD6OH0VUPQkhJySCBJSiRE-P4/view",
+      "drive_comparison": "https://drive.google.com/file/d/1Q8taZLAt-qcjQcwntue4aYmXTxh-u48Z/view",
+      "gh_artifact_sha256": "9b6902c9a3185ddda5be90d7393b90b4a9592031bcb75ef73c17a86d2c4650ae",
+      "report": "docs/atlas-gateway/ATLAS-ART-PROOF-01B-ARTISTIC-REVIEW.md",
+      "original_source_untouched": true,
+      "public_release": false
+    },
+    "review": {
+      "finding": "Visible progress over ARCH-04B but visual parity with ART-DIR-02 not attained",
+      "strengths": [
+        "Four narrative portal visuals rendered as genuine scene geometry",
+        "2-view physical parallax",
+        "More differentiated materials and lighting"
+      ],
+      "deficiencies": [
+        "Skylight remains a flat large sky disc",
+        "God rays subtle/mostly missing",
+        "Library architecture repetitive",
+        "Rim/brass/floor lack canonical luminosity",
+        "Portal shapes and graphics still only approximate"
+      ],
+      "recommended_decision": "NO_GO_FOR_3D_GATEWAY_AS_IS__RETAIN_CANONICAL_IMAGE_BASELINE",
+      "requires_final_user_art_decision": true,
+      "reassessment": {
+        "scope": "The user provides a new physical interpretation of the four portals: glass emerges through floor slots, arranged on a likely circle concentric with the central podium.",
+        "interpretation": "New hypothesis explains nonfaithful 'standalone sign/totem' portal reading. Prior Cycles result is baseline and cannot be counted as final test of the revised geometry.",
+        "exact_code_mismatch": "Old portal arc center (0,-6.3836) vs podium center (0,-2), separate yaw angles, plinth and extra feet",
+        "authorized_next": "Test correction IN THE SAME ARCH-04 and ART-PROOF-01B branch: concentric podio-centered ring, tangential portal facing, actual floor slot, minimal lip, keep existing illustrations and lights, compare HERO/TOP/OBLIQUE against original",
+        "new_project": false,
+        "source_immutable": true,
+        "prior_art_proof_valid_as_history": true,
+        "art_acceptance_still_open": true,
+        "latest_test": {
+          "date": "2026-11-21",
+          "kind": "ISOLATED_PORTAL_GEOMETRY_CORRECTION_WITHIN_SAME_ART_PROOF",
+          "workflow": "https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/44874934825",
+          "technical_status": "PASS",
+          "artistic_status": "NOT_APPROVED",
+          "exact_podium_center_and_tangent_validation": true,
+          "prior_plinths_removed_count": 8,
+          "real_floor_cuts": 4,
+          "floor_polygon_count_before": 82,
+          "floor_polygon_count_after": 106,
+          "candidate_arc_center_xy": [
+            0,
+            -2
+          ],
+          "candidate_arc_radius_bu": 7.3,
+          "rendered_views": [
+            "HERO",
+            "OBLIQUE",
+            "TOP_ORTHO"
+          ],
+          "top_view_restriction": "Roof/skylight occludes real floor slots; need a cutaway version",
+          "archive_drive": "https://drive.google.com/file/d/1eDZzQPNGHOMUIx_i1NgrUD70z733iO9L/view",
+          "comparison_drive": "https://drive.google.com/file/d/11s7iW4C7alAbgmyc79YGfRaF8VLtLJ2n/view",
+          "report": "docs/atlas-gateway/ATLAS-ART-PROOF-01B-ARTISTIC-REVIEW.md",
+          "source_model_untouched": true,
+          "human_gate_pending": true
+        }
+      },
+      "reassessment_result": {
+        "id": "ART-DIR-02-PORTAL-READING-R2",
+        "run": "https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/44876788900",
+        "source_sha256": "a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe",
+        "candidate_blend_sha256": "d477245479a29e39fcac5b08574f2465a3f404dda7b8d7c69fbd22c8f88badcb",
+        "result": "TECHNICAL_PASS__ARTISTIC_APPROVAL_PENDING",
+        "test": "same scene, podium centered arc R=7.30 BU, four glass panels tangent, actual Boolean floor slits, no external double plinths; 3 Blender views",
+        "visual_residuals": [
+          "outer pair still appears too oblique due to ~54.6-degree tangent",
+          "panels look small and receded from HERO compared to reference",
+          "floor-slot emergence needs readable sectional detail and lighting",
+          "top diagnostic camera now sees floor/podium/portals"
+        ],
+        "source_archive": "https://drive.google.com/file/d/1rN2O92uio8vXdAldXB5nhZmyGpLg-iXg/view",
+        "comparison": "https://drive.google.com/file/d/1Kt1NveSO73AlZg2oTtMafUjulh_FV7vH/view",
+        "report": "docs/atlas-gateway/ATLAS-ART-DIR-02-PORTAL-READING-R2-RESULT-01.md",
+        "approval": false,
+        "new_project": false,
+        "next": "Constrained joint fitting of radius/portal apparent size/camera within existing ART-PROOF-01B, keeping previous images, 3D geometry, lights, and canonical art direction"
+      }
+    }
+  },
+  "decision_gate": {
+    "no_automatic_3d_promotion": true,
+    "if_3d_pass": "Derive lightweight web scene progressively and preserve canonical fallback.",
+    "if_3d_fails": "Use faithful canonical-image gateway with accessible DOM hotspot overlays; reserve Blender for educational worlds where depth adds value.",
+    "user_art_approval_required": true,
+    "explicitly_does_not_authorize": [
+      "Merge to main",
+      "Publish student interface",
+      "Replace canonical image",
+      "Claim 3D fidelity",
+      "Create costly services"
+    ],
+    "preferred_next_validation": "Correct the portal physical model before final verdict on 3D artistic feasibility; compare to already-produced 01B candidate and ART-DIR-02.",
+    "reasons_to_preserve": [
+      "all previous Cycles images and blender masters",
+      "canonical JPEG exact bytes",
+      "registered materials, oculus, podio, art lighting and narrative portal visuals"
+    ]
+  },
+  "github_pr": "https://github.com/antoniocorsano-boop/Curriculum-Atlas/pull/152",
+  "trama_issue": "https://github.com/antoniocorsano-boop/trama-ecosistema/issues/354"
+}

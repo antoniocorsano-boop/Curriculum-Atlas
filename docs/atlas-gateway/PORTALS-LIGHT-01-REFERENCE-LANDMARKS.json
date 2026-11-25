@@ -1,0 +1,132 @@
+{
+  "schema": "atlas.gateway.portals-light-reference/v1",
+  "status": "rilievo manuale approssimativo su immagine inviata; non fotogrammetria, non approvazione Blender",
+  "source": {
+    "filename": "1000089007.png",
+    "actual_format": "JPEG",
+    "sha256": "b3bb8bb9c184acee97f479c522669059602c0797e4d8e7033a0627fc88ed0e81",
+    "width": 1536,
+    "height": 960,
+    "role": "riferimento complementare per geometria visiva dei quattro portali, non PNG canonico ART-DIR-02",
+    "original_drive_url": "https://drive.google.com/file/d/1kD4mwQ30zWeP8dMmM_HKtOyVRF4eGsvm/view?usp=drivesdk",
+    "annotated_drive_url": "https://drive.google.com/file/d/1toIauSMLP-SBDZ3BVEpWQVrDCqhfSMoR/view?usp=drivesdk"
+  },
+  "portals": [
+    {
+      "id": "curricolo",
+      "bbox_px": [
+        91,
+        195,
+        399,
+        626
+      ],
+      "bbox_normalized": [
+        0.0592,
+        0.2031,
+        0.2598,
+        0.6521
+      ],
+      "center_normalized": [
+        0.1595,
+        0.4276
+      ],
+      "visibility": "interamente visibile"
+    },
+    {
+      "id": "esplora",
+      "bbox_px": [
+        424,
+        220,
+        725,
+        616
+      ],
+      "bbox_normalized": [
+        0.276,
+        0.2292,
+        0.472,
+        0.6417
+      ],
+      "center_normalized": [
+        0.374,
+        0.4354
+      ],
+      "visibility": "base parzialmente occultata dal podio"
+    },
+    {
+      "id": "percorsi",
+      "bbox_px": [
+        814,
+        220,
+        1117,
+        615
+      ],
+      "bbox_normalized": [
+        0.5299,
+        0.2292,
+        0.7272,
+        0.6406
+      ],
+      "center_normalized": [
+        0.6286,
+        0.4349
+      ],
+      "visibility": "base parzialmente occultata dal podio"
+    },
+    {
+      "id": "esperienze",
+      "bbox_px": [
+        1138,
+        194,
+        1452,
+        627
+      ],
+      "bbox_normalized": [
+        0.7409,
+        0.2021,
+        0.9453,
+        0.6531
+      ],
+      "center_normalized": [
+        0.8431,
+        0.4276
+      ],
+      "visibility": "interamente visibile"
+    }
+  ],
+  "architecture": {
+    "reference_axis_x_px": 768,
+    "podium_base_bbox_px": [
+      324,
+      452,
+      1224,
+      700
+    ],
+    "podium_upper_curve_bbox_px": [
+      420,
+      455,
+      1103,
+      639
+    ],
+    "skylight_visible_bbox_px": [
+      499,
+      0,
+      1160,
+      147
+    ]
+  },
+  "rules": {
+    "visible_portal_title_count": 1,
+    "visible_symbol_count": 1,
+    "discreet_motif_count": 1,
+    "html_duplicate_labels": 0,
+    "dynamic_portal_lights_required": 0,
+    "prefer_shared_geometry": true,
+    "chrome": "blue translucent glass, one subtle warm perimeter, no multiple decorative highlights"
+  },
+  "limits": [
+    "boxes identify apparent image silhouettes, not invisible dimensions",
+    "occlusion masks the lower region of two middle portals",
+    "single generated perspective cannot establish absolute 3D dimensions",
+    "not interchangeable with canonical 1672×941 image in ART-DIR-02"
+  ]
+}

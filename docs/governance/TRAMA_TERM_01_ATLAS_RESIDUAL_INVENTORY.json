@@ -273,6 +273,324 @@
       "contains": "antoniocorsano-boop/Curriculum-Atlas",
       "reason": "Identificativo tecnico esatto della fonte nei riferimenti ASI-01; nessuna modifica al lessico di dominio.",
       "category": "historical-evidence"
+    },
+    {
+      "path": "docs/atlas-gateway/ART-REFERENCE-MANIFEST.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository address is a stable technical link; ART-DIR-02 prose uses the canonical curricolo vocabulary."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-ART-DIRECTION-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository address is a stable technical link; ART-DIR-02 prose uses the canonical curricolo vocabulary."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-ART-DIRECTION-02.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository address is a stable technical link; ART-DIR-02 prose uses the canonical curricolo vocabulary."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-PRODUCTION-WORKFLOW-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository address is a stable technical link; ART-DIR-02 prose uses the canonical curricolo vocabulary."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-CLOSED-LOOP-02.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "infrastructure-legacy",
+      "reason": "Exact existing GitHub repository address is a stable technical link; ART-DIR-02 prose uses the canonical curricolo vocabulary."
+    },
+    {
+      "path": "docs/atlas-gateway/ARCH-04-ARCHITECTURAL-GEOMETRY-PROJECT-01.json",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ARCH-04-ARCHITECTURAL-GEOMETRY-PROJECT-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ARCH-04B-CONSTRUCTION-RESULT-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ARENA-IG0-HISTORIC-01.json",
+      "contains": "\"id\": \"arena_curriculum\",",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ARENA-IG0-HISTORIC-01.json",
+      "contains": "\"label\": \"Curriculum\",",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ART-REFERENCE-MANIFEST.md",
+      "contains": "**Archivio Drive del progetto:** [Cartella Curriculum Atlas](https://drive.google.com/drive/folders/11tt7SPHgQSDAp8p-s6Iflg56fdYkH1ti). Due file ricevuti nella conversazione corrente sono stati trasferiti tramite riferimento ai byte dell'allegato originale e verificati mediante rilettura dei metadati sul Drive.",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ART-REFERENCE-MANIFEST.md",
+      "contains": "1. Aprire la conversazione del 20/11 in cui il PNG originale e il file ZIP sono stati prodotti. In quel contesto chiedere il **trasferimento diretto degli allegati in Google Drive / Curriculum Atlas**, preservando i byte, senza ricompressione, ritaglio, conversione o generazione.",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ASSET-KIT-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ARCH-VIS-REFERENCE-ANALYSIS-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-ARCH-02.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-ARCH-03.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-CAMERA-AB-REVIEW-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-FINISHINGS-R4-RESULT-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-MASTER-PERCETTIVO-PARAMETRICO-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-MULTIWORK-R6-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-P1-PRIMO-MODELLO-ESITO-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-P1B-RESULT-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-PORTAL-READING-R2-RESULT-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-R5-GALLERIES-PORTAL-SECTION-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-R6-SOLO-EXECUTION-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-R6-SOLO-EXECUTION-01.md",
+      "contains": "- **GitHub Actions come officina parallela**: quando ciascuno script è concretamente disponibile e qualificato, può essere eseguito in job indipendenti, anche mediante una matrice, con Blender, senza lavorare sul computer dell'ideatore. Il repository Curriculum-Atlas è pubblico e i normali runner ospitati da GitHub sono gratuiti per i repository pubblici (documentazione GitHub corrente). Gli job possono ripartire da un master comune per produrre 4 varianti per componente.",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-R6-SOLO-EXECUTION-01.md",
+      "contains": "1. Se **Codex Cloud** compare nell'account ChatGPT, aprirlo da web o app e **collegare** GitHub/Curriculum-Atlas nell'ambiente cloud. Il collegamento richiede autorizzazione esplicita dell'utente.",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-R6AB-PARALLEL-RESULT-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-R6ABCD-PRODUCTION-RESULT-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-R6C-R6D-EXECUTION-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-R7-ART-RESULT-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-R8-INTEGRATED-RESULT-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-DIR-02-VISUAL-READING-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-PROOF-01-DECISION.json",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-PROOF-01-PROTOCOL.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ART-PROOF-01B-ARTISTIC-REVIEW.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ATRIUM-3D-SEED-02.md",
+      "contains": "- **Pacchetto permanente, contenente il GLB, il Blueprint-02 e le viste VTK HERO/SIDE/MOBILE:** [Drive Curriculum Atlas — SEED-02](https://drive.google.com/file/d/1AqK_L45BYeWVZ6cn3RdM-swIxEvzB0HN/view). ZIP **1.406.862 byte**, SHA-256 `7055ae48b97435c7bc870517e7a71e54d64f722d5feefe04efe153f126616220`.",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ATRIUM-3D-SEED-03.md",
+      "contains": "- **[Drive Curriculum Atlas — SEED-03, sorgenti e tre viste](https://drive.google.com/file/d/1qmY_CtiOjOdrAxDlJXvbgibdCfxU5nSP/view)**, file ZIP **2.508.885 byte**. Google Drive ha confermato il caricamento e la successiva rilettura dei metadati.",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ATRIUM-BLENDER-RUN-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ATRIUM-BLENDER-RUN-01.md",
+      "contains": "3. Salvare **immediatamente in Drive Curriculum Atlas** l'archivio firmato, perché la conservazione GitHub Actions per 30 giorni **non è archivio permanente**. Verificare il nuovo file Drive mediante `get_file_metadata`.",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-ATRIUM-COMPOSER-KIT-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-ENTRY-WEB-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-ENTRY-WEB-01.md",
+      "contains": "**Conservazione delle immagini sorgente**: i cinque binari già versionati in GitHub sono separati dalle prove browser ed esistono anche nel Drive Curriculum Atlas. Nessun file fotografico di origine è stato sovrascritto.",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-HYBRID-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-HYBRID-HOVER-01.md",
+      "contains": "- [Archivio permanente nel Drive di Curriculum Atlas](https://drive.google.com/file/d/1oSA1KSp_hJp2eipYCM7oaFsfEhqyARwr/view): `ATLAS-GATEWAY-HYBRID-HOVER-01-prova-interattiva-2026-11-20.zip`, **6.549.540 byte**, SHA-256 `a31c5f34b293621d6612f3cfbccfb02835749d84390ab6e1a3154cfcb93ab258`, **14 componenti**, ZIP riaperto e verificato; metadati Drive riletti dopo l'archiviazione.",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-HYBRID-HOVER-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-LOCKED-DELIVERY-SEQUENCE-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-MOBILE-02.md",
+      "contains": "- **Risorsa mobile autonoma:** [`public/atlas-gateway-entry/mobile-atrium-01.png`](../../public/atlas-gateway-entry/mobile-atrium-01.png), **948 × 1659 px**, **2.204.582 byte**, SHA-256 `a742aed54e69a9a857540d7b1f39e0486dd5d07597e3e4cf57723fb6f92f347f`. Creato il 20 novembre 2026 come nuovo *candidato scenografico verticale*, non come derivazione geometrica o immagine originale ART-DIR-02. È stato salvato come **blob binario reale** nel repository e in [Google Drive Curriculum Atlas](https://drive.google.com/file/d/1_0DDwW3gBLx7JYI1JjsmcLoxkgqJTlk7/view).",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-MOBILE-02.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-MOBILE-03-TOUCH-AND-PODIUM.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-MOBILE-ART-PROVENANCE-01.md",
+      "contains": "| PNG conservato | [Google Drive Curriculum Atlas](https://drive.google.com/file/d/1_0DDwW3gBLx7JYI1JjsmcLoxkgqJTlk7/view) |",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/ATLAS-GATEWAY-PORTALS-LIGHT-01.md",
+      "contains": "https://github.com/antoniocorsano-boop/Curriculum-Atlas",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
+    },
+    {
+      "path": "docs/atlas-gateway/GENERATION-PROVENANCE-01.md",
+      "contains": "- Prima immagine ARENA fornita il 20/11: atrio circolare con oculo vetrato, basamento ARENA e **cinque** pannelli «Curriculum», «Governance», «Evidence», «Operations», «Review».",
+      "category": "historical-evidence",
+      "reason": "Riferimento tecnico o storico verificato nel rapporto; non modifica il lessico di dominio."
     }
   ]
 }

@@ -1,0 +1,323 @@
+{
+  "schema": "atlas.art-dir02.perceptual-rig/v1",
+  "status": "DESIGN_ONLY__NOT_APPLIED_TO_BLENDER",
+  "created": "2026-11-21",
+  "reference": {
+    "image": "https://drive.google.com/file/d/1vSC_ynSxAF-pxR071TiKjEE0OtaFjXCn/view",
+    "sha256": "a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe",
+    "size_px": [
+      1536,
+      864
+    ]
+  },
+  "baseline": {
+    "archive": "https://drive.google.com/file/d/19JWBQ4DQG4a77YbsChtID7ZYFjZ9LUQU/view",
+    "file": "atlas-art-dir02-r8-integrated-atmosphere.blend",
+    "sha256": "2d39c43e0690334ce40627266d083e78d4d4238d25a28d0aaec6be33ef6550f8",
+    "camera": "CAM_HERO_ARCH04",
+    "size_px": [
+      1152,
+      648
+    ],
+    "state": "TECHNICAL_PASS__ARTISTIC_NOT_APPROVED"
+  },
+  "measurement": {
+    "method": "manual indicative screen-space contours; refine before first calibration",
+    "screenshot": "https://drive.google.com/file/d/1aYKVL5vQlBtqb1nb2DzJazTR2_sKkbx6/view",
+    "confidence": "preliminary",
+    "reference_portal_rectangles_px": [
+      [
+        177,
+        168,
+        447,
+        552
+      ],
+      [
+        471,
+        192,
+        722,
+        530
+      ],
+      [
+        815,
+        195,
+        1082,
+        529
+      ],
+      [
+        1100,
+        169,
+        1364,
+        552
+      ]
+    ],
+    "r8_portal_rectangles_px": [
+      [
+        192,
+        208,
+        383,
+        516
+      ],
+      [
+        385,
+        222,
+        568,
+        496
+      ],
+      [
+        570,
+        219,
+        766,
+        497
+      ],
+      [
+        776,
+        210,
+        964,
+        515
+      ]
+    ],
+    "reference_central_gap_fraction_approx": 0.063,
+    "r8_central_gap_fraction_approx": 0.006,
+    "target_mid_gap_fraction_band": [
+      0.045,
+      0.08
+    ],
+    "warning": "All image coordinates are rough hand estimates, not physical survey data"
+  },
+  "controls": {
+    "camera": {
+      "focal_length_mm": {
+        "source": "read_from_blender",
+        "candidate": [
+          26,
+          29,
+          34,
+          38
+        ],
+        "scope": "P1"
+      },
+      "camera_height_scale": {
+        "initial": 1,
+        "candidate": [
+          0.9,
+          1,
+          1.1,
+          1.2
+        ],
+        "scope": "P1"
+      },
+      "camera_distance_scale": {
+        "initial": 1,
+        "candidate": [
+          0.9,
+          1,
+          1.1,
+          1.2
+        ],
+        "scope": "P1"
+      },
+      "camera_target_height_offset_bu": {
+        "initial": 0,
+        "candidate": [
+          -1.5,
+          -0.75,
+          0,
+          0.75,
+          1.5
+        ],
+        "scope": "P1"
+      },
+      "shift_y": {
+        "source": "read_from_blender",
+        "candidate_offsets": [
+          -0.1,
+          0,
+          0.1
+        ],
+        "scope": "P1"
+      }
+    },
+    "atrium": {
+      "radius_scale": {
+        "initial": 1,
+        "candidate": [
+          1,
+          1.1,
+          1.2,
+          1.32
+        ],
+        "scope": "P1"
+      },
+      "height_scale": {
+        "initial": 1,
+        "candidate": [
+          1,
+          1.15,
+          1.3,
+          1.45
+        ],
+        "scope": "P1"
+      },
+      "gallery_recess_depth_scale": {
+        "initial": 1,
+        "candidate": [
+          1,
+          1.25,
+          1.5,
+          1.8
+        ],
+        "scope": "P2"
+      },
+      "gallery_level_spacing_scale": {
+        "initial": 1,
+        "candidate": [
+          1,
+          1.1,
+          1.2
+        ],
+        "scope": "P2"
+      },
+      "oculus_screen_ratio": {
+        "source": "optimize_from_screen_anchors",
+        "scope": "P1"
+      }
+    },
+    "portals": {
+      "central_gap_fraction_of_frame": {
+        "initial_from_r8": 0.006,
+        "target_band": [
+          0.045,
+          0.08
+        ],
+        "scope": "P2"
+      },
+      "arc_radius_scale": {
+        "initial": 1,
+        "candidate": [
+          1,
+          1.12,
+          1.25,
+          1.4
+        ],
+        "scope": "P2"
+      },
+      "left_right_spread_scale": {
+        "initial": 1,
+        "candidate": [
+          1,
+          1.13,
+          1.27
+        ],
+        "scope": "P2"
+      },
+      "individual_angles_rad": {
+        "source": "read_original_four_roots",
+        "scope": "P2"
+      },
+      "individual_heights_bu": {
+        "source": "read_actual_meshes",
+        "scope": "P2"
+      },
+      "individual_depth_offsets_bu": {
+        "initial": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "scope": "P2"
+      },
+      "base_count": {
+        "fixed": 4,
+        "scope": "all"
+      }
+    },
+    "lighting": {
+      "L01_DAY_SKY": {
+        "controls": [
+          "power",
+          "color",
+          "apparent_sky_brightness",
+          "sun_direction",
+          "angular_softness"
+        ]
+      },
+      "L02_ZENITH_VOLUME": {
+        "controls": [
+          "density",
+          "anisotropy",
+          "radial_falloff",
+          "shaft_variance"
+        ]
+      },
+      "L03_GALLERY_AMBER": {
+        "controls": [
+          "power",
+          "color_temperature_proxy",
+          "receiver_set",
+          "spread",
+          "ies_profile"
+        ]
+      },
+      "L04_PORTAL_EDGE": {
+        "controls": [
+          "color",
+          "emission_strength",
+          "base_glow",
+          "falloff"
+        ]
+      },
+      "L05_FLOOR_SPECULAR": {
+        "controls": [
+          "key_size",
+          "key_position",
+          "floor_roughness",
+          "environment_reflection"
+        ]
+      },
+      "L06_PLANTS_PODIUM": {
+        "controls": [
+          "bronze_edge_power",
+          "foliage_fill",
+          "podium_roughness"
+        ]
+      },
+      "L07_NEGATIVE_FILL": {
+        "controls": [
+          "ambient_fill",
+          "shadow_cards",
+          "selective_shadows"
+        ]
+      }
+    }
+  },
+  "verification": {
+    "first_test": "P1 camera+global architecture in neutral clay, reference overlay, before lights or PBR",
+    "order": [
+      "P1_camera_scene",
+      "P2_perceptual_3d",
+      "P3_lighting_groups",
+      "web_one_bay_after_approval"
+    ],
+    "invariants": [
+      "reference_file_unchanged",
+      "baseline_file_unchanged",
+      "4_semantic_portal_accesses",
+      "source_CC0_assets_traceable",
+      "no_merge",
+      "no_deploy",
+      "no_student_data"
+    ],
+    "art_approval_required": true,
+    "parametric_tuning_is_not_approval": true
+  },
+  "sources": [
+    "https://fspy.io/basics/",
+    "https://docs.blender.org/manual/en/4.5/render/layers/passes.html",
+    "https://docs.blender.org/manual/en/4.5/render/lights/light_linking.html",
+    "https://docs.blender.org/manual/en/4.5/render/shader_nodes/textures/ies.html",
+    "https://docs.blender.org/manual/en/4.5/render/cycles/baking.html",
+    "https://threejs.org/docs/pages/GLTFLoader.html"
+  ]
+}

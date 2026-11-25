@@ -1,0 +1,155 @@
+{
+  "schema": "atlas.atrium.blueprint-measures/v1",
+  "status": "CONCEPTUAL_GEOMETRY_TESTED_NOT_IMAGE_FITTED",
+  "coordinate_units": "R",
+  "portals": [
+    {
+      "id": "curricolo",
+      "name": "Curricolo",
+      "center_R": [
+        -0.428244,
+        0.475613,
+        0.26
+      ],
+      "angle_deg": -42,
+      "corners_R": [
+        [
+          -0.481004,
+          0.414651
+        ],
+        [
+          -0.362101,
+          0.521712
+        ],
+        [
+          -0.375483,
+          0.536575
+        ],
+        [
+          -0.494386,
+          0.429514
+        ]
+      ]
+    },
+    {
+      "id": "esplora",
+      "name": "Esplora",
+      "center_R": [
+        -0.15483,
+        0.620989,
+        0.26
+      ],
+      "angle_deg": -14,
+      "corners_R": [
+        [
+          -0.230034,
+          0.591933
+        ],
+        [
+          -0.074787,
+          0.63064
+        ],
+        [
+          -0.079626,
+          0.650046
+        ],
+        [
+          -0.234873,
+          0.611338
+        ]
+      ]
+    },
+    {
+      "id": "percorsi",
+      "name": "Percorsi",
+      "center_R": [
+        0.15483,
+        0.620989,
+        0.26
+      ],
+      "angle_deg": 14,
+      "corners_R": [
+        [
+          0.074787,
+          0.63064
+        ],
+        [
+          0.230034,
+          0.591933
+        ],
+        [
+          0.234873,
+          0.611338
+        ],
+        [
+          0.079626,
+          0.650046
+        ]
+      ]
+    },
+    {
+      "id": "esperienze",
+      "name": "Esperienze",
+      "center_R": [
+        0.428244,
+        0.475613,
+        0.26
+      ],
+      "angle_deg": 42,
+      "corners_R": [
+        [
+          0.362101,
+          0.521712
+        ],
+        [
+          0.481004,
+          0.414651
+        ],
+        [
+          0.494386,
+          0.429514
+        ],
+        [
+          0.375483,
+          0.536575
+        ]
+      ]
+    }
+  ],
+  "adjacent_portal_center_distances": [
+    {
+      "between": [
+        "curricolo",
+        "esplora"
+      ],
+      "center_distance_R": 0.30966
+    },
+    {
+      "between": [
+        "esplora",
+        "percorsi"
+      ],
+      "center_distance_R": 0.30966
+    },
+    {
+      "between": [
+        "percorsi",
+        "esperienze"
+      ],
+      "center_distance_R": 0.30966
+    }
+  ],
+  "observations": {
+    "rotunda_diameter_R": 2,
+    "skylight_diameter_R": 0.68,
+    "platform_diameter_R": 0.6,
+    "camera_hero_distance_to_origin_R": 1.91637678967368
+  },
+  "checks": {
+    "four_portals": true,
+    "symmetric_angles": true,
+    "separated_panel_footprints": true,
+    "three_cameras": true
+  },
+  "image_fitting": "NOT_RUN_REFERENCE_PNG_UNAVAILABLE"
+}

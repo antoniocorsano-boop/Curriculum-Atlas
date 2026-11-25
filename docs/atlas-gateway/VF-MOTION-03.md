@@ -1,0 +1,6 @@
+# VF-MOTION-03 — Profilo ottico locale
+Base qualificata e6ebed8d: 25 procedure PASS, 3 saltate, nessun errore. Stesso ramo di laboratorio.
+## Realizzazione
+`/atrio/?vf-optics=1` attiva un profilo statico opt-in, combinabile con la regia già esistente. Risorsa ambientale procedurale 256×128 RGBA (128 KiB prima della prefiltratura), prefiltrata una volta con PMREM del motore Three.js r128. Materiali standard con parametri espliciti per pietra, bronzo, ossidiana e cornici. Shader GLSL dell'oculo sulla geometria esistente: gradiente/alone, nessuna simulazione fisica della rifrazione. I riflessi provengono dalla mappa ambientale sintetica, non dalla scena reale. Nessun nuovo oggetto, passaggio di postproduzione o rete. Le etichette e i bersagli dei portali restano immutati. Il master GLB eventualmente allegato viene preservato integralmente e non riceve il profilo.
+## Prove
+Contratti deterministici, ripristino e rilascio delle risorse; confronto A/B di schermate Chromium software, differenza RGB e chiamate/triangoli; conservazione evidenze. Modalità di misura `vf-optics=baseline`. Nessun risultato fisico o approvazione estetica prima del collaudo; il costo iniziale di prefiltratura e i tempi reali su telefono restano da misurare. Nessuna integrazione o pubblicazione.

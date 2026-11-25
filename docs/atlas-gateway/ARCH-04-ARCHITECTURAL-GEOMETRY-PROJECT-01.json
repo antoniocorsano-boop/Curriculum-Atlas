@@ -1,0 +1,898 @@
+{
+  "schema": "atlas.gateway.architectural-geometry-project/v1",
+  "id": "ATLAS-ARCH-04-GEOMETRY-PROJECT-01",
+  "title": "Atlante architettonico dell'atrio — progetto geometrico dettagliato",
+  "date": "2026-11-21",
+  "authority": "ART-DIR-02 CANONICAL JPEG > approved art direction > this geometric design proposal > ARCH-04 diagnostic candidate",
+  "status": "EXECUTIVE_GEOMETRY_DESIGN__NOT_CONSTRUCTION_OR_ARTISTIC_APPROVAL",
+  "canonical": {
+    "image_drive": "https://drive.google.com/file/d/1vSC_ynSxAF-pxR071TiKjEE0OtaFjXCn/view",
+    "sha256": "a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe",
+    "size_px": [
+      1536,
+      864
+    ],
+    "landmarks_path": "docs/atlas-gateway/ART-DIR-02-CANONICAL-LANDMARKS.json",
+    "measured_elements": [
+      "4 portal apparent bboxes",
+      "visible oculus area",
+      "podium silhouettes",
+      "entry CTA",
+      "upper galleries"
+    ],
+    "dimensional_limit": "No real-world scale known, BU means relative Blender scene units, no implied building-code dimensions"
+  },
+  "provenance": {
+    "blender_source": "scripts/atlas-gateway-production/rebuild_architecture_04.py",
+    "verified_run": "https://github.com/antoniocorsano-boop/Curriculum-Atlas/actions/runs/44867149465",
+    "archive": "https://drive.google.com/file/d/1txZ0sBnOh6zeovEGHBx6n5f2DBnfNFcn/view",
+    "comparison": "https://drive.google.com/file/d/1CFxylInmmUVTwZdaTxxgjHK1B7hqojJP/view",
+    "geometric_profile": "ARCH-04 R2 successful technically but not approved artistically",
+    "joints": "16 versioned construction nodes, including actual floor support gaps and front architecture unresolved"
+  },
+  "coordinate_frame": {
+    "right_handed": true,
+    "axes": {
+      "x": "+ right",
+      "y": "+ rear/into rotunda",
+      "z": "+ upwards"
+    },
+    "units": "BU (relative Blender units; never assert 1 BU = 1m)",
+    "floor_reference_z": 0,
+    "rotunda_center_xy": [
+      0,
+      1.3
+    ],
+    "portal_arc_center_xy": [
+      0,
+      -6.3836
+    ],
+    "podium_center_xy": [
+      0,
+      -2
+    ],
+    "authoring_scene": "Cycles Blender 5.x; parametric source as versioned scripts + JSON; no GLB export in this stage"
+  },
+  "geometry": {
+    "rotunda": {
+      "id": "ARCH_ROTUNDA",
+      "kind": "circular_foyer_with_rear_sector",
+      "floor": {
+        "center": [
+          0,
+          1.3,
+          -0.24
+        ],
+        "radius": 11.76,
+        "thickness": 0.4,
+        "top_z": -0.04
+      },
+      "main_radial_dimensions": {
+        "structural_pier_axis_r": 11.52,
+        "ground_plinth": {
+          "inner_r": 11.05,
+          "outer_r": 11.85,
+          "z_bottom": 0.02,
+          "z_top": 0.45
+        },
+        "external_wall_candidate_r": 11.85,
+        "outer_gallery_edge_r": 11.86
+      },
+      "azimuthal_rear_sector_deg": [
+        -90,
+        90
+      ],
+      "inference": "The reference image reveals the rear part only; construction of a 360° foyer and front entrance is a separate hidden-geometry architectural design decision",
+      "front_architecture": {
+        "known_status": "UNSEEN_IN_REFERENCE",
+        "current_render_geometry": "OPEN_CAMERA_STAGE",
+        "target_architecture": "PHYSICALLY_PLAUSIBLE_ENTRY_WITH_INTEGRATED_FRONT_RETURNS",
+        "caution": "Do not invent a 360-degree opaque front roof before solving view and navigation clearance"
+      }
+    },
+    "galleries": {
+      "id": "ARCH_GALLERIES",
+      "arc_sector_deg": [
+        -90,
+        90
+      ],
+      "number_of_bays": 14,
+      "number_of_pier_axes": 15,
+      "angular_pitch_deg": 12.857142857142858,
+      "pier_radial_axis": 11.52,
+      "pier_section_xy": [
+        0.25,
+        0.46
+      ],
+      "pier_vertical_sections": [
+        [
+          0.4,
+          2.43
+        ],
+        [
+          2.64,
+          5.18
+        ],
+        [
+          5.4,
+          7.03
+        ]
+      ],
+      "decks": [
+        {
+          "name": "GALLERY_1",
+          "r_inner": 10.17,
+          "r_outer": 11.86,
+          "z_bottom": 2.45,
+          "z_top": 2.63,
+          "handrail": {
+            "r_inner": 10.1,
+            "r_outer": 10.21,
+            "z": [
+              3.35,
+              3.41
+            ]
+          },
+          "glass": {
+            "r": 10.13,
+            "z": [
+              2.68,
+              3.34
+            ]
+          }
+        },
+        {
+          "name": "GALLERY_2",
+          "r_inner": 10.17,
+          "r_outer": 11.86,
+          "z_bottom": 5.2,
+          "z_top": 5.38,
+          "handrail": {
+            "r_inner": 10.1,
+            "r_outer": 10.21,
+            "z": [
+              6.1,
+              6.16
+            ]
+          },
+          "glass": {
+            "r": 10.13,
+            "z": [
+              5.43,
+              6.09
+            ]
+          }
+        }
+      ],
+      "cornice": {
+        "r": [
+          11.16,
+          11.92
+        ],
+        "z": [
+          7.03,
+          7.21
+        ]
+      },
+      "bay_depth_variants_r": [
+        11.94,
+        12.32
+      ],
+      "visible_depth_requirements": [
+        "balustrade in foreground",
+        "deck thickness real",
+        "back wall recessed",
+        "side pilasters with real connecting beams",
+        "library/alcove module behind railing as secondary volume"
+      ],
+      "structural_issue": "14 primary columns vs 18 roof panels: require a continuous perimeter distribution ring (not unsupported floating radial rafters)"
+    },
+    "oculus": {
+      "id": "ARCH_OCULUS",
+      "center_xy": [
+        0,
+        1.3
+      ],
+      "roof_inner_r": 6.85,
+      "roof_outer_r": 11.55,
+      "roof_profile_z": "8.44 - 1.17*((r - 6.85)/(11.55 - 6.85))^2",
+      "roof_z_inner": 8.44,
+      "roof_z_outer": 7.27,
+      "roof_panels_rear": 18,
+      "roof_panel_mesh_radial_divisions": 4,
+      "roof_panel_angle_coverage_fraction": 0.55,
+      "metal_radial_ribs": 18,
+      "sky_radial_mullions": 12,
+      "corona_r": [
+        6.76,
+        6.98
+      ],
+      "corona_z": [
+        8.22,
+        8.4
+      ],
+      "sky_disc_r": 6.8,
+      "sky_disc_z": 8.55,
+      "glass_thickness_candidate": 0.045,
+      "physical_rib_profile_candidate": 0.06,
+      "roof_front_status": "OPEN_IN_DIAGNOSTIC_STAGE_ONLY",
+      "upper_ring_requirement": "physically continuous circumferential metallic load distributor and luminous inlay separate mesh",
+      "image_guidance": "Canonical visible oculus bounding area px x454..1119, y0..136 represents visible portion only; the full circle is clipped by image edge; never equate its box with full projected disc bounds.",
+      "design_uncertainties": [
+        "oculus true diameter vs projection",
+        "support roof join to upper cornice",
+        "amount of metal crown vs illuminated strip",
+        "upper frame crop camera vs actual opening"
+      ]
+    },
+    "portals": {
+      "id": "ARCH_PORTAL_ARC",
+      "arc_center_xy": [
+        0,
+        -6.3836
+      ],
+      "arc_radius": 9.144182903,
+      "center_coordinate_rule": "y=cy+sqrt(R^2-x^2) on rear-facing branch",
+      "pairs": {
+        "outer": [
+          "Curricolo",
+          "Esperienze"
+        ],
+        "inner": [
+          "Esplora",
+          "Percorsi"
+        ]
+      },
+      "instances": [
+        {
+          "id": "Curricolo",
+          "center_bu": [
+            -5.95,
+            0.56,
+            0
+          ],
+          "yaw_rad": -0.29,
+          "root_scale": [
+            1.2,
+            1,
+            1
+          ],
+          "nominal_frame_local_bu": {
+            "width": 3.16,
+            "height": 5.04,
+            "depth": 0.2,
+            "base_center_z": 2.72,
+            "corner_radius": 0.38
+          },
+          "effective_frame_bu": {
+            "width": 3.792,
+            "height": 5.04,
+            "bottom_z": 0.2,
+            "top_z": 5.24
+          },
+          "pedestal_local_bu": {
+            "width": 3.22,
+            "depth": 0.62,
+            "height": 0.28,
+            "z_center": 0.25
+          },
+          "image_required": true
+        },
+        {
+          "id": "Esplora",
+          "center_bu": [
+            -2.4,
+            2.440009,
+            0
+          ],
+          "yaw_rad": -0.11,
+          "root_scale": [
+            1.2,
+            1,
+            1
+          ],
+          "nominal_frame_local_bu": {
+            "width": 3.16,
+            "height": 5.04,
+            "depth": 0.2,
+            "base_center_z": 2.72,
+            "corner_radius": 0.38
+          },
+          "effective_frame_bu": {
+            "width": 3.792,
+            "height": 5.04,
+            "bottom_z": 0.2,
+            "top_z": 5.24
+          },
+          "pedestal_local_bu": {
+            "width": 3.22,
+            "depth": 0.62,
+            "height": 0.28,
+            "z_center": 0.25
+          },
+          "image_required": true
+        },
+        {
+          "id": "Percorsi",
+          "center_bu": [
+            2.4,
+            2.440009,
+            0
+          ],
+          "yaw_rad": 0.11,
+          "root_scale": [
+            1.2,
+            1,
+            1
+          ],
+          "nominal_frame_local_bu": {
+            "width": 3.16,
+            "height": 5.04,
+            "depth": 0.2,
+            "base_center_z": 2.72,
+            "corner_radius": 0.38
+          },
+          "effective_frame_bu": {
+            "width": 3.792,
+            "height": 5.04,
+            "bottom_z": 0.2,
+            "top_z": 5.24
+          },
+          "pedestal_local_bu": {
+            "width": 3.22,
+            "depth": 0.62,
+            "height": 0.28,
+            "z_center": 0.25
+          },
+          "image_required": true
+        },
+        {
+          "id": "Esperienze",
+          "center_bu": [
+            5.95,
+            0.56,
+            0
+          ],
+          "yaw_rad": 0.29,
+          "root_scale": [
+            1.2,
+            1,
+            1
+          ],
+          "nominal_frame_local_bu": {
+            "width": 3.16,
+            "height": 5.04,
+            "depth": 0.2,
+            "base_center_z": 2.72,
+            "corner_radius": 0.38
+          },
+          "effective_frame_bu": {
+            "width": 3.792,
+            "height": 5.04,
+            "bottom_z": 0.2,
+            "top_z": 5.24
+          },
+          "pedestal_local_bu": {
+            "width": 3.22,
+            "depth": 0.62,
+            "height": 0.28,
+            "z_center": 0.25
+          },
+          "image_required": true
+        }
+      ],
+      "design_rule": "paired symmetry and same actual frame height within each pair; apparent upper/lower positions evaluated in image not hardwired as physical height Revision of reading (2026-11-21): test concentric podium arc with tangent glass sheets inset into floor rather than monumental plinths; old values remain the diagnostic baseline.",
+      "current_yaw_discrepancy": "Current yaw ±0.29/±0.11 rad is NOT equal to geometrical radial/tangent normal angle arcsin(x/R): the portal orientation requires dedicated artistic camera-fit solving This is now a prioritized geometric correction hypothesis, not merely a later optional adjustment.",
+      "content_contract": "each of the four preserves individual original icon, exact title, exact subtitle and original illustration; visual graphics VIS-01, not geometry if beyond framing",
+      "layout_tests": [
+        "four ordered x coordinates",
+        "single circle residual <1e-4 BU",
+        "portal base and platform intersection analysis",
+        "HERO bbox alignment, preserve reference MAE ~0.01190",
+        "no duplicate web labels in GLB"
+      ],
+      "reading_revision": {
+        "id": "ARCH-04-PORTAL-READING-02",
+        "date": "2026-11-21",
+        "state": "USER_DIRECTED_DESIGN_HYPOTHESIS__NOT_RENDERED_OR_ART_APPROVED",
+        "change_class": "REFINEMENT_OF_EXISTING_ART_DIR_02_AND_ARCH04_NOT_NEW_PROJECT",
+        "evidence": [
+          "user's latest reading: glass slabs emerge from illuminated incision in floor",
+          "canonical 2D portal bboxes preserved in ART-DIR-02-CANONICAL-LANDMARKS.json",
+          "existing ARCH-04B ring center differs from podium center by 4.3836 BU",
+          "current independent yaw angles do not follow arc tangents",
+          "master includes rectangular plinth plus ARCH-04B adds separate foot block"
+        ],
+        "reference_center_in_existing_model": {
+          "podium_xy": [
+            0,
+            -2
+          ],
+          "previous_arc_center_xy": [
+            0,
+            -6.3836
+          ],
+          "distance_bu": 4.3836,
+          "status": "FACT_OF_EXISTING_CODE_NOT_IMAGE_MEASUREMENT"
+        },
+        "candidate_geometry": {
+          "hypothesis": "Portal-center circle concentric with the Atlas podium, distinct from rotunda/oculus centers unless evidence validates a common center",
+          "center_xy": [
+            0,
+            -2
+          ],
+          "R_bu": {
+            "initial_test": 7.3,
+            "minimum": "greater than absolute maximum portal x offset",
+            "status": "OPTIMIZE_NOT_LOCKED"
+          },
+          "angles_symbolic": [
+            "-alpha_outer",
+            "-alpha_inner",
+            "+alpha_inner",
+            "+alpha_outer"
+          ],
+          "angular_constraints": "0<alpha_inner<alpha_outer<PI/2",
+          "position": "x = cx + R*sin(alpha), y = cy + R*cos(alpha), z = shared slot datum",
+          "rotation_rad": "yaw_z = -alpha for a local XZ panel whose front normal is -Y, pointing towards the podium center",
+          "geometry_orientation": "tangent vector (cos alpha,-sin alpha) perpendicular to radial vector (sin alpha,cos alpha)",
+          "radial_normal": "pointing from each panel to circle center (-sin alpha,-cos alpha) in world XY",
+          "front_back": "central pair farther rear Y than outer pair in candidate, apparent altitude to be solved via perspective",
+          "source_landmarks": "docs/atlas-gateway/ART-DIR-02-CANONICAL-LANDMARKS.json",
+          "notes": "Do not infer actual world heights from 2D apparent top and bottom."
+        },
+        "physical_portal_assembly": {
+          "role": "SINGLE_THIN_VERTICAL_GLASS_SLAB_RISING_FROM_FLOOR_SLOT",
+          "mandatory_layers": [
+            "stone floor with actual cut",
+            "dark recessed technical channel",
+            "nearly flush low brass edging",
+            "thin blue glass extending into channel",
+            "continuous delicate illuminated rim",
+            "icon title subtitle and unique illustration integrated with panel"
+          ],
+          "exclude": [
+            "large independent footblocks",
+            "raised rectangular podium for each panel",
+            "second stacked sole or double pedestal",
+            "plane merely image-mapped for entire four-portals composition"
+          ],
+          "slot": "Four physical tangent-aligned recesses (or an arc-shaped slot where geometrically viable), integrated with actual floor mesh; low lip only, side profile demonstrable",
+          "proposed_slot_dimensions_bu": {
+            "width": "panel actual projected width + local margin, test",
+            "depth": 0.1,
+            "opening": 0.16,
+            "edge_lip_height": 0.025,
+            "approval": "PARAMETRIC_INITIAL_CANDIDATE"
+          },
+          "glass": "single pane curved-corner, physical thickness and inset bottom, preserve four independent graphics"
+        },
+        "supersession_scope": {
+          "obsolete_as_target": [
+            "arc_center_xy [-6.3836] in the old candidate",
+            "manual non-tangent yaw ±0.29/±0.11",
+            "3.22×0.62×0.28 monolithic pedestal",
+            "ARCH-04B auxiliary foot 3.78×0.52×0.144"
+          ],
+          "preserve_as_historical_cad": [
+            "all existing instances and coordinates for reproduction of old candidate",
+            "original four portal graphics and strings",
+            "floor, podio, skylight, art direction, lighting and library"
+          ],
+          "change_requires_render_before_promote": true
+        },
+        "validation": {
+          "required_cameras": [
+            "HERO",
+            "TOP_ORTHO",
+            "OBLIQUE"
+          ],
+          "checks": [
+            "same circle center as podium for candidate",
+            "exact paired symmetry",
+            "tangent dot radial ~ 0",
+            "slot depth + glass foot contact with finished floor",
+            "no free-standing visible plinth",
+            "2D landmark overlap without substantial regressions",
+            "oculus, podium, galleries visual relationship not degraded",
+            "real parallax and 4 individual portal images"
+          ],
+          "release_forbidden": true,
+          "human_art_gate": true
+        }
+      }
+    },
+    "podium": {
+      "id": "ATLAS_PODIUM",
+      "center_xy": [
+        0,
+        -2
+      ],
+      "cap_shape": "upper half ellipsoid",
+      "cap_equation": "((x-0)/3.58)^2+((y+2)/2.38)^2+((z-.58)/1.59)^2=1, with z>=.58",
+      "semiaxes": [
+        3.58,
+        2.38
+      ],
+      "base_z": 0.58,
+      "height": 1.59,
+      "top_z": 2.17,
+      "mesh_sample_u": 112,
+      "mesh_sample_v": 25,
+      "rings": [
+        {
+          "name": "R_OUTER_BRONZE",
+          "ax": 4.89,
+          "ay": 3.13,
+          "z": 0.22,
+          "profile_half_width": 0.075,
+          "profile_half_height": 0.08
+        },
+        {
+          "name": "R_INNER_PLINTH",
+          "ax": 4.42,
+          "ay": 2.85,
+          "z": 0.44,
+          "profile_half_width": 0.075,
+          "profile_half_height": 0.055
+        },
+        {
+          "name": "R_INNER_EMISSION_SLOT",
+          "ax": 4.37,
+          "ay": 2.8,
+          "z": 0.54,
+          "profile_half_width": 0.04,
+          "profile_half_height": 0.034
+        }
+      ],
+      "brand": "Reuse approved Atlas logo image on convex UV grid, do not regenerate text or letters",
+      "design_issue": "Verify foreground podio does not physically intersect portal plinths; its image overlap is intentional and may remain in HERO"
+    },
+    "floor": {
+      "id": "ARCH_FLOOR",
+      "center_xy": [
+        0,
+        1.3
+      ],
+      "main_radius": 11.76,
+      "top_z": -0.04,
+      "thickness": 0.4,
+      "paved_pattern": "large segmented stone slabs with narrow joint gaps and staggered radial/transverse joints; reflection geometry from VIS-01",
+      "geometry_requirements": [
+        "genuine level 0 plane and connecting entrance",
+        "no floating rings",
+        "small bevel to catch highlights",
+        "podium load supports ground",
+        "avoid unnecessary dense tessellation"
+      ]
+    },
+    "secondary_geometry": {
+      "id": "ARCH_PROPS",
+      "current_pairs": [
+        {
+          "name": "LEFT/RIGHT_STRUCTURAL_PIER",
+          "positions_xy": [
+            [
+              -9.35,
+              5.4
+            ],
+            [
+              9.35,
+              5.4
+            ]
+          ],
+          "z_center": 3.62,
+          "profile": [
+            0.32,
+            0.48,
+            6.2
+          ]
+        },
+        {
+          "name": "LEFT/RIGHT_PLANTERS",
+          "positions_xy": [
+            [
+              -9.12,
+              -1.65
+            ],
+            [
+              9.12,
+              -1.65
+            ]
+          ],
+          "z_center": 0.44,
+          "profile": [
+            1.13,
+            1.08,
+            0.82
+          ]
+        }
+      ],
+      "unresolved_reconstructions": [
+        "left/right banners",
+        "lateral bookcases",
+        "foreground ornamental planters",
+        "upper-gallery vegetation",
+        "rear transparent panels and niches"
+      ],
+      "rule": "Only blocking geometry and attachment points in ARCH-04; fine props and materials scheduled VIS-01"
+    },
+    "cameras": {
+      "hero": {
+        "location": [
+          0,
+          -15.8,
+          3.38
+        ],
+        "look_at": [
+          0,
+          2.2,
+          2.05
+        ],
+        "lens_mm": 30,
+        "image_ratio": [
+          16,
+          9
+        ],
+        "current_state": "DIAGNOSTIC_NOT_FINAL",
+        "fit_params": [
+          "x_center",
+          "camera_y",
+          "camera_z",
+          "target_z",
+          "lens_mm",
+          "sensor",
+          "oculus radius/height",
+          "podium profile"
+        ]
+      },
+      "side": {
+        "location": [
+          5,
+          -13.8,
+          3.56
+        ],
+        "look_at": [
+          0,
+          2.2,
+          2.22
+        ],
+        "lens_mm": 29,
+        "image_ratio": [
+          16,
+          9
+        ]
+      },
+      "mobile_overview": {
+        "location": [
+          0,
+          -18.3,
+          3.54
+        ],
+        "look_at": [
+          0,
+          2.4,
+          2.59
+        ],
+        "lens_mm": 23.5,
+        "image_ratio": [
+          9,
+          16
+        ]
+      },
+      "mobile_left": {
+        "location": [
+          -4.2,
+          -11.4,
+          3.42
+        ],
+        "look_at": [
+          -4.05,
+          1.72,
+          3.01
+        ],
+        "lens_mm": 32,
+        "image_ratio": [
+          9,
+          16
+        ]
+      },
+      "mobile_right": {
+        "location": [
+          4.2,
+          -11.4,
+          3.42
+        ],
+        "look_at": [
+          4.05,
+          1.72,
+          3.01
+        ],
+        "lens_mm": 32,
+        "image_ratio": [
+          9,
+          16
+        ]
+      },
+      "fit_strategy": {
+        "priority_1": "preserve portal candidate pixel bbox accuracy; normalized MAE <=0.013 for initial locked comparison, tolerance provisional",
+        "priority_2": "fit actually visible oculus opening as foreground-masked aperture (not full projected disc)",
+        "priority_3": "fit podio overall and cap image bbox; avoid camera movement that hides floor or CTA space",
+        "priority_4": "check 5 camera parallax and mobile frames",
+        "fit_method": "joint least squares with explicit uncertainty and constrained parameters; images plus human qualitative approval"
+      }
+    }
+  },
+  "drawings": [
+    {
+      "id": "PL-01",
+      "name": "Planimetria geometrica",
+      "camera": "ORTHOGRAPHIC_TOP",
+      "must_show": [
+        "both circle centers",
+        "rotunda rear support sector and floor",
+        "14 gallery bays + 15 structural axes",
+        "18 roof panel axes",
+        "4 portal instance bases and directions",
+        "podium ellipses",
+        "walking and front entry sector"
+      ],
+      "current_status": "DRAWN_VECTOR_EDITABLE__NOT_ART_APPROVED",
+      "file_path": "docs/atlas-gateway/drawings/ARCH-04-PL-01-PLAN.svg"
+    },
+    {
+      "id": "SE-01",
+      "name": "Sezione diametrale trasversale",
+      "camera": "ORTHOGRAPHIC_FRONT",
+      "must_show": [
+        "0 floor z",
+        "2 mezzanine decks with thickness",
+        "two glass balustrades",
+        "upper cornice",
+        "oculus sky plane",
+        "corona section",
+        "roof height curve",
+        "cap ellipsoid and plinth rings",
+        "portal top and base"
+      ],
+      "current_status": "DRAWN_VECTOR_EDITABLE__NOT_ART_APPROVED",
+      "file_path": "docs/atlas-gateway/drawings/ARCH-04-SE-01-TRANSVERSE.svg"
+    },
+    {
+      "id": "SE-02",
+      "name": "Sezione longitudinale accesso-centro-oculo",
+      "camera": "ORTHOGRAPHIC_SIDE",
+      "must_show": [
+        "portal arc depth",
+        "camera/eye point",
+        "oculus cut and rear ring",
+        "podium depth",
+        "entry path and headroom"
+      ],
+      "current_status": "DRAWN_VECTOR_EDITABLE__NOT_ART_APPROVED",
+      "file_path": "docs/atlas-gateway/drawings/ARCH-04-SE-02-LONGITUDINAL.svg"
+    },
+    {
+      "id": "PR-01",
+      "name": "Prospetto della parete portali",
+      "camera": "CAM_HERO",
+      "must_show": [
+        "4 bbox measured",
+        "portal heights and bottom lines",
+        "podio upper/lower silhouette",
+        "visible sky and ring",
+        "gallery glazing"
+      ],
+      "current_status": "DRAWN_VECTOR_EDITABLE__NOT_ART_APPROVED",
+      "file_path": "docs/atlas-gateway/drawings/ARCH-04-PR-01-CANONICAL-FIT.svg"
+    }
+  ],
+  "tolerances": {
+    "angular_symmetry_rad": 0.000001,
+    "arc_radius_residual_bu": 0.0001,
+    "mesh_surface_min_thickness_candidate_bu": 0.03,
+    "portal_pairs_same_mesh_dimensions": true,
+    "plinth_contact_tolerance_candidate_bu": 0.03,
+    "photographic_acceptance": "human review; do not self-approve from numeric bbox alone"
+  },
+  "gates": [
+    {
+      "id": "GEO-00",
+      "stage": "ARCH-04",
+      "test": "Original reference binary and the approved source hash equal the canonical record; ARCH-03 and ARCH-04 diagnostic blends remain immutable",
+      "method": "manifest SHA256; Drive readback",
+      "status": "PENDING_PRODUCT_GATE"
+    },
+    {
+      "id": "GEO-01",
+      "stage": "ARCH-04",
+      "test": "All primary components, orthographic plan, both building sections, hero elevation, portal components and versioned object IDs exist",
+      "method": "parameter inventory and orthographic camera renders",
+      "status": "PENDING_PRODUCT_GATE"
+    },
+    {
+      "id": "GEO-02",
+      "stage": "ARCH-04",
+      "test": "Four portal centers lie on one circle; outer pair and inner pair each mirrored; paired frame heights match",
+      "method": "deterministic numeric residual <=1e-4 BU",
+      "status": "PENDING_PRODUCT_GATE"
+    },
+    {
+      "id": "GEO-03",
+      "stage": "ARCH-04",
+      "test": "Main shell, two decks, balustrades, columns, roof panels, crown and dome are real 3D geometries; no flat photo substitutes",
+      "method": "mesh topology, side view, camera parallax, intersections",
+      "status": "PENDING_PRODUCT_GATE"
+    },
+    {
+      "id": "GEO-04",
+      "stage": "ARCH-04",
+      "test": "HERO camera fits portals, visibly exposed oculus rim/sky and podium simultaneously; consider occlusion rather than using unoccluded circle bbox",
+      "method": "canonical landmark overlays + segmentation/visible region + human review",
+      "status": "PENDING_PRODUCT_GATE"
+    },
+    {
+      "id": "GEO-05",
+      "stage": "ARCH-04",
+      "test": "A coherent perimeter support joins roof panel loads to building support; all visible structural joints resolved",
+      "method": "orthographic sections and Blender cutaway inspection",
+      "status": "PENDING_PRODUCT_GATE"
+    },
+    {
+      "id": "GEO-06",
+      "stage": "ARCH-04",
+      "test": "No relevant mesh intersections or clearance conflicts among portal bases, podium rings and walkable foreground; balcony slab continuity verified",
+      "method": "plan 2D SAT/bbox, Blender mesh intersection checks, side camera",
+      "status": "PENDING_PRODUCT_GATE"
+    },
+    {
+      "id": "GEO-07",
+      "stage": "ARCH-04",
+      "test": "Mobile overview + left/right focus preserve portal hit targets and full silhouettes; interactive text remains canonical DOM",
+      "method": "five-view render; separate browser and real Android test after geometry",
+      "status": "PENDING_PRODUCT_GATE"
+    },
+    {
+      "id": "GEO-08",
+      "stage": "ARCH-04",
+      "test": "Art direction explicitly approves geometry for the specific source hash and .blend hash; otherwise VIS-01 is blocked",
+      "method": "human ART-DIR-02 decision recorded in PR and TRAMA",
+      "status": "REQUIRES_HUMAN_APPROVAL"
+    }
+  ],
+  "production_sequence": [
+    {
+      "id": "P1",
+      "name": "ARCH-04 progettazione geometrie, disegni e parametri",
+      "status": "DESIGN_ARTIFACTS_WRITTEN__VALIDATION_PENDING"
+    },
+    {
+      "id": "P2",
+      "name": "ARCH-04 costruzione parametricamente coerente da progetto, HERO/SIDE/MOBILE, revisione e approvazione",
+      "status": "SUPERSEDED_AS_AUTOMATIC_NEXT_STEP__ART_PROOF_PORTAL_READING_TEST_FIRST"
+    },
+    {
+      "id": "P3",
+      "name": "VIS-01 simboli, testi, immagini, materiali PBR, luci, raggi, arredi e riflessi",
+      "status": "BLOCKED_UNTIL_ARCH04_ART_APPROVAL"
+    },
+    {
+      "id": "P4",
+      "name": "Derivato GLB/WebGL ottimizzato integrato nell'Atlas esistente; prove Android",
+      "status": "BLOCKED_UNTIL_VIS01_ART_APPROVAL"
+    },
+    {
+      "id": "P5",
+      "name": "Promozione a distribuzione solo con decisione autorizzata",
+      "status": "BLOCKED"
+    }
+  ],
+  "non_goals": [
+    "Do not make the architectural render by pasting a reference photo on a billboard",
+    "Do not claim the model has true dimensional scale in meters",
+    "Do not invent exact 3D geometry of unseen foreground",
+    "Do not merge PR or publish public pages",
+    "Do not start VIS-01 until geometry gate is human approved"
+  ],
+  "construction_nodes_path": "docs/atlas-gateway/ARCH-04-CONSTRUCTION-JOINTS-01.json"
+}

@@ -1,0 +1,119 @@
+{
+  "schema": "atlas.atrium-composer-seed/v1",
+  "id": "ATLAS-COMPOSER-SEED-01",
+  "created": "2026-11-20",
+  "status": "PROPOSED_RELATIVE_VALUES_NOT_MEASURED_NOT_APPROVED",
+  "source": {
+    "prompt": "ATLAS-PROMPT-ART-01.md",
+    "geometry_spec": "ATLAS-GEO-SPEC-01.md",
+    "art_direction": "ATLAS-GATEWAY-ART-DIRECTION-02.md",
+    "canonical_reference": "atrio_futuristico_atlas_della_conoscenza.png",
+    "canonical_sha256": "7b3ffb9a355b89057acea02489020ad43d871e10b6cf5bbb29f8769ff3073336",
+    "reference_available_in_production": false
+  },
+  "scale": {
+    "base_unit": "R",
+    "meaning": "raggio parametrico dell'atrio",
+    "metric_unit_established": false,
+    "parameters_are": "initial_assumptions_not_photo_measurements"
+  },
+  "architecture": {
+    "plan": "circular_rotunda",
+    "levels_at_least": 2,
+    "atrium_radius_R": 1,
+    "visible_total_height_R": 1.35,
+    "first_order_height_R": 0.42,
+    "second_order_height_R": 0.78,
+    "skylight_spring_height_R": 1.05,
+    "skylight_radius_R": 0.34,
+    "skylight_shape_3d": "UNKNOWN_CHECK_CIRCULAR_VS_ELLIPTICAL",
+    "galleries": "concentric"
+  },
+  "centerpiece": {
+    "visual_type": "low_wide_convex_elliptical_dome",
+    "initial_prompt_type": "hemisphere",
+    "podium_radius_R": 0.22,
+    "podium_height_R": 0.14,
+    "platform_radius_R": 0.3,
+    "actual_ellipse_semiaxes": "TO_CALIBRATE_ON_CANONICAL_IMAGE",
+    "notes": "Radii are only initial conceptual values. Do not silently impose a pure hemisphere or a circular podium if image shows an elliptical flattened form."
+  },
+  "portals": {
+    "count": 4,
+    "order": [
+      "Curricolo",
+      "Esplora",
+      "Percorsi",
+      "Esperienze"
+    ],
+    "layout": "2_left_2_right_rear_arc",
+    "width_R": 0.18,
+    "height_R": 0.46,
+    "thickness_R": 0.02,
+    "radial_distance_R": 0.46,
+    "base_height_R": 0.03,
+    "angular_positions_deg": [
+      -34,
+      -12,
+      12,
+      34
+    ],
+    "curvature": "slight",
+    "separate_interactive_labels_in_HTML": true
+  },
+  "hero_camera": {
+    "name": "CAM_HERO",
+    "position_in_R": [
+      0,
+      -1.15,
+      0.18
+    ],
+    "target": "centerpiece",
+    "fov_deg_initial_range": [
+      58,
+      65
+    ],
+    "pitch": "slightly_upwards_to_include_oculus",
+    "roll_deg": 0,
+    "verified_by_projection": false
+  },
+  "side_camera": {
+    "name": "CAM_SIDE",
+    "purpose": "audit_geometry_parallax_and_depth",
+    "parameters": "TO_ESTABLISH"
+  },
+  "mobile_camera": {
+    "name": "CAM_MOBILE",
+    "purpose": "independent_vertical_composition",
+    "parameters": "TO_ESTABLISH"
+  },
+  "appearance": {
+    "palette": [
+      "blu notte",
+      "blu cobalto",
+      "azzurro luminoso",
+      "oro champagne",
+      "ambra",
+      "bianco caldo"
+    ],
+    "light_direction": "cool_zenith_from_skylight",
+    "warm_architectural_accents": true,
+    "materials": "PBR_ASSET_KIT_01_FUTURE",
+    "notes": "Reference image guides these choices; asset licenses and render fidelity not yet verified."
+  },
+  "revision_rules": [
+    "Do not replace the canonical image",
+    "Store calibrated values separately with evidence and provenance",
+    "All changes versioned, compare before/after with same camera",
+    "HERO SIDE MOBILE must be generated from same true 3D scene",
+    "Not an artistically approved Master Blender"
+  ],
+  "pending_evidence": [
+    "reference verified and accessible to build",
+    "landmarks on exact reference file",
+    "camera-matching",
+    "parametric plan and sections",
+    "Blender generated scene and rendered views",
+    "comparison and human artistic decision"
+  ]
+}

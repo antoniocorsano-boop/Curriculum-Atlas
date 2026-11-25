@@ -1,5 +1,6 @@
 import { chromium } from "playwright";
 import fs from "node:fs/promises";
+import {verifyGateway} from "./atlas-surface-contract.mjs";
 
 const base = process.env.BASE_URL || "http://127.0.0.1:3000";
 const viewports = [
@@ -63,7 +64,9 @@ try {
         throw new Error(`Horizontal overflow detected on ${path} / ${viewport.name}: ${metrics.scrollWidth} > ${metrics.clientWidth}`);
       }
 
-      if (viewport.name.startsWith("mobile")) {
+      if(path==="/" && await page.locator('[data-atlas-surface="gateway"]').count()){
+        await verifyGateway(page,base);
+      }else if (viewport.name.startsWith("mobile")) {
         const targets = await page.locator(".atlas-mobile-nav > a, .atlas-mobile-more > summary").evaluateAll((nodes) =>
           nodes.map((node) => Math.round(node.getBoundingClientRect().height))
         );

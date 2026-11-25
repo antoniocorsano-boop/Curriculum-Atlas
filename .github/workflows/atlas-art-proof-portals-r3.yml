@@ -1,0 +1,88 @@
+name: "ATLAS ART-PROOF-01B — Calibrazione portali R3"
+on:
+  pull_request:
+    branches: [work/atlas-library-web-delivery]
+    paths:
+      - "scripts/atlas-gateway-production/art_proof_01b_portals_calibration_r3.py"
+      - ".github/workflows/atlas-art-proof-portals-r3.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: atlas-art-portal-r3-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  portal-r3-a:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check R3 script and locked provenance
+        run: |
+          python3 -m py_compile scripts/atlas-gateway-production/art_proof_01b_portals_calibration_r3.py
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path("docs/atlas-gateway/ART-DIR-02-CANONICAL-LANDMARKS.json").read_text())
+          assert j["source"]["sha256"]=="a132a9e188b6b931d078a6f016450f3e9a03153de665f72a486816035ea830fe"
+          assert len(j["portals"])==4
+          PY
+      - name: Install Blender
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends blender python3-numpy
+      - name: Reconstruct unchanged original master
+        run: |
+          mkdir -p "$RUNNER_TEMP/atlas-r3/master" "$RUNNER_TEMP/atlas-r3/geometry" "$RUNNER_TEMP/atlas-r3/art" "$RUNNER_TEMP/atlas-r3/r3a"
+          blender -b --factory-startup --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-foyer/blender_master.py -- \
+            --out "$RUNNER_TEMP/atlas-r3/master"
+      - name: Reuse existing ARCH-04B construction
+        run: |
+          blender -b "$RUNNER_TEMP/atlas-r3/master/atlas-foyer-master.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/build_architecture_04_geometry.py -- \
+            --out "$RUNNER_TEMP/atlas-r3/geometry" --geometry-only
+      - name: Reuse existing ART-PROOF-01B look
+        run: |
+          blender -b "$RUNNER_TEMP/atlas-r3/geometry/atlas-foyer-arch04b-geometric-candidate.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/art_proof_01_cinematic.py -- \
+            --out "$RUNNER_TEMP/atlas-r3/art" --model-only
+      - name: Calibrate R3A radius panels and camera and render four real views
+        run: |
+          blender -b "$RUNNER_TEMP/atlas-r3/art/atlas-art-proof-01b-cinematic.blend" \
+            --threads 2 --python-exit-code 1 \
+            --python scripts/atlas-gateway-production/art_proof_01b_portals_calibration_r3.py -- \
+            --out "$RUNNER_TEMP/atlas-r3/r3a" --profile A
+      - name: Validate R3 geometry imagery hashes and forbidden publication
+        run: |
+          python3 - <<'PY'
+          import json,hashlib,os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])/"atlas-r3"
+          j=json.loads((root/"r3a"/"portal-calibration-r3-a-receipt.json").read_text())
+          sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+          src=root/"art"/"atlas-art-proof-01b-cinematic.blend"
+          out=root/"r3a"/"atlas-art-proof-01b-portal-calibration-r3-a.blend"
+          assert j["source_art_proof_blend_sha256"]==sha(src)
+          assert j["candidate_blend_sha256"]==sha(out)
+          assert j["profile_id"]=="A" and len(j["portals"])==4
+          assert j["positive_arc_gap"] and j["corrected_floor_polygon_count"]>j["original_floor_polygon_count"]
+          assert set(j["renders"])=={"hero","oblique","top_ortho","slot_detail"}
+          assert all(p["real_floor_boolean"] and p["tangent_radial_abs_dot"]<1e-8 for p in j["portals"].values())
+          assert not j["human_art_approval"] and j["no_publication"] and j["no_gltf_runtime"]
+          assert len(j["hero_portal_projected_frame_bboxes"])==4
+          for item in j["renders"].values():
+              f=root/"r3a"/item["file"]
+              assert f.is_file() and f.stat().st_size>9000 and item["sha256"]==sha(f)
+          print("R3A TECHNICAL PROOF PASS; ARTISTIC APPROVAL IS STILL REQUIRED")
+          PY
+      - name: Preserve isolated R3 candidate and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-art-proof-portal-calibration-r3-a-${{ github.run_number }}
+          path: ${{ runner.temp }}/atlas-r3/
+          retention-days: 30
+          if-no-files-found: warn

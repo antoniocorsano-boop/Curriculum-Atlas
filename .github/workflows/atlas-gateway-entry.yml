@@ -1,0 +1,47 @@
+name: "ATLAS — Ingresso scenografico a tutta schermata"
+on:
+  pull_request:
+    branches: [work/atlas-library-web-delivery]
+    paths:
+      - "src/app/page.tsx"
+      - "next.config.ts"
+      - "src/features/atlas-gateway/atlas-entry.tsx"
+      - "src/features/atlas-gateway/atlas-entry.module.css"
+      - "public/atlas-gateway-entry/**"
+      - "tests/atlas-gateway-entry.spec.ts"
+      - ".github/workflows/atlas-gateway-entry.yml"
+  workflow_dispatch:
+concurrency:
+  group: atlas-gateway-entry-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  entry-web:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 10.17.1 }
+      - uses: actions/setup-node@v5
+        with: { node-version: 22, package-manager-cache: false }
+      - name: Installa le dipendenze già previste dal prodotto
+        run: pnpm install --frozen-lockfile
+      - name: Controlla i tipi dei componenti Atlas
+        run: pnpm typecheck
+      - name: Installa Chromium di verifica
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Verifica realmente desktop, telefono, portali, CTA e accessibilità del movimento
+        run: pnpm exec playwright test tests/atlas-gateway-entry.spec.ts --project=chromium
+      - name: Conserva screenshots e rapporto dei test
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-entry-fullscreen-browser-${{ github.sha }}
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 21
+          if-no-files-found: warn
+# La procedura è solo di verifica su PR: nessun merge, pages:write o deploy pubblico.
