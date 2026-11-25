@@ -3,7 +3,9 @@ import {execFileSync} from "node:child_process";
 import {readFileSync} from "node:fs";
 import {join} from "node:path";
 import {createHash} from "node:crypto";
+import {verifyMediaToolchain} from "./atlas-media-toolchain.mjs";
 export function buildFoyerMedia(dest){
+ const toolchain=verifyMediaToolchain();
  const width=320,height=180,fps=15,duration=4,n=fps*duration;
  const bytes=Buffer.alloc(width*height*3*n);
  for(let f=0;f<n;f++){
@@ -26,5 +28,5 @@ export function buildFoyerMedia(dest){
  if(assets[0].bytes>400000||assets[1].bytes>150000)throw Error("Media exceeds local budget");
  const probe=JSON.parse(execFileSync("ffprobe",["-v","error","-show_streams","-show_format","-of","json",join(dest,video)],{encoding:"utf8"}));
  if(probe.streams.length!==1||probe.streams[0].codec_name!=="vp8"||probe.streams[0].width!==width||probe.streams[0].height!==height||Math.abs(Number(probe.format.duration)-duration)>.15)throw Error("Unexpected generated media");
- return {schema:"atlas.scene.media/v1",available:true,width,height,fps,duration,assets,source:"original-procedural",studentAuthorized:false};
+ return {schema:"atlas.scene.media/v1",available:true,width,height,fps,duration,assets,toolchain,source:"original-procedural",studentAuthorized:false};
 }

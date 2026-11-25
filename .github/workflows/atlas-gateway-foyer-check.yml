@@ -12,6 +12,8 @@ on:
       - "scripts/test-atlas-optical-profile.mjs"
       - "scripts/build-atlas-foyer-media.mjs"
       - "scripts/test-atlas-video-layer.mjs"
+      - "scripts/atlas-media-toolchain.mjs"
+      - "scripts/test-atlas-media-toolchain.mjs"
       - ".github/workflows/atlas-gateway-foyer-check.yml"
   workflow_dispatch:
 concurrency:
@@ -41,12 +43,22 @@ jobs:
           node scripts/test-atlas-scene-timeline.mjs
           node scripts/test-atlas-optical-profile.mjs
           node scripts/test-atlas-video-layer.mjs
+          node scripts/test-atlas-media-toolchain.mjs
       - name: Install existing Playwright dependencies
         uses: pnpm/action-setup@v4
         with:
           version: 10.17.1
       - name: Restore repository dependencies
         run: pnpm install --frozen-lockfile
+      - name: Install system media tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends ffmpeg
+      - name: Qualify media toolchain before building
+        run: |
+          mkdir -p "$RUNNER_TEMP/foyer-visual"
+          set -o pipefail
+          node scripts/atlas-media-toolchain.mjs | tee "$RUNNER_TEMP/foyer-visual/media-toolchain.json"
       - name: Install test Chromium
         run: pnpm exec playwright install --with-deps chromium
       - name: Build self-contained foyer sample without deployment
@@ -54,8 +66,6 @@ jobs:
           ATLAS_GATEWAY_FOYER_PREVIEW: 'true'
           ATLAS_FOYER_VIDEO_PREVIEW: 'true'
         run: |
-          ffmpeg -version
-          ffprobe -version
           mkdir -p out/curricolo out/esplora out/percorsi out/esperienze
           for route in curricolo esplora percorsi esperienze; do printf '%s\n' '<!doctype html><html lang="it"><title>Route sample</title></html>' > "out/$route/index.html"; done
           node scripts/build-atlas-gateway-foyer.mjs out
