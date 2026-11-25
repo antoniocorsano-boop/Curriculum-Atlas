@@ -15,7 +15,7 @@ for(const p of PORTALS){
   const route=join(output,p.href.slice(1),"index.html");
   if(!existsSync(route))throw Error("Target route not present in export: "+p.href);
 }
-const sources=["index.html","foyer.css","foyer.mjs","portal-contract.mjs"];
+const sources=["index.html","foyer.css","foyer.mjs","portal-contract.mjs","motion-layer.mjs"];
 const logoFile="atlas-logo-approved-01.png";
 const logoSource=resolve("public/atlas-gateway-entry",logoFile);
 const sourceDir=resolve("scripts/atlas-gateway-foyer");

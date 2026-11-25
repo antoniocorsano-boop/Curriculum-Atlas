@@ -1,5 +1,6 @@
 // ATLAS-GATEWAY-01 / G1.1 — atrio tridimensionale reale; nessuna libreria 3D aggiunta.
 import {PORTALS,FOYER_SCHEMA,verifyPortalContract} from "./portal-contract.mjs";
+import {createAtmosphereLayer} from "./motion-layer.mjs";
 
 const stage=document.querySelector(".stage");
 const canvas=document.getElementById("foyer-canvas");
@@ -16,7 +17,10 @@ if(links.length!==PORTALS.length)throw Error("ATLAS_EXTRA_PORTAL");
 const T=globalThis.THREE;
 const mobile=()=>window.matchMedia("(max-width:650px)").matches;
 let renderer,scene,camera,request=0,orbit=0,vertical=0,pressed=null,portalPanels=[];
-let stopped=false,selected=null;
+let stopped=false,selected=null,motionLayer=null;
+const motionButton=document.getElementById("motion-preview");
+const motionPreference=window.matchMedia("(prefers-reduced-motion: reduce)");
+const motionOptIn=new URLSearchParams(location.search).get("vf-motion")==="1";
 function highlight(id){
   selected=id;
   for(const {pane,portal} of portalPanels){
@@ -31,6 +35,8 @@ function highlight(id){
 }
 function fallback(message){
   stopped=true;
+  motionLayer?.dispose();
+  if(motionButton)motionButton.hidden=true;
   document.body.classList.add("no-webgl");
   setStatus(message+" · Puoi usare direttamente gli accessi qui sotto.");
   if(renderer){try{renderer.dispose();renderer.forceContextLoss();}catch{}}
@@ -378,9 +384,12 @@ function setCamera(){
   camera.lookAt(new T.Vector3(0,viewHeight+vertical,-.65));
   camera.aspect=aspect;camera.fov=portrait?60:53;camera.updateProjectionMatrix();
 }
-function render(){
+function render(now){
   request=0;if(stopped)return;
+  const active=motionLayer?.tick(now)??false;
+  if(motionButton&&!motionButton.hidden)motionButton.dataset.running=String(active);
   setCamera();renderer.render(scene,camera);
+  if(active)schedule();
 }
 function schedule(){if(!request&&!stopped)request=requestAnimationFrame(render);}
 function resize(){
@@ -417,6 +426,26 @@ async function init(){
     try{artLoaded=await loadArtMaster();}
     catch(error){artError=String(error?.message||error);console.warn("ATLAS_ART_FALLBACK",artError);}
     if(!artLoaded)drawFoyer();
+    if(motionOptIn&&motionButton){
+      motionLayer=createAtmosphereLayer(T,scene,{mobile:mobile(),reduced:motionPreference.matches});
+      motionButton.hidden=false;
+      const syncMotionPreference=()=>{
+        motionLayer.setReduced(motionPreference.matches);
+        motionButton.disabled=motionPreference.matches;
+        motionButton.dataset.running="false";
+        schedule();
+      };
+      syncMotionPreference();
+      motionPreference.addEventListener("change",syncMotionPreference);
+      motionButton.addEventListener("click",()=>{
+        if(motionButton.dataset.running==="true"){motionLayer.stop();motionButton.dataset.running="false";}
+        else if(motionLayer.play(performance.now()))motionButton.dataset.running="true";
+        schedule();
+      });
+      document.addEventListener("visibilitychange",()=>{
+        if(document.hidden){motionLayer.stop();motionButton.dataset.running="false";schedule();}
+      });
+    }
     canvas.style.touchAction="none";
     canvas.addEventListener("pointerdown",e=>{
       pressed={x:e.clientX,y:e.clientY,orbit,vertical,moved:false};
@@ -446,7 +475,7 @@ async function init(){
     }
     window.addEventListener("resize",resize,{passive:true});
     canvas.addEventListener("webglcontextlost",e=>{e.preventDefault();fallback("Contesto grafico interrotto");});
-    window.addEventListener("pagehide",()=>{stopped=true;cancelAnimationFrame(request);renderer?.dispose();});
+    window.addEventListener("pagehide",()=>{stopped=true;cancelAnimationFrame(request);motionLayer?.dispose();renderer?.dispose();});
     document.body.classList.add("webgl-ready");
     resize();setStatus(artLoaded?"Atrio tridimensionale pronto · modello Blender verificato":
       artError?"Atrio tridimensionale pronto · versione geometrica di ripiego":"Atrio tridimensionale pronto · scegli una destinazione");

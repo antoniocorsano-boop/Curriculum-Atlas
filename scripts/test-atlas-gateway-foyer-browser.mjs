@@ -78,7 +78,31 @@ try{
     await page.locator("#camera-right").click();
     await page.locator("#camera-reset").click();
     assert.equal(await page.locator("body.no-webgl").count(),0);
-    report.devices.push({device:dim.name,width:dim.width,height:dim.height,...info});
+    // Explicit lab opt-in; ordinary preview remains unchanged.
+    assert.equal(await page.locator("#motion-preview").isVisible(),false);
+    await page.goto(origin+"/atrio/?vf-motion=1");
+    await page.waitForFunction(()=>document.body.classList.contains("webgl-ready"));
+    const trigger=page.locator("#motion-preview");
+    await trigger.click();
+    await page.waitForFunction(()=>document.querySelector("#motion-preview").dataset.running==="true");
+    const frames=await page.evaluate(()=>new Promise(resolve=>{
+      const gaps=[];let start,last;
+      function frame(t){if(start===undefined)start=t;if(last!==undefined)gaps.push(t-last);last=t;
+        if(t-start<1000)requestAnimationFrame(frame);else resolve(gaps);}
+      requestAnimationFrame(frame);
+    }));
+    await page.screenshot({path:join(output,dim.name+"-motion.png"),fullPage:true});
+    await page.waitForFunction(()=>document.querySelector("#motion-preview").dataset.running==="false",null,{timeout:10000});
+    await trigger.click();
+    await trigger.click();
+    assert.equal(await trigger.getAttribute("data-running"),"false");
+    await page.emulateMedia({reducedMotion:"reduce"});
+    await page.waitForFunction(()=>document.querySelector("#motion-preview").disabled);
+    assert.equal(await trigger.getAttribute("data-running"),"false");
+    const sorted=[...frames].sort((a,b)=>a-b);
+    const motion={frames:frames.length,meanFps:frames.length?1000*frames.length/frames.reduce((a,b)=>a+b,0):null,
+      p95Ms:sorted.length?sorted[Math.ceil(sorted.length*.95)-1]:null,kind:"software-rAF-not-physical-phone"};
+    report.devices.push({device:dim.name,width:dim.width,height:dim.height,...info,motion});
     await context.close();
   }
   assert.deepEqual(report.errors,[]);
