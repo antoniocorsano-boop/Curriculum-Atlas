@@ -1,0 +1,6 @@
+# VF-MOTION-04 — Composizione ibrida locale
+Base 0e6c920e, 25 procedure eseguite superate. Modulo facoltativo, nessuna modifica alla home pubblica.
+- Produzione: ricetta originale procedurale, FFmpeg e FFprobe disponibili nel laboratorio, WebM VP8 320×180, 15 fps, 4 secondi, nessuna traccia audio. Poster PNG dal primo fotogramma. Limiti 400 kB video e 150 kB poster, impronte SHA-256 nel manifesto e nella ricevuta. Nessun asset esterno.
+- Fruizione: `/atrio/?vf-video=1` in confezione tecnica prodotta con `ATLAS_FOYER_VIDEO_PREVIEW=true`. Il filmato sostituisce il materiale dell'oculo già presente; nessuna nuova geometria. Regia e profili ottici possono essere richiesti nella stessa scena, ma la superficie dell'oculo usa un solo materiale alla volta. Master Blender non modificato.
+- Controlli: avvio esplicito, riproduzione silenziosa, stop/fine/riduzione movimento/visibilità, alternativa statica, rilascio risorse. Il ciclo di rendering esistente riceve richieste quando arrivano fotogrammi decodificati. Nessun nuovo ciclo permanente.
+- Qualificazione: contratti, generazione e verifica codec, prova WebGL su due viewport, conteggio fotogrammi e budget geometrico, schermate. Non dimostra fedeltà artistica, prestazioni fisiche o produzione di filmati Blender. Nessun merge o pubblicazione.

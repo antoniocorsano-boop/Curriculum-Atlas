@@ -4,6 +4,7 @@ import {createAtmosphereLayer} from "./motion-layer.mjs";
 import {createTimelinePlayer} from "./scene-timeline.mjs";
 import {FOYER_TIMELINE} from "./foyer-timeline.mjs";
 import {createOpticalProfile} from "./optical-profile.mjs";
+import {createVideoLayer,validMediaManifest} from "./video-layer.mjs";
 
 const stage=document.querySelector(".stage");
 const canvas=document.getElementById("foyer-canvas");
@@ -20,7 +21,10 @@ if(links.length!==PORTALS.length)throw Error("ATLAS_EXTRA_PORTAL");
 const T=globalThis.THREE;
 const mobile=()=>window.matchMedia("(max-width:650px)").matches;
 let renderer,scene,camera,request=0,orbit=0,vertical=0,pressed=null,portalPanels=[];
-let stopped=false,selected=null,motionLayer=null,optics=null;
+let stopped=false,selected=null,motionLayer=null,optics=null,videoLayer=null;
+const videoButton=document.getElementById("video-preview");
+const videoOptIn=new URLSearchParams(location.search).get("vf-video")==="1";
+let videoReport={state:"off",frames:0};
 const opticsMode=new URLSearchParams(location.search).get("vf-optics");
 let opticsState="baseline",opticsFrames=0;
 const motionButton=document.getElementById("motion-preview");
@@ -55,7 +59,8 @@ function highlight(id){
 }
 function fallback(message){
   stopped=true;
-  motionLayer?.dispose();optics?.dispose();
+  motionLayer?.dispose();videoLayer?.dispose();optics?.dispose();
+  if(videoButton)videoButton.hidden=true;
   if(motionButton)motionButton.hidden=true;
   document.body.classList.add("no-webgl");
   setStatus(message+" · Puoi usare direttamente gli accessi qui sotto.");
@@ -415,6 +420,7 @@ function render(now){
   }else active=motionLayer?.tick(now)??false;
   if(motionButton&&!motionButton.hidden)motionButton.dataset.running=String(active);
   setCamera();renderer.render(scene,camera);
+  if(videoOptIn){canvas.dataset.videoState=videoReport.state;canvas.dataset.videoFrames=String(videoReport.frames);canvas.dataset.videoCalls=String(renderer.info.render.calls);canvas.dataset.videoTriangles=String(renderer.info.render.triangles);}
   if(opticsMode==="1"||opticsMode==="baseline"){
     canvas.dataset.optics=opticsState;
     canvas.dataset.opticsFrame=String(++opticsFrames);
@@ -449,6 +455,35 @@ function pick(event){
   const hit=ray.intersectObjects(portalPanels.map(o=>o.pane),false)[0];
   if(hit?.object?.userData?.portalId)activatePortal(hit.object.userData.portalId);
 }
+async function setupVideo(mesh){
+  try{
+    const response=await fetch("./media-manifest.json",{credentials:"omit",cache:"no-store"});
+    if(!response.ok)throw Error("Media manifest unavailable");
+    const manifest=await response.json();
+    if(!validMediaManifest(manifest))return;
+    const video=document.createElement("video");
+    video.muted=true;video.playsInline=true;video.preload="none";
+    if(!video.canPlayType('video/webm; codecs="vp8"'))return;
+    const poster=await new T.TextureLoader().loadAsync("./foyer-atmosphere.png");
+    poster.encoding=T.sRGBEncoding;
+    video.src="./foyer-atmosphere.webm";
+    videoLayer=createVideoLayer(T,mesh,video,poster,schedule,report=>{
+      videoReport=report;
+      const active=report.state==="playing"||report.state==="starting";
+      videoButton.setAttribute("aria-pressed",String(active));
+      videoButton.textContent=active?"Arresta luce":"Riproduci luce";
+      videoButton.disabled=motionPreference.matches||report.state==="unavailable";
+    });
+    videoButton.hidden=false;
+    videoLayer.setReduced(motionPreference.matches);
+    motionPreference.addEventListener("change",()=>videoLayer?.setReduced(motionPreference.matches));
+    videoButton.addEventListener("click",()=>{
+      if(videoLayer.state==="playing"||videoLayer.state==="starting")videoLayer.stop();
+      else void videoLayer.play();
+    });
+    document.addEventListener("visibilitychange",()=>{if(document.hidden)videoLayer?.stop();});
+  }catch(error){console.warn("ATLAS_MEDIA_FALLBACK",String(error));videoReport={state:"unavailable",frames:0};}
+}
 async function init(){
   if(!T||typeof T.WebGLRenderer!=="function"){fallback("WebGL non disponibile");return;}
   try{
@@ -465,6 +500,7 @@ async function init(){
     if(!artLoaded){
       const surfaces=drawFoyer();
       if(opticsMode==="1"){optics=createOpticalProfile(T,renderer,surfaces);opticsState="active";}
+      if(videoOptIn)await setupVideo(surfaces.oculus);
     }else opticsState="preserved-master";
     if(motionOptIn&&motionButton){
       motionLayer=createAtmosphereLayer(T,scene,{mobile:mobile(),reduced:motionPreference.matches});
@@ -517,7 +553,7 @@ async function init(){
     }
     window.addEventListener("resize",resize,{passive:true});
     canvas.addEventListener("webglcontextlost",e=>{e.preventDefault();fallback("Contesto grafico interrotto");});
-    window.addEventListener("pagehide",()=>{stopped=true;cancelAnimationFrame(request);motionLayer?.dispose();optics?.dispose();renderer?.dispose();});
+    window.addEventListener("pagehide",()=>{stopped=true;cancelAnimationFrame(request);motionLayer?.dispose();videoLayer?.dispose();optics?.dispose();renderer?.dispose();});
     document.body.classList.add("webgl-ready");
     readyStatus=artLoaded?"Atrio tridimensionale pronto · modello Blender verificato":
       artError?"Atrio tridimensionale pronto · versione geometrica di ripiego":"Atrio tridimensionale pronto · scegli una destinazione";

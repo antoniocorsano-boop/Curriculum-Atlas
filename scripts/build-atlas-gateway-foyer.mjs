@@ -4,6 +4,7 @@ import {join,resolve} from "node:path";
 import {tmpdir} from "node:os";
 import {execFileSync} from "node:child_process";
 import {createHash} from "node:crypto";
+import {buildFoyerMedia} from "./build-atlas-foyer-media.mjs";
 import {PORTALS,FOYER_SCHEMA,verifyPortalContract} from "./atlas-gateway-foyer/portal-contract.mjs";
 
 if(process.env.ATLAS_GATEWAY_FOYER_PREVIEW!=="true"||process.env.ATLAS_STUDENT_AUTHORIZED==="true")
@@ -15,7 +16,7 @@ for(const p of PORTALS){
   const route=join(output,p.href.slice(1),"index.html");
   if(!existsSync(route))throw Error("Target route not present in export: "+p.href);
 }
-const sources=["index.html","foyer.css","foyer.mjs","portal-contract.mjs","motion-layer.mjs","scene-timeline.mjs","foyer-timeline.mjs","optical-profile.mjs"];
+const sources=["index.html","foyer.css","foyer.mjs","portal-contract.mjs","motion-layer.mjs","scene-timeline.mjs","foyer-timeline.mjs","optical-profile.mjs","video-layer.mjs"];
 const logoFile="atlas-logo-approved-01.png";
 const logoSource=resolve("public/atlas-gateway-entry",logoFile);
 const sourceDir=resolve("scripts/atlas-gateway-foyer");
@@ -64,8 +65,10 @@ if(modelPath){
   writeFileSync(join(dest,visual.file),bytes);
 }
 writeFileSync(join(dest,"visual-manifest.json"),JSON.stringify(visual,null,2)+"\n");
-const extra=visual.available?[visual.file]:[];
-const files=[...sources,logoFile,"three.min.js","GLTFLoader.js","visual-manifest.json",...extra].map(file=>{
+const media=process.env.ATLAS_FOYER_VIDEO_PREVIEW==="true"?buildFoyerMedia(dest):{schema:"atlas.scene.media/v1",available:false,studentAuthorized:false};
+writeFileSync(join(dest,"media-manifest.json"),JSON.stringify(media,null,2)+"\n");
+const extra=[...(visual.available?[visual.file]:[]),...(media.available?media.assets.map(a=>a.name):[])];
+const files=[...sources,logoFile,"three.min.js","GLTFLoader.js","visual-manifest.json","media-manifest.json",...extra].map(file=>{
   const contents=readFileSync(join(dest,file));
   return {name:file,bytes:contents.length,sha256:sha(contents)};
 });

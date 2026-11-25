@@ -10,7 +10,7 @@ const root=resolve(process.argv[2]||"out"),output=resolve(process.argv[3]||"evid
 mkdirSync(output,{recursive:true});
 const contentTypes={".html":"text/html; charset=utf-8",".mjs":"text/javascript; charset=utf-8",
   ".js":"text/javascript; charset=utf-8",".css":"text/css; charset=utf-8",".json":"application/json",
-  ".png":"image/png",".svg":"image/svg+xml"};
+  ".png":"image/png",".svg":"image/svg+xml",".webm":"video/webm"};
 const server=createServer((req,res)=>{
   try{
     const path=new URL(req.url,"http://127.0.0.1").pathname;
@@ -152,7 +152,28 @@ try{
       assert.equal(b.metrics.triangles,a.metrics.triangles,"No extra optical geometry");
       assert(b.metrics.calls<=a.metrics.calls+1,"Optical draw-call budget exceeded");
     }
-    report.devices.push({device:dim.name,width:dim.width,height:dim.height,...info,motion,timeline:{renderedCues:trace.slice(0,4),manualOverride:true,reducedMotion:true},optics:{baseline:a.metrics,profile:b.metrics,meanAbsoluteRGBDelta:delta,physicalPerformanceVerified:false}});
+    let video=null;
+    if(process.env.ATLAS_FOYER_EXPECT_VIDEO==="true"&&process.env.ATLAS_FOYER_EXPECT_ART!=="true"){
+      await page.emulateMedia({reducedMotion:"no-preference"});
+      await page.goto(origin+"/atrio/?vf-video=1");
+      const control=page.locator("#video-preview"),surface=page.locator("#foyer-canvas");
+      await page.waitForFunction(()=>document.querySelector("#foyer-canvas").dataset.videoState==="poster");
+      assert(await control.isVisible());assert.equal(await control.getAttribute("aria-pressed"),"false");
+      await surface.screenshot({path:join(output,dim.name+"-video-poster.png")});
+      await control.click();
+      await page.waitForFunction(()=>Number(document.querySelector("#foyer-canvas").dataset.videoFrames)>=2,null,{timeout:15000});
+      await surface.screenshot({path:join(output,dim.name+"-video-frame.png")});
+      await page.waitForFunction(()=>document.querySelector("#foyer-canvas").dataset.videoState==="poster",null,{timeout:15000});
+      video=await surface.evaluate(el=>({frames:Number(el.dataset.videoFrames),state:el.dataset.videoState,calls:Number(el.dataset.videoCalls),triangles:Number(el.dataset.videoTriangles)}));
+      assert(video.frames>=2);
+      assert.equal(video.triangles,a.metrics.triangles);
+      assert(video.calls<=a.metrics.calls+1);
+      await page.emulateMedia({reducedMotion:"reduce"});
+      await page.waitForFunction(()=>document.querySelector("#video-preview").disabled);
+      assert.equal(await control.getAttribute("aria-pressed"),"false");
+      assert.equal(await surface.getAttribute("data-video-state"),"poster");
+    }
+    report.devices.push({device:dim.name,width:dim.width,height:dim.height,...info,motion,video,timeline:{renderedCues:trace.slice(0,4),manualOverride:true,reducedMotion:true},optics:{baseline:a.metrics,profile:b.metrics,meanAbsoluteRGBDelta:delta,physicalPerformanceVerified:false}});
     await context.close();
   }
   assert.deepEqual(report.errors,[]);

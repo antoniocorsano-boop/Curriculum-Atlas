@@ -96,3 +96,7 @@ body.webgl-ready:not(.no-webgl) #camera-reset {font-size:22px;line-height:1}
 #motion-preview{font:inherit;min-height:44px;padding:6px 12px;border:1px solid #c9ab76;border-radius:8px;background:#142a40;color:#fff1d7;cursor:pointer}
 #motion-preview:focus-visible{outline:3px solid #ffda98;outline-offset:3px}
 #motion-preview:disabled{opacity:.7;cursor:default}
+
+#video-preview[hidden]{display:none!important}
+#video-preview{font:inherit;font-size:12px;min-height:44px;padding:5px 9px;border:1px solid #c9ab76;border-radius:8px;background:#142a40;color:#fff1d7}
+#video-preview:disabled{opacity:.7;cursor:default}
